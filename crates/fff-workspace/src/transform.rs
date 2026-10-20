@@ -41,7 +41,10 @@ impl std::fmt::Display for TransformError {
                 write!(f, "expected {expected} matches, found {actual}")
             }
             Self::TooManyFiles { max, actual } => {
-                write!(f, "target resolved to {actual} files, exceeding maximum {max}")
+                write!(
+                    f,
+                    "target resolved to {actual} files, exceeding maximum {max}"
+                )
             }
             Self::EmptyPattern => write!(f, "replacement pattern must not be empty"),
         }
@@ -167,19 +170,11 @@ pub(crate) fn apply_mutation(
             pattern,
             replacement,
             expected_matches,
-        } => apply_replace(
-            buffers,
-            *mode,
-            pattern,
-            replacement,
-            *expected_matches,
-        ),
+        } => apply_replace(buffers, *mode, pattern, replacement, *expected_matches),
     }
 }
 
-pub(crate) fn collect_changes(
-    buffers: &BTreeMap<String, BufferState>,
-) -> Vec<JournalChange> {
+pub(crate) fn collect_changes(buffers: &BTreeMap<String, BufferState>) -> Vec<JournalChange> {
     buffers
         .iter()
         .filter_map(|(path, state)| {
@@ -234,9 +229,7 @@ fn apply_replace(
         }
 
         let updated = match (&regex, mode) {
-            (Some(regex), ReplaceMode::Regex) => {
-                regex.replace_all(&text, replacement).into_owned()
-            }
+            (Some(regex), ReplaceMode::Regex) => regex.replace_all(&text, replacement).into_owned(),
             (None, ReplaceMode::Literal) => text.replace(pattern, replacement),
             _ => unreachable!(),
         };
@@ -304,10 +297,16 @@ mod tests {
         let tx = result.transaction.unwrap();
 
         assert_eq!(result.changed_files, 2);
-        assert_eq!(fs::read_to_string(root.join("src/a.rs")).unwrap(), "Account Account");
+        assert_eq!(
+            fs::read_to_string(root.join("src/a.rs")).unwrap(),
+            "Account Account"
+        );
 
         Journal::open(&root).unwrap().undo(&tx.id).unwrap();
-        assert_eq!(fs::read_to_string(root.join("src/a.rs")).unwrap(), "User User");
+        assert_eq!(
+            fs::read_to_string(root.join("src/a.rs")).unwrap(),
+            "User User"
+        );
         assert_eq!(fs::read_to_string(root.join("src/b.rs")).unwrap(), "User");
 
         fs::remove_dir_all(root).unwrap();
