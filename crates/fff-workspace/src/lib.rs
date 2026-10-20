@@ -4,6 +4,8 @@ use std::path::{Component, Path, PathBuf};
 use globset::Glob;
 use regex::Regex;
 
+pub mod dsl;
+
 #[derive(Debug)]
 pub enum WorkspaceError {
     Io(io::Error),
@@ -322,10 +324,7 @@ impl Workspace {
             let rel = self.relative_display(&path);
             files_scanned += 1;
 
-            let bytes = match fs::read(&path) {
-                Ok(bytes) => bytes,
-                Err(e) => return Err(e.into()),
-            };
+            let bytes = fs::read(&path)?;
             let Ok(text) = String::from_utf8(bytes) else {
                 continue;
             };
@@ -360,13 +359,13 @@ impl Workspace {
             ));
         }
 
-        if let Some(expected) = request.expected_matches {
-            if total_matches != expected {
-                return Err(WorkspaceError::ExpectedOccurrenceCount {
-                    expected,
-                    actual: total_matches,
-                });
-            }
+        if let Some(expected) = request.expected_matches
+            && total_matches != expected
+        {
+            return Err(WorkspaceError::ExpectedOccurrenceCount {
+                expected,
+                actual: total_matches,
+            });
         }
 
         if !request.dry_run {
