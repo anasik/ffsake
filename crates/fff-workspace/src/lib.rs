@@ -8,6 +8,7 @@ pub mod coordinates;
 pub mod edits;
 pub mod journal;
 pub mod preview;
+pub mod search;
 pub mod selection;
 pub mod session;
 pub mod transform;
