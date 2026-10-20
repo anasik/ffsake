@@ -47,13 +47,15 @@ Implemented:
 - multi-range edits (the useful semantics of multi-caret editing without GUI caret state);
 - match-relative insertion/deletion;
 - lexical whole-identifier replacement;
-- path-qualified line delete/duplicate/indent/outdent.
+- path-qualified line delete/duplicate/indent/outdent;
+- arbitrary selection clear/duplicate plus range-to-line indent/outdent planning;
+- same-file and cross-file selection copy/move planning;
+- guarded selection transforms with source-hash preconditions;
+- dry-run transform previews and per-file unified diffs.
 
 Next primitives:
-- case-preserving textual rename;
-- move/copy ranges;
-- sort/deduplicate selected lines;
-- dry-run previews and unified diffs.
+- case-preserving textual rename after the search/mutation benchmark;
+- syntax-aware selection and identifier operations when Tree-sitter is introduced.
 
 Target principle:
 
@@ -65,11 +67,18 @@ rather than:
 
 ## Phase 1D — FFF search integration
 
-- reuse FFF's resident indexed search;
-- expose workspace operations beside `find_files`, `grep`, and `multi_grep`;
-- allow search results/match sets to feed exact multi-range mutation;
-- teach agent-facing instructions to prefer workspace tools over shell equivalents;
-- no generic shell/exec tool for ordinary repository manipulation.
+Implemented:
+- FFF pinned as the resident indexed/watched search backend;
+- literal and regex content search through FFF's public `FilePicker::grep` API;
+- all search results re-scoped through ffsake's safe `FileSelector`;
+- owned `MatchSet` values with exact path-qualified byte ranges and source hashes;
+- direct MatchSet → guarded Transform conversion for replace and insert-before/after;
+- staged hash assertions plus journal commit guards to reject stale search results.
+
+Next:
+- expose the resident runtime through the compact agent-facing interface;
+- benchmark FFF search → MatchSet → preview/transform end to end;
+- add richer FFF modes only when a concrete workflow requires them.
 
 ## Phase 1E — agent benchmark
 
