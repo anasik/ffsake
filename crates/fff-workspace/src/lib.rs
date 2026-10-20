@@ -16,6 +16,9 @@ pub enum WorkspaceError {
     ExpectedOccurrenceCount { expected: usize, actual: usize },
     Regex(regex::Error),
     InvalidGlob(String),
+    ContentChanged { expected: String, actual: String },
+    InvalidEditRange { start: usize, end: usize, len: usize },
+    OverlappingEdits,
 }
 
 impl std::fmt::Display for WorkspaceError {
@@ -31,6 +34,9 @@ impl std::fmt::Display for WorkspaceError {
             }
             Self::Regex(e) => write!(f, "invalid regex: {e}"),
             Self::InvalidGlob(g) => write!(f, "invalid glob: {g}"),
+            Self::ContentChanged { expected, actual } => write!(f, "content changed: expected {expected}, actual {actual}"),
+            Self::InvalidEditRange { start, end, len } => write!(f, "invalid edit range {start}..{end} for {len}-byte file"),
+            Self::OverlappingEdits => write!(f, "text edits overlap"),
         }
     }
 }
@@ -168,6 +174,25 @@ pub struct ReplaceBatchResult {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TextEdit {
+    /// UTF-8 byte offset, inclusive.
+    pub start_byte: usize,
+    /// UTF-8 byte offset, exclusive.
+    pub end_byte: usize,
+    pub replacement: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EditResult {
+    pub path: String,
+    pub edits: usize,
+    pub bytes_before: usize,
+    pub bytes_after: usize,
+    pub before_hash: String,
+    pub after_hash: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ReplaceResult {
     pub path: String,
     pub replacements: usize,
@@ -265,6 +290,81 @@ impl Workspace {
         fs::write(&tmp, text.as_bytes())?;
         fs::rename(&tmp, &path)?;
         Ok(())
+    }
+
+    pub fn content_hash(&self, relative: impl AsRef<Path>) -> Result<String> {
+        let path = self.resolve_existing(relative.as_ref())?;
+        if !path.is_file() {
+            return Err(WorkspaceError::InvalidPath(self.relative_display(&path)));
+        }
+        let bytes = fs::read(path)?;
+        Ok(blake3::hash(&bytes).to_hex().to_string())
+    }
+
+    pub fn apply_text_edits(
+        &self,
+        relative: impl AsRef<Path>,
+        edits: &[TextEdit],
+        expected_hash: Option<&str>,
+    ) -> Result<EditResult> {
+        let path = self.resolve_existing(relative.as_ref())?;
+        if !path.is_file() {
+            return Err(WorkspaceError::InvalidPath(self.relative_display(&path)));
+        }
+
+        let bytes = fs::read(&path)?;
+        let text = String::from_utf8(bytes).map_err(|_| WorkspaceError::NotUtf8(path.clone()))?;
+        let before_hash = blake3::hash(text.as_bytes()).to_hex().to_string();
+
+        if let Some(expected) = expected_hash
+            && expected != before_hash
+        {
+            return Err(WorkspaceError::ContentChanged {
+                expected: expected.to_string(),
+                actual: before_hash,
+            });
+        }
+
+        let mut ordered = edits.to_vec();
+        ordered.sort_by_key(|edit| (edit.start_byte, edit.end_byte));
+
+        let len = text.len();
+        let mut previous_end = 0usize;
+        for edit in &ordered {
+            if edit.start_byte > edit.end_byte
+                || edit.end_byte > len
+                || !text.is_char_boundary(edit.start_byte)
+                || !text.is_char_boundary(edit.end_byte)
+            {
+                return Err(WorkspaceError::InvalidEditRange {
+                    start: edit.start_byte,
+                    end: edit.end_byte,
+                    len,
+                });
+            }
+            if edit.start_byte < previous_end {
+                return Err(WorkspaceError::OverlappingEdits);
+            }
+            previous_end = edit.end_byte;
+        }
+
+        let mut updated = text.clone();
+        for edit in ordered.iter().rev() {
+            updated.replace_range(edit.start_byte..edit.end_byte, &edit.replacement);
+        }
+
+        let after_hash = blake3::hash(updated.as_bytes()).to_hex().to_string();
+        let rel = self.relative_path(&path)?;
+        self.write_text(rel, &updated)?;
+
+        Ok(EditResult {
+            path: self.relative_display(&path),
+            edits: edits.len(),
+            bytes_before: text.len(),
+            bytes_after: updated.len(),
+            before_hash,
+            after_hash,
+        })
     }
 
     pub fn replace_exact(
@@ -844,5 +944,80 @@ mod tests {
 
         fs::remove_dir_all(root).unwrap();
     }
+    #[test]
+    fn applies_multiple_precise_text_edits_with_hash_precondition() {
+        let root = fixture();
+        let ws = Workspace::new(&root).unwrap();
+        let hash = ws.content_hash("src/lib.rs").unwrap();
+
+        let result = ws
+            .apply_text_edits(
+                "src/lib.rs",
+                &[
+                    TextEdit {
+                        start_byte: 0,
+                        end_byte: 3,
+                        replacement: "ONE".into(),
+                    },
+                    TextEdit {
+                        start_byte: 8,
+                        end_byte: 13,
+                        replacement: "THREE".into(),
+                    },
+                ],
+                Some(&hash),
+            )
+            .unwrap();
+
+        assert_eq!(result.edits, 2);
+        assert_eq!(
+            fs::read_to_string(root.join("src/lib.rs")).unwrap(),
+            "ONE\ntwo\nTHREE\n"
+        );
+
+        assert!(matches!(
+            ws.apply_text_edits(
+                "src/lib.rs",
+                &[TextEdit {
+                    start_byte: 0,
+                    end_byte: 3,
+                    replacement: "X".into(),
+                }],
+                Some(&hash),
+            ),
+            Err(WorkspaceError::ContentChanged { .. })
+        ));
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn rejects_overlapping_text_edits() {
+        let root = fixture();
+        let ws = Workspace::new(&root).unwrap();
+
+        assert!(matches!(
+            ws.apply_text_edits(
+                "src/lib.rs",
+                &[
+                    TextEdit {
+                        start_byte: 0,
+                        end_byte: 5,
+                        replacement: "x".into(),
+                    },
+                    TextEdit {
+                        start_byte: 3,
+                        end_byte: 7,
+                        replacement: "y".into(),
+                    },
+                ],
+                None,
+            ),
+            Err(WorkspaceError::OverlappingEdits)
+        ));
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
 
 }
