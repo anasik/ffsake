@@ -1,3 +1,4 @@
+use crate::edits::{RangeEdit, apply_range_edits};
 use crate::journal::{Journal, JournalChange, JournalError, TransactionManifest};
 use crate::{FileSelector, ReplaceMode, Workspace, WorkspaceError};
 use regex::Regex;
@@ -6,11 +7,32 @@ use std::fs;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MatchPosition {
+    Before,
+    After,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Mutation {
     Replace {
         mode: ReplaceMode,
         pattern: String,
         replacement: String,
+        expected_matches: Option<usize>,
+    },
+    ApplyRanges {
+        edits: Vec<RangeEdit>,
+    },
+    InsertAtMatches {
+        mode: ReplaceMode,
+        pattern: String,
+        text: String,
+        position: MatchPosition,
+        expected_matches: Option<usize>,
+    },
+    DeleteMatches {
+        mode: ReplaceMode,
+        pattern: String,
         expected_matches: Option<usize>,
     },
     DeleteFiles,
@@ -165,6 +187,36 @@ pub(crate) fn apply_mutation(
             }
             Ok(())
         }
+        Mutation::ApplyRanges { edits } => {
+            for state in buffers.values_mut() {
+                let Some(bytes) = &state.current else {
+                    continue;
+                };
+                let text = String::from_utf8(bytes.clone())
+                    .map_err(|_| WorkspaceError::NotUtf8(state.path.clone()))?;
+                state.current = Some(apply_range_edits(&text, edits)?.into_bytes());
+            }
+            Ok(())
+        }
+        Mutation::InsertAtMatches {
+            mode,
+            pattern,
+            text,
+            position,
+            expected_matches,
+        } => apply_insert_at_matches(
+            buffers,
+            *mode,
+            pattern,
+            text,
+            *position,
+            *expected_matches,
+        ),
+        Mutation::DeleteMatches {
+            mode,
+            pattern,
+            expected_matches,
+        } => apply_delete_matches(buffers, *mode, pattern, *expected_matches),
         Mutation::Replace {
             mode,
             pattern,
@@ -189,6 +241,122 @@ pub(crate) fn collect_changes(buffers: &BTreeMap<String, BufferState>) -> Vec<Jo
             }
         })
         .collect()
+}
+
+
+fn collect_match_ranges(text: &str, mode: ReplaceMode, pattern: &str) -> Result<Vec<(usize, usize)>> {
+    if pattern.is_empty() {
+        return Err(TransformError::EmptyPattern);
+    }
+
+    match mode {
+        ReplaceMode::Literal => Ok(text
+            .match_indices(pattern)
+            .map(|(start, matched)| (start, start + matched.len()))
+            .collect()),
+        ReplaceMode::Regex => {
+            let regex = Regex::new(pattern).map_err(WorkspaceError::from)?;
+            Ok(regex.find_iter(text).map(|m| (m.start(), m.end())).collect())
+        }
+    }
+}
+
+fn apply_insert_at_matches(
+    buffers: &mut BTreeMap<String, BufferState>,
+    mode: ReplaceMode,
+    pattern: &str,
+    inserted: &str,
+    position: MatchPosition,
+    expected_matches: Option<usize>,
+) -> Result<()> {
+    let mut total_matches = 0usize;
+
+    for state in buffers.values_mut() {
+        let Some(bytes) = &state.current else {
+            continue;
+        };
+        let text = String::from_utf8(bytes.clone())
+            .map_err(|_| WorkspaceError::NotUtf8(state.path.clone()))?;
+        let ranges = collect_match_ranges(&text, mode, pattern)?;
+        total_matches += ranges.len();
+
+        if ranges.is_empty() {
+            continue;
+        }
+
+        let edits = ranges
+            .into_iter()
+            .map(|(start, end)| {
+                let offset = match position {
+                    MatchPosition::Before => start,
+                    MatchPosition::After => end,
+                };
+                RangeEdit {
+                    start_byte: offset,
+                    end_byte: offset,
+                    replacement: inserted.to_string(),
+                }
+            })
+            .collect::<Vec<_>>();
+
+        state.current = Some(apply_range_edits(&text, &edits)?.into_bytes());
+    }
+
+    if let Some(expected) = expected_matches
+        && total_matches != expected
+    {
+        return Err(TransformError::ExpectedMatchCount {
+            expected,
+            actual: total_matches,
+        });
+    }
+
+    Ok(())
+}
+
+fn apply_delete_matches(
+    buffers: &mut BTreeMap<String, BufferState>,
+    mode: ReplaceMode,
+    pattern: &str,
+    expected_matches: Option<usize>,
+) -> Result<()> {
+    let mut total_matches = 0usize;
+
+    for state in buffers.values_mut() {
+        let Some(bytes) = &state.current else {
+            continue;
+        };
+        let text = String::from_utf8(bytes.clone())
+            .map_err(|_| WorkspaceError::NotUtf8(state.path.clone()))?;
+        let ranges = collect_match_ranges(&text, mode, pattern)?;
+        total_matches += ranges.len();
+
+        if ranges.is_empty() {
+            continue;
+        }
+
+        let edits = ranges
+            .into_iter()
+            .map(|(start, end)| RangeEdit {
+                start_byte: start,
+                end_byte: end,
+                replacement: String::new(),
+            })
+            .collect::<Vec<_>>();
+
+        state.current = Some(apply_range_edits(&text, &edits)?.into_bytes());
+    }
+
+    if let Some(expected) = expected_matches
+        && total_matches != expected
+    {
+        return Err(TransformError::ExpectedMatchCount {
+            expected,
+            actual: total_matches,
+        });
+    }
+
+    Ok(())
 }
 
 fn apply_replace(
@@ -329,5 +497,45 @@ mod tests {
         assert!(root.join("src/a.rs").exists());
 
         fs::remove_dir_all(root).unwrap();
+    }    #[test]
+    fn transform_supports_match_relative_insert_and_delete() {
+        let root = fixture();
+        let workspace = Workspace::new(&root).unwrap();
+
+        let transform = Transform {
+            target: FileSelector::exact("src/a.rs"),
+            operations: vec![
+                Mutation::InsertAtMatches {
+                    mode: ReplaceMode::Literal,
+                    pattern: "User".into(),
+                    text: "[".into(),
+                    position: MatchPosition::Before,
+                    expected_matches: Some(2),
+                },
+                Mutation::InsertAtMatches {
+                    mode: ReplaceMode::Literal,
+                    pattern: "User".into(),
+                    text: "]".into(),
+                    position: MatchPosition::After,
+                    expected_matches: Some(2),
+                },
+                Mutation::DeleteMatches {
+                    mode: ReplaceMode::Literal,
+                    pattern: " ".into(),
+                    expected_matches: Some(1),
+                },
+            ],
+            max_files: Some(1),
+        };
+
+        execute(&workspace, &transform, None).unwrap();
+        assert_eq!(
+            fs::read_to_string(root.join("src/a.rs")).unwrap(),
+            "[User][User]"
+        );
+
+        fs::remove_dir_all(root).unwrap();
     }
+
+
 }
