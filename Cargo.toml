@@ -1,0 +1,7 @@
+[workspace]
+members = ["crates/fff-workspace"]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
