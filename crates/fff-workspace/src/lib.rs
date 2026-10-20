@@ -1,8 +1,8 @@
+use globset::Glob;
+use regex::Regex;
 use std::fs;
 use std::io;
 use std::path::{Component, Path, PathBuf};
-use globset::Glob;
-use regex::Regex;
 
 pub mod journal;
 pub mod session;
@@ -15,11 +15,21 @@ pub enum WorkspaceError {
     OutsideWorkspace(PathBuf),
     NotUtf8(PathBuf),
     NotFound(PathBuf),
-    ExpectedOccurrenceCount { expected: usize, actual: usize },
+    ExpectedOccurrenceCount {
+        expected: usize,
+        actual: usize,
+    },
     Regex(regex::Error),
     InvalidGlob(String),
-    ContentChanged { expected: String, actual: String },
-    InvalidEditRange { start: usize, end: usize, len: usize },
+    ContentChanged {
+        expected: String,
+        actual: String,
+    },
+    InvalidEditRange {
+        start: usize,
+        end: usize,
+        len: usize,
+    },
     OverlappingEdits,
     InternalPath(String),
 }
@@ -33,12 +43,19 @@ impl std::fmt::Display for WorkspaceError {
             Self::NotUtf8(p) => write!(f, "file is not valid UTF-8: {}", p.display()),
             Self::NotFound(p) => write!(f, "path not found: {}", p.display()),
             Self::ExpectedOccurrenceCount { expected, actual } => {
-                write!(f, "expected {expected} matching occurrence(s), found {actual}")
+                write!(
+                    f,
+                    "expected {expected} matching occurrence(s), found {actual}"
+                )
             }
             Self::Regex(e) => write!(f, "invalid regex: {e}"),
             Self::InvalidGlob(g) => write!(f, "invalid glob: {g}"),
-            Self::ContentChanged { expected, actual } => write!(f, "content changed: expected {expected}, actual {actual}"),
-            Self::InvalidEditRange { start, end, len } => write!(f, "invalid edit range {start}..{end} for {len}-byte file"),
+            Self::ContentChanged { expected, actual } => {
+                write!(f, "content changed: expected {expected}, actual {actual}")
+            }
+            Self::InvalidEditRange { start, end, len } => {
+                write!(f, "invalid edit range {start}..{end} for {len}-byte file")
+            }
             Self::OverlappingEdits => write!(f, "text edits overlap"),
             Self::InternalPath(path) => write!(f, "path is reserved for ffsake internals: {path}"),
         }
@@ -411,7 +428,9 @@ impl Workspace {
 
     pub fn replace(&self, request: &ReplaceRequest) -> Result<ReplaceBatchResult> {
         if request.pattern.is_empty() {
-            return Err(WorkspaceError::InvalidPath("replacement pattern must not be empty".into()));
+            return Err(WorkspaceError::InvalidPath(
+                "replacement pattern must not be empty".into(),
+            ));
         }
 
         let regex = match request.mode {
@@ -443,10 +462,12 @@ impl Workspace {
             }
 
             let updated = match (&regex, request.mode) {
-                (Some(re), ReplaceMode::Regex) => {
-                    re.replace_all(&text, request.replacement.as_str()).into_owned()
+                (Some(re), ReplaceMode::Regex) => re
+                    .replace_all(&text, request.replacement.as_str())
+                    .into_owned(),
+                (None, ReplaceMode::Literal) => {
+                    text.replace(&request.pattern, &request.replacement)
                 }
-                (None, ReplaceMode::Literal) => text.replace(&request.pattern, &request.replacement),
                 _ => unreachable!(),
             };
 
@@ -903,14 +924,21 @@ mod tests {
             .unwrap();
         assert_eq!(dry.replacements, 2);
         assert_eq!(dry.files_changed, 1);
-        assert!(fs::read_to_string(root.join("src/a.rs")).unwrap().contains("foo"));
+        assert!(
+            fs::read_to_string(root.join("src/a.rs"))
+                .unwrap()
+                .contains("foo")
+        );
 
         let changed = ws
             .replace_regex(
                 r"(foo) (\d+)",
                 "$1 number=$2",
                 FileSelector {
-                    include: vec![PathSelector::Exact("src".into()), PathSelector::Glob("**/*.rs".into())],
+                    include: vec![
+                        PathSelector::Exact("src".into()),
+                        PathSelector::Glob("**/*.rs".into()),
+                    ],
                     exclude: vec![PathSelector::Regex(r"^tests/".into())],
                 },
                 Some(2),
@@ -922,7 +950,10 @@ mod tests {
             fs::read_to_string(root.join("src/a.rs")).unwrap(),
             "foo number=123\nfoo number=456\n"
         );
-        assert_eq!(fs::read_to_string(root.join("tests/a.rs")).unwrap(), "foo 999\n");
+        assert_eq!(
+            fs::read_to_string(root.join("tests/a.rs")).unwrap(),
+            "foo 999\n"
+        );
 
         fs::remove_dir_all(root).unwrap();
     }
@@ -1036,7 +1067,10 @@ mod tests {
         let ws = Workspace::new(&root).unwrap();
 
         let all = ws.select_files(&FileSelector::all()).unwrap();
-        assert!(all.iter().all(|path| !path.starts_with(root.join(".ffsake"))));
+        assert!(
+            all.iter()
+                .all(|path| !path.starts_with(root.join(".ffsake")))
+        );
         assert!(matches!(
             ws.read_text(".ffsake/secret", None, None),
             Err(WorkspaceError::InternalPath(_))
@@ -1066,6 +1100,4 @@ mod tests {
         assert!(root.exists());
         fs::remove_dir_all(root).unwrap();
     }
-
-
 }
