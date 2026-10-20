@@ -1,5 +1,5 @@
 use crate::journal::{Journal, JournalError, TransactionManifest};
-use crate::transform::{apply_mutation, collect_changes, load_paths, Mutation, TransformError};
+use crate::transform::{Mutation, TransformError, apply_mutation, collect_changes, load_paths};
 use crate::{FileSelector, ReplaceMode, Workspace, WorkspaceError};
 
 #[derive(Debug)]
