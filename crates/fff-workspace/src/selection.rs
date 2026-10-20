@@ -168,6 +168,7 @@ fn guarded_transform(
         expected.insert(path.clone(), workspace.content_hash(path)?);
     }
 
+    let max_files = expected.len();
     let mut operations = vec![Mutation::AssertHashes { expected }];
     operations.extend(mutations);
 
@@ -177,18 +178,8 @@ fn guarded_transform(
             exclude: Vec::new(),
         },
         operations,
-        max_files: Some(operations_target_count(&operations)),
+        max_files: Some(max_files),
     })
-}
-
-fn operations_target_count(operations: &[Mutation]) -> usize {
-    operations
-        .first()
-        .and_then(|operation| match operation {
-            Mutation::AssertHashes { expected } => Some(expected.len()),
-            _ => None,
-        })
-        .unwrap_or(0)
 }
 
 pub fn clear_selection_transform(
@@ -366,5 +357,40 @@ mod tests {
         let range_edits = edits.into_iter().map(|edit| edit.edit).collect::<Vec<_>>();
         let moved = crate::edits::apply_range_edits("abcdef", &range_edits).unwrap();
         assert_eq!(moved, "adefbc");
+    }    #[test]
+    fn guarded_selection_transform_rejects_stale_source() {
+        use crate::transform::execute;
+        use std::fs;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("ffsake-selection-guard-{id}"));
+        fs::create_dir_all(&root).unwrap();
+        fs::write(root.join("a.txt"), "abcdef").unwrap();
+
+        let workspace = Workspace::new(&root).unwrap();
+        let selection = TextSelection {
+            path: "a.txt".into(),
+            start_byte: 1,
+            end_byte: 3,
+        };
+        let transform = duplicate_selection_transform(&workspace, &selection).unwrap();
+
+        fs::write(root.join("a.txt"), "changed").unwrap();
+
+        assert!(matches!(
+            execute(&workspace, &transform, None),
+            Err(crate::transform::TransformError::Workspace(
+                WorkspaceError::ContentChanged { .. }
+            ))
+        ));
+        assert_eq!(fs::read_to_string(root.join("a.txt")).unwrap(), "changed");
+
+        fs::remove_dir_all(root).unwrap();
     }
+
+
 }
