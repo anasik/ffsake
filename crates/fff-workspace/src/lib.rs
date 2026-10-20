@@ -679,7 +679,9 @@ impl Workspace {
 
     fn validate_relative(&self, relative: &Path) -> Result<PathBuf> {
         if relative.as_os_str().is_empty() {
-            return Ok(PathBuf::new());
+            return Err(WorkspaceError::InvalidPath(
+                "workspace root is not a valid mutation target".to_string(),
+            ));
         }
         if relative.is_absolute() {
             return Err(WorkspaceError::InvalidPath(relative.display().to_string()));
@@ -1040,6 +1042,28 @@ mod tests {
             Err(WorkspaceError::InternalPath(_))
         ));
 
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn workspace_root_cannot_be_mutated_as_empty_path() {
+        let root = fixture();
+        let ws = Workspace::new(&root).unwrap();
+
+        assert!(matches!(
+            ws.delete_path(""),
+            Err(WorkspaceError::InvalidPath(_))
+        ));
+        assert!(matches!(
+            ws.move_path("", "moved"),
+            Err(WorkspaceError::InvalidPath(_))
+        ));
+        assert!(matches!(
+            ws.write_text("", "oops"),
+            Err(WorkspaceError::InvalidPath(_))
+        ));
+
+        assert!(root.exists());
         fs::remove_dir_all(root).unwrap();
     }
 
