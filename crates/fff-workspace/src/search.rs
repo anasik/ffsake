@@ -368,7 +368,10 @@ mod tests {
 
         let transform = set.replace_transform(&workspace, "world").unwrap();
         execute(&workspace, &transform, None).unwrap();
-        assert_eq!(fs::read_to_string(root.join("a.txt")).unwrap(), "world world\n");
+        assert_eq!(
+            fs::read_to_string(root.join("a.txt")).unwrap(),
+            "world world\n"
+        );
 
         fs::remove_dir_all(root).unwrap();
     }
