@@ -369,7 +369,9 @@ fn apply_line_operation(
     let mut lines = if text.is_empty() {
         Vec::new()
     } else {
-        text.split_inclusive('\n').map(str::to_string).collect::<Vec<_>>()
+        text.split_inclusive('\n')
+            .map(str::to_string)
+            .collect::<Vec<_>>()
     };
 
     if lines.is_empty() || start_line > lines.len() || end_line > lines.len() {
@@ -551,10 +553,7 @@ fn identifier_ranges(text: &str, identifier: &str) -> Vec<(usize, usize)> {
     if identifier.is_empty()
         || !identifier.is_ascii()
         || !is_ascii_identifier_start(identifier.as_bytes()[0])
-        || !identifier
-            .bytes()
-            .skip(1)
-            .all(is_ascii_identifier_continue)
+        || !identifier.bytes().skip(1).all(is_ascii_identifier_continue)
     {
         return Vec::new();
     }
@@ -877,7 +876,9 @@ mod tests {
         );
 
         fs::remove_dir_all(root).unwrap();
-    }    #[test]
+    }
+
+    #[test]
     fn identifier_replace_respects_ascii_identifier_boundaries() {
         let root = fixture();
         fs::write(
@@ -943,6 +944,4 @@ mod tests {
 
         fs::remove_dir_all(root).unwrap();
     }
-
-
 }
