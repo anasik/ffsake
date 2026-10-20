@@ -641,7 +641,9 @@ mod tests {
         assert_eq!(fs::read_to_string(root.join("src/b.rs")).unwrap(), "Member");
 
         fs::remove_dir_all(root).unwrap();
-    }    #[test]
+    }
+
+    #[test]
     fn position_edits_convert_to_exact_ranges() {
         let root = fixture();
         fs::write(root.join("src/a.rs"), "alpha\nbeta\n").unwrap();
@@ -668,6 +670,4 @@ mod tests {
 
         fs::remove_dir_all(root).unwrap();
     }
-
-
 }
