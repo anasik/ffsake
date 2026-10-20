@@ -35,6 +35,11 @@ pub enum Mutation {
         replacement: String,
         expected_matches: Option<usize>,
     },
+    ReplaceIdentifier {
+        from: String,
+        to: String,
+        expected_matches: Option<usize>,
+    },
     ApplyRanges {
         edits: Vec<TargetedRangeEdit>,
     },
@@ -275,6 +280,11 @@ pub(crate) fn apply_mutation(
             pattern,
             expected_matches,
         } => apply_delete_matches(buffers, *mode, pattern, *expected_matches),
+        Mutation::ReplaceIdentifier {
+            from,
+            to,
+            expected_matches,
+        } => apply_identifier_replace(buffers, from, to, *expected_matches),
         Mutation::Replace {
             mode,
             pattern,
@@ -405,6 +415,98 @@ fn apply_delete_matches(
                 start_byte: start,
                 end_byte: end,
                 replacement: String::new(),
+            })
+            .collect::<Vec<_>>();
+
+        state.current = Some(apply_range_edits(&text, &edits)?.into_bytes());
+    }
+
+    if let Some(expected) = expected_matches
+        && total_matches != expected
+    {
+        return Err(TransformError::ExpectedMatchCount {
+            expected,
+            actual: total_matches,
+        });
+    }
+
+    Ok(())
+}
+
+fn is_ascii_identifier_start(byte: u8) -> bool {
+    byte == b'_' || byte.is_ascii_alphabetic()
+}
+
+fn is_ascii_identifier_continue(byte: u8) -> bool {
+    is_ascii_identifier_start(byte) || byte.is_ascii_digit()
+}
+
+fn identifier_ranges(text: &str, identifier: &str) -> Vec<(usize, usize)> {
+    if identifier.is_empty()
+        || !identifier.is_ascii()
+        || !is_ascii_identifier_start(identifier.as_bytes()[0])
+        || !identifier
+            .bytes()
+            .skip(1)
+            .all(is_ascii_identifier_continue)
+    {
+        return Vec::new();
+    }
+
+    let bytes = text.as_bytes();
+    let needle = identifier.as_bytes();
+    let mut out = Vec::new();
+    let mut i = 0usize;
+
+    while i + needle.len() <= bytes.len() {
+        if &bytes[i..i + needle.len()] == needle {
+            let left_ok = i == 0 || !is_ascii_identifier_continue(bytes[i - 1]);
+            let right = i + needle.len();
+            let right_ok = right == bytes.len() || !is_ascii_identifier_continue(bytes[right]);
+
+            if left_ok && right_ok {
+                out.push((i, right));
+                i = right;
+                continue;
+            }
+        }
+        i += 1;
+    }
+
+    out
+}
+
+fn apply_identifier_replace(
+    buffers: &mut BTreeMap<String, BufferState>,
+    from: &str,
+    to: &str,
+    expected_matches: Option<usize>,
+) -> Result<()> {
+    if from.is_empty() {
+        return Err(TransformError::EmptyPattern);
+    }
+
+    let mut total_matches = 0usize;
+
+    for state in buffers.values_mut() {
+        let Some(bytes) = &state.current else {
+            continue;
+        };
+        let text = String::from_utf8(bytes.clone())
+            .map_err(|_| WorkspaceError::NotUtf8(state.path.clone()))?;
+        let ranges = identifier_ranges(&text, from);
+        total_matches += ranges.len();
+
+        if ranges.is_empty() {
+            continue;
+        }
+
+        let edits = ranges
+            .into_iter()
+            .map(|(start, end)| RangeEdit {
+                start_byte: start,
+                end_byte: end,
+                replacement: to.to_string(),
             })
             .collect::<Vec<_>>();
 
@@ -669,5 +771,34 @@ mod tests {
         );
 
         fs::remove_dir_all(root).unwrap();
+    }    #[test]
+    fn identifier_replace_respects_ascii_identifier_boundaries() {
+        let root = fixture();
+        fs::write(
+            root.join("src/a.rs"),
+            "User SuperUser UserFactory _User User2 Vec<User> foo::User User::new",
+        )
+        .unwrap();
+        let workspace = Workspace::new(&root).unwrap();
+
+        let transform = Transform {
+            target: FileSelector::exact("src/a.rs"),
+            operations: vec![Mutation::ReplaceIdentifier {
+                from: "User".into(),
+                to: "Customer".into(),
+                expected_matches: Some(4),
+            }],
+            max_files: Some(1),
+        };
+
+        execute(&workspace, &transform, None).unwrap();
+        assert_eq!(
+            fs::read_to_string(root.join("src/a.rs")).unwrap(),
+            "Customer SuperUser UserFactory _User User2 Vec<Customer> foo::Customer Customer::new"
+        );
+
+        fs::remove_dir_all(root).unwrap();
     }
+
+
 }
