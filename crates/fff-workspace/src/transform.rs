@@ -255,7 +255,6 @@ pub(crate) fn collect_changes(buffers: &BTreeMap<String, BufferState>) -> Vec<Jo
         .collect()
 }
 
-
 fn collect_match_ranges(
     text: &str,
     mode: ReplaceMode,
