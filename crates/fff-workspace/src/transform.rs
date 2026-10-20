@@ -963,7 +963,9 @@ mod tests {
         );
 
         fs::remove_dir_all(root).unwrap();
-    }    #[test]
+    }
+
+    #[test]
     fn hash_assertion_fails_closed_before_mutation() {
         let root = fixture();
         let workspace = Workspace::new(&root).unwrap();
@@ -988,7 +990,9 @@ mod tests {
 
         assert!(matches!(
             execute(&workspace, &transform, None),
-            Err(TransformError::Workspace(WorkspaceError::ContentChanged { .. }))
+            Err(TransformError::Workspace(
+                WorkspaceError::ContentChanged { .. }
+            ))
         ));
         assert_eq!(
             fs::read_to_string(root.join("src/a.rs")).unwrap(),
@@ -997,6 +1001,4 @@ mod tests {
 
         fs::remove_dir_all(root).unwrap();
     }
-
-
 }
