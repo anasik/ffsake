@@ -357,7 +357,9 @@ mod tests {
         let range_edits = edits.into_iter().map(|edit| edit.edit).collect::<Vec<_>>();
         let moved = crate::edits::apply_range_edits("abcdef", &range_edits).unwrap();
         assert_eq!(moved, "adefbc");
-    }    #[test]
+    }
+
+    #[test]
     fn guarded_selection_transform_rejects_stale_source() {
         use crate::transform::execute;
         use std::fs;
@@ -413,8 +415,7 @@ mod tests {
             start_byte: 1,
             end_byte: 3,
         };
-        let transform =
-            move_selection_transform(&workspace, &selection, "b.txt", 1).unwrap();
+        let transform = move_selection_transform(&workspace, &selection, "b.txt", 1).unwrap();
 
         let result = execute(&workspace, &transform, Some("move selection".into())).unwrap();
         assert_eq!(result.changed_files, 2);
@@ -431,6 +432,4 @@ mod tests {
 
         fs::remove_dir_all(root).unwrap();
     }
-
-
 }
