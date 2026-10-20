@@ -123,3 +123,31 @@ Rename should therefore have tiers:
 4. semantic rename: LSP/compiler-backed, added later.
 
 The goal is to beat naive LLM mutation even before semantic tooling exists.
+
+
+## Command language
+
+Consider a compact command syntax with two orthogonal parts:
+
+1. a target expression selecting an arbitrary set of files;
+2. a pipeline of deterministic ffsake operations applied to that target.
+
+Conceptually:
+
+`target -> op -> op -> op`
+
+Target expressions should support unions of exact paths, directories, regex paths, globs, exclusions, and `*` for the entire workspace. Operations should be typed ffsake primitives rather than shell commands.
+
+The human/LLM-facing DSL should compile to a structured internal plan before execution. The structured plan is the source of truth for validation, preview, transactions, audit, and MCP/tool use.
+
+Potential syntax direction:
+
+`[src/a.rs, re:^src/.*\\.rs$, !re:^src/generated/] | replace /Foo/ Bar | format`
+
+or
+
+`* | where path ~= /\\.rs$/ | replace /Foo(\\w+)/ Bar$1 | write`
+
+Prefer explicit prefixes for regex/glob/exact selectors to avoid ambiguity.
+
+Pipelines should be transactional by default for mutations, or at minimum support an explicit transaction wrapper. Dry-run/preview should expose the resolved target set and exact mutation plan before commit.
