@@ -82,3 +82,44 @@ Examples:
 - all except generated files: `*` minus regex/glob exclusion
 
 This selector must be reusable by replacement, reads, deletion, metadata inspection, formatting, future transformations, and any other sensible file-scoped operation. Batch execution is therefore a workspace primitive, not a replace-specific feature.
+
+
+## Editor-grade mutation before LSP
+
+The product should prefer deterministic editor operations over LLM-authored file rewrites.
+
+Target principle:
+
+`LLM decides intent -> runtime performs exact mutation`
+
+rather than:
+
+`LLM rereads file -> regenerates text -> overwrites file`
+
+Before LSP, add editor-grade textual/structural operations such as:
+
+- exact range replace by byte/line/column coordinates;
+- insert/delete at exact positions;
+- multi-cursor style edits across arbitrary file selectors;
+- replace-all with literal or regex patterns;
+- whole-identifier replacement with language-aware identifier boundaries;
+- case-preserving rename variants where requested;
+- occurrence selection (nth match, matches in selected ranges, matches after/before coordinates);
+- move/copy selected ranges;
+- indent/outdent selected ranges;
+- duplicate/delete lines or ranges;
+- sort/deduplicate selected lines where appropriate;
+- transactional multi-file mutations;
+- file-content hash/version preconditions;
+- dry-run previews and unified diffs.
+
+A useful intermediate layer before LSP is syntax-aware mutation using parsers such as tree-sitter. This can distinguish identifiers/comments/strings and target AST node kinds without requiring a running language server.
+
+Rename should therefore have tiers:
+
+1. textual rename: exact/regex replace;
+2. identifier-aware rename: token-boundary or parser-aware;
+3. syntax-aware rename: AST-scoped where supported;
+4. semantic rename: LSP/compiler-backed, added later.
+
+The goal is to beat naive LLM mutation even before semantic tooling exists.
