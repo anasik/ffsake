@@ -6,3 +6,5 @@ license.workspace = true
 description = "Workspace-scoped file navigation and editing primitives for coding agents"
 
 [dependencies]
+globset = "0.4"
+regex = "1"
