@@ -392,5 +392,45 @@ mod tests {
         fs::remove_dir_all(root).unwrap();
     }
 
+    #[test]
+    fn guarded_cross_file_move_commits_atomically() {
+        use crate::transform::execute;
+        use std::fs;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("ffsake-selection-move-{id}"));
+        fs::create_dir_all(&root).unwrap();
+        fs::write(root.join("a.txt"), "abcdef").unwrap();
+        fs::write(root.join("b.txt"), "XYZ").unwrap();
+
+        let workspace = Workspace::new(&root).unwrap();
+        let selection = TextSelection {
+            path: "a.txt".into(),
+            start_byte: 1,
+            end_byte: 3,
+        };
+        let transform =
+            move_selection_transform(&workspace, &selection, "b.txt", 1).unwrap();
+
+        let result = execute(&workspace, &transform, Some("move selection".into())).unwrap();
+        assert_eq!(result.changed_files, 2);
+        assert_eq!(fs::read_to_string(root.join("a.txt")).unwrap(), "adef");
+        assert_eq!(fs::read_to_string(root.join("b.txt")).unwrap(), "XbcYZ");
+
+        let tx = result.transaction.unwrap();
+        crate::journal::Journal::open(&root)
+            .unwrap()
+            .undo(&tx.id)
+            .unwrap();
+        assert_eq!(fs::read_to_string(root.join("a.txt")).unwrap(), "abcdef");
+        assert_eq!(fs::read_to_string(root.join("b.txt")).unwrap(), "XYZ");
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
 
 }
