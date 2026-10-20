@@ -253,10 +253,7 @@ mod tests {
 
     #[test]
     fn parses_union_and_exclusion() {
-        let plan = parse(
-            "[src/lib.rs, re:^src/.*\\.rs$, !glob:**/generated/**] | read",
-        )
-        .unwrap();
+        let plan = parse("[src/lib.rs, re:^src/.*\\.rs$, !glob:**/generated/**] | read").unwrap();
 
         assert_eq!(
             plan.selector.include,
@@ -274,19 +271,13 @@ mod tests {
 
     #[test]
     fn parses_pipeline() {
-        let plan = parse(
-            "glob:**/*.rs | replace re:\\bUser\\b => Customer | read",
-        )
-        .unwrap();
+        let plan = parse("glob:**/*.rs | replace re:\\bUser\\b => Customer | read").unwrap();
         assert_eq!(plan.operations.len(), 2);
     }
 
     #[test]
     fn bare_target_is_exact() {
         let plan = parse("README.md | read").unwrap();
-        assert_eq!(
-            plan.selector,
-            FileSelector::exact("README.md")
-        );
+        assert_eq!(plan.selector, FileSelector::exact("README.md"));
     }
 }
