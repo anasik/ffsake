@@ -1,7 +1,7 @@
 use std::fs;
 use std::io;
 use std::path::{Component, Path, PathBuf};
-use globset::{Glob, GlobSet, GlobSetBuilder};
+use globset::Glob;
 use regex::Regex;
 
 #[derive(Debug)]
@@ -85,16 +85,55 @@ pub enum ReplaceMode {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ReplaceScope {
-    /// Optional workspace-relative file or directory. None means the whole workspace.
-    pub path: Option<String>,
-    /// Include/exclude globs. Prefix exclusions with !, for example !**/target/**.
-    pub globs: Vec<String>,
+pub enum PathSelector {
+    /// Select every file in the workspace. "*" is normalized to this at API boundaries.
+    All,
+    /// Exact workspace-relative file or directory. Directories select their descendants.
+    Exact(String),
+    /// Glob over workspace-relative paths.
+    Glob(String),
+    /// Regular expression over workspace-relative paths.
+    Regex(String),
 }
 
-impl Default for ReplaceScope {
-    fn default() -> Self {
-        Self { path: None, globs: Vec::new() }
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct FileSelector {
+    /// Union of selectors. Empty means no files; use PathSelector::All for the whole workspace.
+    pub include: Vec<PathSelector>,
+    /// Applied after the include union.
+    pub exclude: Vec<PathSelector>,
+}
+
+impl FileSelector {
+    pub fn all() -> Self {
+        Self {
+            include: vec![PathSelector::All],
+            exclude: Vec::new(),
+        }
+    }
+
+    pub fn exact(path: impl Into<String>) -> Self {
+        Self {
+            include: vec![PathSelector::Exact(path.into())],
+            exclude: Vec::new(),
+        }
+    }
+
+    pub fn from_patterns(patterns: impl IntoIterator<Item = String>) -> Self {
+        let include = patterns
+            .into_iter()
+            .map(|pattern| {
+                if pattern == "*" {
+                    PathSelector::All
+                } else {
+                    PathSelector::Regex(pattern)
+                }
+            })
+            .collect();
+        Self {
+            include,
+            exclude: Vec::new(),
+        }
     }
 }
 
@@ -103,7 +142,7 @@ pub struct ReplaceRequest {
     pub pattern: String,
     pub replacement: String,
     pub mode: ReplaceMode,
-    pub scope: ReplaceScope,
+    pub selector: FileSelector,
     /// If set, the operation fails unless the total matches across the selected scope equals this value.
     pub expected_matches: Option<usize>,
     /// If true, return what would change without writing files.
@@ -273,22 +312,7 @@ impl Workspace {
             ReplaceMode::Literal => None,
             ReplaceMode::Regex => Some(Regex::new(&request.pattern)?),
         };
-        let (includes, excludes) = build_globsets(&request.scope.globs)?;
-
-        let scope_root = match request.scope.path.as_deref() {
-            Some(path) => self.resolve_existing(Path::new(path))?,
-            None => self.root.clone(),
-        };
-
-        let mut files = Vec::new();
-        if scope_root.is_file() {
-            files.push(scope_root);
-        } else if scope_root.is_dir() {
-            self.collect_files(&scope_root, &mut files)?;
-        } else {
-            return Err(WorkspaceError::InvalidPath(self.relative_display(&scope_root)));
-        }
-        files.sort();
+        let files = self.select_files(&request.selector)?;
 
         let mut staged: Vec<(PathBuf, String, FileReplaceResult)> = Vec::new();
         let mut total_matches = 0usize;
@@ -296,9 +320,6 @@ impl Workspace {
 
         for path in files {
             let rel = self.relative_display(&path);
-            if !scope_matches(&rel, includes.as_ref(), excludes.as_ref()) {
-                continue;
-            }
             files_scanned += 1;
 
             let bytes = match fs::read(&path) {
@@ -367,7 +388,7 @@ impl Workspace {
         &self,
         pattern: impl Into<String>,
         replacement: impl Into<String>,
-        scope: ReplaceScope,
+        selector: FileSelector,
         expected_matches: Option<usize>,
         dry_run: bool,
     ) -> Result<ReplaceBatchResult> {
@@ -375,7 +396,7 @@ impl Workspace {
             pattern: pattern.into(),
             replacement: replacement.into(),
             mode: ReplaceMode::Literal,
-            scope,
+            selector,
             expected_matches,
             dry_run,
         })
@@ -385,7 +406,7 @@ impl Workspace {
         &self,
         pattern: impl Into<String>,
         replacement: impl Into<String>,
-        scope: ReplaceScope,
+        selector: FileSelector,
         expected_matches: Option<usize>,
         dry_run: bool,
     ) -> Result<ReplaceBatchResult> {
@@ -393,10 +414,121 @@ impl Workspace {
             pattern: pattern.into(),
             replacement: replacement.into(),
             mode: ReplaceMode::Regex,
-            scope,
+            selector,
             expected_matches,
             dry_run,
         })
+    }
+
+    pub fn select_files(&self, selector: &FileSelector) -> Result<Vec<PathBuf>> {
+        use std::collections::BTreeSet;
+
+        let mut all_files = Vec::new();
+        let needs_scan = selector
+            .include
+            .iter()
+            .chain(selector.exclude.iter())
+            .any(|s| !matches!(s, PathSelector::Exact(_)));
+        if needs_scan {
+            self.collect_files(&self.root, &mut all_files)?;
+        }
+
+        let mut selected = BTreeSet::new();
+
+        for rule in &selector.include {
+            match rule {
+                PathSelector::All => {
+                    for path in &all_files {
+                        selected.insert(path.clone());
+                    }
+                }
+                PathSelector::Exact(raw) => {
+                    let path = self.resolve_existing(Path::new(raw))?;
+                    if path.is_file() {
+                        selected.insert(path);
+                    } else if path.is_dir() {
+                        let mut nested = Vec::new();
+                        self.collect_files(&path, &mut nested)?;
+                        selected.extend(nested);
+                    } else {
+                        return Err(WorkspaceError::InvalidPath(raw.clone()));
+                    }
+                }
+                PathSelector::Glob(pattern) => {
+                    let glob = Glob::new(pattern)
+                        .map_err(|_| WorkspaceError::InvalidGlob(pattern.clone()))?
+                        .compile_matcher();
+                    for path in &all_files {
+                        if glob.is_match(self.relative_display(path)) {
+                            selected.insert(path.clone());
+                        }
+                    }
+                }
+                PathSelector::Regex(pattern) => {
+                    let re = Regex::new(pattern)?;
+                    for path in &all_files {
+                        if re.is_match(&self.relative_display(path)) {
+                            selected.insert(path.clone());
+                        }
+                    }
+                }
+            }
+        }
+
+        if !selector.exclude.is_empty() && !selected.is_empty() {
+            let mut remove = BTreeSet::new();
+            for rule in &selector.exclude {
+                match rule {
+                    PathSelector::All => {
+                        remove.extend(selected.iter().cloned());
+                    }
+                    PathSelector::Exact(raw) => {
+                        let path = self.resolve_existing(Path::new(raw))?;
+                        if path.is_file() {
+                            remove.insert(path);
+                        } else if path.is_dir() {
+                            let mut nested = Vec::new();
+                            self.collect_files(&path, &mut nested)?;
+                            remove.extend(nested);
+                        }
+                    }
+                    PathSelector::Glob(pattern) => {
+                        let glob = Glob::new(pattern)
+                            .map_err(|_| WorkspaceError::InvalidGlob(pattern.clone()))?
+                            .compile_matcher();
+                        for path in &selected {
+                            if glob.is_match(self.relative_display(path)) {
+                                remove.insert(path.clone());
+                            }
+                        }
+                    }
+                    PathSelector::Regex(pattern) => {
+                        let re = Regex::new(pattern)?;
+                        for path in &selected {
+                            if re.is_match(&self.relative_display(path)) {
+                                remove.insert(path.clone());
+                            }
+                        }
+                    }
+                }
+            }
+            for path in remove {
+                selected.remove(&path);
+            }
+        }
+
+        Ok(selected.into_iter().collect())
+    }
+
+    pub fn batch<T, F>(&self, selector: &FileSelector, mut operation: F) -> Result<Vec<T>>
+    where
+        F: FnMut(&Workspace, &Path) -> Result<T>,
+    {
+        let files = self.select_files(selector)?;
+        files
+            .iter()
+            .map(|path| operation(self, path.as_path()))
+            .collect()
     }
 
     fn collect_files(&self, dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
@@ -544,44 +676,6 @@ impl Workspace {
     }
 }
 
-fn build_globsets(globs: &[String]) -> Result<(Option<GlobSet>, Option<GlobSet>)> {
-    let mut include_builder = GlobSetBuilder::new();
-    let mut exclude_builder = GlobSetBuilder::new();
-    let mut has_include = false;
-    let mut has_exclude = false;
-
-    for raw in globs {
-        let (exclude, pattern) = raw.strip_prefix('!').map_or((false, raw.as_str()), |p| (true, p));
-        let glob = Glob::new(pattern).map_err(|_| WorkspaceError::InvalidGlob(raw.clone()))?;
-        if exclude {
-            exclude_builder.add(glob);
-            has_exclude = true;
-        } else {
-            include_builder.add(glob);
-            has_include = true;
-        }
-    }
-
-    let includes = if has_include {
-        Some(include_builder.build().map_err(|_| WorkspaceError::InvalidGlob("include set".into()))?)
-    } else {
-        None
-    };
-    let excludes = if has_exclude {
-        Some(exclude_builder.build().map_err(|_| WorkspaceError::InvalidGlob("exclude set".into()))?)
-    } else {
-        None
-    };
-    Ok((includes, excludes))
-}
-
-fn scope_matches(path: &str, includes: Option<&GlobSet>, excludes: Option<&GlobSet>) -> bool {
-    if excludes.is_some_and(|set| set.is_match(path)) {
-        return false;
-    }
-    includes.is_none_or(|set| set.is_match(path))
-}
-
 fn temp_sibling(path: &Path) -> PathBuf {
     let mut tmp = path.to_path_buf();
     let name = path
@@ -691,9 +785,9 @@ mod tests {
             .replace_literal(
                 "foo",
                 "bar",
-                ReplaceScope {
-                    path: None,
-                    globs: vec!["src/**".into()],
+                FileSelector {
+                    include: vec![PathSelector::Glob("src/**".into())],
+                    exclude: vec![],
                 },
                 Some(2),
                 true,
@@ -707,9 +801,9 @@ mod tests {
             .replace_regex(
                 r"(foo) (\d+)",
                 "$1 number=$2",
-                ReplaceScope {
-                    path: Some("src".into()),
-                    globs: vec!["**/*.rs".into()],
+                FileSelector {
+                    include: vec![PathSelector::Exact("src".into()), PathSelector::Glob("**/*.rs".into())],
+                    exclude: vec![PathSelector::Regex(r"^tests/".into())],
                 },
                 Some(2),
                 false,
@@ -721,6 +815,33 @@ mod tests {
             "foo number=123\nfoo number=456\n"
         );
         assert_eq!(fs::read_to_string(root.join("tests/a.rs")).unwrap(), "foo 999\n");
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn selector_unions_exact_regex_and_all() {
+        let root = fixture();
+        fs::create_dir_all(root.join("tests")).unwrap();
+        fs::write(root.join("src/a.rs"), "a").unwrap();
+        fs::write(root.join("src/b.txt"), "b").unwrap();
+        fs::write(root.join("tests/c.rs"), "c").unwrap();
+        let ws = Workspace::new(&root).unwrap();
+
+        let selected = ws
+            .select_files(&FileSelector {
+                include: vec![
+                    PathSelector::Exact("src/b.txt".into()),
+                    PathSelector::Regex(r"\.rs$".into()),
+                ],
+                exclude: vec![PathSelector::Regex(r"^tests/".into())],
+            })
+            .unwrap();
+        let rel: Vec<_> = selected.iter().map(|p| ws.relative_display(p)).collect();
+        assert_eq!(rel, vec!["src/a.rs", "src/b.txt", "src/lib.rs"]);
+
+        let everything = ws.select_files(&FileSelector::all()).unwrap();
+        assert_eq!(everything.len(), 4);
 
         fs::remove_dir_all(root).unwrap();
     }
