@@ -1,7 +1,7 @@
 use crate::journal::{Journal, JournalError, TransactionManifest};
 use crate::transform::{
-    MatchPosition, Mutation, TargetedRangeEdit, TransformError, apply_mutation, collect_changes,
-    load_paths,
+    MatchPosition, Mutation, TargetedPositionEdit, TargetedRangeEdit, TransformError,
+    apply_mutation, collect_changes, load_paths,
 };
 use crate::{FileSelector, ReplaceMode, Workspace, WorkspaceError};
 
@@ -133,6 +133,13 @@ impl EditorSession {
         self.apply(
             Mutation::ApplyRanges { edits },
             Some("editor multi-range edit".into()),
+        )
+    }
+
+    pub fn apply_positions(&self, edits: Vec<TargetedPositionEdit>) -> Result<EditResult> {
+        self.apply(
+            Mutation::ApplyPositions { edits },
+            Some("editor position edit".into()),
         )
     }
 
