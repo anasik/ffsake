@@ -41,16 +41,18 @@ Do not add general `if/else`, loops, variables, recursion, or orchestration. The
 
 ## Phase 1C — editor-grade mutation
 
-Next primitives:
-
+Implemented:
 - line/column coordinate conversion over canonical byte offsets;
 - insert/delete/replace exact ranges;
 - multi-range edits (the useful semantics of multi-caret editing without GUI caret state);
 - match-relative insertion/deletion;
-- whole-identifier replacement;
+- lexical whole-identifier replacement;
+- path-qualified line delete/duplicate/indent/outdent.
+
+Next primitives:
 - case-preserving textual rename;
 - move/copy ranges;
-- line/range operations such as duplicate, delete, indent, outdent, sort, and deduplicate;
+- sort/deduplicate selected lines;
 - dry-run previews and unified diffs.
 
 Target principle:
