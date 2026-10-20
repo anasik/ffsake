@@ -45,6 +45,9 @@ pub enum MatchPosition {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Mutation {
+    AssertHashes {
+        expected: BTreeMap<String, String>,
+    },
     Replace {
         mode: ReplaceMode,
         pattern: String,
@@ -223,6 +226,23 @@ pub(crate) fn apply_mutation(
     operation: &Mutation,
 ) -> Result<()> {
     match operation {
+        Mutation::AssertHashes { expected } => {
+            for (path, expected_hash) in expected {
+                let Some(state) = buffers.get(path) else {
+                    return Err(TransformError::Workspace(WorkspaceError::NotFound(
+                        PathBuf::from(path),
+                    )));
+                };
+                let actual_hash = blake3::hash(&state.before).to_hex().to_string();
+                if &actual_hash != expected_hash {
+                    return Err(TransformError::Workspace(WorkspaceError::ContentChanged {
+                        expected: expected_hash.clone(),
+                        actual: actual_hash,
+                    }));
+                }
+            }
+            Ok(())
+        }
         Mutation::DeleteFiles => {
             for state in buffers.values_mut() {
                 state.current = None;
@@ -943,5 +963,40 @@ mod tests {
         );
 
         fs::remove_dir_all(root).unwrap();
+    }    #[test]
+    fn hash_assertion_fails_closed_before_mutation() {
+        let root = fixture();
+        let workspace = Workspace::new(&root).unwrap();
+        let expected = workspace.content_hash("src/a.rs").unwrap();
+        fs::write(root.join("src/a.rs"), "changed").unwrap();
+
+        let transform = Transform {
+            target: FileSelector::exact("src/a.rs"),
+            operations: vec![
+                Mutation::AssertHashes {
+                    expected: BTreeMap::from([("src/a.rs".into(), expected)]),
+                },
+                Mutation::Replace {
+                    mode: ReplaceMode::Literal,
+                    pattern: "changed".into(),
+                    replacement: "mutated".into(),
+                    expected_matches: Some(1),
+                },
+            ],
+            max_files: Some(1),
+        };
+
+        assert!(matches!(
+            execute(&workspace, &transform, None),
+            Err(TransformError::Workspace(WorkspaceError::ContentChanged { .. }))
+        ));
+        assert_eq!(
+            fs::read_to_string(root.join("src/a.rs")).unwrap(),
+            "changed"
+        );
+
+        fs::remove_dir_all(root).unwrap();
     }
+
+
 }
