@@ -239,6 +239,16 @@ impl Workspace {
         &self.root
     }
 
+    pub fn read_all_text(&self, relative: impl AsRef<Path>) -> Result<String> {
+        let path = self.resolve_existing(relative.as_ref())?;
+        if !path.is_file() {
+            return Err(WorkspaceError::InvalidPath(self.relative_display(&path)));
+        }
+
+        let bytes = fs::read(&path)?;
+        String::from_utf8(bytes).map_err(|_| WorkspaceError::NotUtf8(path))
+    }
+
     pub fn read_text(
         &self,
         relative: impl AsRef<Path>,
