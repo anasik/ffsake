@@ -1,4 +1,4 @@
-use crate::{WorkspaceError, Result};
+use crate::{Result, WorkspaceError};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RangeEdit {
