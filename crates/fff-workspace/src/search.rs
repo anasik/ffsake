@@ -160,7 +160,12 @@ impl MatchSet {
         self.validate(workspace)?;
         Ok(Transform {
             target: self.target_selector(),
-            operations: vec![Mutation::ApplyRanges { edits }],
+            operations: vec![
+                Mutation::AssertHashes {
+                    expected: self.file_hashes.clone(),
+                },
+                Mutation::ApplyRanges { edits },
+            ],
             max_files: Some(self.file_hashes.len()),
         })
     }
