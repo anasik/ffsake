@@ -1,7 +1,7 @@
 use crate::journal::{Journal, JournalError, TransactionManifest};
 use crate::transform::{
-    MatchPosition, Mutation, TargetedPositionEdit, TargetedRangeEdit, TransformError,
-    apply_mutation, collect_changes, load_paths,
+    MatchPosition, Mutation, TargetedLineEdit, TargetedPositionEdit, TargetedRangeEdit,
+    TransformError, apply_mutation, collect_changes, load_paths,
 };
 use crate::{FileSelector, ReplaceMode, Workspace, WorkspaceError};
 
@@ -156,6 +156,13 @@ impl EditorSession {
         self.apply(
             Mutation::ApplyPositions { edits },
             Some("editor position edit".into()),
+        )
+    }
+
+    pub fn apply_lines(&self, edits: Vec<TargetedLineEdit>) -> Result<EditResult> {
+        self.apply(
+            Mutation::ApplyLines { edits },
+            Some("editor line edit".into()),
         )
     }
 
