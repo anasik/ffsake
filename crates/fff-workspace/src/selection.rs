@@ -1,6 +1,7 @@
 use crate::edits::RangeEdit;
-use crate::transform::{LineOperation, TargetedLineEdit, TargetedRangeEdit};
-use crate::{Result, WorkspaceError};
+use crate::transform::{LineOperation, Mutation, TargetedLineEdit, TargetedRangeEdit, Transform};
+use crate::{FileSelector, PathSelector, Result, Workspace, WorkspaceError};
+use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TextSelection {
@@ -153,6 +154,160 @@ pub fn move_selection(
             },
         },
     ])
+}
+
+fn guarded_transform(
+    workspace: &Workspace,
+    paths: impl IntoIterator<Item = String>,
+    mutations: Vec<Mutation>,
+) -> Result<Transform> {
+    let paths = paths.into_iter().collect::<BTreeSet<_>>();
+    let mut expected = BTreeMap::new();
+
+    for path in &paths {
+        expected.insert(path.clone(), workspace.content_hash(path)?);
+    }
+
+    let mut operations = vec![Mutation::AssertHashes { expected }];
+    operations.extend(mutations);
+
+    Ok(Transform {
+        target: FileSelector {
+            include: paths.into_iter().map(PathSelector::Exact).collect(),
+            exclude: Vec::new(),
+        },
+        operations,
+        max_files: Some(operations_target_count(&operations)),
+    })
+}
+
+fn operations_target_count(operations: &[Mutation]) -> usize {
+    operations
+        .first()
+        .and_then(|operation| match operation {
+            Mutation::AssertHashes { expected } => Some(expected.len()),
+            _ => None,
+        })
+        .unwrap_or(0)
+}
+
+pub fn clear_selection_transform(
+    workspace: &Workspace,
+    selection: &TextSelection,
+) -> Result<Transform> {
+    let text = workspace.read_all_text(&selection.path)?;
+    let edit = clear_selection(&text, selection)?;
+    guarded_transform(
+        workspace,
+        [selection.path.clone()],
+        vec![Mutation::ApplyRanges { edits: vec![edit] }],
+    )
+}
+
+pub fn duplicate_selection_transform(
+    workspace: &Workspace,
+    selection: &TextSelection,
+) -> Result<Transform> {
+    let text = workspace.read_all_text(&selection.path)?;
+    let edit = duplicate_selection(&text, selection)?;
+    guarded_transform(
+        workspace,
+        [selection.path.clone()],
+        vec![Mutation::ApplyRanges { edits: vec![edit] }],
+    )
+}
+
+pub fn indent_selection_transform(
+    workspace: &Workspace,
+    selection: &TextSelection,
+    indentation: impl Into<String>,
+) -> Result<Transform> {
+    let text = workspace.read_all_text(&selection.path)?;
+    let edit = indent_selection(&text, selection, indentation)?;
+    guarded_transform(
+        workspace,
+        [selection.path.clone()],
+        vec![Mutation::ApplyLines { edits: vec![edit] }],
+    )
+}
+
+pub fn outdent_selection_transform(
+    workspace: &Workspace,
+    selection: &TextSelection,
+    width: usize,
+) -> Result<Transform> {
+    let text = workspace.read_all_text(&selection.path)?;
+    let edit = outdent_selection(&text, selection, width)?;
+    guarded_transform(
+        workspace,
+        [selection.path.clone()],
+        vec![Mutation::ApplyLines { edits: vec![edit] }],
+    )
+}
+
+fn validate_destination(text: &str, destination_byte: usize) -> Result<()> {
+    if destination_byte > text.len() || !text.is_char_boundary(destination_byte) {
+        return Err(WorkspaceError::InvalidEditRange {
+            start: destination_byte,
+            end: destination_byte,
+            len: text.len(),
+        });
+    }
+    Ok(())
+}
+
+pub fn copy_selection_transform(
+    workspace: &Workspace,
+    source: &TextSelection,
+    destination_path: impl Into<String>,
+    destination_byte: usize,
+) -> Result<Transform> {
+    let destination_path = destination_path.into();
+    let source_text = workspace.read_all_text(&source.path)?;
+    let destination_text = workspace.read_all_text(&destination_path)?;
+    validate_destination(&destination_text, destination_byte)?;
+
+    let edit = copy_selection(
+        &source_text,
+        source,
+        destination_path.clone(),
+        destination_byte,
+    )?;
+
+    guarded_transform(
+        workspace,
+        [source.path.clone(), destination_path],
+        vec![Mutation::ApplyRanges { edits: vec![edit] }],
+    )
+}
+
+pub fn move_selection_transform(
+    workspace: &Workspace,
+    source: &TextSelection,
+    destination_path: impl Into<String>,
+    destination_byte: usize,
+) -> Result<Transform> {
+    let destination_path = destination_path.into();
+    let source_text = workspace.read_all_text(&source.path)?;
+    let destination_text = if destination_path == source.path {
+        source_text.clone()
+    } else {
+        workspace.read_all_text(&destination_path)?
+    };
+    validate_destination(&destination_text, destination_byte)?;
+
+    let edits = move_selection(
+        &source_text,
+        source,
+        destination_path.clone(),
+        destination_byte,
+    )?;
+
+    guarded_transform(
+        workspace,
+        [source.path.clone(), destination_path],
+        vec![Mutation::ApplyRanges { edits }],
+    )
 }
 
 #[cfg(test)]
