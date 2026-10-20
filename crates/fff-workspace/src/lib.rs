@@ -4,6 +4,7 @@ use std::fs;
 use std::io;
 use std::path::{Component, Path, PathBuf};
 
+pub mod coordinates;
 pub mod edits;
 pub mod journal;
 pub mod session;
