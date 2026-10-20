@@ -13,7 +13,10 @@ The first implementation is `crates/fff-workspace`, a workspace-scoped file API 
 - safe writes;
 - exact, regex, and repo-wide replacement;
 - arbitrary exact/glob/regex file targeting with exclusions;
-- precise byte-range edits with content-hash guards;
+- precise byte-range and multi-range edits with content-hash guards;
+- editor-style selection planners for clear, duplicate, indent, outdent, copy, and move;
+- non-committing transform previews with unified diffs;
+- resident FFF-backed indexed content search that returns reusable path-qualified match sets;
 - move/rename and delete;
 - strict workspace containment and symlink-escape protection;
 - an internal `.ffsake/` journal with undo/redo and stale-state guards.
@@ -39,6 +42,14 @@ A `Transform` is the composition primitive for broad workspace mutations. It con
 The entire transform is evaluated in memory and committed as one journal transaction. This is intended for global replace/refactor-style operations, including files that were never part of the active editor target.
 
 There is no general condition/control-flow language. The LLM handles branching and orchestration; ffsake provides deterministic selectors, matches/ranges, preconditions, staging, mutation, and undo/redo.
+
+### Search to mutation
+
+A resident FFF index performs watched/indexed literal and regex content search. Search hits are converted immediately into owned `MatchSet` values containing workspace-relative byte ranges and source hashes. Match sets can compile directly into guarded transforms for replace or insert-before/after operations, so the model does not need to reconstruct locations from search output.
+
+### Preview
+
+The preview API runs the same transform staging path without committing it and returns per-file unified diffs. This keeps preview semantics aligned with the mutation that would actually be committed.
 
 ## Scope
 
