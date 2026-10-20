@@ -1,4 +1,4 @@
-use crate::transform::TargetedRangeEdit;
+use crate::transform::{Mutation, TargetedRangeEdit, Transform};
 use crate::{FileSelector, Workspace, WorkspaceError};
 use crate::edits::RangeEdit;
 use fff::{
@@ -139,9 +139,57 @@ impl MatchSet {
             })
             .collect()
     }
+
+    pub fn target_selector(&self) -> FileSelector {
+        FileSelector {
+            include: self
+                .file_hashes
+                .keys()
+                .cloned()
+                .map(crate::PathSelector::Exact)
+                .collect(),
+            exclude: Vec::new(),
+        }
+    }
+
+    fn transform_from_edits(
+        &self,
+        workspace: &Workspace,
+        edits: Vec<TargetedRangeEdit>,
+    ) -> Result<Transform, SearchError> {
+        self.validate(workspace)?;
+        Ok(Transform {
+            target: self.target_selector(),
+            operations: vec![Mutation::ApplyRanges { edits }],
+            max_files: Some(self.file_hashes.len()),
+        })
+    }
+
+    pub fn replace_transform(
+        &self,
+        workspace: &Workspace,
+        replacement: impl Into<String>,
+    ) -> Result<Transform, SearchError> {
+        self.transform_from_edits(workspace, self.replace_edits(replacement))
+    }
+
+    pub fn insert_before_transform(
+        &self,
+        workspace: &Workspace,
+        text: impl Into<String>,
+    ) -> Result<Transform, SearchError> {
+        self.transform_from_edits(workspace, self.insert_before_edits(text))
+    }
+
+    pub fn insert_after_transform(
+        &self,
+        workspace: &Workspace,
+        text: impl Into<String>,
+    ) -> Result<Transform, SearchError> {
+        self.transform_from_edits(workspace, self.insert_after_edits(text))
+    }
 }
 
-#[derive(Clone)]
 pub struct FffSearchIndex {
     picker: SharedFilePicker,
     frecency: SharedFrecency,
@@ -265,5 +313,84 @@ impl FffSearchIndex {
 impl Drop for FffSearchIndex {
     fn drop(&mut self) {
         self.picker.cancel();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::transform::execute;
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn fixture(name: &str) -> std::path::PathBuf {
+        let id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("ffsake-search-{name}-{id}"));
+        fs::create_dir_all(&root).unwrap();
+        root
+    }
+
+    #[test]
+    fn match_set_builds_hash_guarded_transform() {
+        let root = fixture("matchset");
+        fs::write(root.join("a.txt"), "hello hello\n").unwrap();
+        let workspace = Workspace::new(&root).unwrap();
+        let hash = workspace.content_hash("a.txt").unwrap();
+
+        let set = MatchSet {
+            pattern: "hello".into(),
+            mode: SearchMode::Literal,
+            ranges: vec![
+                SearchRange {
+                    path: "a.txt".into(),
+                    start_byte: 0,
+                    end_byte: 5,
+                    line: 1,
+                },
+                SearchRange {
+                    path: "a.txt".into(),
+                    start_byte: 6,
+                    end_byte: 11,
+                    line: 1,
+                },
+            ],
+            file_hashes: BTreeMap::from([("a.txt".into(), hash)]),
+            next_file_offset: 0,
+        };
+
+        let transform = set.replace_transform(&workspace, "world").unwrap();
+        execute(&workspace, &transform, None).unwrap();
+        assert_eq!(fs::read_to_string(root.join("a.txt")).unwrap(), "world world\n");
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn resident_fff_search_returns_exact_ranges() {
+        let root = fixture("fff");
+        fs::write(root.join("a.txt"), "zero needle one needle\n").unwrap();
+        let workspace = Workspace::new(&root).unwrap();
+        let index = FffSearchIndex::open(&workspace).unwrap();
+
+        let set = index
+            .search(
+                &workspace,
+                "needle",
+                SearchMode::Literal,
+                Some(&FileSelector::exact("a.txt")),
+                100,
+                0,
+            )
+            .unwrap();
+
+        assert_eq!(set.ranges.len(), 2);
+        assert_eq!((set.ranges[0].start_byte, set.ranges[0].end_byte), (5, 11));
+        assert_eq!((set.ranges[1].start_byte, set.ranges[1].end_byte), (16, 22));
+
+        drop(index);
+        fs::remove_dir_all(root).unwrap();
     }
 }
