@@ -268,14 +268,14 @@ mod tests {
         assert_eq!(session.active_target().unwrap().files.len(), 3);
 
         fs::remove_dir_all(root).unwrap();
-    }    #[test]
+    }
+
+    #[test]
     fn multi_range_edit_is_one_editor_undo_entry() {
         let root = fixture();
         let workspace = Workspace::new(&root).unwrap();
         let mut session = EditorSession::new(workspace);
-        session
-            .set_target(FileSelector::exact("src/a.rs"))
-            .unwrap();
+        session.set_target(FileSelector::exact("src/a.rs")).unwrap();
 
         let result = session
             .apply_ranges(vec![
@@ -306,6 +306,4 @@ mod tests {
 
         fs::remove_dir_all(root).unwrap();
     }
-
-
 }
