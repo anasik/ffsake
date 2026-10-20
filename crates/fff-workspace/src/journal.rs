@@ -70,6 +70,7 @@ pub struct JournalChange {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TransactionState {
+    Prepared,
     Applied,
     Undone,
 }
@@ -99,6 +100,48 @@ impl Journal {
             workspace_root,
             journal_root,
         })
+    }
+
+    pub fn commit(
+        &self,
+        label: Option<String>,
+        planned: &[(String, Option<Vec<u8>>)],
+    ) -> Result<TransactionManifest> {
+        let mut changes = Vec::with_capacity(planned.len());
+
+        for (path, after) in planned {
+            let resolved = self.resolve(path)?;
+            let before = if resolved.exists() {
+                Some(fs::read(&resolved)?)
+            } else {
+                None
+            };
+            changes.push(JournalChange {
+                path: path.clone(),
+                before,
+                after: after.clone(),
+            });
+        }
+
+        let mut manifest = self.prepare(label, &changes)?;
+        self.verify_side(&manifest, SnapshotSide::Before)?;
+
+        let mut applied = Vec::new();
+        for file in &manifest.files {
+            let path = self.resolve(&file.path)?;
+            let result = self.apply_one(&manifest, file, SnapshotSide::After);
+            if let Err(error) = result {
+                for applied_file in applied.iter().rev() {
+                    let _ = self.apply_one(&manifest, applied_file, SnapshotSide::Before);
+                }
+                return Err(error);
+            }
+            applied.push(file);
+        }
+
+        manifest.state = TransactionState::Applied;
+        self.write_manifest(&manifest)?;
+        Ok(manifest)
     }
 
     pub fn record(
@@ -144,6 +187,49 @@ impl Journal {
         Ok(manifest)
     }
 
+    fn prepare(
+        &self,
+        label: Option<String>,
+        changes: &[JournalChange],
+    ) -> Result<TransactionManifest> {
+        let id = transaction_id();
+        let tx_root = self.journal_root.join(&id);
+        let before_root = tx_root.join("before");
+        let after_root = tx_root.join("after");
+        fs::create_dir_all(&before_root)?;
+        fs::create_dir_all(&after_root)?;
+
+        let mut files = Vec::with_capacity(changes.len());
+
+        for change in changes {
+            validate_relative(Path::new(&change.path))?;
+            let snapshot_key = blake3::hash(change.path.as_bytes()).to_hex().to_string();
+
+            if let Some(before) = &change.before {
+                fs::write(before_root.join(&snapshot_key), before)?;
+            }
+            if let Some(after) = &change.after {
+                fs::write(after_root.join(&snapshot_key), after)?;
+            }
+
+            files.push(TransactionFile {
+                path: change.path.clone(),
+                snapshot_key,
+                before_hash: change.before.as_deref().map(hash_bytes),
+                after_hash: change.after.as_deref().map(hash_bytes),
+            });
+        }
+
+        let manifest = TransactionManifest {
+            id,
+            state: TransactionState::Prepared,
+            label,
+            files,
+        };
+        self.write_manifest(&manifest)?;
+        Ok(manifest)
+    }
+
     pub fn load(&self, id: &str) -> Result<TransactionManifest> {
         let path = self.journal_root.join(id).join("manifest.json");
         if !path.is_file() {
@@ -157,6 +243,13 @@ impl Journal {
         if manifest.state == TransactionState::Undone {
             return Ok(manifest);
         }
+        if manifest.state == TransactionState::Prepared {
+            return Err(JournalError::StateConflict {
+                path: manifest.id.clone(),
+                expected: "applied transaction".to_string(),
+                actual: "prepared transaction".to_string(),
+            });
+        }
 
         self.verify_side(&manifest, SnapshotSide::After)?;
         self.apply_side(&manifest, SnapshotSide::Before)?;
@@ -169,6 +262,13 @@ impl Journal {
         let mut manifest = self.load(id)?;
         if manifest.state == TransactionState::Applied {
             return Ok(manifest);
+        }
+        if manifest.state == TransactionState::Prepared {
+            return Err(JournalError::StateConflict {
+                path: manifest.id.clone(),
+                expected: "undone transaction".to_string(),
+                actual: "prepared transaction".to_string(),
+            });
         }
 
         self.verify_side(&manifest, SnapshotSide::Before)?;
@@ -215,24 +315,34 @@ impl Journal {
     }
 
     fn apply_side(&self, manifest: &TransactionManifest, side: SnapshotSide) -> Result<()> {
+        for file in &manifest.files {
+            self.apply_one(manifest, file, side)?;
+        }
+        Ok(())
+    }
+
+    fn apply_one(
+        &self,
+        manifest: &TransactionManifest,
+        file: &TransactionFile,
+        side: SnapshotSide,
+    ) -> Result<()> {
         let snapshot_root = self
             .journal_root
             .join(&manifest.id)
             .join(side.directory_name());
+        let path = self.resolve(&file.path)?;
 
-        for file in &manifest.files {
-            let path = self.resolve(&file.path)?;
-            if side.hash(file).is_some() {
-                let bytes = fs::read(snapshot_root.join(&file.snapshot_key))?;
-                if let Some(parent) = path.parent() {
-                    fs::create_dir_all(parent)?;
-                }
-                atomic_write(&path, &bytes)?;
-            } else if path.is_file() {
-                fs::remove_file(path)?;
-            } else if path.is_dir() {
-                fs::remove_dir_all(path)?;
+        if side.hash(file).is_some() {
+            let bytes = fs::read(snapshot_root.join(&file.snapshot_key))?;
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent)?;
             }
+            atomic_write(&path, &bytes)?;
+        } else if path.is_file() {
+            fs::remove_file(path)?;
+        } else if path.is_dir() {
+            fs::remove_dir_all(path)?;
         }
 
         Ok(())
@@ -416,5 +526,26 @@ mod tests {
         assert_eq!(fs::read(root.join("new.txt")).unwrap(), b"created");
 
         fs::remove_dir_all(root).unwrap();
+    }    #[test]
+    fn commit_owns_the_write_and_can_undo_it() {
+        let root = fixture();
+        let journal = Journal::open(&root).unwrap();
+
+        let manifest = journal
+            .commit(
+                Some("edit".into()),
+                &[("src/lib.rs".into(), Some(b"committed".to_vec()))],
+            )
+            .unwrap();
+
+        assert_eq!(manifest.state, TransactionState::Applied);
+        assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"committed");
+
+        journal.undo(&manifest.id).unwrap();
+        assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"before");
+
+        fs::remove_dir_all(root).unwrap();
     }
+
+
 }
