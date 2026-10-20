@@ -4,9 +4,9 @@ use std::path::{Component, Path, PathBuf};
 use globset::Glob;
 use regex::Regex;
 
-pub mod dsl;
-pub mod executor;
 pub mod journal;
+pub mod session;
+pub mod transform;
 
 #[derive(Debug)]
 pub enum WorkspaceError {
