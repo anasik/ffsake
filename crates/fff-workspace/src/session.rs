@@ -1,5 +1,8 @@
 use crate::journal::{Journal, JournalError, TransactionManifest};
-use crate::transform::{Mutation, TransformError, apply_mutation, collect_changes, load_paths};
+use crate::transform::{
+    MatchPosition, Mutation, TargetedRangeEdit, TransformError, apply_mutation, collect_changes,
+    load_paths,
+};
 use crate::{FileSelector, ReplaceMode, Workspace, WorkspaceError};
 
 #[derive(Debug)]
@@ -126,6 +129,49 @@ impl EditorSession {
         self.apply(Mutation::DeleteFiles, Some("editor delete".into()))
     }
 
+    pub fn apply_ranges(&self, edits: Vec<TargetedRangeEdit>) -> Result<EditResult> {
+        self.apply(
+            Mutation::ApplyRanges { edits },
+            Some("editor multi-range edit".into()),
+        )
+    }
+
+    pub fn insert_at_matches(
+        &self,
+        mode: ReplaceMode,
+        pattern: impl Into<String>,
+        text: impl Into<String>,
+        position: MatchPosition,
+        expected_matches: Option<usize>,
+    ) -> Result<EditResult> {
+        self.apply(
+            Mutation::InsertAtMatches {
+                mode,
+                pattern: pattern.into(),
+                text: text.into(),
+                position,
+                expected_matches,
+            },
+            Some("editor insert at matches".into()),
+        )
+    }
+
+    pub fn delete_matches(
+        &self,
+        mode: ReplaceMode,
+        pattern: impl Into<String>,
+        expected_matches: Option<usize>,
+    ) -> Result<EditResult> {
+        self.apply(
+            Mutation::DeleteMatches {
+                mode,
+                pattern: pattern.into(),
+                expected_matches,
+            },
+            Some("editor delete matches".into()),
+        )
+    }
+
     pub fn apply(&self, mutation: Mutation, label: Option<String>) -> Result<EditResult> {
         let active = self.active.as_ref().ok_or(SessionError::NoActiveTarget)?;
         let mut buffers = load_paths(&self.workspace, &active.files)?;
@@ -222,5 +268,44 @@ mod tests {
         assert_eq!(session.active_target().unwrap().files.len(), 3);
 
         fs::remove_dir_all(root).unwrap();
+    }    #[test]
+    fn multi_range_edit_is_one_editor_undo_entry() {
+        let root = fixture();
+        let workspace = Workspace::new(&root).unwrap();
+        let mut session = EditorSession::new(workspace);
+        session
+            .set_target(FileSelector::exact("src/a.rs"))
+            .unwrap();
+
+        let result = session
+            .apply_ranges(vec![
+                TargetedRangeEdit {
+                    path: "src/a.rs".into(),
+                    edit: crate::edits::RangeEdit {
+                        start_byte: 0,
+                        end_byte: 1,
+                        replacement: "X".into(),
+                    },
+                },
+                TargetedRangeEdit {
+                    path: "src/a.rs".into(),
+                    edit: crate::edits::RangeEdit {
+                        start_byte: 1,
+                        end_byte: 1,
+                        replacement: "Y".into(),
+                    },
+                },
+            ])
+            .unwrap();
+
+        let tx = result.transaction.unwrap();
+        assert_eq!(fs::read_to_string(root.join("src/a.rs")).unwrap(), "XY");
+
+        Journal::open(&root).unwrap().undo(&tx.id).unwrap();
+        assert_eq!(fs::read_to_string(root.join("src/a.rs")).unwrap(), "A");
+
+        fs::remove_dir_all(root).unwrap();
     }
+
+
 }
