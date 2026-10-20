@@ -1,0 +1,8 @@
+[package]
+name = "fff-workspace"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Workspace-scoped file navigation and editing primitives for coding agents"
+
+[dependencies]
