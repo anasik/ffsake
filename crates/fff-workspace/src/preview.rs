@@ -1,4 +1,4 @@
-use crate::transform::{apply_mutation, collect_changes, load_paths, Transform, TransformError};
+use crate::transform::{Transform, TransformError, apply_mutation, collect_changes, load_paths};
 use crate::{Workspace, WorkspaceError};
 use similar::TextDiff;
 
@@ -15,7 +15,10 @@ pub struct TransformPreview {
     pub files: Vec<FilePreview>,
 }
 
-pub fn preview(workspace: &Workspace, transform: &Transform) -> Result<TransformPreview, TransformError> {
+pub fn preview(
+    workspace: &Workspace,
+    transform: &Transform,
+) -> Result<TransformPreview, TransformError> {
     let files = workspace.select_files(&transform.target)?;
 
     if let Some(max) = transform.max_files
@@ -45,17 +48,16 @@ pub fn preview(workspace: &Workspace, transform: &Transform) -> Result<Transform
     for change in changes {
         let before = change.before.unwrap_or_default();
         let after = change.after.unwrap_or_default();
-        let before_text = String::from_utf8(before)
-            .map_err(|_| TransformError::Workspace(WorkspaceError::NotUtf8(workspace.root().join(&change.path))))?;
-        let after_text = String::from_utf8(after)
-            .map_err(|_| TransformError::Workspace(WorkspaceError::NotUtf8(workspace.root().join(&change.path))))?;
+        let before_text = String::from_utf8(before).map_err(|_| {
+            TransformError::Workspace(WorkspaceError::NotUtf8(workspace.root().join(&change.path)))
+        })?;
+        let after_text = String::from_utf8(after).map_err(|_| {
+            TransformError::Workspace(WorkspaceError::NotUtf8(workspace.root().join(&change.path)))
+        })?;
 
         let diff = TextDiff::from_lines(&before_text, &after_text)
             .unified_diff()
-            .header(
-                &format!("a/{}", change.path),
-                &format!("b/{}", change.path),
-            )
+            .header(&format!("a/{}", change.path), &format!("b/{}", change.path))
             .to_string();
 
         previews.push(FilePreview {
