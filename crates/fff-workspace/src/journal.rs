@@ -533,7 +533,9 @@ mod tests {
         assert_eq!(fs::read(root.join("new.txt")).unwrap(), b"created");
 
         fs::remove_dir_all(root).unwrap();
-    }    #[test]
+    }
+
+    #[test]
     fn commit_owns_the_write_and_can_undo_it() {
         let root = fixture();
         let journal = Journal::open(&root).unwrap();
@@ -553,6 +555,4 @@ mod tests {
 
         fs::remove_dir_all(root).unwrap();
     }
-
-
 }
