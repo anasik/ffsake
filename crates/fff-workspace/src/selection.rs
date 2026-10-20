@@ -199,4 +199,17 @@ mod tests {
         assert_eq!(edits.len(), 2);
         assert_eq!(edits[1].edit.replacement, "bc");
     }
+
+    #[test]
+    fn same_file_move_offsets_apply_correctly() {
+        let selection = TextSelection {
+            path: "a.rs".into(),
+            start_byte: 1,
+            end_byte: 3,
+        };
+        let edits = move_selection("abcdef", &selection, "a.rs", 6).unwrap();
+        let range_edits = edits.into_iter().map(|edit| edit.edit).collect::<Vec<_>>();
+        let moved = crate::edits::apply_range_edits("abcdef", &range_edits).unwrap();
+        assert_eq!(moved, "adefbc");
+    }
 }
