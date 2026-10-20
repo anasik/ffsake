@@ -10,21 +10,41 @@ The first implementation is `crates/fff-workspace`, a workspace-scoped file API 
 
 - ranged UTF-8 reads;
 - directory listing;
-- atomic writes;
-- deterministic exact replacement with occurrence guards;
-- move/rename;
-- delete;
-- rejection of absolute paths and `..` traversal;
-- canonical workspace containment;
-- symlink-escape protection.
+- safe writes;
+- exact, regex, and repo-wide replacement;
+- arbitrary exact/glob/regex file targeting with exclusions;
+- precise byte-range edits with content-hash guards;
+- move/rename and delete;
+- strict workspace containment and symlink-escape protection;
+- an internal `.ffsake/` journal with undo/redo and stale-state guards.
 
-Search/indexing will reuse FFF rather than reimplement it. The intended next step is to expose this workspace layer beside FFF's existing MCP search tools.
+## Mutation model
+
+ffsake intentionally separates editor-style work from workspace-wide transformations.
+
+### Editor session
+
+An `EditorSession` can hold a sticky active target: a resolved set of files analogous to open files in an IDE, except the set may originally come from exact paths, globs, or regex selectors.
+
+Each direct mutation against the active target is its own journal entry and is independently undoable.
+
+### Transform
+
+A `Transform` is the composition primitive for broad workspace mutations. It contains:
+
+- one arbitrary file target;
+- an ordered vector of typed mutation operations;
+- optional fail-closed preconditions such as a maximum file count.
+
+The entire transform is evaluated in memory and committed as one journal transaction. This is intended for global replace/refactor-style operations, including files that were never part of the active editor target.
+
+There is no general condition/control-flow language. The LLM handles branching and orchestration; ffsake provides deterministic selectors, matches/ranges, preconditions, staging, mutation, and undo/redo.
 
 ## Scope
 
 Phase 1: editing, navigation, search integration.
 
-Phase 2: LSP-backed semantic navigation.
+Phase 2: LSP-backed semantic navigation and refactoring.
 
 Later: build/test execution, language adapters, sandboxing, and plugins.
 
