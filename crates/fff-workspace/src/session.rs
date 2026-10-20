@@ -125,6 +125,22 @@ impl EditorSession {
         )
     }
 
+    pub fn replace_identifier(
+        &self,
+        from: impl Into<String>,
+        to: impl Into<String>,
+        expected_matches: Option<usize>,
+    ) -> Result<EditResult> {
+        self.apply(
+            Mutation::ReplaceIdentifier {
+                from: from.into(),
+                to: to.into(),
+                expected_matches,
+            },
+            Some("editor identifier replace".into()),
+        )
+    }
+
     pub fn delete_files(&self) -> Result<EditResult> {
         self.apply(Mutation::DeleteFiles, Some("editor delete".into()))
     }
