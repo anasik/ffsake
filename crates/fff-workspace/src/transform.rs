@@ -7,6 +7,12 @@ use std::fs;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TargetedRangeEdit {
+    pub path: String,
+    pub edit: RangeEdit,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MatchPosition {
     Before,
     After,
@@ -21,7 +27,7 @@ pub enum Mutation {
         expected_matches: Option<usize>,
     },
     ApplyRanges {
-        edits: Vec<RangeEdit>,
+        edits: Vec<TargetedRangeEdit>,
     },
     InsertAtMatches {
         mode: ReplaceMode,
@@ -188,13 +194,26 @@ pub(crate) fn apply_mutation(
             Ok(())
         }
         Mutation::ApplyRanges { edits } => {
-            for state in buffers.values_mut() {
+            let mut by_path: BTreeMap<&str, Vec<RangeEdit>> = BTreeMap::new();
+            for targeted in edits {
+                by_path
+                    .entry(targeted.path.as_str())
+                    .or_default()
+                    .push(targeted.edit.clone());
+            }
+
+            for (path, path_edits) in by_path {
+                let Some(state) = buffers.get_mut(path) else {
+                    return Err(TransformError::Workspace(WorkspaceError::NotFound(
+                        PathBuf::from(path),
+                    )));
+                };
                 let Some(bytes) = &state.current else {
                     continue;
                 };
                 let text = String::from_utf8(bytes.clone())
                     .map_err(|_| WorkspaceError::NotUtf8(state.path.clone()))?;
-                state.current = Some(apply_range_edits(&text, edits)?.into_bytes());
+                state.current = Some(apply_range_edits(&text, &path_edits)?.into_bytes());
             }
             Ok(())
         }
@@ -532,6 +551,49 @@ mod tests {
         assert_eq!(
             fs::read_to_string(root.join("src/a.rs")).unwrap(),
             "[User][User]"
+        );
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn exact_range_edits_are_path_qualified() {
+        let root = fixture();
+        let workspace = Workspace::new(&root).unwrap();
+
+        let transform = Transform {
+            target: FileSelector::all(),
+            operations: vec![Mutation::ApplyRanges {
+                edits: vec![
+                    TargetedRangeEdit {
+                        path: "src/a.rs".into(),
+                        edit: RangeEdit {
+                            start_byte: 0,
+                            end_byte: 4,
+                            replacement: "Account".into(),
+                        },
+                    },
+                    TargetedRangeEdit {
+                        path: "src/b.rs".into(),
+                        edit: RangeEdit {
+                            start_byte: 0,
+                            end_byte: 4,
+                            replacement: "Member".into(),
+                        },
+                    },
+                ],
+            }],
+            max_files: Some(10),
+        };
+
+        execute(&workspace, &transform, None).unwrap();
+        assert_eq!(
+            fs::read_to_string(root.join("src/a.rs")).unwrap(),
+            "Account User"
+        );
+        assert_eq!(
+            fs::read_to_string(root.join("src/b.rs")).unwrap(),
+            "Member"
         );
 
         fs::remove_dir_all(root).unwrap();
