@@ -8,3 +8,4 @@ description = "Workspace-scoped file navigation and editing primitives for codin
 [dependencies]
 globset = "0.4"
 regex = "1"
+blake3 = "1.8"
