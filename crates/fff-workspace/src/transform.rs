@@ -223,14 +223,7 @@ pub(crate) fn apply_mutation(
             text,
             position,
             expected_matches,
-        } => apply_insert_at_matches(
-            buffers,
-            *mode,
-            pattern,
-            text,
-            *position,
-            *expected_matches,
-        ),
+        } => apply_insert_at_matches(buffers, *mode, pattern, text, *position, *expected_matches),
         Mutation::DeleteMatches {
             mode,
             pattern,
@@ -263,7 +256,11 @@ pub(crate) fn collect_changes(buffers: &BTreeMap<String, BufferState>) -> Vec<Jo
 }
 
 
-fn collect_match_ranges(text: &str, mode: ReplaceMode, pattern: &str) -> Result<Vec<(usize, usize)>> {
+fn collect_match_ranges(
+    text: &str,
+    mode: ReplaceMode,
+    pattern: &str,
+) -> Result<Vec<(usize, usize)>> {
     if pattern.is_empty() {
         return Err(TransformError::EmptyPattern);
     }
@@ -275,7 +272,10 @@ fn collect_match_ranges(text: &str, mode: ReplaceMode, pattern: &str) -> Result<
             .collect()),
         ReplaceMode::Regex => {
             let regex = Regex::new(pattern).map_err(WorkspaceError::from)?;
-            Ok(regex.find_iter(text).map(|m| (m.start(), m.end())).collect())
+            Ok(regex
+                .find_iter(text)
+                .map(|m| (m.start(), m.end()))
+                .collect())
         }
     }
 }
@@ -516,7 +516,9 @@ mod tests {
         assert!(root.join("src/a.rs").exists());
 
         fs::remove_dir_all(root).unwrap();
-    }    #[test]
+    }
+
+    #[test]
     fn transform_supports_match_relative_insert_and_delete() {
         let root = fixture();
         let workspace = Workspace::new(&root).unwrap();
@@ -591,13 +593,8 @@ mod tests {
             fs::read_to_string(root.join("src/a.rs")).unwrap(),
             "Account User"
         );
-        assert_eq!(
-            fs::read_to_string(root.join("src/b.rs")).unwrap(),
-            "Member"
-        );
+        assert_eq!(fs::read_to_string(root.join("src/b.rs")).unwrap(), "Member");
 
         fs::remove_dir_all(root).unwrap();
     }
-
-
 }
