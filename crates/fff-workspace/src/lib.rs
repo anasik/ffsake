@@ -5,6 +5,7 @@ use globset::Glob;
 use regex::Regex;
 
 pub mod dsl;
+pub mod journal;
 
 #[derive(Debug)]
 pub enum WorkspaceError {
@@ -19,6 +20,7 @@ pub enum WorkspaceError {
     ContentChanged { expected: String, actual: String },
     InvalidEditRange { start: usize, end: usize, len: usize },
     OverlappingEdits,
+    InternalPath(String),
 }
 
 impl std::fmt::Display for WorkspaceError {
@@ -37,6 +39,7 @@ impl std::fmt::Display for WorkspaceError {
             Self::ContentChanged { expected, actual } => write!(f, "content changed: expected {expected}, actual {actual}"),
             Self::InvalidEditRange { start, end, len } => write!(f, "invalid edit range {start}..{end} for {len}-byte file"),
             Self::OverlappingEdits => write!(f, "text edits overlap"),
+            Self::InternalPath(path) => write!(f, "path is reserved for ffsake internals: {path}"),
         }
     }
 }
@@ -635,7 +638,7 @@ impl Workspace {
             let entry = entry?;
             let path = entry.path();
             let ty = entry.file_type()?;
-            if ty.is_symlink() {
+            if path == self.root.join(".ffsake") || ty.is_symlink() {
                 continue;
             }
             if ty.is_dir() {
@@ -684,6 +687,9 @@ impl Workspace {
         let mut clean = PathBuf::new();
         for component in relative.components() {
             match component {
+                Component::Normal(part) if part == ".ffsake" => {
+                    return Err(WorkspaceError::InternalPath(relative.display().to_string()));
+                }
                 Component::Normal(part) => clean.push(part),
                 Component::CurDir => {}
                 Component::ParentDir | Component::RootDir | Component::Prefix(_) => {
@@ -1014,6 +1020,23 @@ mod tests {
                 None,
             ),
             Err(WorkspaceError::OverlappingEdits)
+        ));
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn internal_ffsake_directory_is_not_targetable() {
+        let root = fixture();
+        fs::create_dir_all(root.join(".ffsake/journal")).unwrap();
+        fs::write(root.join(".ffsake/secret"), "internal").unwrap();
+        let ws = Workspace::new(&root).unwrap();
+
+        let all = ws.select_files(&FileSelector::all()).unwrap();
+        assert!(all.iter().all(|path| !path.starts_with(root.join(".ffsake"))));
+        assert!(matches!(
+            ws.read_text(".ffsake/secret", None, None),
+            Err(WorkspaceError::InternalPath(_))
         ));
 
         fs::remove_dir_all(root).unwrap();
