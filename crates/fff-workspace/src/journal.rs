@@ -143,7 +143,7 @@ impl Journal {
                 }
                 return Err(error);
             }
-            applied.push(file);
+            applied.push(file.clone());
         }
 
         manifest.state = TransactionState::Applied;
