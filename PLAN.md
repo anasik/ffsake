@@ -55,3 +55,30 @@ Only after Phase 1 proves useful:
 ## Later
 
 Build/test/runtime adapters, sandboxing, package-management support, and plugin architecture are tertiary.
+
+
+## Generic file selection and batching
+
+File selection is independent of the operation being performed.
+
+Every batch-capable operation should accept the same selector model:
+
+- `all` / `*` — literally every file in the workspace;
+- exact file paths;
+- exact directory paths, selecting descendants;
+- multiple explicit files/directories;
+- glob path selectors;
+- regex path selectors;
+- arbitrary unions of all of the above;
+- exclusions applied after the include union.
+
+Examples:
+
+- one file: `["src/lib.rs"]`
+- listed files: `["src/a.rs", "src/b.rs"]`
+- file + regex: exact `README.md` union regex `^src/.*\\.rs$`
+- all Rust files: regex `\\.rs$`
+- literally all files: `*`
+- all except generated files: `*` minus regex/glob exclusion
+
+This selector must be reusable by replacement, reads, deletion, metadata inspection, formatting, future transformations, and any other sensible file-scoped operation. Batch execution is therefore a workspace primitive, not a replace-specific feature.
