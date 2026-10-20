@@ -6,6 +6,7 @@ license.workspace = true
 description = "Workspace-scoped file navigation and editing primitives for coding agents"
 
 [dependencies]
+fff = { package = "fff-search", git = "https://github.com/dmtrKovalenko/fff", rev = "7353971198321b5330824c29eb4e49635c072245" }
 blake3 = "1.8"
 globset = "0.4"
 regex = "1"
