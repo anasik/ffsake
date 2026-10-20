@@ -123,12 +123,19 @@ impl Journal {
             });
         }
 
-        let mut manifest = self.prepare(label, &changes)?;
+        self.commit_changes(label, &changes)
+    }
+
+    pub fn commit_changes(
+        &self,
+        label: Option<String>,
+        changes: &[JournalChange],
+    ) -> Result<TransactionManifest> {
+        let mut manifest = self.prepare(label, changes)?;
         self.verify_side(&manifest, SnapshotSide::Before)?;
 
         let mut applied = Vec::new();
         for file in &manifest.files {
-            let path = self.resolve(&file.path)?;
             let result = self.apply_one(&manifest, file, SnapshotSide::After);
             if let Err(error) = result {
                 for applied_file in applied.iter().rev() {
