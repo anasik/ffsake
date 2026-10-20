@@ -21,6 +21,22 @@ pub struct TargetedPositionEdit {
     pub replacement: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum LineOperation {
+    Delete,
+    Duplicate,
+    Indent { text: String },
+    Outdent { width: usize },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TargetedLineEdit {
+    pub path: String,
+    pub start_line: usize,
+    pub end_line: usize,
+    pub operation: LineOperation,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MatchPosition {
     Before,
@@ -45,6 +61,9 @@ pub enum Mutation {
     },
     ApplyPositions {
         edits: Vec<TargetedPositionEdit>,
+    },
+    ApplyLines {
+        edits: Vec<TargetedLineEdit>,
     },
     InsertAtMatches {
         mode: ReplaceMode,
@@ -268,6 +287,30 @@ pub(crate) fn apply_mutation(
             }
             Ok(())
         }
+        Mutation::ApplyLines { edits } => {
+            for targeted in edits {
+                let Some(state) = buffers.get_mut(targeted.path.as_str()) else {
+                    return Err(TransformError::Workspace(WorkspaceError::NotFound(
+                        PathBuf::from(&targeted.path),
+                    )));
+                };
+                let Some(bytes) = &state.current else {
+                    continue;
+                };
+                let text = String::from_utf8(bytes.clone())
+                    .map_err(|_| WorkspaceError::NotUtf8(state.path.clone()))?;
+                state.current = Some(
+                    apply_line_operation(
+                        &text,
+                        targeted.start_line,
+                        targeted.end_line,
+                        &targeted.operation,
+                    )?
+                    .into_bytes(),
+                );
+            }
+            Ok(())
+        }
         Mutation::InsertAtMatches {
             mode,
             pattern,
@@ -309,6 +352,69 @@ pub(crate) fn collect_changes(buffers: &BTreeMap<String, BufferState>) -> Vec<Jo
             }
         })
         .collect()
+}
+
+fn apply_line_operation(
+    text: &str,
+    start_line: usize,
+    end_line: usize,
+    operation: &LineOperation,
+) -> Result<String> {
+    if start_line == 0 || end_line < start_line {
+        return Err(TransformError::Workspace(WorkspaceError::InvalidPath(
+            format!("invalid line range: {start_line}..={end_line}"),
+        )));
+    }
+
+    let mut lines = if text.is_empty() {
+        Vec::new()
+    } else {
+        text.split_inclusive('\n').map(str::to_string).collect::<Vec<_>>()
+    };
+
+    if lines.is_empty() || start_line > lines.len() || end_line > lines.len() {
+        return Err(TransformError::Workspace(WorkspaceError::InvalidPath(
+            format!(
+                "line range {start_line}..={end_line} exceeds {} line(s)",
+                lines.len()
+            ),
+        )));
+    }
+
+    let start = start_line - 1;
+    let end = end_line;
+
+    match operation {
+        LineOperation::Delete => {
+            lines.drain(start..end);
+        }
+        LineOperation::Duplicate => {
+            let duplicated = lines[start..end].to_vec();
+            lines.splice(end..end, duplicated);
+        }
+        LineOperation::Indent { text } => {
+            for line in &mut lines[start..end] {
+                line.insert_str(0, text);
+            }
+        }
+        LineOperation::Outdent { width } => {
+            for line in &mut lines[start..end] {
+                let remove = line
+                    .as_bytes()
+                    .iter()
+                    .take(*width)
+                    .take_while(|byte| **byte == b' ')
+                    .count();
+                if remove > 0 {
+                    line.replace_range(0..remove, "");
+                } else if line.starts_with('\t') {
+                    line.replace_range(0..1, "");
+                }
+            }
+        }
+    }
+
+    Ok(lines.concat())
 }
 
 fn collect_match_ranges(
@@ -795,6 +901,44 @@ mod tests {
         assert_eq!(
             fs::read_to_string(root.join("src/a.rs")).unwrap(),
             "Customer SuperUser UserFactory _User User2 Vec<Customer> foo::Customer Customer::new"
+        );
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn line_edits_are_structural_and_path_qualified() {
+        let root = fixture();
+        fs::write(root.join("src/a.rs"), "a\nb\nc\n").unwrap();
+        let workspace = Workspace::new(&root).unwrap();
+
+        let transform = Transform {
+            target: FileSelector::exact("src/a.rs"),
+            operations: vec![
+                Mutation::ApplyLines {
+                    edits: vec![TargetedLineEdit {
+                        path: "src/a.rs".into(),
+                        start_line: 2,
+                        end_line: 2,
+                        operation: LineOperation::Duplicate,
+                    }],
+                },
+                Mutation::ApplyLines {
+                    edits: vec![TargetedLineEdit {
+                        path: "src/a.rs".into(),
+                        start_line: 1,
+                        end_line: 2,
+                        operation: LineOperation::Indent { text: "  ".into() },
+                    }],
+                },
+            ],
+            max_files: Some(1),
+        };
+
+        execute(&workspace, &transform, None).unwrap();
+        assert_eq!(
+            fs::read_to_string(root.join("src/a.rs")).unwrap(),
+            "  a\n  b\nb\nc\n"
         );
 
         fs::remove_dir_all(root).unwrap();
