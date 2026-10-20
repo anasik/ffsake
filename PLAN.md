@@ -2,91 +2,56 @@
 
 ## Phase 1A — workspace primitives
 
-Implement and verify:
+Implemented/active:
 
-- `read_file(path, start_line?, end_line?)`
-- `list_dir(path)`
-- `write_file(path, text)`
-- `replace_exact(path, old, new, expected_occurrences)`
-- `move_path(from, to)`
-- `delete_path(path)`
+- ranged file reads;
+- directory listing;
+- safe writes;
+- exact, literal, regex, and repo-wide replacement;
+- move/rename and delete;
+- exact/glob/regex target selection with exclusions;
+- precise byte-range edits;
+- content-hash preconditions;
+- protected internal `.ffsake/` namespace;
+- persistent undo/redo journal.
 
-Security invariant: all paths are workspace-relative and remain inside the canonical workspace root, including through symlinks.
+Security invariant: all user-visible paths are workspace-relative and remain inside the canonical workspace root, including through symlinks. The workspace root itself is never a valid mutation target.
 
-## Phase 1B — FFF MCP integration
+## Phase 1B — mutation model
 
-- reuse FFF's current indexed search;
-- expose workspace operations beside `find_files`, `grep`, and `multi_grep`;
-- teach MCP instructions to prefer workspace tools over shell equivalents;
-- no generic shell/exec tool.
+### Direct editor operations
 
-## Phase 1C — editing quality
+Use an `EditorSession` with an optional sticky active target.
 
-- multi-file transactions;
-- line/byte-range replace;
-- unified diffs after mutations;
-- optimistic file-version/hash preconditions;
-- undo token;
-- recursive tree listing with limits and pagination.
+The active target is a resolved file set, analogous to open files in an IDE. It may originate from one path, many paths, directories, globs, regexes, or all files.
 
-## Phase 1D — agent benchmark
+Each direct mutation is independently journaled and undoable. Keeping the same target active does not group later edits into one transaction.
 
-Test Claude Code/Codex against representative repositories.
+### Global transforms
 
-Pass condition:
+Use:
 
-- ordinary exploration/editing completes without shell grep/find/sed/awk/cat/head/tail;
-- no recursive-search hangs;
-- deterministic edits;
-- fewer tool round-trips than baseline.
+`Transform { target, operations, preconditions }`
 
-## Phase 2 — LSP
+A transform is the composition primitive. It stages all selected files in memory, applies its ordered mutation vector, validates preconditions, and commits the entire workspace mutation as one journal transaction.
 
-Only after Phase 1 proves useful:
+Do not add a second scripting layer on top of transforms.
 
-- definitions;
-- references;
-- implementations;
-- symbols;
-- rename;
-- hover/types;
-- diagnostics/code actions.
+Do not add general `if/else`, loops, variables, recursion, or orchestration. The LLM handles control flow. ffsake only needs fail-closed preconditions such as expected match counts, file hashes, and maximum target size.
 
-## Later
+## Phase 1C — editor-grade mutation
 
-Build/test/runtime adapters, sandboxing, package-management support, and plugin architecture are tertiary.
+Next primitives:
 
-
-## Generic file selection and batching
-
-File selection is independent of the operation being performed.
-
-Every batch-capable operation should accept the same selector model:
-
-- `all` / `*` — literally every file in the workspace;
-- exact file paths;
-- exact directory paths, selecting descendants;
-- multiple explicit files/directories;
-- glob path selectors;
-- regex path selectors;
-- arbitrary unions of all of the above;
-- exclusions applied after the include union.
-
-Examples:
-
-- one file: `["src/lib.rs"]`
-- listed files: `["src/a.rs", "src/b.rs"]`
-- file + regex: exact `README.md` union regex `^src/.*\\.rs$`
-- all Rust files: regex `\\.rs$`
-- literally all files: `*`
-- all except generated files: `*` minus regex/glob exclusion
-
-This selector must be reusable by replacement, reads, deletion, metadata inspection, formatting, future transformations, and any other sensible file-scoped operation. Batch execution is therefore a workspace primitive, not a replace-specific feature.
-
-
-## Editor-grade mutation before LSP
-
-The product should prefer deterministic editor operations over LLM-authored file rewrites.
+- line/column coordinate conversion over canonical byte offsets;
+- insert/delete/replace exact ranges;
+- multi-range edits (the useful semantics of multi-caret editing without GUI caret state);
+- match-relative insertion/deletion;
+- whole-identifier replacement;
+- case-preserving textual rename;
+- move/copy ranges;
+- line/range operations such as duplicate, delete, indent, outdent, sort, and deduplicate;
+- dry-run previews and unified diffs.
 
 Target principle:
 
@@ -96,58 +61,41 @@ rather than:
 
 `LLM rereads file -> regenerates text -> overwrites file`
 
-Before LSP, add editor-grade textual/structural operations such as:
+## Phase 1D — FFF search integration
 
-- exact range replace by byte/line/column coordinates;
-- insert/delete at exact positions;
-- multi-cursor style edits across arbitrary file selectors;
-- replace-all with literal or regex patterns;
-- whole-identifier replacement with language-aware identifier boundaries;
-- case-preserving rename variants where requested;
-- occurrence selection (nth match, matches in selected ranges, matches after/before coordinates);
-- move/copy selected ranges;
-- indent/outdent selected ranges;
-- duplicate/delete lines or ranges;
-- sort/deduplicate selected lines where appropriate;
-- transactional multi-file mutations;
-- file-content hash/version preconditions;
-- dry-run previews and unified diffs.
+- reuse FFF's resident indexed search;
+- expose workspace operations beside `find_files`, `grep`, and `multi_grep`;
+- allow search results/match sets to feed exact multi-range mutation;
+- teach agent-facing instructions to prefer workspace tools over shell equivalents;
+- no generic shell/exec tool for ordinary repository manipulation.
 
-A useful intermediate layer before LSP is syntax-aware mutation using parsers such as tree-sitter. This can distinguish identifiers/comments/strings and target AST node kinds without requiring a running language server.
+## Phase 1E — agent benchmark
 
-Rename should therefore have tiers:
+Test Claude Code/Codex against representative repositories.
 
-1. textual rename: exact/regex replace;
-2. identifier-aware rename: token-boundary or parser-aware;
-3. syntax-aware rename: AST-scoped where supported;
-4. semantic rename: LSP/compiler-backed, added later.
+Pass condition:
 
-The goal is to beat naive LLM mutation even before semantic tooling exists.
+- ordinary exploration/editing completes without shell grep/find/sed/awk/cat/head/tail;
+- no recursive-search hangs;
+- deterministic edits;
+- safe global transformations;
+- reliable undo/redo;
+- fewer tool round-trips than baseline.
 
+## Phase 2 — syntax and LSP
 
-## Command language
+Before full LSP, consider parser/tree-sitter-backed syntax-aware mutation for identifiers, comments, strings, imports, and AST node kinds.
 
-Consider a compact command syntax with two orthogonal parts:
+Then add LSP/compiler-backed:
 
-1. a target expression selecting an arbitrary set of files;
-2. a pipeline of deterministic ffsake operations applied to that target.
+- definitions;
+- references;
+- implementations;
+- symbols;
+- semantic rename;
+- hover/types;
+- diagnostics/code actions.
 
-Conceptually:
+## Later
 
-`target -> op -> op -> op`
-
-Target expressions should support unions of exact paths, directories, regex paths, globs, exclusions, and `*` for the entire workspace. Operations should be typed ffsake primitives rather than shell commands.
-
-The human/LLM-facing DSL should compile to a structured internal plan before execution. The structured plan is the source of truth for validation, preview, transactions, audit, and MCP/tool use.
-
-Potential syntax direction:
-
-`[src/a.rs, re:^src/.*\\.rs$, !re:^src/generated/] | replace /Foo/ Bar | format`
-
-or
-
-`* | where path ~= /\\.rs$/ | replace /Foo(\\w+)/ Bar$1 | write`
-
-Prefer explicit prefixes for regex/glob/exact selectors to avoid ambiguity.
-
-Pipelines should be transactional by default for mutations, or at minimum support an explicit transaction wrapper. Dry-run/preview should expose the resolved target set and exact mutation plan before commit.
+Build/test/runtime adapters, sandboxing, package-management support, and plugin architecture are tertiary.
