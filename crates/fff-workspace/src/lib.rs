@@ -1,6 +1,8 @@
 use std::fs;
 use std::io;
 use std::path::{Component, Path, PathBuf};
+use globset::{Glob, GlobSet, GlobSetBuilder};
+use regex::Regex;
 
 #[derive(Debug)]
 pub enum WorkspaceError {
@@ -10,6 +12,8 @@ pub enum WorkspaceError {
     NotUtf8(PathBuf),
     NotFound(PathBuf),
     ExpectedOccurrenceCount { expected: usize, actual: usize },
+    Regex(regex::Error),
+    InvalidGlob(String),
 }
 
 impl std::fmt::Display for WorkspaceError {
@@ -23,6 +27,8 @@ impl std::fmt::Display for WorkspaceError {
             Self::ExpectedOccurrenceCount { expected, actual } => {
                 write!(f, "expected {expected} matching occurrence(s), found {actual}")
             }
+            Self::Regex(e) => write!(f, "invalid regex: {e}"),
+            Self::InvalidGlob(g) => write!(f, "invalid glob: {g}"),
         }
     }
 }
@@ -32,6 +38,12 @@ impl std::error::Error for WorkspaceError {}
 impl From<io::Error> for WorkspaceError {
     fn from(value: io::Error) -> Self {
         Self::Io(value)
+    }
+}
+
+impl From<regex::Error> for WorkspaceError {
+    fn from(value: regex::Error) -> Self {
+        Self::Regex(value)
     }
 }
 
@@ -64,6 +76,54 @@ pub struct ReadResult {
     pub end_line: usize,
     pub total_lines: usize,
     pub text: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ReplaceMode {
+    Literal,
+    Regex,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReplaceScope {
+    /// Optional workspace-relative file or directory. None means the whole workspace.
+    pub path: Option<String>,
+    /// Include/exclude globs. Prefix exclusions with !, for example !**/target/**.
+    pub globs: Vec<String>,
+}
+
+impl Default for ReplaceScope {
+    fn default() -> Self {
+        Self { path: None, globs: Vec::new() }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReplaceRequest {
+    pub pattern: String,
+    pub replacement: String,
+    pub mode: ReplaceMode,
+    pub scope: ReplaceScope,
+    /// If set, the operation fails unless the total matches across the selected scope equals this value.
+    pub expected_matches: Option<usize>,
+    /// If true, return what would change without writing files.
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FileReplaceResult {
+    pub path: String,
+    pub replacements: usize,
+    pub bytes_before: usize,
+    pub bytes_after: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReplaceBatchResult {
+    pub files_scanned: usize,
+    pub files_changed: usize,
+    pub replacements: usize,
+    pub changes: Vec<FileReplaceResult>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -204,6 +264,160 @@ impl Workspace {
         })
     }
 
+    pub fn replace(&self, request: &ReplaceRequest) -> Result<ReplaceBatchResult> {
+        if request.pattern.is_empty() {
+            return Err(WorkspaceError::InvalidPath("replacement pattern must not be empty".into()));
+        }
+
+        let regex = match request.mode {
+            ReplaceMode::Literal => None,
+            ReplaceMode::Regex => Some(Regex::new(&request.pattern)?),
+        };
+        let (includes, excludes) = build_globsets(&request.scope.globs)?;
+
+        let scope_root = match request.scope.path.as_deref() {
+            Some(path) => self.resolve_existing(Path::new(path))?,
+            None => self.root.clone(),
+        };
+
+        let mut files = Vec::new();
+        if scope_root.is_file() {
+            files.push(scope_root);
+        } else if scope_root.is_dir() {
+            self.collect_files(&scope_root, &mut files)?;
+        } else {
+            return Err(WorkspaceError::InvalidPath(self.relative_display(&scope_root)));
+        }
+        files.sort();
+
+        let mut staged: Vec<(PathBuf, String, FileReplaceResult)> = Vec::new();
+        let mut total_matches = 0usize;
+        let mut files_scanned = 0usize;
+
+        for path in files {
+            let rel = self.relative_display(&path);
+            if !scope_matches(&rel, includes.as_ref(), excludes.as_ref()) {
+                continue;
+            }
+            files_scanned += 1;
+
+            let bytes = match fs::read(&path) {
+                Ok(bytes) => bytes,
+                Err(e) => return Err(e.into()),
+            };
+            let Ok(text) = String::from_utf8(bytes) else {
+                continue;
+            };
+
+            let matches = match (&regex, request.mode) {
+                (Some(re), ReplaceMode::Regex) => re.find_iter(&text).count(),
+                (None, ReplaceMode::Literal) => text.match_indices(&request.pattern).count(),
+                _ => unreachable!(),
+            };
+            if matches == 0 {
+                continue;
+            }
+
+            let updated = match (&regex, request.mode) {
+                (Some(re), ReplaceMode::Regex) => {
+                    re.replace_all(&text, request.replacement.as_str()).into_owned()
+                }
+                (None, ReplaceMode::Literal) => text.replace(&request.pattern, &request.replacement),
+                _ => unreachable!(),
+            };
+
+            total_matches += matches;
+            staged.push((
+                path,
+                updated.clone(),
+                FileReplaceResult {
+                    path: rel,
+                    replacements: matches,
+                    bytes_before: text.len(),
+                    bytes_after: updated.len(),
+                },
+            ));
+        }
+
+        if let Some(expected) = request.expected_matches {
+            if total_matches != expected {
+                return Err(WorkspaceError::ExpectedOccurrenceCount {
+                    expected,
+                    actual: total_matches,
+                });
+            }
+        }
+
+        if !request.dry_run {
+            for (path, updated, _) in &staged {
+                let rel = self.relative_path(path)?;
+                self.write_text(rel, updated)?;
+            }
+        }
+
+        Ok(ReplaceBatchResult {
+            files_scanned,
+            files_changed: staged.len(),
+            replacements: total_matches,
+            changes: staged.into_iter().map(|(_, _, change)| change).collect(),
+        })
+    }
+
+    pub fn replace_literal(
+        &self,
+        pattern: impl Into<String>,
+        replacement: impl Into<String>,
+        scope: ReplaceScope,
+        expected_matches: Option<usize>,
+        dry_run: bool,
+    ) -> Result<ReplaceBatchResult> {
+        self.replace(&ReplaceRequest {
+            pattern: pattern.into(),
+            replacement: replacement.into(),
+            mode: ReplaceMode::Literal,
+            scope,
+            expected_matches,
+            dry_run,
+        })
+    }
+
+    pub fn replace_regex(
+        &self,
+        pattern: impl Into<String>,
+        replacement: impl Into<String>,
+        scope: ReplaceScope,
+        expected_matches: Option<usize>,
+        dry_run: bool,
+    ) -> Result<ReplaceBatchResult> {
+        self.replace(&ReplaceRequest {
+            pattern: pattern.into(),
+            replacement: replacement.into(),
+            mode: ReplaceMode::Regex,
+            scope,
+            expected_matches,
+            dry_run,
+        })
+    }
+
+    fn collect_files(&self, dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            let ty = entry.file_type()?;
+            if ty.is_symlink() {
+                continue;
+            }
+            if ty.is_dir() {
+                self.ensure_inside(fs::canonicalize(&path)?)?;
+                self.collect_files(&path, out)?;
+            } else if ty.is_file() {
+                self.ensure_inside(fs::canonicalize(&path)?)?;
+                out.push(path);
+            }
+        }
+        Ok(())
+    }
+
     pub fn move_path(&self, from: impl AsRef<Path>, to: impl AsRef<Path>) -> Result<()> {
         let from = self.resolve_entry(from.as_ref())?;
         let to = self.resolve_for_write(to.as_ref())?;
@@ -330,6 +544,44 @@ impl Workspace {
     }
 }
 
+fn build_globsets(globs: &[String]) -> Result<(Option<GlobSet>, Option<GlobSet>)> {
+    let mut include_builder = GlobSetBuilder::new();
+    let mut exclude_builder = GlobSetBuilder::new();
+    let mut has_include = false;
+    let mut has_exclude = false;
+
+    for raw in globs {
+        let (exclude, pattern) = raw.strip_prefix('!').map_or((false, raw.as_str()), |p| (true, p));
+        let glob = Glob::new(pattern).map_err(|_| WorkspaceError::InvalidGlob(raw.clone()))?;
+        if exclude {
+            exclude_builder.add(glob);
+            has_exclude = true;
+        } else {
+            include_builder.add(glob);
+            has_include = true;
+        }
+    }
+
+    let includes = if has_include {
+        Some(include_builder.build().map_err(|_| WorkspaceError::InvalidGlob("include set".into()))?)
+    } else {
+        None
+    };
+    let excludes = if has_exclude {
+        Some(exclude_builder.build().map_err(|_| WorkspaceError::InvalidGlob("exclude set".into()))?)
+    } else {
+        None
+    };
+    Ok((includes, excludes))
+}
+
+fn scope_matches(path: &str, includes: Option<&GlobSet>, excludes: Option<&GlobSet>) -> bool {
+    if excludes.is_some_and(|set| set.is_match(path)) {
+        return false;
+    }
+    includes.is_none_or(|set| set.is_match(path))
+}
+
 fn temp_sibling(path: &Path) -> PathBuf {
     let mut tmp = path.to_path_buf();
     let name = path
@@ -427,4 +679,50 @@ mod tests {
         fs::remove_dir_all(root).unwrap();
         fs::remove_dir_all(outside).unwrap();
     }
+    #[test]
+    fn repo_wide_literal_and_regex_replace_are_scoped() {
+        let root = fixture();
+        fs::create_dir_all(root.join("tests")).unwrap();
+        fs::write(root.join("src/a.rs"), "foo 123\nfoo 456\n").unwrap();
+        fs::write(root.join("tests/a.rs"), "foo 999\n").unwrap();
+        let ws = Workspace::new(&root).unwrap();
+
+        let dry = ws
+            .replace_literal(
+                "foo",
+                "bar",
+                ReplaceScope {
+                    path: None,
+                    globs: vec!["src/**".into()],
+                },
+                Some(2),
+                true,
+            )
+            .unwrap();
+        assert_eq!(dry.replacements, 2);
+        assert_eq!(dry.files_changed, 1);
+        assert!(fs::read_to_string(root.join("src/a.rs")).unwrap().contains("foo"));
+
+        let changed = ws
+            .replace_regex(
+                r"(foo) (\d+)",
+                "$1 number=$2",
+                ReplaceScope {
+                    path: Some("src".into()),
+                    globs: vec!["**/*.rs".into()],
+                },
+                Some(2),
+                false,
+            )
+            .unwrap();
+        assert_eq!(changed.replacements, 2);
+        assert_eq!(
+            fs::read_to_string(root.join("src/a.rs")).unwrap(),
+            "foo number=123\nfoo number=456\n"
+        );
+        assert_eq!(fs::read_to_string(root.join("tests/a.rs")).unwrap(), "foo 999\n");
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
 }
