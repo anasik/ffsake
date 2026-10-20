@@ -6,6 +6,8 @@ license.workspace = true
 description = "Workspace-scoped file navigation and editing primitives for coding agents"
 
 [dependencies]
+blake3 = "1.8"
 globset = "0.4"
 regex = "1"
-blake3 = "1.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
