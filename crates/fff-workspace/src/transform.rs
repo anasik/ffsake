@@ -1,3 +1,4 @@
+use crate::coordinates::{TextPosition, to_byte_offset};
 use crate::edits::{RangeEdit, apply_range_edits};
 use crate::journal::{Journal, JournalChange, JournalError, TransactionManifest};
 use crate::{FileSelector, ReplaceMode, Workspace, WorkspaceError};
@@ -10,6 +11,14 @@ use std::path::PathBuf;
 pub struct TargetedRangeEdit {
     pub path: String,
     pub edit: RangeEdit,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TargetedPositionEdit {
+    pub path: String,
+    pub start: TextPosition,
+    pub end: TextPosition,
+    pub replacement: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -28,6 +37,9 @@ pub enum Mutation {
     },
     ApplyRanges {
         edits: Vec<TargetedRangeEdit>,
+    },
+    ApplyPositions {
+        edits: Vec<TargetedPositionEdit>,
     },
     InsertAtMatches {
         mode: ReplaceMode,
@@ -214,6 +226,40 @@ pub(crate) fn apply_mutation(
                 let text = String::from_utf8(bytes.clone())
                     .map_err(|_| WorkspaceError::NotUtf8(state.path.clone()))?;
                 state.current = Some(apply_range_edits(&text, &path_edits)?.into_bytes());
+            }
+            Ok(())
+        }
+        Mutation::ApplyPositions { edits } => {
+            let mut by_path: BTreeMap<&str, Vec<&TargetedPositionEdit>> = BTreeMap::new();
+            for targeted in edits {
+                by_path
+                    .entry(targeted.path.as_str())
+                    .or_default()
+                    .push(targeted);
+            }
+
+            for (path, position_edits) in by_path {
+                let Some(state) = buffers.get_mut(path) else {
+                    return Err(TransformError::Workspace(WorkspaceError::NotFound(
+                        PathBuf::from(path),
+                    )));
+                };
+                let Some(bytes) = &state.current else {
+                    continue;
+                };
+                let text = String::from_utf8(bytes.clone())
+                    .map_err(|_| WorkspaceError::NotUtf8(state.path.clone()))?;
+
+                let mut range_edits = Vec::with_capacity(position_edits.len());
+                for targeted in position_edits {
+                    range_edits.push(RangeEdit {
+                        start_byte: to_byte_offset(&text, targeted.start)?,
+                        end_byte: to_byte_offset(&text, targeted.end)?,
+                        replacement: targeted.replacement.clone(),
+                    });
+                }
+
+                state.current = Some(apply_range_edits(&text, &range_edits)?.into_bytes());
             }
             Ok(())
         }
@@ -595,5 +641,33 @@ mod tests {
         assert_eq!(fs::read_to_string(root.join("src/b.rs")).unwrap(), "Member");
 
         fs::remove_dir_all(root).unwrap();
+    }    #[test]
+    fn position_edits_convert_to_exact_ranges() {
+        let root = fixture();
+        fs::write(root.join("src/a.rs"), "alpha\nbeta\n").unwrap();
+        let workspace = Workspace::new(&root).unwrap();
+
+        let transform = Transform {
+            target: FileSelector::exact("src/a.rs"),
+            operations: vec![Mutation::ApplyPositions {
+                edits: vec![TargetedPositionEdit {
+                    path: "src/a.rs".into(),
+                    start: TextPosition { line: 2, column: 0 },
+                    end: TextPosition { line: 2, column: 4 },
+                    replacement: "BETA".into(),
+                }],
+            }],
+            max_files: Some(1),
+        };
+
+        execute(&workspace, &transform, None).unwrap();
+        assert_eq!(
+            fs::read_to_string(root.join("src/a.rs")).unwrap(),
+            "alpha\nBETA\n"
+        );
+
+        fs::remove_dir_all(root).unwrap();
     }
+
+
 }
