@@ -246,6 +246,18 @@ def save_report(path: Path, report: dict):
         raise
 
 
+def reserve_report_path():
+    """Reserve a unique report filename even for concurrent suite processes."""
+    RESULT_DIR.mkdir(parents=True, exist_ok=True)
+    fd, name = tempfile.mkstemp(
+        prefix=f"suite-{time.strftime('%Y%m%d-%H%M%S')}-",
+        suffix=".json",
+        dir=RESULT_DIR,
+    )
+    os.close(fd)
+    return Path(name)
+
+
 def parse_jsonl(text):
     out = []
     for line in text.splitlines():
@@ -506,8 +518,7 @@ def main():
         raise SystemExit("build first: cargo build --locked --bin ffsake-mcp")
 
     results = []
-    stamp = time.strftime("%Y%m%d-%H%M%S")
-    out = RESULT_DIR / f"suite-{stamp}.json"
+    out = reserve_report_path()
     report = {
         "agents": agents,
         "tasks": tasks,
