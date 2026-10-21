@@ -1,6 +1,6 @@
 use crate::{Result, WorkspaceError};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct TextPosition {
     /// One-based line number.
     pub line: usize,

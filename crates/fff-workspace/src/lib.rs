@@ -8,6 +8,7 @@ pub mod coordinates;
 pub mod edits;
 pub mod journal;
 pub mod preview;
+pub mod resident;
 pub mod search;
 pub mod selection;
 pub mod session;
@@ -88,14 +89,14 @@ pub struct Workspace {
     root: PathBuf,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct DirEntry {
     pub path: String,
     pub kind: EntryKind,
     pub size: u64,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum EntryKind {
     File,
     Directory,
@@ -103,7 +104,7 @@ pub enum EntryKind {
     Other,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ReadResult {
     pub path: String,
     pub start_line: usize,
@@ -112,13 +113,13 @@ pub struct ReadResult {
     pub text: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum ReplaceMode {
     Literal,
     Regex,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum PathSelector {
     /// Select every file in the workspace. "*" is normalized to this at API boundaries.
     All,
@@ -130,7 +131,7 @@ pub enum PathSelector {
     Regex(String),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 pub struct FileSelector {
     /// Union of selectors. Empty means no files; use PathSelector::All for the whole workspace.
     pub include: Vec<PathSelector>,

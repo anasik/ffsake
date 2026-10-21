@@ -48,7 +48,7 @@ impl From<WorkspaceError> for SearchError {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum SearchMode {
     Literal,
     Regex,
@@ -63,7 +63,7 @@ impl From<SearchMode> for GrepMode {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 pub struct SearchRange {
     pub path: String,
     pub start_byte: usize,
@@ -71,7 +71,7 @@ pub struct SearchRange {
     pub line: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct MatchSet {
     pub pattern: String,
     pub mode: SearchMode,

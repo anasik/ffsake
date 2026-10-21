@@ -14,6 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo test --workspace
-      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --locked --workspace
+      - run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - run: cargo fmt --all -- --check
+      - run: cargo build --locked --bin ffsake
+      - run: python3 scripts/benchmark.py target/debug/ffsake

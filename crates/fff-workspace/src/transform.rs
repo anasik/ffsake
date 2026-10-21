@@ -7,13 +7,13 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct TargetedRangeEdit {
     pub path: String,
     pub edit: RangeEdit,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct TargetedPositionEdit {
     pub path: String,
     pub start: TextPosition,
@@ -21,7 +21,7 @@ pub struct TargetedPositionEdit {
     pub replacement: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum LineOperation {
     Delete,
     Duplicate,
@@ -29,7 +29,7 @@ pub enum LineOperation {
     Outdent { width: usize },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct TargetedLineEdit {
     pub path: String,
     pub start_line: usize,
@@ -37,13 +37,13 @@ pub struct TargetedLineEdit {
     pub operation: LineOperation,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum MatchPosition {
     Before,
     After,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Mutation {
     AssertHashes {
         expected: BTreeMap<String, String>,
@@ -83,7 +83,7 @@ pub enum Mutation {
     DeleteFiles,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Transform {
     pub target: FileSelector,
     pub operations: Vec<Mutation>,

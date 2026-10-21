@@ -1,6 +1,6 @@
 use crate::{Result, WorkspaceError};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct RangeEdit {
     /// UTF-8 byte offset, inclusive.
     pub start_byte: usize,

@@ -2,13 +2,13 @@ use crate::transform::{Transform, TransformError, apply_mutation, collect_change
 use crate::{Workspace, WorkspaceError};
 use similar::TextDiff;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct FilePreview {
     pub path: String,
     pub unified_diff: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct TransformPreview {
     pub selected_files: usize,
     pub changed_files: usize,

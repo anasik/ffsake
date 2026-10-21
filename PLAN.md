@@ -76,8 +76,8 @@ Implemented:
 - staged hash assertions plus journal commit guards to reject stale search results.
 
 Next:
-- expose the resident runtime through the compact agent-facing interface;
-- benchmark FFF search → MatchSet → preview/transform end to end;
+- implemented: resident JSONL CLI, workspace-scoped handles, guarded preview/apply;
+- implemented: repeatable FFF search → MatchSet → preview → transform → undo benchmark (see docs/BENCHMARK.md);
 - add richer FFF modes only when a concrete workflow requires them.
 
 ## Phase 1E — agent benchmark

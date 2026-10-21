@@ -64,3 +64,7 @@ Those later concerns must not block proving that reducing edit/navigation fricti
 ## Upstream
 
 Search/indexing substrate: https://github.com/dmtrKovalenko/fff
+
+## Resident CLI
+
+Run `cargo run --bin ffsake -- serve /absolute/workspace` and keep the JSONL stdin/stdout session open. See [the protocol and validation guide](docs/CLI.md).
