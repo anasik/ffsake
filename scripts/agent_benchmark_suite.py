@@ -395,12 +395,15 @@ def claude_run(root: Path, prompt: str, use_ffsake: bool, timeout: int):
         "--output-format", "stream-json", "--verbose",
         "--max-turns", "40", "--dangerously-skip-permissions",
     ]
+    cmd += ["--strict-mcp-config"]
     if use_ffsake:
         cfg = root / ".ffsake-claude-mcp.json"
         cfg.write_text(json.dumps({
             "mcpServers": {"ffsake": {"command": str(FFSAKE_MCP), "args": [str(root)]}}
         }))
-        cmd += ["--mcp-config", str(cfg), "--disallowedTools", "Bash,Read,Write,Edit,Glob,Grep"]
+        cmd += ["--mcp-config", str(cfg), "--tools", ""]
+    else:
+        cmd += ["--mcp-config", '{"mcpServers":{}}']
     return run_process(cmd, root, timeout)
 
 
@@ -428,25 +431,19 @@ def codex_run(root: Path, prompt: str, use_ffsake: bool, timeout: int):
 
 
 def opencode_run(root: Path, prompt: str, use_ffsake: bool, timeout: int, model: str | None):
+    # Deny by default, including inherited MCPs and delegation/custom tools.
+    # Only the selected mode's explicitly named repository tools are authorized.
+    permission = {"*": "deny"}
     if use_ffsake:
-        (root / "opencode.json").write_text(json.dumps({
-            "$schema": "https://opencode.ai/config.json",
-            "mcp": {
-                "ffsake": {
-                    "type": "local",
-                    "command": [str(FFSAKE_MCP), str(root)],
-                    "enabled": True,
-                }
-            },
-            "tools": {
-                "bash": False,
-                "read": False,
-                "edit": False,
-                "glob": False,
-                "grep": False,
-            },
-        }, indent=2))
-    cmd = ["opencode", "run", "--format", "json", "--dangerously-skip-permissions"]
+        permission["ffsake_*"] = "allow"
+    else:
+        permission.update({name: "allow" for name in
+                           ["bash", "shell", "read", "edit", "write", "apply_patch", "glob", "grep", "list"]})
+    config = {"$schema": "https://opencode.ai/config.json", "permission": permission}
+    if use_ffsake:
+        config["mcp"] = {"ffsake": {"type": "local", "command": [str(FFSAKE_MCP), str(root)], "enabled": True}}
+    (root / "opencode.json").write_text(json.dumps(config, indent=2))
+    cmd = ["opencode", "run", "--format", "json"]
     if model:
         cmd += ["--model", model]
     cmd += [ffsake_prompt(prompt) if use_ffsake else prompt]
@@ -535,6 +532,38 @@ def one(agent, task_name, mode, timeout, opencode_model):
         }
 
 
+def preflight(agents):
+    """Inspect installed CLIs without sending a prompt or contacting a model."""
+    checks = []
+    required = {
+        "claude": ["--output-format", "--verbose", "--max-turns", "--dangerously-skip-permissions",
+                   "--strict-mcp-config", "--mcp-config", "--tools"],
+        "codex": ["--json", "--sandbox", "--config"],
+        "opencode": ["--format", "--model"],
+    }
+    for agent in agents:
+        executable = shutil.which(agent)
+        check = {"agent": agent, "executable": executable, "ok": False}
+        if executable is None:
+            check["error"] = "missing_cli"
+            checks.append(check)
+            continue
+        command = [executable] + ([] if agent == "claude" else ["exec" if agent == "codex" else "run"]) + ["--help"]
+        try:
+            help_result = run_process(command, ROOT, 15)
+            version = run_process([executable, "--version"], ROOT, 15)
+            help_text = help_result["stdout"] + help_result["stderr"]
+            missing = [flag for flag in required[agent] if flag not in help_text]
+            check.update({"version": version["stdout"].strip(), "help_exit_code": help_result["exit_code"],
+                          "missing_flags": missing, "stderr": help_result["stderr"],
+                          "ok": help_result["exit_code"] == 0 and not help_result["timed_out"] and not missing})
+        except OSError as exc:
+            check["error"] = str(exc)
+        checks.append(check)
+    return {"checks": checks, "ok": all(c["ok"] for c in checks),
+            "model_calls": 0, "runtime_permission_isolation_verified": False}
+
+
 def median_or_none(values):
     values = [x for x in values if isinstance(x, (int, float))]
     return statistics.median(values) if values else None
@@ -576,6 +605,7 @@ def main():
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--opencode-model")
+    parser.add_argument("--preflight-only", action="store_true", help="Check CLI versions and supported flags without model calls")
     args = parser.parse_args()
     if args.timeout < 1:
         raise SystemExit("--timeout must be positive")
@@ -585,13 +615,20 @@ def main():
     for agent in agents:
         if agent not in {"claude", "codex", "opencode"}:
             raise SystemExit(f"unknown agent: {agent}")
-        if shutil.which(agent) is None:
-            raise SystemExit(f"missing CLI: {agent}")
     for task in tasks:
         if task not in TASKS:
             raise SystemExit(f"unknown task: {task}")
     if args.repetitions < 1:
         raise SystemExit("--repetitions must be >= 1")
+    checks = preflight(agents)
+    if args.preflight_only or not checks["ok"]:
+        out = reserve_report_path()
+        save_report(out, {"preflight": checks, "complete": False, "results": []})
+        print(json.dumps(checks, indent=2))
+        print(f"Preflight report: {out}", flush=True)
+        if not checks["ok"]:
+            raise SystemExit("CLI preflight failed; no model calls were made")
+        return
     if not FFSAKE_MCP.exists():
         raise SystemExit("build first: cargo build --locked --bin ffsake-mcp")
 
@@ -599,6 +636,7 @@ def main():
     out = reserve_report_path()
     report = {
         "schema_version": 2,
+        "preflight": checks,
         "agents": agents,
         "tasks": tasks,
         "repetitions": args.repetitions,
@@ -610,7 +648,7 @@ def main():
             "FFSAKE mode has no build/test runtime adapter; correctness is verified externally by this harness.",
             "Tool accounting recognizes explicit Claude, Codex and OpenCode invocation records; unknown schemas are unverified, and raw traces are retained.",
             "Trace policy checks do not prove host-enforced permission isolation. Codex native filesystem and shell tools remain available.",
-            "Inherited agent configuration is not isolated; observed baseline FFSAKE calls invalidate that comparison.",
+            "Claude MCP configuration is explicit; OpenCode uses a tool allowlist. Codex still inherits configuration; observed baseline FFSAKE calls invalidate that comparison.",
             "OpenCode uses its configured default model unless --opencode-model is supplied.",
         ],
     }

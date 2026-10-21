@@ -184,5 +184,73 @@ class AggregateTests(unittest.TestCase):
         self.assertIsNone(suite.aggregate([result(False, 1)])[0]["median_elapsed_ms"])
 
 
+class IsolationTests(unittest.TestCase):
+    def test_claude_baseline_explicitly_has_no_mcp_servers(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td, patch.object(suite, "run_process", return_value={}) as run:
+            suite.claude_run(Path(td), "task", False, 1)
+        args = run.call_args.args[0]
+        self.assertIn("--strict-mcp-config", args)
+        self.assertEqual(json.loads(args[args.index("--mcp-config") + 1]), {"mcpServers": {}})
+
+    def test_claude_ffsake_disables_all_builtin_tools(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td, patch.object(suite, "run_process", return_value={}) as run:
+            suite.claude_run(Path(td), "task", True, 1)
+            args = run.call_args.args[0]
+            self.assertEqual(args[args.index("--tools") + 1], "")
+            config = json.loads(Path(args[args.index("--mcp-config") + 1]).read_text())
+            self.assertEqual(set(config["mcpServers"]), {"ffsake"})
+
+    def test_opencode_allowlist_excludes_unlisted_tools_in_both_modes(self):
+        from unittest.mock import patch
+        import fnmatch
+        def permitted(rules, name):
+            action = None
+            for pattern, value in rules.items():
+                if fnmatch.fnmatchcase(name, pattern):
+                    action = value
+            return action == "allow"
+        for use_ffsake in [False, True]:
+            with self.subTest(use_ffsake=use_ffsake), tempfile.TemporaryDirectory() as td:
+                with patch.object(suite, "run_process", return_value={}) as run:
+                    suite.opencode_run(Path(td), "task", use_ffsake, 1, None)
+                rules = json.loads((Path(td) / "opencode.json").read_text())["permission"]
+                self.assertEqual(permitted(rules, "ffsake_ffsake_read"), use_ffsake)
+                self.assertEqual(permitted(rules, "read"), not use_ffsake)
+                self.assertFalse(permitted(rules, "task"))
+                self.assertFalse(permitted(rules, "other_mcp_read"))
+                self.assertNotIn("--dangerously-skip-permissions", run.call_args.args[0])
+
+
+class PreflightTests(unittest.TestCase):
+    def test_preflight_invokes_only_help_and_version(self):
+        from unittest.mock import patch
+        calls = []
+        def run(cmd, *args):
+            calls.append(cmd)
+            self.assertIn(cmd[-1], ["--help", "--version"])
+            return {"stdout": "--format --model" if cmd[-1] == "--help" else "1.2.3",
+                    "stderr": "", "exit_code": 0, "timed_out": False}
+        with patch.object(suite.shutil, "which", return_value="/fake/opencode"), patch.object(suite, "run_process", side_effect=run):
+            report = suite.preflight(["opencode"])
+        self.assertTrue(report["ok"])
+        self.assertEqual(report["model_calls"], 0)
+        self.assertEqual(len(calls), 2)
+
+    def test_unsupported_cli_stops_suite_and_saves_diagnostic(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td:
+            result_dir = Path(td)
+            with patch.object(suite, "RESULT_DIR", result_dir), patch.object(sys, "argv", ["suite", "--agents", "codex"]), patch.object(suite.shutil, "which", return_value=None), patch.object(suite, "one") as agent:
+                with self.assertRaisesRegex(SystemExit, "no model calls"):
+                    suite.main()
+                agent.assert_not_called()
+            report = json.loads(next(result_dir.glob("*.json")).read_text())
+            self.assertEqual(report["results"], [])
+            self.assertFalse(report["preflight"]["ok"])
+            self.assertEqual(report["preflight"]["checks"][0]["error"], "missing_cli")
+
+
 if __name__ == "__main__":
     unittest.main()
