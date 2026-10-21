@@ -97,3 +97,28 @@ python3 scripts/agent_benchmark.py codex
 Use `all` to run both. The harness creates temporary fixture repositories, runs the same rename task once with the agent's normal tools and once with FFSAKE MCP, checks the exact resulting bytes, records structured agent traces, and writes the full result under `docs/agent-benchmark-runs/`. It never points the agent at this repository or another existing user repository.
 
 Claude Code is invoked non-interactively with stream-JSON output and a temporary MCP config. The FFSAKE run disables its normal Bash/read/write/edit/search tools for the fixture. Codex is invoked with `codex exec --json` and a temporary project-level MCP configuration inside the disposable fixture.
+
+
+### Multi-agent suite
+
+The broader benchmark matrix supports Claude Code, Codex, and OpenCode across three task sizes:
+
+- `micro`: deterministic repository-wide identifier rename;
+- `medium`: implement a small request-policy engine in an existing file;
+- `app`: complete a JSON-backed issue-tracker application scaffold with hidden verification.
+
+Each agent is run in both baseline and FFSAKE modes. Use repeated runs and compare medians:
+
+```sh
+cargo build --locked --bin ffsake-mcp
+python3 scripts/agent_benchmark_suite.py \
+  --agents claude,codex,opencode \
+  --tasks micro,medium,app \
+  --repetitions 3
+```
+
+To test only the installed agents you care about, pass a smaller `--agents` list. OpenCode uses its configured default model unless `--opencode-model provider/model` is supplied.
+
+Every run gets a fresh committed temporary Git repository. The harness performs correctness verification outside the agent session, retains raw JSON traces, and writes one aggregate report under `docs/agent-benchmark-runs/`.
+
+Known current boundary: the large task completes an existing application scaffold rather than starting from an empty directory because FFSAKE MCP does not yet expose arbitrary create-file/write-new-file operations or a build/test runner. That limitation is intentionally recorded rather than hidden with shell fallback.
