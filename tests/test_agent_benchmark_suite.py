@@ -50,6 +50,36 @@ class PersistenceTests(unittest.TestCase):
             finally:
                 suite.RESULT_DIR = original_dir
 
+    def test_medium_fixture_rule_precedence(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = suite.medium_fixture(root)
+            source = (root / "policy.py").read_text()
+            self.assertIn("TODO_ALLOWED", source)
+            self.assertEqual(state, {})
+            rules = [
+                {"method": "GET", "prefix": "/public", "allow": True},
+                {"method": "POST", "prefix": "/admin/invite", "allow": True},
+                {"method": "*", "prefix": "/admin", "allow": False},
+            ]
+            self.assertEqual(next(r for r in rules if
+                (r["method"] == "*" or r["method"] == "POST")
+                and "/admin/invite/7".startswith(r["prefix"]))["allow"], True)
+
+    def test_generic_metrics_do_not_infer_tool_from_text(self):
+        events = [{"type": "tool_call", "message": "Use FFSAKE for this task"}]
+        metrics = suite.generic_metrics("opencode", events)
+        self.assertEqual(metrics["ffsake_tool_calls"], 0)
+
+    def test_codex_invocation_uses_supported_arguments(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td:
+            with patch.object(suite, "run_process", return_value={}) as mocked:
+                suite.codex_run(Path(td), "task", False, 1)
+            args = mocked.call_args.args[0]
+            self.assertNotIn("--ask-for-approval", args)
+            self.assertEqual(args[:3], ["codex", "exec", "--json"])
+
     def test_timeout_returns_json_safe_text(self):
         with tempfile.TemporaryDirectory() as td:
             command = [sys.executable, "-c", "import sys,time;sys.stdout.buffer.write(bytes([255]));sys.stdout.flush();time.sleep(5)"]
