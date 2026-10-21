@@ -320,8 +320,13 @@ def codex_run(root: Path, prompt: str, use_ffsake: bool, timeout: int):
     cmd = [
         "codex", "exec", "--json", "--sandbox", "workspace-write",
         "--ask-for-approval", "never",
-        ffsake_prompt(prompt) if use_ffsake else prompt,
     ]
+    if use_ffsake:
+        # Codex only loads project .codex/config.toml when the repo is trusted.
+        # Keep the trust override process-local instead of mutating user config.
+        project = str(root).replace("\\\\", "\\\\\\\\").replace('"', '\\\\"')
+        cmd += ["-c", f'projects={{"{project}"={{trust_level="trusted"}}}}']
+    cmd += [ffsake_prompt(prompt) if use_ffsake else prompt]
     return run_process(cmd, root, timeout)
 
 
