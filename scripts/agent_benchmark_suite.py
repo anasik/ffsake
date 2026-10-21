@@ -7,6 +7,7 @@ micro, medium, and app-completion tasks. Every run uses a disposable git repo.
 import argparse
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import statistics
@@ -207,10 +208,42 @@ def run_process(cmd, cwd: Path, timeout: int):
         return {
             "exit_code": None,
             "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
-            "stdout": exc.stdout or "",
-            "stderr": exc.stderr or "",
+            "stdout": decode_output(exc.stdout),
+            "stderr": decode_output(exc.stderr),
             "timed_out": True,
         }
+
+
+def decode_output(value):
+    """TimeoutExpired may return bytes even when text=True."""
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value
+
+
+def save_report(path: Path, report: dict):
+    """Atomically persist the completed runs before starting another agent."""
+    payload = json.dumps(report, indent=2)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", dir=path.parent,
+        prefix=path.name + ".", suffix=".tmp", delete=False,
+    ) as stream:
+        tmp_path = Path(stream.name)
+        try:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        except BaseException:
+            tmp_path.unlink(missing_ok=True)
+            raise
+    try:
+        os.replace(tmp_path, path)
+    except BaseException:
+        tmp_path.unlink(missing_ok=True)
+        raise
 
 
 def parse_jsonl(text):
@@ -473,6 +506,24 @@ def main():
         raise SystemExit("build first: cargo build --locked --bin ffsake-mcp")
 
     results = []
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    out = RESULT_DIR / f"suite-{stamp}.json"
+    report = {
+        "agents": agents,
+        "tasks": tasks,
+        "repetitions": args.repetitions,
+        "results": results,
+        "aggregate": [],
+        "complete": False,
+        "known_limitations": [
+            "The app task completes an existing scaffold because FFSAKE MCP does not yet expose create-file/write-new-file primitives.",
+            "FFSAKE mode has no build/test runtime adapter; correctness is verified externally by this harness.",
+            "Codex and OpenCode tool-event schemas differ from Claude, so non-Claude tool-count extraction is conservative; raw traces are retained.",
+            "OpenCode uses its configured default model unless --opencode-model is supplied.",
+        ],
+    }
+    save_report(out, report)
+    print(f"Saving results after every run to: {out}", flush=True)
     total = len(agents) * len(tasks) * 2 * args.repetitions
     index = 0
     for agent in agents:
@@ -484,6 +535,8 @@ def main():
                     result = one(agent, task, mode, args.timeout, args.opencode_model)
                     result["repetition"] = repetition
                     results.append(result)
+                    report["aggregate"] = aggregate(results)
+                    save_report(out, report)
                     print(json.dumps({
                         "correct": result["correct"],
                         "elapsed_ms": result["elapsed_ms"],
@@ -491,24 +544,8 @@ def main():
                         "ffsake_tool_calls": result["trace"]["ffsake_tool_calls"],
                     }), flush=True)
 
-    report = {
-        "agents": agents,
-        "tasks": tasks,
-        "repetitions": args.repetitions,
-        "results": results,
-        "aggregate": aggregate(results),
-        "known_limitations": [
-            "The app task completes an existing scaffold because FFSAKE MCP does not yet expose create-file/write-new-file primitives.",
-            "FFSAKE mode has no build/test runtime adapter; correctness is verified externally by this harness.",
-            "Codex and OpenCode tool-event schemas differ from Claude, so non-Claude tool-count extraction is conservative; raw traces are retained.",
-            "OpenCode uses its configured default model unless --opencode-model is supplied.",
-        ],
-    }
-
-    RESULT_DIR.mkdir(parents=True, exist_ok=True)
-    stamp = time.strftime("%Y%m%d-%H%M%S")
-    out = RESULT_DIR / f"suite-{stamp}.json"
-    out.write_text(json.dumps(report, indent=2))
+    report["complete"] = True
+    save_report(out, report)
 
     print("\nAGGREGATE")
     for row in report["aggregate"]:
