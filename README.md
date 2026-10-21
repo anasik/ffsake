@@ -68,3 +68,12 @@ Search/indexing substrate: https://github.com/dmtrKovalenko/fff
 ## Resident CLI
 
 Run `cargo run --bin ffsake -- serve /absolute/workspace` and keep the JSONL stdin/stdout session open. See [the protocol and validation guide](docs/CLI.md).
+
+
+## Resident interfaces
+
+`ffsake serve WORKSPACE` exposes the native newline-delimited JSON resident interface. Keep the process alive so FFF indexing and server-owned MatchSet/preview handles remain resident.
+
+`ffsake-mcp WORKSPACE` exposes a thin MCP stdio adapter over the same `Resident` backend. It does not duplicate mutation or search logic; MCP tools translate directly to the existing resident requests.
+
+The reproducible benchmark and safety checks live under `scripts/benchmark.py` and `docs/BENCHMARK.md`. The MCP path has its own end-to-end smoke test in `scripts/mcp_smoke.py`.
