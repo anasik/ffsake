@@ -10,13 +10,21 @@ binary = str(Path(sys.argv[1] if len(sys.argv) > 1 else "target/debug/ffsake-mcp
 def send(proc, message):
     proc.stdin.write(json.dumps(message) + "\n")
     proc.stdin.flush()
+    import select
+    ready, _, _ = select.select([proc.stdout], [], [], 30)
+    if not ready:
+        proc.kill()
+        raise AssertionError("MCP response timed out after 30 seconds")
     line = proc.stdout.readline()
     if not line:
         raise AssertionError(proc.stderr.read())
     return json.loads(line)
 
 with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
-    root = Path(temp)
+    root = Path(temp) / "workspace"
+    root.mkdir()
+    outside = Path(temp) / "outside.txt"
+    outside.write_text("outside-only-secret\n")
     (root / "a.txt").write_text("needle needle\n")
 
     proc = subprocess.Popen(
@@ -85,8 +93,79 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         undone_payload = json.loads(undone["result"]["content"][0]["text"])
         assert undone_payload["ok"]
         assert (root / "a.txt").read_text() == "needle needle\n"
+        # Exercise the public MCP boundary, not just Resident's Rust API.
+        # A failed guard must return an MCP error and leave source/sentinel intact.
+        request_id = 7
+        denied_checks = 0
+
+        def call(name, arguments, expect_ok=True):
+            global request_id, denied_checks
+            request_id += 1
+            response = send(proc, {
+                "jsonrpc": "2.0", "id": request_id, "method": "tools/call",
+                "params": {"name": name, "arguments": arguments},
+            })
+            assert response["id"] == request_id, response
+            result = response["result"]
+            payload = json.loads(result["content"][0]["text"])
+            assert payload["ok"] is expect_ok, (name, arguments, response)
+            assert result["isError"] is (not expect_ok), response
+            if not expect_ok:
+                denied_checks += 1
+                assert payload.get("error"), response
+            assert outside.read_text() == "outside-only-secret\n"
+            return payload.get("result")
+
+        for name in ["ffsake_read", "ffsake_list"]:
+            for path in ["../outside.txt", str(outside), ".ffsake"]:
+                call(name, {"path": path}, expect_ok=False)
+        assert (root / "a.txt").read_text() == "needle needle\n"
+
+        (root / "escape.txt").symlink_to(outside)
+        call("ffsake_read", {"path": "escape.txt"}, expect_ok=False)
+        call("ffsake_refresh", {})
+        found_outside = call("ffsake_search", {"pattern": "outside-only-secret"})
+        assert found_outside["matches"] == 0, found_outside
+        call("ffsake_release", {"handle": found_outside["handle"]})
+
+        for name in ["bash", "ffsake_exec", "ffsake_write"]:
+            call(name, {"command": "touch forbidden.txt"}, expect_ok=False)
+        assert not (root / "forbidden.txt").exists()
+        call("ffsake_read", {"path": "a.txt", "unexpected": True}, expect_ok=False)
+        call("ffsake_apply", {"handle": 999999}, expect_ok=False)
+        # A successful preview is consumed by apply; replay must be rejected.
+        call("ffsake_apply", {"handle": preview_handle}, expect_ok=False)
+        # The original MatchSet is not an apply capability.
+        call("ffsake_apply", {"handle": handle}, expect_ok=False)
+        for name in ["ffsake_undo", "ffsake_redo"]:
+            call(name, {"transaction": "../outside.txt"}, expect_ok=False)
+        assert (root / "a.txt").read_text() == "needle needle\n"
+
+        found_again = call("ffsake_search", {"pattern": "needle"})
+        assert found_again["matches"] == 2, found_again
+        fresh_handle = found_again["handle"]
+        call("ffsake_preview_matches", {"handle": fresh_handle, "replacement": "world",
+                                        "expected_matches": 1}, expect_ok=False)
+        assert (root / "a.txt").read_text() == "needle needle\n"
+        fresh_preview = call("ffsake_preview_matches", {
+            "handle": fresh_handle, "replacement": "world", "expected_matches": 2})
+        assert (root / "a.txt").read_text() == "needle needle\n"
+        (root / "a.txt").write_text("external edit must survive\n")
+        call("ffsake_apply", {"handle": fresh_preview["handle"]}, expect_ok=False)
+        call("ffsake_preview_matches", {"handle": fresh_handle, "replacement": "world",
+                                        "expected_matches": 2}, expect_ok=False)
+        assert (root / "a.txt").read_text() == "external edit must survive\n"
+
+        call("ffsake_release", {"handle": fresh_preview["handle"]})
+        call("ffsake_apply", {"handle": fresh_preview["handle"]}, expect_ok=False)
+        call("ffsake_release", {"handle": fresh_handle})
+        call("ffsake_preview_matches", {"handle": fresh_handle, "replacement": "world",
+                                        "expected_matches": 2}, expect_ok=False)
+        assert (root / "a.txt").read_text() == "external edit must survive\n"
+        print(f"MCP boundary guards: {denied_checks} rejected operations; sentinel and source checks PASS")
     finally:
         proc.stdin.close()
         assert proc.wait(timeout=30) == 0, proc.stderr.read()
 
 print("MCP smoke: initialize/tools/search/preview/apply/undo PASS")
+
