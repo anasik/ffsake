@@ -77,3 +77,23 @@ Run `cargo run --bin ffsake -- serve /absolute/workspace` and keep the JSONL std
 `ffsake-mcp WORKSPACE` exposes a thin MCP stdio adapter over the same `Resident` backend. It does not duplicate mutation or search logic; MCP tools translate directly to the existing resident requests.
 
 The reproducible benchmark and safety checks live under `scripts/benchmark.py` and `docs/BENCHMARK.md`. The MCP path has its own end-to-end smoke test in `scripts/mcp_smoke.py`.
+
+
+## Real agent benchmark
+
+After building the MCP binary, run a disposable controlled benchmark with an installed coding-agent CLI:
+
+```sh
+cargo build --locked --bin ffsake-mcp
+python3 scripts/agent_benchmark.py claude
+```
+
+or:
+
+```sh
+python3 scripts/agent_benchmark.py codex
+```
+
+Use `all` to run both. The harness creates temporary fixture repositories, runs the same rename task once with the agent's normal tools and once with FFSAKE MCP, checks the exact resulting bytes, records structured agent traces, and writes the full result under `docs/agent-benchmark-runs/`. It never points the agent at this repository or another existing user repository.
+
+Claude Code is invoked non-interactively with stream-JSON output and a temporary MCP config. The FFSAKE run disables its normal Bash/read/write/edit/search tools for the fixture. Codex is invoked with `codex exec --json` and a temporary project-level MCP configuration inside the disposable fixture.
