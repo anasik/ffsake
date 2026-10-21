@@ -78,7 +78,10 @@ fn handle_message(runtime: &mut Resident, message: Value) -> Option<Value> {
     }
 
     let id = message.get("id")?.clone();
-    let method = message.get("method").and_then(Value::as_str).unwrap_or_default();
+    let method = message
+        .get("method")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
 
     Some(match method {
         "initialize" => {
@@ -161,51 +164,91 @@ fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
 
 fn tools() -> Vec<Value> {
     vec![
-        tool("ffsake_read", "Read a workspace file or line range.", json!({
-            "type":"object","required":["path"],"properties":{
-                "path":{"type":"string"},
-                "start":{"type":"integer","minimum":1},
-                "end":{"type":"integer","minimum":1}
-            }
-        })),
-        tool("ffsake_list", "List a safe workspace-relative directory.", json!({
-            "type":"object","required":["path"],"properties":{"path":{"type":"string"}}
-        })),
-        tool("ffsake_target", "Set the sticky workspace file target used by later searches.", json!({
-            "type":"object","required":["target"],"properties":{"target":selector_schema()}
-        })),
-        tool("ffsake_search", "Search indexed workspace content and retain a server-owned MatchSet.", json!({
-            "type":"object","required":["pattern"],"properties":{
-                "pattern":{"type":"string"},
-                "regex":{"type":"boolean"},
-                "target":selector_schema(),
-                "limit":{"type":"integer","minimum":1,"maximum":1000},
-                "offset":{"type":"integer","minimum":0},
-                "details":{"type":"boolean"}
-            }
-        })),
-        tool("ffsake_preview_matches", "Preview replacing a cached MatchSet without writing.", json!({
-            "type":"object","required":["handle","replacement","expected_matches"],"properties":{
-                "handle":{"type":"integer","minimum":1},
-                "replacement":{"type":"string"},
-                "expected_matches":{"type":"integer","minimum":0}
-            }
-        })),
-        tool("ffsake_apply", "Atomically apply a previously previewed transform.", json!({
-            "type":"object","required":["handle"],"properties":{"handle":{"type":"integer","minimum":1}}
-        })),
-        tool("ffsake_undo", "Undo a journal transaction with state verification.", json!({
-            "type":"object","required":["transaction"],"properties":{"transaction":{"type":"string"}}
-        })),
-        tool("ffsake_redo", "Redo a journal transaction with state verification.", json!({
-            "type":"object","required":["transaction"],"properties":{"transaction":{"type":"string"}}
-        })),
-        tool("ffsake_release", "Release a resident MatchSet or preview handle.", json!({
-            "type":"object","required":["handle"],"properties":{"handle":{"type":"integer","minimum":1}}
-        })),
-        tool("ffsake_refresh", "Wait for a full FFF index refresh.", json!({
-            "type":"object","properties":{}
-        })),
+        tool(
+            "ffsake_read",
+            "Read a workspace file or line range.",
+            json!({
+                "type":"object","required":["path"],"properties":{
+                    "path":{"type":"string"},
+                    "start":{"type":"integer","minimum":1},
+                    "end":{"type":"integer","minimum":1}
+                }
+            }),
+        ),
+        tool(
+            "ffsake_list",
+            "List a safe workspace-relative directory.",
+            json!({
+                "type":"object","required":["path"],"properties":{"path":{"type":"string"}}
+            }),
+        ),
+        tool(
+            "ffsake_target",
+            "Set the sticky workspace file target used by later searches.",
+            json!({
+                "type":"object","required":["target"],"properties":{"target":selector_schema()}
+            }),
+        ),
+        tool(
+            "ffsake_search",
+            "Search indexed workspace content and retain a server-owned MatchSet.",
+            json!({
+                "type":"object","required":["pattern"],"properties":{
+                    "pattern":{"type":"string"},
+                    "regex":{"type":"boolean"},
+                    "target":selector_schema(),
+                    "limit":{"type":"integer","minimum":1,"maximum":1000},
+                    "offset":{"type":"integer","minimum":0},
+                    "details":{"type":"boolean"}
+                }
+            }),
+        ),
+        tool(
+            "ffsake_preview_matches",
+            "Preview replacing a cached MatchSet without writing.",
+            json!({
+                "type":"object","required":["handle","replacement","expected_matches"],"properties":{
+                    "handle":{"type":"integer","minimum":1},
+                    "replacement":{"type":"string"},
+                    "expected_matches":{"type":"integer","minimum":0}
+                }
+            }),
+        ),
+        tool(
+            "ffsake_apply",
+            "Atomically apply a previously previewed transform.",
+            json!({
+                "type":"object","required":["handle"],"properties":{"handle":{"type":"integer","minimum":1}}
+            }),
+        ),
+        tool(
+            "ffsake_undo",
+            "Undo a journal transaction with state verification.",
+            json!({
+                "type":"object","required":["transaction"],"properties":{"transaction":{"type":"string"}}
+            }),
+        ),
+        tool(
+            "ffsake_redo",
+            "Redo a journal transaction with state verification.",
+            json!({
+                "type":"object","required":["transaction"],"properties":{"transaction":{"type":"string"}}
+            }),
+        ),
+        tool(
+            "ffsake_release",
+            "Release a resident MatchSet or preview handle.",
+            json!({
+                "type":"object","required":["handle"],"properties":{"handle":{"type":"integer","minimum":1}}
+            }),
+        ),
+        tool(
+            "ffsake_refresh",
+            "Wait for a full FFF index refresh.",
+            json!({
+                "type":"object","properties":{}
+            }),
+        ),
     ]
 }
 
