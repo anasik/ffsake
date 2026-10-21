@@ -91,15 +91,11 @@ fn handle_message(runtime: &mut Resident, message: Value) -> Option<Value> {
 
     Some(match method {
         "initialize" => {
-            let protocol = message
-                .pointer("/params/protocolVersion")
-                .cloned()
-                .unwrap_or_else(|| json!("2025-03-26"));
             json!({
                 "jsonrpc":"2.0",
                 "id":id,
                 "result":{
-                    "protocolVersion":protocol,
+                    "protocolVersion":"2025-11-25",
                     "capabilities":{"tools":{}},
                     "serverInfo":{"name":"ffsake","version":env!("CARGO_PKG_VERSION")}
                 }
