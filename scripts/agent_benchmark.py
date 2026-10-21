@@ -40,6 +40,20 @@ def fixture(root: Path) -> dict[str, bytes]:
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(content)
+
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.name", "FFSAKE Benchmark"], cwd=root, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "ffsake-benchmark@example.invalid"],
+        cwd=root,
+        check=True,
+    )
+    subprocess.run(["git", "add", "."], cwd=root, check=True)
+    subprocess.run(
+        ["git", "commit", "-qm", "benchmark fixture"],
+        cwd=root,
+        check=True,
+    )
     return files
 
 
@@ -98,18 +112,60 @@ def flatten_strings(value):
 
 
 def trace_metrics(events):
-    blob = "\n".join(flatten_strings(events))
-    lower = blob.lower()
+    tool_calls = []
+    result_event = None
+
+    for event in events:
+        if event.get("type") == "result":
+            result_event = event
+        message = event.get("message")
+        if not isinstance(message, dict) or message.get("role") != "assistant":
+            continue
+        for block in message.get("content", []):
+            if isinstance(block, dict) and block.get("type") == "tool_use":
+                tool_calls.append(
+                    {
+                        "name": block.get("name", ""),
+                        "input": block.get("input"),
+                    }
+                )
+
+    names = [call["name"] for call in tool_calls]
+    bash_calls = [call for call in tool_calls if call["name"] == "Bash"]
+    ffsake_calls = [
+        call
+        for call in tool_calls
+        if "ffsake" in call["name"].lower()
+        and call["name"] != "ToolSearch"
+    ]
+
+    commands = [
+        str(call.get("input", {}).get("command", ""))
+        for call in bash_calls
+        if isinstance(call.get("input"), dict)
+    ]
+    command_blob = "\n".join(commands).lower()
+
+    usage = (result_event or {}).get("usage", {})
+    model_usage = (result_event or {}).get("modelUsage", {})
+
     return {
         "events": len(events),
-        "ffsake_tool_mentions": lower.count("ffsake_"),
-        "shell_mentions": sum(
-            lower.count(token)
-            for token in ["shell", "bash", "command_execution", "exec_command", "terminal"]
-        ),
-        "grep_mentions": lower.count("grep"),
-        "sed_mentions": lower.count("sed"),
-        "cat_mentions": lower.count("cat "),
+        "tool_calls": len(tool_calls),
+        "tool_names": names,
+        "ffsake_tool_calls": len(ffsake_calls),
+        "bash_tool_calls": len(bash_calls),
+        "grep_commands": sum("grep" in command for command in commands),
+        "sed_commands": sum("sed" in command for command in commands),
+        "cat_commands": sum("cat " in command for command in commands),
+        "num_turns": (result_event or {}).get("num_turns"),
+        "total_cost_usd": (result_event or {}).get("total_cost_usd"),
+        "input_tokens": usage.get("input_tokens"),
+        "output_tokens": usage.get("output_tokens"),
+        "cache_read_input_tokens": usage.get("cache_read_input_tokens"),
+        "cache_creation_input_tokens": usage.get("cache_creation_input_tokens"),
+        "model_usage": model_usage,
+        "shell_command_text": command_blob,
     }
 
 
@@ -235,9 +291,17 @@ def summarize(runs):
                 "exit_code": item["exit_code"],
                 "elapsed_ms": item["elapsed_ms"],
                 "events": item["trace"]["events"],
-                "ffsake_tool_mentions": item["trace"]["ffsake_tool_mentions"],
-                "shell_mentions": item["trace"]["shell_mentions"],
-                "grep_mentions": item["trace"]["grep_mentions"],
+                "tool_calls": item["trace"]["tool_calls"],
+                "ffsake_tool_calls": item["trace"]["ffsake_tool_calls"],
+                "bash_tool_calls": item["trace"]["bash_tool_calls"],
+                "grep_commands": item["trace"]["grep_commands"],
+                "sed_commands": item["trace"]["sed_commands"],
+                "num_turns": item["trace"]["num_turns"],
+                "total_cost_usd": item["trace"]["total_cost_usd"],
+                "input_tokens": item["trace"]["input_tokens"],
+                "output_tokens": item["trace"]["output_tokens"],
+                "cache_read_input_tokens": item["trace"]["cache_read_input_tokens"],
+                "cache_creation_input_tokens": item["trace"]["cache_creation_input_tokens"],
             }
         )
     return rows
