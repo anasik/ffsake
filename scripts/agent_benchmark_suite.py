@@ -536,7 +536,10 @@ def preflight(agents):
     """Inspect installed CLIs without sending a prompt or contacting a model."""
     checks = []
     required = {
-        "claude": ["--output-format", "--verbose", "--max-turns", "--dangerously-skip-permissions",
+        # Claude documents --max-turns for print mode but may hide it from
+        # top-level --help. Preserve the turn cap; do not reject its omission.
+        # https://code.claude.com/docs/en/cli-reference
+        "claude": ["--output-format", "--verbose", "--dangerously-skip-permissions",
                    "--strict-mcp-config", "--mcp-config", "--tools"],
         "codex": ["--json", "--sandbox", "--config"],
         "opencode": ["--format", "--model"],
@@ -554,6 +557,8 @@ def preflight(agents):
             version = run_process([executable, "--version"], ROOT, 15)
             help_text = help_result["stdout"] + help_result["stderr"]
             missing = [flag for flag in required[agent] if flag not in help_text]
+            unlisted = ["--max-turns"] if agent == "claude" and "--max-turns" not in help_text else []
+            check["unlisted_documented_flags"] = unlisted
             check.update({"version": version["stdout"].strip(), "help_exit_code": help_result["exit_code"],
                           "missing_flags": missing, "stderr": help_result["stderr"],
                           "ok": help_result["exit_code"] == 0 and not help_result["timed_out"] and not missing})

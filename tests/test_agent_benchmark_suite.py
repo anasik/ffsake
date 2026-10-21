@@ -252,5 +252,43 @@ class PreflightTests(unittest.TestCase):
             self.assertEqual(report["preflight"]["checks"][0]["error"], "missing_cli")
 
 
+class ClaudePreflightTests(unittest.TestCase):
+    HELP = "--output-format --verbose --dangerously-skip-permissions --strict-mcp-config --mcp-config --tools"
+
+    def preflight_with_help(self, help_text):
+        from unittest.mock import patch
+        def run(cmd, *args):
+            self.assertIn(cmd[-1], ["--help", "--version"])
+            return {"stdout": help_text if cmd[-1] == "--help" else "2.1.306 (Claude Code)",
+                    "stderr": "", "exit_code": 0, "timed_out": False}
+        with patch.object(suite.shutil, "which", return_value="/fake/claude"), patch.object(suite, "run_process", side_effect=run):
+            return suite.preflight(["claude"])
+
+    def test_documented_print_only_flag_missing_from_help_is_not_failure(self):
+        report = self.preflight_with_help(self.HELP)
+        self.assertTrue(report["ok"])
+        self.assertEqual(report["checks"][0]["missing_flags"], [])
+        self.assertEqual(report["checks"][0]["unlisted_documented_flags"], ["--max-turns"])
+        self.assertEqual(report["model_calls"], 0)
+
+    def test_required_isolation_flag_is_still_mandatory(self):
+        report = self.preflight_with_help(self.HELP.replace("--tools", ""))
+        self.assertFalse(report["ok"])
+        self.assertEqual(report["checks"][0]["missing_flags"], ["--tools"])
+
+    def test_visible_turn_flag_is_not_reported_unlisted(self):
+        report = self.preflight_with_help(self.HELP + " --max-turns")
+        self.assertTrue(report["ok"])
+        self.assertEqual(report["checks"][0]["unlisted_documented_flags"], [])
+
+    def test_turn_cap_remains_in_both_benchmark_modes(self):
+        from unittest.mock import patch
+        for mode in [False, True]:
+            with tempfile.TemporaryDirectory() as td, patch.object(suite, "run_process", return_value={}) as run:
+                suite.claude_run(Path(td), "task", mode, 1)
+                args = run.call_args.args[0]
+                self.assertEqual(args[args.index("--max-turns") + 1], "40")
+
+
 if __name__ == "__main__":
     unittest.main()
