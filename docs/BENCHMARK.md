@@ -9,10 +9,10 @@ Measured locally on 2026-10-21, Linux x86_64, Rust 1.99.1, unoptimized debug bin
 | Measurement | Resident CLI | Shell baseline |
 | --- | ---: | ---: |
 | Tool request/response phases per iteration | 4 | 4 |
-| Median elapsed per workflow | 29.661 ms | 84.386 ms |
-| One-time resident startup + ranged-read probe | 12.134 ms | Not applicable |
+| Median elapsed per workflow | 27.165 ms | 83.179 ms |
+| One-time resident startup + ranged-read probe | 22.074 ms | Not applicable |
 
-The resident workflow was approximately 2.85× faster in this fixture. There is **no measured round-trip reduction** against this deliberately batched shell baseline. Both preserve a review opportunity between preview and apply. The baseline uses grep for discovery, then Python/difflib subprocesses for staged previews, guarded apply, and guarded snapshot restoration. It does not invoke ffsake. Its snapshots do not offer ffsake's persistent journal protocol or workspace confinement.
+The resident workflow was approximately 3.06× faster in this fixture. There is **no measured round-trip reduction** against this deliberately batched shell baseline. Both preserve a review opportunity between preview and apply. The baseline uses grep for discovery, then Python/difflib subprocesses for staged previews, guarded apply, and guarded snapshot restoration. It does not invoke ffsake. Its snapshots do not offer ffsake's persistent journal protocol or workspace confinement.
 
 Times include pipe/subprocess overhead and fixture verification, exclude compilation, and include resident index refresh on subsequent searches. Iterations alternate resident then shell on the same restored fixture. This is a small synthetic local benchmark, not a claim about large repositories, network tool latency, universal shell performance, or LLM token savings. A single script can batch either interface if the review boundary is removed. Raw samples are in [benchmark-results.json](benchmark-results.json).
 

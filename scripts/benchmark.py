@@ -59,7 +59,7 @@ def safety(root):
         assert client.call(op='read', path='a.txt')['text'] == 'needle needle'
         # Scoped MatchSet, count guard, read-only preview, stale apply, undo conflict.
         target = {'include': [{'Exact': 'a.txt'}], 'exclude': []}
-        found = client.call(op='search', pattern='needle', target=target)
+        found = client.call(op='search', pattern='needle', target=target, details=True)
         assert len(found['ranges']) == 2
         client.reject(op='preview_matches', handle=found['handle'], replacement='new', expected_matches=3)
         plan = client.call(op='preview_matches', handle=found['handle'], replacement='new', expected_matches=2)
@@ -174,7 +174,7 @@ def main():
             for _ in range(10):
                 start = time.perf_counter()
                 found = client.call(op='search', pattern='needle', limit=1000)
-                assert len(found['ranges']) == 400, found
+                assert found['matches'] == 400 and 'ranges' not in found, found
                 plan = client.call(op='preview_matches', handle=found['handle'], replacement='replacement', expected_matches=400)
                 assert plan['preview']['changed_files'] == 20
                 check(root, original)

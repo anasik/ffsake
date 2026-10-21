@@ -34,6 +34,8 @@ pub enum Request {
         limit: usize,
         #[serde(default)]
         offset: usize,
+        #[serde(default)]
+        details: bool,
     },
     PreviewMatches {
         handle: u64,
@@ -150,6 +152,7 @@ impl Resident {
                 target,
                 limit,
                 offset,
+                details,
             } => {
                 if limit == 0 || limit > 1000 {
                     return Err("search limit must be 1..=1000".into());
@@ -177,7 +180,10 @@ impl Resident {
                     offset,
                 )?;
                 let handle = self.allocate()?;
-                let response = json!({"handle": handle, "ranges": set.ranges, "next_file_offset": set.next_file_offset});
+                let mut response = json!({"handle": handle, "matches": set.ranges.len(), "files": set.file_hashes.len(), "next_file_offset": set.next_file_offset});
+                if details {
+                    response["ranges"] = serde_json::to_value(&set.ranges)?;
+                }
                 self.matches.insert(handle, set);
                 Ok(response)
             }
