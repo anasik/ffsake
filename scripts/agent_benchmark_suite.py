@@ -279,32 +279,52 @@ def recursive_strings(value):
             yield from recursive_strings(x)
 
 
+def tool_names(agent, events):
+    """Count invocations once, rather than counting lifecycle events or prose."""
+    names, seen = [], set()
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        calls = []
+        if agent == "claude":
+            message = event.get("message", {})
+            if isinstance(message, dict) and message.get("role") == "assistant":
+                content = message.get("content", [])
+                if isinstance(content, list):
+                    calls = [(b.get("id"), b.get("name")) for b in content
+                             if isinstance(b, dict) and b.get("type") == "tool_use"]
+        elif agent == "codex" and event.get("type") in {"item.started", "item.updated", "item.completed"}:
+            item = event.get("item", {})
+            if isinstance(item, dict):
+                kind = item.get("type")
+                if kind == "mcp_tool_call":
+                    calls = [(item.get("id"), "mcp__" + str(item.get("server", ""))
+                              + "__" + str(item.get("tool", "")))]
+                elif kind in {"command_execution", "file_change", "web_search"}:
+                    calls = [(item.get("id"), kind)]
+        elif agent == "opencode" and event.get("type") == "tool_use":
+            part = event.get("part", {})
+            if isinstance(part, dict):
+                calls = [(part.get("callID") or part.get("id"), part.get("tool"))]
+        for call_id, name in calls:
+            if not isinstance(name, str) or not name:
+                continue
+            key = (str(call_id), name) if call_id is not None else None
+            if key is not None and key in seen:
+                continue
+            if key is not None:
+                seen.add(key)
+            names.append(name)
+    return names
+
+
 def generic_metrics(agent, events):
-    names = []
+    names = tool_names(agent, events)
     ffsake = 0
     shell = 0
-    for event in events:
-        if agent == "claude":
-            message = event.get("message") if isinstance(event, dict) else None
-            if isinstance(message, dict) and message.get("role") == "assistant":
-                for block in message.get("content", []):
-                    if isinstance(block, dict) and block.get("type") == "tool_use":
-                        name = str(block.get("name", ""))
-                        names.append(name)
-        else:
-            # Codex/OpenCode JSON formats evolve; preserve raw trace and extract
-            # likely tool identifiers conservatively.
-            if not isinstance(event, dict):
-                continue
-            typ = str(event.get("type", ""))
-            if "tool" in typ or "command" in typ or "item." in typ:
-                blob = list(recursive_strings(event))
-                candidate = typ
-                names.append(candidate)
-
     for name in names:
         low = name.lower()
-        if "ffsake" in low:
+        if is_ffsake_tool(name):
             ffsake += 1
         if any(x in low for x in ["bash", "shell", "command_execution", "exec_command"]):
             shell += 1
@@ -315,6 +335,12 @@ def generic_metrics(agent, events):
         {},
     )
     usage = result_event.get("usage", {}) if isinstance(result_event, dict) else {}
+    if agent == "codex":
+        completed = next((e for e in reversed(events) if isinstance(e, dict)
+                          and e.get("type") == "turn.completed"), {})
+        usage = completed.get("usage", {})
+    if not isinstance(usage, dict):
+        usage = {}
 
     return {
         "events": len(events),
@@ -331,6 +357,36 @@ def generic_metrics(agent, events):
         "total_cost_usd": result_event.get("total_cost_usd") if isinstance(result_event, dict) else None,
         "num_turns": result_event.get("num_turns") if isinstance(result_event, dict) else None,
     }
+
+
+def is_ffsake_tool(name):
+    name = name.lower()
+    return name.startswith(("mcp__ffsake__", "ffsake_", "ffsake."))
+
+
+def permission_audit(agent, use_ffsake, metrics):
+    names = metrics["tool_names"]
+    violations = ([name for name in names if not is_ffsake_tool(name)]
+                  if use_ffsake else [name for name in names if is_ffsake_tool(name)])
+    return {
+        "requested_ffsake_only": use_ffsake,
+        "native_tool_restrictions_configured": use_ffsake and agent in {"claude", "opencode"},
+        "enforced_by_host": False,
+        "observed_tool_calls": len(names),
+        "observed_policy_violations": violations,
+        "trace_policy_status": "violation" if violations else "no_violation_observed" if names else "unverified",
+        "permission_isolation_verified": False,
+    }
+
+
+def fixture_files(root):
+    """Snapshot user files before verifier imports create any bytecode."""
+    excluded = {".git", ".ffsake", ".codex", ".ffsake-claude-mcp.json", "opencode.json"}
+    return {str(p.relative_to(root)): (b"SYMLINK:" + os.fsencode(os.readlink(p))
+                                      if p.is_symlink() else p.read_bytes())
+            for p in root.rglob("*")
+            if not excluded.intersection(p.relative_to(root).parts)
+            and (p.is_symlink() or p.is_file())}
 
 
 def claude_run(root: Path, prompt: str, use_ffsake: bool, timeout: int):
@@ -427,6 +483,7 @@ def one(agent, task_name, mode, timeout, opencode_model):
     with tempfile.TemporaryDirectory(prefix=f"ffsake-suite-{agent}-{task_name}-") as td:
         root = Path(td)
         state = task["fixture"](root)
+        original_files = fixture_files(root)
 
         if agent == "claude":
             result = claude_run(root, task["prompt"], use_ffsake, timeout)
@@ -439,24 +496,36 @@ def one(agent, task_name, mode, timeout, opencode_model):
 
         events = parse_jsonl(result["stdout"])
         metrics = generic_metrics(agent, events)
-        clean_control_files(root)
-        correct, verification = task["verify"](root, state)
-        changed = git_changed_files(root)
+        final_files = fixture_files(root)
+        allowed_changes = set(original_files) if task_name == "micro" else {
+            "policy.py" if task_name == "medium" else "issue_tracker.py"}
+        unexpected = sorted(set(original_files) ^ set(final_files) |
+                            {name for name in original_files.keys() & final_files.keys()
+                             if name not in allowed_changes and original_files[name] != final_files[name]})
+        changed = sorted(name for name in original_files.keys() | final_files.keys()
+                         if original_files.get(name) != final_files.get(name))
+        try:
+            correct, verification = task["verify"](root, state)
+        except Exception as exc:
+            correct, verification = False, {"exception": repr(exc)}
+        verification["unexpected_file_changes"] = unexpected
+        policy = permission_audit(agent, use_ffsake, metrics)
+        invalid_reasons = []
+        if not metrics["tool_calls"]:
+            invalid_reasons.append("no_recognized_tool_calls")
+        if policy["observed_policy_violations"]:
+            invalid_reasons.append("tool_policy_violation")
 
         return {
             "agent": agent,
             "task": task_name,
             "mode": mode,
-            "correct": correct and result["exit_code"] == 0 and not result["timed_out"],
+            "correct": correct and not unexpected and result["exit_code"] == 0 and not result["timed_out"],
+            "comparison_valid": not invalid_reasons,
+            "comparison_invalid_reasons": invalid_reasons,
             "verification": verification,
             "changed_files": changed,
-            "permission_policy": {
-                "scope": "workspace",
-                "filesystem_tools_disabled": use_ffsake,
-                "direct_shell_disabled": use_ffsake,
-                "requested_ffsake_only": use_ffsake,
-                "enforced_by_host": False,
-            },
+            "permission_policy": policy,
             "exit_code": result["exit_code"],
             "elapsed_ms": result["elapsed_ms"],
             "timed_out": result["timed_out"],
@@ -479,21 +548,23 @@ def aggregate(results):
 
     rows = []
     for (agent, task, mode), items in sorted(groups.items()):
+        valid_items = [x for x in items if x.get("comparison_valid", False)]
         rows.append({
             "agent": agent,
             "task": task,
             "mode": mode,
             "runs": len(items),
+            "comparison_valid_runs": len(valid_items),
             "correct_runs": sum(bool(x["correct"]) for x in items),
             "success_rate": sum(bool(x["correct"]) for x in items) / len(items),
-            "median_elapsed_ms": median_or_none([x["elapsed_ms"] for x in items]),
+            "median_elapsed_ms": median_or_none([x["elapsed_ms"] for x in valid_items]),
             "successful_exit_rate": sum(x["exit_code"] == 0 and not x["timed_out"] for x in items) / len(items),
             "timeout_rate": sum(bool(x["timed_out"]) for x in items) / len(items),
-            "median_tool_calls": median_or_none([x["trace"]["tool_calls"] for x in items]),
-            "median_ffsake_tool_calls": median_or_none([x["trace"]["ffsake_tool_calls"] for x in items]),
-            "median_shell_tool_calls": median_or_none([x["trace"]["shell_tool_calls"] for x in items]),
-            "median_output_tokens": median_or_none([x["trace"]["output_tokens"] for x in items]),
-            "median_cost_usd": median_or_none([x["trace"]["total_cost_usd"] for x in items]),
+            "median_tool_calls": median_or_none([x["trace"]["tool_calls"] for x in valid_items]),
+            "median_ffsake_tool_calls": median_or_none([x["trace"]["ffsake_tool_calls"] for x in valid_items]),
+            "median_shell_tool_calls": median_or_none([x["trace"]["shell_tool_calls"] for x in valid_items]),
+            "median_output_tokens": median_or_none([x["trace"]["output_tokens"] for x in valid_items]),
+            "median_cost_usd": median_or_none([x["trace"]["total_cost_usd"] for x in valid_items]),
         })
     return rows
 
@@ -527,6 +598,7 @@ def main():
     results = []
     out = reserve_report_path()
     report = {
+        "schema_version": 2,
         "agents": agents,
         "tasks": tasks,
         "repetitions": args.repetitions,
@@ -536,7 +608,9 @@ def main():
         "known_limitations": [
             "The app task completes an existing scaffold because FFSAKE MCP does not yet expose create-file/write-new-file primitives.",
             "FFSAKE mode has no build/test runtime adapter; correctness is verified externally by this harness.",
-            "Codex and OpenCode tool-event schemas differ from Claude, so non-Claude tool-count extraction is conservative; raw traces are retained.",
+            "Tool accounting recognizes explicit Claude, Codex and OpenCode invocation records; unknown schemas are unverified, and raw traces are retained.",
+            "Trace policy checks do not prove host-enforced permission isolation. Codex native filesystem and shell tools remain available.",
+            "Inherited agent configuration is not isolated; observed baseline FFSAKE calls invalidate that comparison.",
             "OpenCode uses its configured default model unless --opencode-model is supplied.",
         ],
     }
@@ -573,3 +647,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

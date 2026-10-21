@@ -90,5 +90,99 @@ class PersistenceTests(unittest.TestCase):
             json.dumps(result)
 
 
+
+class AccountingTests(unittest.TestCase):
+    def test_codex_lifecycle_is_one_call_and_messages_are_not_calls(self):
+        item = {"id": "tool-1", "type": "mcp_tool_call", "server": "ffsake", "tool": "read"}
+        events = [{"type": kind, "item": item} for kind in
+                  ["item.started", "item.updated", "item.completed"]]
+        events += [{"type": "item.completed", "item": {"id": "msg", "type": "agent_message", "text": "ffsake"}},
+                   {"type": "item.completed", "item": {"id": "cmd", "type": "command_execution"}},
+                   {"type": "turn.completed", "usage": {"input_tokens": 123, "output_tokens": 45}}]
+        metrics = suite.generic_metrics("codex", events)
+        self.assertEqual(metrics["tool_calls"], 2)
+        self.assertEqual(metrics["ffsake_tool_calls"], 1)
+        self.assertEqual(metrics["shell_tool_calls"], 1)
+        self.assertEqual(metrics["input_tokens"], 123)
+        self.assertEqual(metrics["output_tokens"], 45)
+
+    def test_opencode_uses_part_tool_and_deduplicates(self):
+        event = {"type": "tool_use", "part": {"callID": "call1", "tool": "ffsake_read"}}
+        metrics = suite.generic_metrics("opencode", [event, event,
+            {"type": "text", "part": {"text": "ffsake bash"}},
+            {"type": "tool_use", "part": {"callID": "call2", "tool": "bash"}}])
+        self.assertEqual(metrics["tool_calls"], 2)
+        self.assertEqual(metrics["ffsake_tool_calls"], 1)
+        self.assertEqual(metrics["shell_tool_calls"], 1)
+
+    def test_claude_duplicate_assistant_blocks_are_one_call(self):
+        event = {"type": "assistant", "message": {"role": "assistant", "content": [
+            {"type": "tool_use", "id": "1", "name": "mcp__ffsake__read"}]}}
+        self.assertEqual(suite.generic_metrics("claude", [event, event])["tool_calls"], 1)
+
+    def test_policy_detects_contamination_and_forbidden_native_tools(self):
+        metrics = {"tool_names": ["mcp__ffsake__read", "file_change"]}
+        baseline = suite.permission_audit("codex", False, metrics)
+        restricted = suite.permission_audit("codex", True, metrics)
+        self.assertEqual(baseline["observed_policy_violations"], ["mcp__ffsake__read"])
+        self.assertEqual(restricted["observed_policy_violations"], ["file_change"])
+        self.assertFalse(restricted["native_tool_restrictions_configured"])
+        self.assertFalse(restricted["permission_isolation_verified"])
+        self.assertEqual(suite.permission_audit("codex", True, {"tool_names": []})[
+            "trace_policy_status"], "unverified")
+
+    def test_unrelated_server_name_is_not_ffsake(self):
+        self.assertFalse(suite.is_ffsake_tool("mcp__not_ffsake__read"))
+
+
+class RunValidationTests(unittest.TestCase):
+    def run_mock_agent(self, mutation, stdout=''):
+        from unittest.mock import patch
+        def run(root, *args):
+            mutation(root)
+            return {"stdout": stdout, "stderr": "", "elapsed_ms": 1,
+                    "exit_code": 0, "timed_out": False}
+        with patch.object(suite, "codex_run", side_effect=run):
+            return suite.one("codex", "medium", "baseline", 1, None)
+
+    def test_forbidden_changes_fail_even_when_behavior_verifier_passes(self):
+        def mutation(root):
+            (root / "README.md").write_text("changed")
+            (root / "extra.txt").write_text("unexpected")
+        from unittest.mock import patch
+        with patch.dict(suite.TASKS["medium"], {"verify": lambda *_: (True, {})}):
+            result = self.run_mock_agent(mutation)
+        self.assertFalse(result["correct"])
+        self.assertEqual(result["verification"]["unexpected_file_changes"], ["README.md", "extra.txt"])
+
+    def test_missing_required_file_is_recorded_without_losing_run(self):
+        result = self.run_mock_agent(lambda root: (root / "policy.py").unlink())
+        self.assertFalse(result["correct"])
+        self.assertIn("policy.py", result["verification"]["unexpected_file_changes"])
+        json.dumps(result)
+
+    def test_contaminated_baseline_is_invalid(self):
+        event = {"type": "item.completed", "item": {
+            "id": "1", "type": "mcp_tool_call", "server": "ffsake", "tool": "read"}}
+        result = self.run_mock_agent(lambda _: None, json.dumps(event))
+        self.assertFalse(result["comparison_valid"])
+        self.assertIn("tool_policy_violation", result["comparison_invalid_reasons"])
+
+
+class AggregateTests(unittest.TestCase):
+    def test_invalid_runs_do_not_contribute_performance_medians(self):
+        def result(valid, elapsed):
+            return {"agent": "codex", "task": "micro", "mode": "baseline",
+                    "comparison_valid": valid, "correct": valid, "elapsed_ms": elapsed,
+                    "exit_code": 0, "timed_out": False,
+                    "trace": {"tool_calls": 1, "ffsake_tool_calls": 0,
+                              "shell_tool_calls": 1, "output_tokens": None, "total_cost_usd": None}}
+        row = suite.aggregate([result(False, 1), result(True, 200)])[0]
+        self.assertEqual(row["median_elapsed_ms"], 200)
+        self.assertEqual(row["comparison_valid_runs"], 1)
+        self.assertEqual(row["runs"], 2)
+        self.assertIsNone(suite.aggregate([result(False, 1)])[0]["median_elapsed_ms"])
+
+
 if __name__ == "__main__":
     unittest.main()
