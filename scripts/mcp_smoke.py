@@ -84,6 +84,19 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         transaction = applied_payload["result"]["transaction"]
         assert (root / "a.txt").read_text() == "world world\n"
 
+        # Verify the normal search -> preview -> apply -> verification workflow
+        # without a redundant explicit refresh or large range payloads.
+        for pattern, expected in [("needle", 0), ("world", 2)]:
+            verified = send(proc, {
+                "jsonrpc": "2.0", "id": "verify-after-apply-" + pattern,
+                "method": "tools/call",
+                "params": {"name": "ffsake_search", "arguments": {"pattern": pattern}},
+            })
+            verified_payload = json.loads(verified["result"]["content"][0]["text"])
+            assert verified_payload["ok"], verified
+            assert verified_payload["result"]["matches"] == expected, verified
+            assert "ranges" not in verified_payload["result"], verified
+
         undone = send(proc, {
             "jsonrpc": "2.0",
             "id": 6,

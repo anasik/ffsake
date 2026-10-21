@@ -186,6 +186,10 @@ def ffsake_prompt(task_prompt: str):
         task_prompt
         + "\n\nUse FFSAKE MCP for repository reading, search, preview, mutation, and verification. "
         "Do not use normal shell/filesystem read/edit/search tools for repository manipulation. "
+        "Content search discovers matching files directly; listing directories first is not required for search. "
+        "After apply, undo, or redo, the next search refreshes the index automatically; "
+        "reserve explicit refresh for external filesystem changes. "
+        "For count-only verification, omit details or set it to false. "
         "Preview mutations before applying them. If FFSAKE lacks a capability required to finish, "
         "state the missing capability rather than falling back silently."
     )

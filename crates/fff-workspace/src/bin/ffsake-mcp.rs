@@ -199,7 +199,7 @@ fn tools() -> Vec<Value> {
                     "target":selector_schema(),
                     "limit":{"type":"integer","minimum":1,"maximum":1000},
                     "offset":{"type":"integer","minimum":0},
-                    "details":{"type":"boolean"}
+                    "details":{"type":"boolean","description":"Return individual ranges. Omit or use false for count-only verification."}
                 }
             }),
         ),
@@ -216,7 +216,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_apply",
-            "Atomically apply a previously previewed transform.",
+            "Atomically apply a previously previewed transform. The next search refreshes the index automatically; no separate refresh call is needed.",
             json!({
                 "type":"object","required":["handle"],"properties":{"handle":{"type":"integer","minimum":1}}
             }),
@@ -244,7 +244,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_refresh",
-            "Wait for a full FFF index refresh.",
+            "Wait for a full FFF index refresh after external filesystem changes. Not needed after FFSAKE apply, undo or redo: the next search refreshes automatically.",
             json!({
                 "type":"object","properties":{}
             }),
