@@ -31,9 +31,10 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
             "jsonrpc": "2.0",
             "id": 1,
             "method": "initialize",
-            "params": {"protocolVersion": "2025-03-26", "capabilities": {}, "clientInfo": {"name": "smoke", "version": "1"}},
+            "params": {"protocolVersion": "2025-11-25", "capabilities": {}, "clientInfo": {"name": "smoke", "version": "1"}},
         })
         assert init["result"]["serverInfo"]["name"] == "ffsake"
+        assert init["result"]["protocolVersion"] == "2025-11-25"
 
         listed = send(proc, {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
         names = {tool["name"] for tool in listed["result"]["tools"]}
