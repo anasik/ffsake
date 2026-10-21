@@ -116,6 +116,16 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
             assert outside.read_text() == "outside-only-secret\n"
             return payload.get("result")
 
+        search_tool = next(tool for tool in listed["result"]["tools"] if tool["name"] == "ffsake_search")
+        selector = search_tool["inputSchema"]["properties"]["target"]
+        variants = selector["properties"]["include"]["items"]["anyOf"]
+        assert variants[0]["enum"] == ["All"], variants
+        assert {v["required"][0] for v in variants[1:]} == {"Exact", "Glob", "Regex"}
+        for include, expected in [(["All"], 2), ([{"Exact": "a.txt"}], 2), ([], 0)]:
+            scoped = call("ffsake_search", {"pattern": "needle", "target": {"include": include, "exclude": []}})
+            assert scoped["matches"] == expected, scoped
+            assert call("ffsake_release", {"handle": scoped["handle"]})["released"]
+
         for name in ["ffsake_read", "ffsake_list"]:
             for path in ["../outside.txt", str(outside), ".ffsake"]:
                 call(name, {"path": path}, expect_ok=False)

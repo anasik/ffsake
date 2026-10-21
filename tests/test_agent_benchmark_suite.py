@@ -290,5 +290,88 @@ class ClaudePreflightTests(unittest.TestCase):
                 self.assertEqual(args[args.index("--max-turns") + 1], "40")
 
 
+class CodexApprovalTests(unittest.TestCase):
+    def test_only_known_workspace_mcp_tools_are_approved(self):
+        import tomllib
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td, patch.object(suite, "run_process", return_value={}) as run:
+            root = Path(td) / 'repo with "quotes"'
+            root.mkdir()
+            suite.codex_run(root, "task", True, 1)
+            config = tomllib.loads((root / ".codex/config.toml").read_text())
+            self.assertEqual(set(config), {"mcp_servers"})
+            self.assertEqual(set(config["mcp_servers"]), {"ffsake"})
+            server = config["mcp_servers"]["ffsake"]
+            self.assertEqual(server["command"], str(suite.FFSAKE_MCP))
+            self.assertEqual(server["args"], [str(root)])
+            self.assertTrue(server["required"])
+            self.assertEqual(set(server["enabled_tools"]), set(suite.FFSAKE_TOOLS))
+            self.assertEqual(server["tools"], {tool: {"approval_mode": "approve"} for tool in suite.FFSAKE_TOOLS})
+            args = run.call_args.args[0]
+            trust = tomllib.loads(args[args.index("-c") + 1])
+            self.assertEqual(trust["projects"][str(root)]["trust_level"], "trusted")
+            self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", args)
+
+    def test_baseline_does_not_create_approved_mcp_config(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td, patch.object(suite, "run_process", return_value={}):
+            suite.codex_run(Path(td), "task", False, 1)
+            self.assertFalse((Path(td) / ".codex").exists())
+
+    def test_approval_blocked_run_is_invalid_even_with_zero_exit(self):
+        from unittest.mock import patch
+        event = {"type": "item.completed", "item": {"id": "1", "type": "mcp_tool_call",
+            "server": "ffsake", "tool": "ffsake_search", "status": "failed", "result": None,
+            "error": {"message": "MCP tool call requires approval, but approval policy is never"}}}
+        output = {"stdout": json.dumps(event), "stderr": "", "exit_code": 0, "elapsed_ms": 1, "timed_out": False}
+        with patch.object(suite, "codex_run", return_value=output):
+            result = suite.one("codex", "micro", "ffsake", 1, None)
+        self.assertFalse(result["comparison_valid"])
+        self.assertIn("mcp_approval_blocked", result["comparison_invalid_reasons"])
+        self.assertEqual(result["trace"]["mcp_failed_tool_calls"], 1)
+        self.assertEqual(result["trace"]["mcp_approval_blocked_calls"], 1)
+        self.assertEqual(result["trace"]["tool_calls"], 1)
+
+    def test_recoverable_tool_error_is_not_approval_failure(self):
+        event = {"type": "item.completed", "item": {"id": "1", "type": "mcp_tool_call",
+            "server": "ffsake", "tool": "ffsake_read", "status": "completed",
+            "result": {"isError": True}, "error": None}}
+        metrics = suite.generic_metrics("codex", [event, event])
+        self.assertEqual(metrics["mcp_failed_tool_calls"], 1)
+        self.assertEqual(metrics["mcp_approval_blocked_calls"], 0)
+
+    def test_codex_cache_usage_is_preserved(self):
+        metrics = suite.generic_metrics("codex", [{"type": "turn.completed", "usage": {
+            "input_tokens": 60315, "cached_input_tokens": 51584, "cache_write_input_tokens": 0, "output_tokens": 168}}])
+        self.assertEqual(metrics["cache_read_input_tokens"], 51584)
+        self.assertEqual(metrics["cache_creation_input_tokens"], 0)
+
+
+class ModeSelectionTests(unittest.TestCase):
+    def test_targeted_mode_does_not_rerun_baseline(self):
+        from unittest.mock import patch
+        import contextlib
+        import io
+        result = {"agent": "codex", "task": "micro", "mode": "ffsake", "comparison_valid": True,
+                  "correct": True, "exit_code": 0, "timed_out": False, "elapsed_ms": 1,
+                  "trace": {"tool_calls": 1, "ffsake_tool_calls": 1, "shell_tool_calls": 0,
+                            "output_tokens": 1, "total_cost_usd": None}}
+        with tempfile.TemporaryDirectory() as td, contextlib.redirect_stdout(io.StringIO()):
+            with patch.object(sys, "argv", ["suite", "--agents", "codex", "--tasks", "micro", "--modes", "ffsake", "--repetitions", "1"]), patch.object(suite, "preflight", return_value={"ok": True}), patch.object(suite, "FFSAKE_MCP", Path(__file__)), patch.object(suite, "RESULT_DIR", Path(td)), patch.object(suite, "one", return_value=result) as run:
+                suite.main()
+            run.assert_called_once_with("codex", "micro", "ffsake", 900, None)
+            report = json.loads(next(Path(td).glob("*.json")).read_text())
+            self.assertTrue(report["complete"])
+            self.assertEqual(report["modes"], ["ffsake"])
+            self.assertEqual(len(report["results"]), 1)
+
+    def test_invalid_mode_is_rejected_before_preflight(self):
+        from unittest.mock import patch
+        with patch.object(sys, "argv", ["suite", "--modes", "wrong"]), patch.object(suite, "preflight") as check:
+            with self.assertRaisesRegex(SystemExit, "--modes"):
+                suite.main()
+            check.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

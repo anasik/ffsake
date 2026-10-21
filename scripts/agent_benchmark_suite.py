@@ -19,6 +19,11 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 FFSAKE_MCP = (ROOT / "target" / "debug" / "ffsake-mcp").resolve()
 RESULT_DIR = ROOT / "docs" / "agent-benchmark-runs"
+FFSAKE_TOOLS = (
+    "ffsake_read", "ffsake_list", "ffsake_target", "ffsake_search",
+    "ffsake_preview_matches", "ffsake_apply", "ffsake_undo", "ffsake_redo",
+    "ffsake_release", "ffsake_refresh",
+)
 
 
 def git_init(root: Path):
@@ -318,8 +323,31 @@ def tool_names(agent, events):
     return names
 
 
+def codex_tool_outcomes(events):
+    """Terminal outcomes only: a blocked call is an attempt, not an execution."""
+    outcomes = {}
+    for index, event in enumerate(events):
+        if not isinstance(event, dict) or event.get("type") != "item.completed":
+            continue
+        item = event.get("item", {})
+        if not isinstance(item, dict) or item.get("type") != "mcp_tool_call":
+            continue
+        name = "mcp__" + str(item.get("server", "")) + "__" + str(item.get("tool", ""))
+        result = item.get("result") or {}
+        error = item.get("error")
+        failed = bool(error) or item.get("status") == "failed" or (
+            isinstance(result, dict) and (result.get("isError") or result.get("is_error")))
+        error_text = "\n".join(recursive_strings(error)).strip()
+        outcomes[item.get("id", index)] = {
+            "tool": name, "failed": bool(failed), "error": error_text,
+            "approval_blocked": "requires approval, but approval policy is never" in error_text.lower(),
+        }
+    return list(outcomes.values())
+
+
 def generic_metrics(agent, events):
     names = tool_names(agent, events)
+    outcomes = codex_tool_outcomes(events) if agent == "codex" else []
     ffsake = 0
     shell = 0
     for name in names:
@@ -346,14 +374,17 @@ def generic_metrics(agent, events):
         "events": len(events),
         "tool_calls": len(names),
         "tool_names": names,
+        "mcp_tool_outcomes": outcomes,
+        "mcp_failed_tool_calls": sum(x["failed"] for x in outcomes),
+        "mcp_approval_blocked_calls": sum(x["approval_blocked"] for x in outcomes),
         "ffsake_tool_calls": ffsake,
         "shell_tool_calls": shell,
         "grep_mentions": blob.count("grep"),
         "sed_mentions": blob.count("sed"),
         "input_tokens": usage.get("input_tokens"),
         "output_tokens": usage.get("output_tokens"),
-        "cache_read_input_tokens": usage.get("cache_read_input_tokens"),
-        "cache_creation_input_tokens": usage.get("cache_creation_input_tokens"),
+        "cache_read_input_tokens": usage.get("cache_read_input_tokens", usage.get("cached_input_tokens")),
+        "cache_creation_input_tokens": usage.get("cache_creation_input_tokens", usage.get("cache_write_input_tokens")),
         "total_cost_usd": result_event.get("total_cost_usd") if isinstance(result_event, dict) else None,
         "num_turns": result_event.get("num_turns") if isinstance(result_event, dict) else None,
     }
@@ -411,21 +442,25 @@ def codex_run(root: Path, prompt: str, use_ffsake: bool, timeout: int):
     if use_ffsake:
         cfgdir = root / ".codex"
         cfgdir.mkdir(exist_ok=True)
-        command = str(FFSAKE_MCP).replace("\\", "\\\\").replace('"', '\\"')
-        workspace = str(root).replace("\\", "\\\\").replace('"', '\\"')
-        (cfgdir / "config.toml").write_text(
+        # Approval is scoped to known tools of this disposable workspace server.
+        # Unknown future tools stay unavailable. User/global policy is untouched.
+        config = (
             "[mcp_servers.ffsake]\n"
-            f'command = "{command}"\n'
-            f'args = ["{workspace}"]\n'
+            f"command = {json.dumps(str(FFSAKE_MCP))}\n"
+            f"args = [{json.dumps(str(root))}]\n"
+            "required = true\n"
+            f"enabled_tools = {json.dumps(list(FFSAKE_TOOLS))}\n"
         )
+        for tool in FFSAKE_TOOLS:
+            config += f'\n[mcp_servers.ffsake.tools.{tool}]\napproval_mode = "approve"\n'
+        (cfgdir / "config.toml").write_text(config)
     cmd = [
         "codex", "exec", "--json", "--sandbox", "workspace-write",
     ]
     if use_ffsake:
         # Codex only loads project .codex/config.toml when the repo is trusted.
         # Keep the trust override process-local instead of mutating user config.
-        project = str(root).replace("\\\\", "\\\\\\\\").replace('"', '\\\\"')
-        cmd += ["-c", f'projects={{"{project}"={{trust_level="trusted"}}}}']
+        cmd += ["-c", f'projects={{{json.dumps(str(root))}={{trust_level="trusted"}}}}']
     cmd += [ffsake_prompt(prompt) if use_ffsake else prompt]
     return run_process(cmd, root, timeout)
 
@@ -512,6 +547,8 @@ def one(agent, task_name, mode, timeout, opencode_model):
             invalid_reasons.append("no_recognized_tool_calls")
         if policy["observed_policy_violations"]:
             invalid_reasons.append("tool_policy_violation")
+        if metrics["mcp_approval_blocked_calls"]:
+            invalid_reasons.append("mcp_approval_blocked")
 
         return {
             "agent": agent,
@@ -607,6 +644,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--agents", default="claude,codex,opencode")
     parser.add_argument("--tasks", default="micro,medium,app")
+    parser.add_argument("--modes", default="baseline,ffsake", help="Comma-separated baseline,ffsake; select one for targeted diagnostics")
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--opencode-model")
@@ -617,6 +655,9 @@ def main():
 
     agents = [x.strip() for x in args.agents.split(",") if x.strip()]
     tasks = [x.strip() for x in args.tasks.split(",") if x.strip()]
+    modes = [x.strip() for x in args.modes.split(",") if x.strip()]
+    if not modes or any(mode not in {"baseline", "ffsake"} for mode in modes):
+        raise SystemExit("--modes must select baseline and/or ffsake")
     for agent in agents:
         if agent not in {"claude", "codex", "opencode"}:
             raise SystemExit(f"unknown agent: {agent}")
@@ -644,6 +685,7 @@ def main():
         "preflight": checks,
         "agents": agents,
         "tasks": tasks,
+        "modes": modes,
         "repetitions": args.repetitions,
         "results": results,
         "aggregate": [],
@@ -659,12 +701,12 @@ def main():
     }
     save_report(out, report)
     print(f"Saving results after every run to: {out}", flush=True)
-    total = len(agents) * len(tasks) * 2 * args.repetitions
+    total = len(agents) * len(tasks) * len(modes) * args.repetitions
     index = 0
     for agent in agents:
         for task in tasks:
             for repetition in range(1, args.repetitions + 1):
-                for mode in ["baseline", "ffsake"]:
+                for mode in modes:
                     index += 1
                     print(f"[{index}/{total}] {agent} {task} {mode} run {repetition}", flush=True)
                     result = one(agent, task, mode, args.timeout, args.opencode_model)

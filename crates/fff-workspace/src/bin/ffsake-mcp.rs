@@ -191,7 +191,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_search",
-            "Search indexed workspace content and retain a server-owned MatchSet.",
+            "Search indexed workspace content and retain a server-owned MatchSet. Omit target for all workspace files (or the active target). For an explicit whole-workspace target, use include: [\"All\"], exclude: []. Empty include selects no files.",
             json!({
                 "type":"object","required":["pattern"],"properties":{
                     "pattern":{"type":"string"},
@@ -253,12 +253,24 @@ fn tools() -> Vec<Value> {
 }
 
 fn selector_schema() -> Value {
+    let item = json!({
+        "anyOf":[
+            {"type":"string","enum":["All"]},
+            {"type":"object","required":["Exact"],"additionalProperties":false,
+             "properties":{"Exact":{"type":"string"}}},
+            {"type":"object","required":["Glob"],"additionalProperties":false,
+             "properties":{"Glob":{"type":"string"}}},
+            {"type":"object","required":["Regex"],"additionalProperties":false,
+             "properties":{"Regex":{"type":"string"}}}
+        ]
+    });
     json!({
         "type":"object",
+        "description":"Union of include selectors minus exclude selectors. Empty include selects no files. Use include: [\"All\"] for the whole workspace.",
         "required":["include","exclude"],
         "properties":{
-            "include":{"type":"array","items":{}},
-            "exclude":{"type":"array","items":{}}
+            "include":{"type":"array","items":item.clone()},
+            "exclude":{"type":"array","items":item}
         }
     })
 }
@@ -266,3 +278,4 @@ fn selector_schema() -> Value {
 fn tool(name: &str, description: &str, input_schema: Value) -> Value {
     json!({"name":name,"description":description,"inputSchema":input_schema})
 }
+
