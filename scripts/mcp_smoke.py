@@ -156,11 +156,17 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
                                         "expected_matches": 2}, expect_ok=False)
         assert (root / "a.txt").read_text() == "external edit must survive\n"
 
-        call("ffsake_release", {"handle": fresh_preview["handle"]})
-        call("ffsake_apply", {"handle": fresh_preview["handle"]}, expect_ok=False)
-        call("ffsake_release", {"handle": fresh_handle})
-        call("ffsake_preview_matches", {"handle": fresh_handle, "replacement": "world",
-                                        "expected_matches": 2}, expect_ok=False)
+        # Use valid, current handles so release is the only reason for rejection.
+        call("ffsake_refresh", {})
+        release_match = call("ffsake_search", {"pattern": "external"})
+        assert release_match["matches"] == 1, release_match
+        release_preview = call("ffsake_preview_matches", {
+            "handle": release_match["handle"], "replacement": "world", "expected_matches": 1})
+        assert call("ffsake_release", {"handle": release_preview["handle"]})["released"]
+        call("ffsake_apply", {"handle": release_preview["handle"]}, expect_ok=False)
+        assert call("ffsake_release", {"handle": release_match["handle"]})["released"]
+        call("ffsake_preview_matches", {"handle": release_match["handle"], "replacement": "world",
+                                        "expected_matches": 1}, expect_ok=False)
         assert (root / "a.txt").read_text() == "external edit must survive\n"
         print(f"MCP boundary guards: {denied_checks} rejected operations; sentinel and source checks PASS")
     finally:
