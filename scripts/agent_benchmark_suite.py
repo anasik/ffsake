@@ -77,8 +77,8 @@ def medium_verify(root: Path, state):
         spec.loader.exec_module(module)
         rules = [
             {"method": "GET", "prefix": "/public", "allow": True},
-            {"method": "*", "prefix": "/admin", "allow": False},
             {"method": "POST", "prefix": "/admin/invite", "allow": True},
+            {"method": "*", "prefix": "/admin", "allow": False},
         ]
         checks = [
             module.normalize_method(" get ") == "GET",
@@ -299,10 +299,7 @@ def generic_metrics(agent, events):
             typ = str(event.get("type", ""))
             if "tool" in typ or "command" in typ or "item." in typ:
                 blob = list(recursive_strings(event))
-                candidate = next(
-                    (x for x in blob if "ffsake" in x.lower()),
-                    typ,
-                )
+                candidate = typ
                 names.append(candidate)
 
     for name in names:
@@ -364,7 +361,6 @@ def codex_run(root: Path, prompt: str, use_ffsake: bool, timeout: int):
         )
     cmd = [
         "codex", "exec", "--json", "--sandbox", "workspace-write",
-        "--ask-for-approval", "never",
     ]
     if use_ffsake:
         # Codex only loads project .codex/config.toml when the repo is trusted.
@@ -451,9 +447,16 @@ def one(agent, task_name, mode, timeout, opencode_model):
             "agent": agent,
             "task": task_name,
             "mode": mode,
-            "correct": correct,
+            "correct": correct and result["exit_code"] == 0 and not result["timed_out"],
             "verification": verification,
             "changed_files": changed,
+            "permission_policy": {
+                "scope": "workspace",
+                "filesystem_tools_disabled": use_ffsake,
+                "direct_shell_disabled": use_ffsake,
+                "requested_ffsake_only": use_ffsake,
+                "enforced_by_host": False,
+            },
             "exit_code": result["exit_code"],
             "elapsed_ms": result["elapsed_ms"],
             "timed_out": result["timed_out"],
@@ -484,6 +487,8 @@ def aggregate(results):
             "correct_runs": sum(bool(x["correct"]) for x in items),
             "success_rate": sum(bool(x["correct"]) for x in items) / len(items),
             "median_elapsed_ms": median_or_none([x["elapsed_ms"] for x in items]),
+            "successful_exit_rate": sum(x["exit_code"] == 0 and not x["timed_out"] for x in items) / len(items),
+            "timeout_rate": sum(bool(x["timed_out"]) for x in items) / len(items),
             "median_tool_calls": median_or_none([x["trace"]["tool_calls"] for x in items]),
             "median_ffsake_tool_calls": median_or_none([x["trace"]["ffsake_tool_calls"] for x in items]),
             "median_shell_tool_calls": median_or_none([x["trace"]["shell_tool_calls"] for x in items]),
@@ -501,6 +506,8 @@ def main():
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--opencode-model")
     args = parser.parse_args()
+    if args.timeout < 1:
+        raise SystemExit("--timeout must be positive")
 
     agents = [x.strip() for x in args.agents.split(",") if x.strip()]
     tasks = [x.strip() for x in args.tasks.split(",") if x.strip()]
