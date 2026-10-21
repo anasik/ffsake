@@ -14,11 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut input = io::stdin().lock();
     let mut output = io::stdout().lock();
 
-    loop {
-        let Some(message) = read_message(&mut input)? else {
-            break;
-        };
-
+    while let Some(message) = read_message(&mut input)? {
         let response = match serde_json::from_slice::<Value>(&message) {
             Ok(message) => handle_message(&mut runtime, message),
             Err(error) => Some(json!({
@@ -81,13 +77,8 @@ fn handle_message(runtime: &mut Resident, message: Value) -> Option<Value> {
         }));
     }
 
-    let id = message.get("id").cloned();
+    let id = message.get("id")?.clone();
     let method = message.get("method").and_then(Value::as_str).unwrap_or_default();
-
-    if id.is_none() {
-        return None;
-    }
-    let id = id.unwrap();
 
     Some(match method {
         "initialize" => {
