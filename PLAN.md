@@ -82,7 +82,7 @@ Next:
 
 ## Phase 1E — agent benchmark
 
-Test Claude Code/Codex against representative repositories.
+Synthetic executable benchmark is implemented and passing. Next, test Claude Code/Codex against representative repositories.
 
 Pass condition:
 
