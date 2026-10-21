@@ -82,7 +82,13 @@ Next:
 
 ## Phase 1E — agent benchmark
 
-Synthetic executable benchmark is implemented and passing. Next, test Claude Code/Codex against representative repositories.
+Synthetic executable benchmark is implemented and passing. The real-agent harness now covers Claude Code, Codex, and OpenCode in baseline/FFSAKE modes across micro, medium, and application-completion tasks with repeated runs and aggregate medians.
+
+Current benchmark-discovered interface gaps:
+- MCP does not yet expose arbitrary create-file/write-new-file operations;
+- MCP does not yet expose build/test/runtime execution, so suite correctness is verified externally.
+
+Next, run the expanded matrix and use failures/traces to decide whether those gaps or syntax-aware editing should be implemented first.
 
 Pass condition:
 
