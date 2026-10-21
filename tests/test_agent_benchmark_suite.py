@@ -30,6 +30,26 @@ class PersistenceTests(unittest.TestCase):
             self.assertEqual(json.loads(path.read_text()), second)
             self.assertEqual(list(Path(td).glob("*.tmp")), [])
 
+    def test_concurrent_report_paths_are_distinct(self):
+        from concurrent.futures import ThreadPoolExecutor
+
+        original_dir = suite.RESULT_DIR
+        with tempfile.TemporaryDirectory() as td:
+            suite.RESULT_DIR = Path(td)
+            try:
+                with ThreadPoolExecutor(max_workers=16) as pool:
+                    paths = list(pool.map(lambda _: suite.reserve_report_path(), range(64)))
+                self.assertEqual(len(paths), len(set(paths)))
+                self.assertTrue(all(path.exists() for path in paths))
+                for index, path in enumerate(paths):
+                    suite.save_report(path, {"run": index})
+                self.assertEqual(
+                    sorted(json.loads(path.read_text())["run"] for path in paths),
+                    list(range(64)),
+                )
+            finally:
+                suite.RESULT_DIR = original_dir
+
     def test_timeout_returns_json_safe_text(self):
         with tempfile.TemporaryDirectory() as td:
             command = [sys.executable, "-c", "import sys,time;sys.stdout.buffer.write(bytes([255]));sys.stdout.flush();time.sleep(5)"]
