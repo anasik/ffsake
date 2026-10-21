@@ -15,7 +15,7 @@ spec.loader.exec_module(suite)
 
 class PersistenceTests(unittest.TestCase):
     def test_bytes_decode(self):
-        self.assertEqual(suite.decode_output(b"ok\\xff"), "ok�")
+        self.assertEqual(suite.decode_output(b"ok" + bytes([255])), "ok�")
         self.assertEqual(suite.decode_output(None), "")
         self.assertEqual(suite.decode_output("hello"), "hello")
 
@@ -32,7 +32,7 @@ class PersistenceTests(unittest.TestCase):
 
     def test_timeout_returns_json_safe_text(self):
         with tempfile.TemporaryDirectory() as td:
-            command = [sys.executable, "-c", "import sys,time;sys.stdout.buffer.write(b'\\xff');sys.stdout.flush();time.sleep(5)"]
+            command = [sys.executable, "-c", "import sys,time;sys.stdout.buffer.write(bytes([255]));sys.stdout.flush();time.sleep(5)"]
             result = suite.run_process(command, Path(td), timeout=1)
             self.assertTrue(result["timed_out"])
             self.assertIsInstance(result["stdout"], str)
