@@ -48,7 +48,7 @@ fn read_message(input: &mut impl BufRead) -> io::Result<Option<Vec<u8>>> {
             return if bytes.is_empty() && !oversized {
                 Ok(None)
             } else if oversized {
-                Ok(Some(br#"{\"__oversized\":true}"#.to_vec()))
+                Ok(Some(br#"{"__oversized":true}"#.to_vec()))
             } else {
                 Ok(Some(bytes))
             };
@@ -65,7 +65,7 @@ fn read_message(input: &mut impl BufRead) -> io::Result<Option<Vec<u8>>> {
 
         if end.is_some() {
             return if oversized {
-                Ok(Some(br#"{\"__oversized\":true}"#.to_vec()))
+                Ok(Some(br#"{"__oversized":true}"#.to_vec()))
             } else {
                 Ok(Some(bytes))
             };
