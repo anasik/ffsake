@@ -266,9 +266,7 @@ impl Resident {
             Request::PreviewMove { from, to } => {
                 self.preview_file(FileOperation::Move { from, to })
             }
-            Request::PreviewDelete { path } => {
-                self.preview_file(FileOperation::Delete { path })
-            }
+            Request::PreviewDelete { path } => self.preview_file(FileOperation::Delete { path }),
             Request::Preview { transform } => self.preview(transform),
             Request::Apply { handle } => {
                 if let Some(plan) = self.file_plans.get(&handle) {

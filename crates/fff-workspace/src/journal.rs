@@ -96,9 +96,7 @@ impl Journal {
         let workspace_root = fs::canonicalize(workspace_root.as_ref())?;
         let journal_root = workspace_root.join(INTERNAL_DIR).join(JOURNAL_DIR);
         for path in [workspace_root.join(INTERNAL_DIR), journal_root.clone()] {
-            if fs::symlink_metadata(&path)
-                .is_ok_and(|metadata| metadata.file_type().is_symlink())
-            {
+            if fs::symlink_metadata(&path).is_ok_and(|metadata| metadata.file_type().is_symlink()) {
                 return Err(JournalError::InvalidPath(path.display().to_string()));
             }
         }
@@ -416,7 +414,9 @@ impl SnapshotSide {
 fn validate_relative(path: &Path) -> Result<()> {
     if path.as_os_str().is_empty()
         || path.is_absolute()
-        || !path.components().any(|part| matches!(part, Component::Normal(_)))
+        || !path
+            .components()
+            .any(|part| matches!(part, Component::Normal(_)))
     {
         return Err(JournalError::InvalidPath(path.display().to_string()));
     }
