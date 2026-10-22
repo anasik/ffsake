@@ -291,4 +291,3 @@ fn selector_schema() -> Value {
 fn tool(name: &str, description: &str, input_schema: Value) -> Value {
     json!({"name":name,"description":description,"inputSchema":input_schema})
 }
-
