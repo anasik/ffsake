@@ -230,9 +230,9 @@ class PreflightTests(unittest.TestCase):
         def run(cmd, *args):
             calls.append(cmd)
             self.assertIn(cmd[-1], ["--help", "--version"])
-            return {"stdout": "--format --model" if cmd[-1] == "--help" else "1.2.3",
+            return {"stdout": "--format --model --dir" if cmd[-1] == "--help" else "1.2.3",
                     "stderr": "", "exit_code": 0, "timed_out": False}
-        with patch.object(suite.shutil, "which", return_value="/fake/opencode"), patch.object(suite, "run_process", side_effect=run):
+        with patch.object(suite.shutil, "which", return_value="/fake/opencode"), patch.object(suite, "run_process", side_effect=run), patch.object(suite, "opencode_workspace_preflight", return_value={"ok": True, "model_calls": 0}):
             report = suite.preflight(["opencode"])
         self.assertTrue(report["ok"])
         self.assertEqual(report["model_calls"], 0)
@@ -371,6 +371,129 @@ class ModeSelectionTests(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, "--modes"):
                 suite.main()
             check.assert_not_called()
+
+class WorkspaceProcessTests(unittest.TestCase):
+    def test_subprocess_pwd_matches_cwd_without_changing_parent(self):
+        from unittest.mock import patch
+        import os
+        with tempfile.TemporaryDirectory() as td, patch.dict(os.environ, {"PWD": "/wrong/parent"}):
+            result = suite.run_process([sys.executable, "-c", "import os,json;print(json.dumps([os.getcwd(),os.environ['PWD']]))"], Path(td), 5)
+            self.assertEqual(json.loads(result["stdout"]), [str(Path(td).resolve())] * 2)
+            self.assertEqual(os.environ["PWD"], "/wrong/parent")
+
+    @unittest.skipUnless(sys.platform != "win32", "POSIX process groups")
+    def test_timeout_kills_launcher_descendants(self):
+        import time
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            marker = root / "escaped-child.txt"
+            child = "import time;from pathlib import Path;time.sleep(2);Path(" + repr(str(marker)) + ").write_text('leaked')"
+            launcher = "import subprocess,sys,time;subprocess.Popen([sys.executable,'-c'," + repr(child) + "]);print('spawned',flush=True);time.sleep(30)"
+            result = suite.run_process([sys.executable, "-c", launcher], root, 1)
+            self.assertTrue(result["timed_out"])
+            self.assertIn("spawned", result["stdout"])
+            time.sleep(1.5)
+            self.assertFalse(marker.exists(), "Timed-out launcher left a running child")
+
+    def test_invalid_utf8_on_normal_exit_is_json_safe(self):
+        with tempfile.TemporaryDirectory() as td:
+            result = suite.run_process([sys.executable, "-c", "import sys;sys.stdout.buffer.write(bytes([255]))"], Path(td), 5)
+        self.assertEqual(result["stdout"], "�")
+        self.assertEqual(result["exit_code"], 0)
+        json.dumps(result)
+
+
+class OpenCodeWorkspaceTests(unittest.TestCase):
+    def make_cli(self, folder):
+        path = folder / "opencode"
+        path.write_text("#!" + sys.executable + "\n" + '''import base64,json,os,sys
+from pathlib import Path
+args=sys.argv[1:]
+root=Path(os.environ.get("PWD",os.getcwd()))
+if args and args[-1]=="--help":
+ print("--format --model --dir")
+elif args==["--version"]:
+ print("1.18.31")
+elif args[:3]==["debug","file","read"]:
+ print(json.dumps({"content":base64.b64encode((root/args[3]).read_bytes()).decode(),"encoding":"base64"}))
+elif args==["debug","config"]:
+ config=json.loads((root/"opencode.json").read_text())
+ config["provider"]={"private":"do-not-persist-this"}
+ if os.environ.get("BAD_POLICY"): config["permission"]["*"]="allow"
+ if os.environ.get("BAD_ORDER"): config["permission"]["*"]=config["permission"].pop("*")
+ print(json.dumps(config))
+elif args and args[0]=="run":
+ root=Path(args[args.index("--dir")+1])
+ print(json.dumps({"directory":str(root),"pwd":os.environ["PWD"],"config":json.loads((root/"opencode.json").read_text())}))
+else:
+ raise SystemExit("Unexpected command: " + repr(args))
+''')
+        path.chmod(0o755)
+        return path
+
+    @unittest.skipIf(sys.platform == "win32", "Executable shebang fixture")
+    def test_actual_launcher_binds_fixture_with_wrong_inherited_pwd(self):
+        import os
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            self.make_cli(folder)
+            root = folder / "fixture"
+            root.mkdir()
+            with patch.dict(os.environ, {"PATH": str(folder) + os.pathsep + os.environ["PATH"], "PWD": "/wrong/real-checkout"}):
+                result = suite.opencode_run(root, "task", True, 5, None)
+                data = json.loads(result["stdout"])
+                self.assertEqual(data["directory"], str(root.resolve()))
+                self.assertEqual(data["pwd"], str(root.resolve()))
+                self.assertEqual(data["config"]["mcp"]["ffsake"]["command"][-1], str(root.resolve()))
+                self.assertEqual(os.environ["PWD"], "/wrong/real-checkout")
+
+    @unittest.skipIf(sys.platform == "win32", "Executable shebang fixture")
+    def test_model_free_probe_verifies_both_configs_without_saving_credentials(self):
+        import os
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td:
+            executable = self.make_cli(Path(td))
+            with patch.dict(os.environ, {"PWD": "/wrong/real-checkout"}):
+                report = suite.opencode_workspace_preflight(str(executable))
+        self.assertTrue(report["ok"])
+        self.assertEqual(len(report["checks"]), 2)
+        self.assertEqual(report["model_calls"], 0)
+        self.assertNotIn("do-not-persist-this", json.dumps(report))
+
+    @unittest.skipIf(sys.platform == "win32", "Executable shebang fixture")
+    def test_model_free_probe_rejects_wrong_effective_permissions(self):
+        import os
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td:
+            executable = self.make_cli(Path(td))
+            with patch.dict(os.environ, {"BAD_POLICY": "1"}):
+                report = suite.opencode_workspace_preflight(str(executable))
+        self.assertFalse(report["ok"])
+        self.assertTrue(all(c["fixture_read_matches"] for c in report["checks"]))
+        self.assertTrue(all(not c["permissions_match"] for c in report["checks"]))
+
+    @unittest.skipIf(sys.platform == "win32", "Executable shebang fixture")
+    def test_probe_rejects_reordered_wildcard_permissions(self):
+        import os
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td:
+            executable = self.make_cli(Path(td))
+            with patch.dict(os.environ, {"BAD_ORDER": "1"}):
+                report = suite.opencode_workspace_preflight(str(executable))
+        self.assertFalse(report["ok"])
+        self.assertTrue(all(not c["permissions_match"] for c in report["checks"]))
+
+    def test_outside_file_read_invalidates_comparison(self):
+        from unittest.mock import patch
+        event = {"type": "tool_use", "part": {"tool": "read", "callID": "outside",
+                 "state": {"input": {"filePath": "/outside-real-checkout/script.py"}, "status": "completed"}}}
+        result = {"exit_code": 0, "elapsed_ms": 1, "stdout": json.dumps(event), "stderr": "", "timed_out": False}
+        with patch.object(suite, "opencode_run", return_value=result):
+            run = suite.one("opencode", "micro", "baseline", 1, None)
+        self.assertFalse(run["comparison_valid"])
+        self.assertIn("outside_workspace_path", run["comparison_invalid_reasons"])
+        self.assertIn("workspace", run)
 
 
 if __name__ == "__main__":

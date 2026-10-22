@@ -10,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import signal
 import statistics
 import subprocess
 import sys
@@ -197,30 +198,49 @@ def ffsake_prompt(task_prompt: str):
 
 def run_process(cmd, cwd: Path, timeout: int):
     started = time.perf_counter()
+    # Some CLIs (including OpenCode 1.18.31) prefer inherited PWD over
+    # process.cwd(). Both must refer to the disposable fixture.
+    env = os.environ.copy()
+    env["PWD"] = str(cwd.resolve())
+    proc = subprocess.Popen(
+        cmd, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, encoding="utf-8", errors="replace", start_new_session=os.name == "posix",
+    )
+    def stop():
+        if os.name == "posix":
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        else:
+            proc.kill()
+
+    timed_out = False
     try:
-        proc = subprocess.run(
-            cmd,
-            cwd=cwd,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            check=False,
-        )
-        return {
-            "exit_code": proc.returncode,
-            "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
-            "stdout": proc.stdout,
-            "stderr": proc.stderr,
-            "timed_out": False,
-        }
-    except subprocess.TimeoutExpired as exc:
-        return {
-            "exit_code": None,
-            "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
-            "stdout": decode_output(exc.stdout),
-            "stderr": decode_output(exc.stderr),
-            "timed_out": True,
-        }
+        stdout, stderr = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        # npm launchers can spawn the real CLI, which spawns MCP/shell children.
+        # Killing only the launcher leaves the benchmark running after timeout.
+        stop()
+        try:
+            stdout, stderr = proc.communicate(timeout=5)
+        except subprocess.TimeoutExpired as exc:
+            stdout, stderr = decode_output(exc.stdout), decode_output(exc.stderr)
+            proc.stdout.close()
+            proc.stderr.close()
+            proc.wait(timeout=5)
+    except BaseException:
+        stop()
+        proc.wait(timeout=5)
+        proc.stdout.close()
+        proc.stderr.close()
+        raise
+    return {
+        "exit_code": None if timed_out else proc.returncode,
+        "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
+        "stdout": stdout, "stderr": stderr, "timed_out": timed_out,
+    }
 
 
 def decode_output(value):
@@ -469,7 +489,7 @@ def codex_run(root: Path, prompt: str, use_ffsake: bool, timeout: int):
     return run_process(cmd, root, timeout)
 
 
-def opencode_run(root: Path, prompt: str, use_ffsake: bool, timeout: int, model: str | None):
+def configure_opencode(root: Path, use_ffsake: bool):
     # Deny by default, including inherited MCPs and delegation/custom tools.
     # Only the selected mode's explicitly named repository tools are authorized.
     permission = {"*": "deny"}
@@ -482,7 +502,13 @@ def opencode_run(root: Path, prompt: str, use_ffsake: bool, timeout: int, model:
     if use_ffsake:
         config["mcp"] = {"ffsake": {"type": "local", "command": [str(FFSAKE_MCP), str(root)], "enabled": True}}
     (root / "opencode.json").write_text(json.dumps(config, indent=2))
-    cmd = ["opencode", "run", "--format", "json"]
+    return config
+
+
+def opencode_run(root: Path, prompt: str, use_ffsake: bool, timeout: int, model: str | None):
+    root = root.resolve()
+    configure_opencode(root, use_ffsake)
+    cmd = ["opencode", "run", "--dir", str(root), "--format", "json"]
     if model:
         cmd += ["--model", model]
     cmd += [ffsake_prompt(prompt) if use_ffsake else prompt]
@@ -511,6 +537,27 @@ def git_changed_files(root: Path):
         check=False,
     )
     return [line[3:] for line in proc.stdout.splitlines() if len(line) >= 4]
+
+
+def workspace_scope_violations(agent, events, root):
+    """Record explicit OpenCode file paths outside the disposable workspace."""
+    if agent != "opencode":
+        return []
+    violations = []
+    for event in events:
+        if not isinstance(event, dict) or event.get("type") != "tool_use":
+            continue
+        part = event.get("part", {})
+        args = part.get("state", {}).get("input", {})
+        if not isinstance(args, dict):
+            continue
+        for key in ["filePath", "path", "directory", "workdir", "cwd"]:
+            value = args.get(key)
+            if not isinstance(value, str) or not Path(value).is_absolute():
+                continue
+            if not Path(value).resolve().is_relative_to(root.resolve()):
+                violations.append({"tool": part.get("tool"), "argument": key, "path": value})
+    return violations
 
 
 def one(agent, task_name, mode, timeout, opencode_model):
@@ -546,16 +593,21 @@ def one(agent, task_name, mode, timeout, opencode_model):
             correct, verification = False, {"exception": repr(exc)}
         verification["unexpected_file_changes"] = unexpected
         policy = permission_audit(agent, use_ffsake, metrics)
+        path_violations = workspace_scope_violations(agent, events, root)
+        policy["observed_outside_workspace_paths"] = path_violations
         invalid_reasons = []
         if not metrics["tool_calls"]:
             invalid_reasons.append("no_recognized_tool_calls")
         if policy["observed_policy_violations"]:
             invalid_reasons.append("tool_policy_violation")
+        if path_violations:
+            invalid_reasons.append("outside_workspace_path")
         if metrics["mcp_approval_blocked_calls"]:
             invalid_reasons.append("mcp_approval_blocked")
 
         return {
             "agent": agent,
+            "workspace": str(root.resolve()),
             "task": task_name,
             "mode": mode,
             "correct": correct and not unexpected and result["exit_code"] == 0 and not result["timed_out"],
@@ -573,6 +625,47 @@ def one(agent, task_name, mode, timeout, opencode_model):
         }
 
 
+def opencode_workspace_preflight(executable):
+    """Read fixture/config through OpenCode debug commands without a model."""
+    import base64
+    checks = []
+    for use_ffsake in [False, True]:
+        with tempfile.TemporaryDirectory(prefix="ffsake-opencode-probe-") as td:
+            root = Path(td).resolve()
+            token = os.urandom(16).hex()
+            name = "ffsake-workspace-probe.txt"
+            (root / name).write_text(token)
+            git_init(root)
+            expected = configure_opencode(root, use_ffsake)
+            item = {"mode": "ffsake" if use_ffsake else "baseline", "ok": False}
+            try:
+                read = run_process([executable, "debug", "file", "read", name], root, 30)
+                config = run_process([executable, "debug", "config"], root, 30)
+                item.update({"file_probe_exit_code": read["exit_code"], "config_probe_exit_code": config["exit_code"]})
+                if any(r["exit_code"] != 0 or r["timed_out"] for r in [read, config]):
+                    item["error"] = "workspace_or_config_probe_failed"
+                else:
+                    file_data = json.loads(read["stdout"])
+                    actual_token = base64.b64decode(file_data["content"], validate=True).decode("utf-8")
+                    actual = json.loads(config["stdout"])
+                    file_ok = actual_token == token
+                    permissions = actual.get("permission")
+                    # OpenCode permission rules are ordered: equal dict values
+                    # in a different order can grant different capabilities.
+                    permissions_ok = isinstance(permissions, dict) and list(permissions.items()) == list(expected["permission"].items())
+                    server = actual.get("mcp", {}).get("ffsake", {})
+                    server_ok = (server.get("command") == [str(FFSAKE_MCP), str(root)]
+                                 and server.get("enabled") is True) if use_ffsake else not server.get("enabled", False)
+                    item.update({"fixture_read_matches": file_ok, "permissions_match": permissions_ok,
+                                 "mcp_configuration_matches": server_ok,
+                                 "ok": file_ok and permissions_ok and server_ok})
+            except (OSError, ValueError, KeyError, TypeError) as exc:
+                item["error"] = type(exc).__name__
+            # Do not persist resolved config: it may contain provider credentials.
+            checks.append(item)
+    return {"checks": checks, "ok": all(c["ok"] for c in checks), "model_calls": 0}
+
+
 def preflight(agents):
     """Inspect installed CLIs without sending a prompt or contacting a model."""
     checks = []
@@ -583,7 +676,7 @@ def preflight(agents):
         "claude": ["--output-format", "--verbose", "--dangerously-skip-permissions",
                    "--strict-mcp-config", "--mcp-config", "--tools"],
         "codex": ["--json", "--sandbox", "--config"],
-        "opencode": ["--format", "--model"],
+        "opencode": ["--format", "--model", "--dir"],
     }
     for agent in agents:
         executable = shutil.which(agent)
@@ -603,6 +696,10 @@ def preflight(agents):
             check.update({"version": version["stdout"].strip(), "help_exit_code": help_result["exit_code"],
                           "missing_flags": missing, "stderr": help_result["stderr"],
                           "ok": help_result["exit_code"] == 0 and not help_result["timed_out"] and not missing})
+            if agent == "opencode" and check["ok"]:
+                workspace = opencode_workspace_preflight(executable)
+                check["workspace_probe"] = workspace
+                check["ok"] = workspace["ok"]
         except OSError as exc:
             check["error"] = str(exc)
         checks.append(check)
