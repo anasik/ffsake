@@ -24,6 +24,7 @@ FFSAKE_TOOLS = (
     "ffsake_read", "ffsake_list", "ffsake_target", "ffsake_search",
     "ffsake_preview_matches", "ffsake_preview_edit", "ffsake_apply", "ffsake_undo", "ffsake_redo",
     "ffsake_release", "ffsake_refresh",
+    "ffsake_preview_create", "ffsake_preview_copy", "ffsake_preview_move", "ffsake_preview_delete",
 )
 
 
@@ -195,6 +196,8 @@ def ffsake_prompt(task_prompt: str):
         "and expected_matches (normally 1). Multiline blocks are supported; preserve whitespace exactly. "
         "Group related changes into one contiguous block instead of searching and previewing each line. "
         "Use indexed search and preview_matches for repository-wide replacements. "
+        "For file creation, copy, move/rename or deletion, use the corresponding "
+        "ffsake_preview_create/copy/move/delete tool and then apply its handle. "
         "Apply a preview before preparing another edit to the same file: applying changes its hash "
         "and invalidates older MatchSets and previews for that file. "
         "Preview mutations before applying them. If FFSAKE lacks a capability required to finish, "
@@ -822,7 +825,7 @@ def main():
         "aggregate": [],
         "complete": False,
         "known_limitations": [
-            "The app task completes an existing scaffold because FFSAKE MCP does not yet expose create-file/write-new-file primitives.",
+            "The app task completes an existing scaffold; it does not measure project creation, although FFSAKE MCP now supports file creation.",
             "FFSAKE mode has no build/test runtime adapter; correctness is verified externally by this harness.",
             "Tool accounting recognizes explicit Claude, Codex and OpenCode invocation records; unknown schemas are unverified, and raw traces are retained.",
             "Trace policy checks do not prove host-enforced permission isolation. Codex native filesystem and shell tools remain available.",

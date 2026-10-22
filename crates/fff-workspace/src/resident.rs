@@ -1,4 +1,5 @@
 //! One workspace, one resident search index. MatchSet handles retain server-owned ranges and hashes.
+use crate::file_ops::{FileOperation, FilePlan};
 use crate::journal::Journal;
 use crate::search::{FffSearchIndex, MatchSet, SearchMode};
 use crate::session::EditorSession;
@@ -48,6 +49,21 @@ pub enum Request {
         new_text: String,
         expected_matches: usize,
     },
+    PreviewCreate {
+        path: String,
+        content: String,
+    },
+    PreviewCopy {
+        from: String,
+        to: String,
+    },
+    PreviewMove {
+        from: String,
+        to: String,
+    },
+    PreviewDelete {
+        path: String,
+    },
     Preview {
         transform: Transform,
     },
@@ -75,6 +91,7 @@ pub struct Resident {
     index: FffSearchIndex,
     matches: BTreeMap<u64, MatchSet>,
     plans: BTreeMap<u64, Transform>,
+    file_plans: BTreeMap<u64, FilePlan>,
     next: u64,
     index_dirty: bool,
 }
@@ -87,13 +104,14 @@ impl Resident {
             index,
             matches: BTreeMap::new(),
             plans: BTreeMap::new(),
+            file_plans: BTreeMap::new(),
             next: 1,
             index_dirty: false,
         })
     }
 
     fn allocate(&mut self) -> Result<u64> {
-        if self.matches.len() + self.plans.len() >= MAX_HANDLES {
+        if self.matches.len() + self.plans.len() + self.file_plans.len() >= MAX_HANDLES {
             return Err("release unused handles (limit 128)".into());
         }
         let handle = self.next;
@@ -119,6 +137,14 @@ impl Resident {
         let preview = crate::preview::preview(workspace, &plan)?;
         let handle = self.allocate()?;
         self.plans.insert(handle, plan);
+        Ok(json!({"handle": handle, "preview": preview}))
+    }
+
+    fn preview_file(&mut self, operation: FileOperation) -> Result<Value> {
+        let plan = FilePlan::preview(self.session.workspace(), operation)?;
+        let preview = plan.description();
+        let handle = self.allocate()?;
+        self.file_plans.insert(handle, plan);
         Ok(json!({"handle": handle, "preview": preview}))
     }
 
@@ -231,8 +257,26 @@ impl Resident {
                     max_files: Some(1),
                 })
             }
+            Request::PreviewCreate { path, content } => {
+                self.preview_file(FileOperation::Create { path, content })
+            }
+            Request::PreviewCopy { from, to } => {
+                self.preview_file(FileOperation::Copy { from, to })
+            }
+            Request::PreviewMove { from, to } => {
+                self.preview_file(FileOperation::Move { from, to })
+            }
+            Request::PreviewDelete { path } => {
+                self.preview_file(FileOperation::Delete { path })
+            }
             Request::Preview { transform } => self.preview(transform),
             Request::Apply { handle } => {
+                if let Some(plan) = self.file_plans.get(&handle) {
+                    let result = plan.apply(self.session.workspace())?;
+                    self.file_plans.remove(&handle);
+                    self.index_dirty = true;
+                    return Ok(result);
+                }
                 let plan = self.plans.get(&handle).ok_or("unknown preview handle")?;
                 let result = transform::execute(
                     self.session.workspace(),
@@ -248,8 +292,9 @@ impl Resident {
             Request::Undo { transaction } => self.history(&transaction, false),
             Request::Redo { transaction } => self.history(&transaction, true),
             Request::Release { handle } => {
-                let removed =
-                    self.matches.remove(&handle).is_some() | self.plans.remove(&handle).is_some();
+                let removed = self.matches.remove(&handle).is_some()
+                    | self.plans.remove(&handle).is_some()
+                    | self.file_plans.remove(&handle).is_some();
                 Ok(json!({"released": removed}))
             }
             Request::Refresh {} => {

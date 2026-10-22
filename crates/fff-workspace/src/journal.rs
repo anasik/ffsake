@@ -95,6 +95,13 @@ impl Journal {
     pub fn open(workspace_root: impl AsRef<Path>) -> Result<Self> {
         let workspace_root = fs::canonicalize(workspace_root.as_ref())?;
         let journal_root = workspace_root.join(INTERNAL_DIR).join(JOURNAL_DIR);
+        for path in [workspace_root.join(INTERNAL_DIR), journal_root.clone()] {
+            if fs::symlink_metadata(&path)
+                .is_ok_and(|metadata| metadata.file_type().is_symlink())
+            {
+                return Err(JournalError::InvalidPath(path.display().to_string()));
+            }
+        }
         fs::create_dir_all(&journal_root)?;
         Ok(Self {
             workspace_root,
@@ -355,10 +362,24 @@ impl Journal {
         Ok(())
     }
 
-    fn resolve(&self, relative: &str) -> Result<PathBuf> {
+    pub(crate) fn resolve(&self, relative: &str) -> Result<PathBuf> {
         let relative = Path::new(relative);
         validate_relative(relative)?;
-        Ok(self.workspace_root.join(relative))
+        let mut path = self.workspace_root.clone();
+        for component in relative.components() {
+            if let Component::Normal(part) = component {
+                path.push(part);
+                match fs::symlink_metadata(&path) {
+                    Ok(metadata) if metadata.file_type().is_symlink() => {
+                        return Err(JournalError::InvalidPath(relative.display().to_string()));
+                    }
+                    Ok(_) => {}
+                    Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+                    Err(error) => return Err(error.into()),
+                }
+            }
+        }
+        Ok(path)
     }
 
     fn write_manifest(&self, manifest: &TransactionManifest) -> Result<()> {
@@ -393,7 +414,10 @@ impl SnapshotSide {
 }
 
 fn validate_relative(path: &Path) -> Result<()> {
-    if path.as_os_str().is_empty() || path.is_absolute() {
+    if path.as_os_str().is_empty()
+        || path.is_absolute()
+        || !path.components().any(|part| matches!(part, Component::Normal(_)))
+    {
         return Err(JournalError::InvalidPath(path.display().to_string()));
     }
 

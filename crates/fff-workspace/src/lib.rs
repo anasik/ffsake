@@ -6,6 +6,7 @@ use std::path::{Component, Path, PathBuf};
 
 pub mod coordinates;
 pub mod edits;
+mod file_ops;
 pub mod journal;
 pub mod preview;
 pub mod resident;

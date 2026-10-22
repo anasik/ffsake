@@ -232,6 +232,107 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         assert (root / "code.py").read_text() == "external code edit\n"
         assert (root / "a.txt").read_text() == "external edit must survive\n"
         print("MCP multiline preview/edit/apply/undo/redo and stale-content guards PASS")
+        # File operations share the preview/apply/history flow. Destinations
+        # must be absent; source and destination state are frozen at preview.
+        names_expected = {"ffsake_preview_create", "ffsake_preview_copy",
+                          "ffsake_preview_move", "ffsake_preview_delete"}
+        assert names_expected <= names
+        created_path = root / "nested" / "created.txt"
+        create = call("ffsake_preview_create", {"path": "nested/created.txt", "content": "new café\n"})
+        assert not created_path.exists()
+        tx = call("ffsake_apply", {"handle": create["handle"]})["transaction"]
+        assert created_path.read_text() == "new café\n"
+        call("ffsake_undo", {"transaction": tx})
+        assert not created_path.exists()
+        call("ffsake_redo", {"transaction": tx})
+        assert created_path.read_text() == "new café\n"
+        call("ffsake_preview_create", {"path": "nested/created.txt", "content": "overwrite"}, expect_ok=False)
+
+        binary_bytes = bytes([0, 255, 10, 128])
+        (root / "binary.dat").write_bytes(binary_bytes)
+        copied = call("ffsake_preview_copy", {"from": "binary.dat", "to": "nested/copied.dat"})
+        assert not (root / "nested/copied.dat").exists()
+        copy_tx = call("ffsake_apply", {"handle": copied["handle"]})["transaction"]
+        assert (root / "nested/copied.dat").read_bytes() == binary_bytes
+        call("ffsake_undo", {"transaction": copy_tx})
+        assert not (root / "nested/copied.dat").exists()
+        call("ffsake_redo", {"transaction": copy_tx})
+        moved = call("ffsake_preview_move", {"from": "nested/copied.dat", "to": "renamed.dat"})
+        assert (root / "nested/copied.dat").exists()
+        assert not (root / "renamed.dat").exists()
+        move_tx = call("ffsake_apply", {"handle": moved["handle"]})["transaction"]
+        assert not (root / "nested/copied.dat").exists()
+        assert (root / "renamed.dat").read_bytes() == binary_bytes
+        call("ffsake_undo", {"transaction": move_tx})
+        assert (root / "nested/copied.dat").read_bytes() == binary_bytes
+        assert not (root / "renamed.dat").exists()
+        call("ffsake_redo", {"transaction": move_tx})
+        deleted = call("ffsake_preview_delete", {"path": "renamed.dat"})
+        assert (root / "renamed.dat").exists()
+        delete_tx = call("ffsake_apply", {"handle": deleted["handle"]})["transaction"]
+        assert not (root / "renamed.dat").exists()
+        call("ffsake_undo", {"transaction": delete_tx})
+        assert (root / "renamed.dat").read_bytes() == binary_bytes
+        call("ffsake_redo", {"transaction": delete_tx})
+        assert not (root / "renamed.dat").exists()
+
+        # A copy plan must notice source changes even though it only writes
+        # the destination. A create plan must not overwrite a raced-in file.
+        stale_copy = call("ffsake_preview_copy", {"from": "binary.dat", "to": "stale.dat"})
+        (root / "binary.dat").write_bytes(b"external")
+        call("ffsake_apply", {"handle": stale_copy["handle"]}, expect_ok=False)
+        assert not (root / "stale.dat").exists()
+        raced = call("ffsake_preview_create", {"path": "raced.txt", "content": ""})
+        (root / "raced.txt").write_text("external")
+        call("ffsake_apply", {"handle": raced["handle"]}, expect_ok=False)
+        assert (root / "raced.txt").read_text() == "external"
+        stale_delete = call("ffsake_preview_delete", {"path": "raced.txt"})
+        (root / "raced.txt").write_text("later external")
+        call("ffsake_apply", {"handle": stale_delete["handle"]}, expect_ok=False)
+        assert (root / "raced.txt").read_text() == "later external"
+        stale_move = call("ffsake_preview_move", {"from": "raced.txt", "to": "move-dest.txt"})
+        (root / "move-dest.txt").write_text("occupied")
+        call("ffsake_apply", {"handle": stale_move["handle"]}, expect_ok=False)
+        assert (root / "raced.txt").read_text() == "later external"
+        assert (root / "move-dest.txt").read_text() == "occupied"
+
+        # Reject traversal, directories, internal paths and symlinks, including
+        # links inserted between preview and apply or between apply and undo.
+        for bad_path in ["../outside.txt", str(outside), ".ffsake/private", ".", "nested", "escape.txt"]:
+            call("ffsake_preview_create", {"path": bad_path, "content": "bad"}, expect_ok=False)
+            call("ffsake_preview_delete", {"path": bad_path}, expect_ok=False)
+            for tool_name in ["ffsake_preview_copy", "ffsake_preview_move"]:
+                call(tool_name, {"from": bad_path, "to": "unused.dat"}, expect_ok=False)
+                call(tool_name, {"from": "binary.dat", "to": bad_path}, expect_ok=False)
+        (root / "dangling").symlink_to(Path(temp) / "missing")
+        call("ffsake_preview_create", {"path": "dangling", "content": "bad"}, expect_ok=False)
+        safe_dir = root / "safe-dir"
+        safe_dir.mkdir()
+        swapped = call("ffsake_preview_create", {"path": "safe-dir/new.txt", "content": "bad"})
+        safe_dir.rmdir()
+        safe_dir.symlink_to(Path(temp), target_is_directory=True)
+        call("ffsake_apply", {"handle": swapped["handle"]}, expect_ok=False)
+        assert not (Path(temp) / "new.txt").exists()
+        safe_dir.unlink()
+        history_dir = root / "history-dir"
+        history_dir.mkdir()
+        undo_guard = call("ffsake_preview_create", {"path": "history-dir/outside.txt", "content": "inside"})
+        undo_guard_tx = call("ffsake_apply", {"handle": undo_guard["handle"]})["transaction"]
+        (history_dir / "outside.txt").unlink()
+        history_dir.rmdir()
+        history_dir.symlink_to(Path(temp), target_is_directory=True)
+        call("ffsake_undo", {"transaction": undo_guard_tx}, expect_ok=False)
+        assert outside.read_text() == "outside-only-secret\n"
+        empty_plan = call("ffsake_preview_create", {"path": "empty.txt", "content": ""})
+        empty_tx = call("ffsake_apply", {"handle": empty_plan["handle"]})["transaction"]
+        assert (root / "empty.txt").read_bytes() == b""
+        call("ffsake_undo", {"transaction": empty_tx})
+        assert not (root / "empty.txt").exists()
+        released = call("ffsake_preview_create", {"path": "released.txt", "content": "x"})
+        call("ffsake_release", {"handle": released["handle"]})
+        call("ffsake_apply", {"handle": released["handle"]}, expect_ok=False)
+        assert not (root / "released.txt").exists()
+        print("MCP create/copy/move/delete, history, collision and symlink guards PASS")
         print(f"MCP boundary guards: {denied_checks} rejected operations; sentinel and source checks PASS")
     finally:
         proc.stdin.close()

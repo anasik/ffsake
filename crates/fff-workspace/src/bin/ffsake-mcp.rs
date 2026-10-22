@@ -138,6 +138,10 @@ fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
         "ffsake_search" => "search",
         "ffsake_preview_matches" => "preview_matches",
         "ffsake_preview_edit" => "preview_edit",
+        "ffsake_preview_create" => "preview_create",
+        "ffsake_preview_copy" => "preview_copy",
+        "ffsake_preview_move" => "preview_move",
+        "ffsake_preview_delete" => "preview_delete",
         "ffsake_apply" => "apply",
         "ffsake_undo" => "undo",
         "ffsake_redo" => "redo",
@@ -225,6 +229,40 @@ fn tools() -> Vec<Value> {
                     "new_text":{"type":"string"},
                     "expected_matches":{"type":"integer","minimum":1}
                 }
+            }),
+        ),
+        tool(
+            "ffsake_preview_create",
+            "Preview creating a new UTF-8 file. Destination must not exist. Parent directories are created on apply. Returns a preview handle; use ffsake_apply to commit, then undo/redo by transaction ID.",
+            json!({
+                "type":"object","required":["path","content"],"properties":{
+                    "path":{"type":"string"},"content":{"type":"string"}
+                }
+            }),
+        ),
+        tool(
+            "ffsake_preview_copy",
+            "Preview copying one existing file, including binary files. Destination must not exist. No directory copies or overwrites. Source contents are checked again on apply. Use ffsake_apply to commit.",
+            json!({
+                "type":"object","required":["from","to"],"properties":{
+                    "from":{"type":"string"},"to":{"type":"string"}
+                }
+            }),
+        ),
+        tool(
+            "ffsake_preview_move",
+            "Preview moving or renaming one existing file in a single journal transaction. Destination must not exist. No directory moves or overwrites. Use ffsake_apply to commit; undo restores the original path.",
+            json!({
+                "type":"object","required":["from","to"],"properties":{
+                    "from":{"type":"string"},"to":{"type":"string"}
+                }
+            }),
+        ),
+        tool(
+            "ffsake_preview_delete",
+            "Preview deleting one existing file. No recursive directory deletion. Contents are checked again on apply and retained in the journal for undo. Use ffsake_apply to commit.",
+            json!({
+                "type":"object","required":["path"],"properties":{"path":{"type":"string"}}
             }),
         ),
         tool(
