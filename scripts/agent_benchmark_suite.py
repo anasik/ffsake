@@ -561,6 +561,25 @@ def workspace_scope_violations(agent, events, root):
     return violations
 
 
+def provider_errors(agent, events):
+    """Read structured OpenCode API errors, never tool output or quoted prose."""
+    if agent != "opencode":
+        return []
+    errors = []
+    for event in events:
+        if not isinstance(event, dict) or event.get("type") != "error":
+            continue
+        error = event.get("error")
+        if not isinstance(error, dict) or error.get("name") != "APIError":
+            continue
+        data = error.get("data")
+        if not isinstance(data, dict):
+            continue
+        errors.append({key: data[key] for key in
+                       ["message", "statusCode", "isRetryable"] if key in data})
+    return errors
+
+
 def one(agent, task_name, mode, timeout, opencode_model):
     task = TASKS[task_name]
     use_ffsake = mode == "ffsake"
@@ -580,6 +599,7 @@ def one(agent, task_name, mode, timeout, opencode_model):
 
         events = parse_jsonl(result["stdout"])
         metrics = generic_metrics(agent, events)
+        api_errors = provider_errors(agent, events)
         final_files = fixture_files(root)
         allowed_changes = set(original_files) if task_name == "micro" else {
             "policy.py" if task_name == "medium" else "issue_tracker.py"}
@@ -597,6 +617,8 @@ def one(agent, task_name, mode, timeout, opencode_model):
         path_violations = workspace_scope_violations(agent, events, root)
         policy["observed_outside_workspace_paths"] = path_violations
         invalid_reasons = []
+        if api_errors:
+            invalid_reasons.append("provider_api_error")
         if not metrics["tool_calls"]:
             invalid_reasons.append("no_recognized_tool_calls")
         if policy["observed_policy_violations"]:
@@ -614,6 +636,7 @@ def one(agent, task_name, mode, timeout, opencode_model):
             "correct": correct and not unexpected and result["exit_code"] == 0 and not result["timed_out"],
             "comparison_valid": not invalid_reasons,
             "comparison_invalid_reasons": invalid_reasons,
+            "provider_errors": api_errors,
             "verification": verification,
             "changed_files": changed,
             "permission_policy": policy,
@@ -816,12 +839,20 @@ def main():
                     results.append(result)
                     report["aggregate"] = aggregate(results)
                     save_report(out, report)
-                    print(json.dumps({
+                    summary = {
                         "correct": result["correct"],
                         "elapsed_ms": result["elapsed_ms"],
                         "tool_calls": result["trace"]["tool_calls"],
                         "ffsake_tool_calls": result["trace"]["ffsake_tool_calls"],
-                    }), flush=True)
+                        "timed_out": result["timed_out"],
+                        "comparison_invalid_reasons": result.get("comparison_invalid_reasons", []),
+                        "provider_errors": result.get("provider_errors", []),
+                    }
+                    print(json.dumps(summary), flush=True)
+                    if any(error.get("isRetryable") is False for error in summary["provider_errors"]):
+                        report["stopped_reason"] = "non_retryable_provider_error"
+                        save_report(out, report)
+                        raise SystemExit(f"Provider rejected the request; remaining runs stopped. Full suite trace: {out}")
 
     report["complete"] = True
     save_report(out, report)
@@ -834,4 +865,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

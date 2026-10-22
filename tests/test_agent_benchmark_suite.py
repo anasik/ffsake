@@ -512,5 +512,49 @@ else:
         self.assertIn("workspace", run)
 
 
+
+class ProviderErrorTests(unittest.TestCase):
+    ERROR = {"type": "error", "error": {"name": "APIError", "data": {
+        "message": "OpenCode's free tier can only be used from within OpenCode.",
+        "statusCode": 403, "isRetryable": False,
+        "responseHeaders": {"private": "do-not-copy"}}}}
+
+    def test_provider_error_invalidates_run_even_after_tool_calls(self):
+        from unittest.mock import patch
+        events = [{"type": "tool_use", "part": {"callID": "1", "tool": "read"}}, self.ERROR]
+        output = {"stdout": "\n".join(map(json.dumps, events)), "stderr": "",
+                  "exit_code": 1, "elapsed_ms": 1, "timed_out": False}
+        with patch.object(suite, "opencode_run", return_value=output):
+            result = suite.one("opencode", "micro", "baseline", 1, None)
+        self.assertFalse(result["comparison_valid"])
+        self.assertIn("provider_api_error", result["comparison_invalid_reasons"])
+        self.assertEqual(result["provider_errors"][0]["statusCode"], 403)
+        self.assertNotIn("do-not-copy", json.dumps(result["provider_errors"]))
+
+    def test_tool_output_and_other_agents_are_not_provider_errors(self):
+        self.assertEqual(suite.provider_errors("codex", [self.ERROR]), [])
+        self.assertEqual(suite.provider_errors("opencode", [
+            {"type": "text", "error": self.ERROR["error"]},
+            {"type": "error", "error": {"name": "ToolError", "data": self.ERROR["error"]["data"]}},
+            {"type": "error", "error": None}]), [])
+
+    def test_non_retryable_error_saves_report_and_stops_remaining_runs(self):
+        from unittest.mock import patch
+        import contextlib
+        import io
+        output = {"stdout": json.dumps(self.ERROR), "stderr": "",
+                  "exit_code": 1, "elapsed_ms": 1, "timed_out": False}
+        with tempfile.TemporaryDirectory() as td, contextlib.redirect_stdout(io.StringIO()) as console:
+            with patch.object(sys, "argv", ["suite", "--agents", "opencode", "--tasks", "micro"]), patch.object(suite, "preflight", return_value={"ok": True}), patch.object(suite, "FFSAKE_MCP", Path(__file__)), patch.object(suite, "RESULT_DIR", Path(td)), patch.object(suite, "opencode_run", return_value=output) as run:
+                with self.assertRaisesRegex(SystemExit, "remaining runs stopped"):
+                    suite.main()
+            run.assert_called_once()
+            report = json.loads(next(Path(td).glob("*.json")).read_text())
+        self.assertFalse(report["complete"])
+        self.assertEqual(len(report["results"]), 1)
+        self.assertEqual(report["stopped_reason"], "non_retryable_provider_error")
+        self.assertIn("free tier", console.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()
