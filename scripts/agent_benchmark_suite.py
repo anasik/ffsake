@@ -22,7 +22,7 @@ FFSAKE_MCP = (ROOT / "target" / "debug" / "ffsake-mcp").resolve()
 RESULT_DIR = ROOT / "docs" / "agent-benchmark-runs"
 FFSAKE_TOOLS = (
     "ffsake_read", "ffsake_list", "ffsake_target", "ffsake_search",
-    "ffsake_preview_matches", "ffsake_apply", "ffsake_undo", "ffsake_redo",
+    "ffsake_preview_matches", "ffsake_preview_edit", "ffsake_apply", "ffsake_undo", "ffsake_redo",
     "ffsake_release", "ffsake_refresh",
 )
 
@@ -191,6 +191,12 @@ def ffsake_prompt(task_prompt: str):
         "After apply, undo, or redo, the next search refreshes the index automatically; "
         "reserve explicit refresh for external filesystem changes. "
         "For count-only verification, omit details or set it to false. "
+        "For code edits in a known file, read it then use ffsake_preview_edit with exact old_text/new_text "
+        "and expected_matches (normally 1). Multiline blocks are supported; preserve whitespace exactly. "
+        "Group related changes into one contiguous block instead of searching and previewing each line. "
+        "Use indexed search and preview_matches for repository-wide replacements. "
+        "Apply a preview before preparing another edit to the same file: applying changes its hash "
+        "and invalidates older MatchSets and previews for that file. "
         "Preview mutations before applying them. If FFSAKE lacks a capability required to finish, "
         "state the missing capability rather than falling back silently."
     )

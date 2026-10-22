@@ -137,6 +137,7 @@ fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
         "ffsake_target" => "target",
         "ffsake_search" => "search",
         "ffsake_preview_matches" => "preview_matches",
+        "ffsake_preview_edit" => "preview_edit",
         "ffsake_apply" => "apply",
         "ffsake_undo" => "undo",
         "ffsake_redo" => "redo",
@@ -191,7 +192,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_search",
-            "Search indexed workspace content and retain a server-owned MatchSet. Omit target for all workspace files (or the active target). For an explicit whole-workspace target, use include: [\"All\"], exclude: []. Empty include selects no files.",
+            "Search indexed workspace content line by line and retain a server-owned MatchSet. For multiline code replacements, use ffsake_preview_edit after reading the file. Omit target for all workspace files (or the active target). For an explicit whole-workspace target, use include: [\"All\"], exclude: []. Empty include selects no files.",
             json!({
                 "type":"object","required":["pattern"],"properties":{
                     "pattern":{"type":"string"},
@@ -205,12 +206,24 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_preview_matches",
-            "Preview replacing a cached MatchSet without writing.",
+            "Preview replacing a cached MatchSet without writing. Apply before preparing another edit to the same file: changing that file invalidates its older MatchSets and previews.",
             json!({
                 "type":"object","required":["handle","replacement","expected_matches"],"properties":{
                     "handle":{"type":"integer","minimum":1},
                     "replacement":{"type":"string"},
                     "expected_matches":{"type":"integer","minimum":0}
+                }
+            }),
+        ),
+        tool(
+            "ffsake_preview_edit",
+            "Preview an exact literal replacement in one existing workspace file, including multiline blocks. Prefer this for code edits after reading the file: replace a contiguous block in one preview instead of searching each line. old_text and new_text preserve whitespace exactly; no regex or capture expansion. No writes until ffsake_apply. Apply this preview before preparing another edit to the same file; previews are bound to the original file hash.",
+            json!({
+                "type":"object","required":["path","old_text","new_text","expected_matches"],"properties":{
+                    "path":{"type":"string"},
+                    "old_text":{"type":"string","minLength":1},
+                    "new_text":{"type":"string"},
+                    "expected_matches":{"type":"integer","minimum":1}
                 }
             }),
         ),
@@ -278,3 +291,4 @@ fn selector_schema() -> Value {
 fn tool(name: &str, description: &str, input_schema: Value) -> Value {
     json!({"name":name,"description":description,"inputSchema":input_schema})
 }
+

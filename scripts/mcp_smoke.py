@@ -46,7 +46,7 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
 
         listed = send(proc, {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
         names = {tool["name"] for tool in listed["result"]["tools"]}
-        assert {"ffsake_search", "ffsake_preview_matches", "ffsake_apply", "ffsake_undo"} <= names
+        assert {"ffsake_search", "ffsake_preview_matches", "ffsake_preview_edit", "ffsake_apply", "ffsake_undo"} <= names
 
         found = send(proc, {
             "jsonrpc": "2.0",
@@ -191,10 +191,52 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         call("ffsake_preview_matches", {"handle": release_match["handle"], "replacement": "world",
                                         "expected_matches": 1}, expect_ok=False)
         assert (root / "a.txt").read_text() == "external edit must survive\n"
+        # Multiline code editing uses one guarded preview, with literal Unicode,
+        # whitespace and dollar signs preserved rather than regex-expanded.
+        before = 'def first():\n    return "café"\n\ndef second():\n    return "$1"\n'
+        after = 'def first():\n    return "你好"\n\ndef second():\n    return "$2"\n'
+        (root / "code.py").write_text(before)
+        edit = {"path": "code.py", "old_text": before, "new_text": after, "expected_matches": 1}
+        plan = call("ffsake_preview_edit", edit)
+        assert plan["preview"]["changed_files"] == 1
+        assert (root / "code.py").read_text() == before
+        changed = call("ffsake_apply", {"handle": plan["handle"]})
+        assert changed["changed_files"] == 1
+        assert (root / "code.py").read_text() == after
+        call("ffsake_apply", {"handle": plan["handle"]}, expect_ok=False)
+        call("ffsake_undo", {"transaction": changed["transaction"]})
+        assert (root / "code.py").read_text() == before
+        call("ffsake_redo", {"transaction": changed["transaction"]})
+        assert (root / "code.py").read_text() == after
+        verified = call("ffsake_search", {"pattern": "你好"})
+        assert verified["matches"] == 1
+        call("ffsake_release", {"handle": verified["handle"]})
+
+        # Ambiguity, missing content, invalid paths/arguments and stale plans
+        # must fail without writing either the workspace or outside sentinel.
+        for override in [
+            {"path": "../outside.txt"}, {"path": str(outside)},
+            {"path": "escape.txt"}, {"path": ".ffsake"},
+            {"path": "."}, {"path": "missing.py"},
+            {"old_text": ""}, {"old_text": "absent"},
+            {"old_text": "return", "expected_matches": 1},
+            {"old_text": after, "expected_matches": 0},
+            {"old_text": after, "expected_matches": -1},
+            {"old_text": after, "unexpected": True},
+        ]:
+            call("ffsake_preview_edit", {**edit, **override}, expect_ok=False)
+            assert (root / "code.py").read_text() == after
+        stale = call("ffsake_preview_edit", {**edit, "old_text": after, "new_text": before})
+        (root / "code.py").write_text("external code edit\n")
+        call("ffsake_apply", {"handle": stale["handle"]}, expect_ok=False)
+        assert (root / "code.py").read_text() == "external code edit\n"
+        assert (root / "a.txt").read_text() == "external edit must survive\n"
+        print("MCP multiline preview/edit/apply/undo/redo and stale-content guards PASS")
         print(f"MCP boundary guards: {denied_checks} rejected operations; sentinel and source checks PASS")
     finally:
         proc.stdin.close()
         assert proc.wait(timeout=30) == 0, proc.stderr.read()
 
 print("MCP smoke: initialize/tools/search/preview/apply/undo PASS")
+
 

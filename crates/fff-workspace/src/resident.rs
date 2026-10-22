@@ -3,7 +3,7 @@ use crate::journal::Journal;
 use crate::search::{FffSearchIndex, MatchSet, SearchMode};
 use crate::session::EditorSession;
 use crate::transform::{self, Mutation, Transform};
-use crate::{FileSelector, PathSelector, Workspace};
+use crate::{FileSelector, PathSelector, ReplaceMode, Workspace};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
@@ -40,6 +40,12 @@ pub enum Request {
     PreviewMatches {
         handle: u64,
         replacement: String,
+        expected_matches: usize,
+    },
+    PreviewEdit {
+        path: String,
+        old_text: String,
+        new_text: String,
         expected_matches: usize,
     },
     Preview {
@@ -202,6 +208,29 @@ impl Resident {
                 let plan = set.replace_transform(self.session.workspace(), replacement)?;
                 self.preview(plan)
             }
+            Request::PreviewEdit {
+                path,
+                old_text,
+                new_text,
+                expected_matches,
+            } => {
+                if expected_matches == 0 {
+                    return Err("expected_matches must be positive".into());
+                }
+                // Exact selectors also accept directories; this operation is
+                // deliberately limited to one existing, safe UTF-8 file.
+                self.session.workspace().read_text(&path, None, None)?;
+                self.preview(Transform {
+                    target: FileSelector::exact(path),
+                    operations: vec![Mutation::Replace {
+                        mode: ReplaceMode::Literal,
+                        pattern: old_text,
+                        replacement: new_text,
+                        expected_matches: Some(expected_matches),
+                    }],
+                    max_files: Some(1),
+                })
+            }
             Request::Preview { transform } => self.preview(transform),
             Request::Apply { handle } => {
                 let plan = self.plans.get(&handle).ok_or("unknown preview handle")?;
@@ -231,3 +260,4 @@ impl Resident {
         }
     }
 }
+
