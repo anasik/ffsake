@@ -499,8 +499,9 @@ def configure_opencode(root: Path, use_ffsake: bool):
         permission.update({name: "allow" for name in
                            ["bash", "shell", "read", "edit", "write", "apply_patch", "glob", "grep", "list"]})
     config = {"$schema": "https://opencode.ai/config.json", "permission": permission}
-    if use_ffsake:
-        config["mcp"] = {"ffsake": {"type": "local", "command": [str(FFSAKE_MCP), str(root)], "enabled": True}}
+    # Explicitly override inherited servers in both modes: omission merges in
+    # an enabled global FFSAKE server, contaminating the baseline.
+    config["mcp"] = {"ffsake": {"type": "local", "command": [str(FFSAKE_MCP), str(root)], "enabled": use_ffsake}}
     (root / "opencode.json").write_text(json.dumps(config, indent=2))
     return config
 

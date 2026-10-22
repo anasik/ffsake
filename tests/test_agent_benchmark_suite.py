@@ -418,6 +418,10 @@ elif args[:3]==["debug","file","read"]:
  print(json.dumps({"content":base64.b64encode((root/args[3]).read_bytes()).decode(),"encoding":"base64"}))
 elif args==["debug","config"]:
  config=json.loads((root/"opencode.json").read_text())
+ if os.environ.get("INHERIT_FFSAKE"):
+  server={"type":"local","command":["inherited-global-server"],"enabled":True}
+  server.update(config.get("mcp",{}).get("ffsake",{}))
+  config.setdefault("mcp",{})["ffsake"]=server
  config["provider"]={"private":"do-not-persist-this"}
  if os.environ.get("BAD_POLICY"): config["permission"]["*"]="allow"
  if os.environ.get("BAD_ORDER"): config["permission"]["*"]=config["permission"].pop("*")
@@ -460,6 +464,18 @@ else:
         self.assertEqual(len(report["checks"]), 2)
         self.assertEqual(report["model_calls"], 0)
         self.assertNotIn("do-not-persist-this", json.dumps(report))
+
+    @unittest.skipIf(sys.platform == "win32", "Executable shebang fixture")
+    def test_probe_overrides_inherited_enabled_ffsake_server(self):
+        import os
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td:
+            executable = self.make_cli(Path(td))
+            with patch.dict(os.environ, {"INHERIT_FFSAKE": "1"}):
+                report = suite.opencode_workspace_preflight(str(executable))
+        self.assertTrue(report["ok"])
+        self.assertTrue(all(c["mcp_configuration_matches"] for c in report["checks"]))
+        self.assertEqual(report["model_calls"], 0)
 
     @unittest.skipIf(sys.platform == "win32", "Executable shebang fixture")
     def test_model_free_probe_rejects_wrong_effective_permissions(self):
