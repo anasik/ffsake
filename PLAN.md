@@ -82,13 +82,21 @@ Next:
 
 ## Phase 1E — agent benchmark
 
-Synthetic executable benchmark is implemented and passing. The real-agent harness now covers Claude Code, Codex, and OpenCode in baseline/FFSAKE modes across micro, medium, and application-completion tasks with repeated runs and aggregate medians.
+Synthetic executable benchmark is implemented and passing. The real-agent harness now covers Claude Code, Codex, and OpenCode in baseline/FFSAKE modes across micro, medium, application-completion, and from-scratch project tasks with repeated runs and aggregate medians.
 
-Current benchmark-discovered interface gaps:
-- MCP does not yet expose arbitrary create-file/write-new-file operations;
-- MCP does not yet expose build/test/runtime execution, so suite correctness is verified externally.
+Implemented after benchmark feedback:
+- guarded multiline block preview/edit/apply;
+- file create/copy/move/rename/delete previews with journal apply and undo/redo;
+- a from-scratch CLI package task with separate-process persistence checks.
 
-Next, run the expanded matrix and use failures/traces to decide whether those gaps or syntax-aware editing should be implemented first.
+Verified repeated project fixture: 12/12 correct runs, with Claude median time down 42.1% and reported median cost down 48.9%; Codex median time was 1.1% higher. Every FFSAKE run used only FFSAKE tools; this does not establish host-enforced isolation or general performance results.
+
+Next: use the Claude launcher on one real-repository task in a separate worktree and inspect the resulting diff. Do not keep rerunning the same synthetic fixture without a new question.
+
+Remaining gaps:
+- build/test/runtime execution remains external;
+- directory operations and filesystem metadata preservation are not covered by the MCP journal;
+- native Codex tools are not disabled; enforced isolation remains unverified.
 
 Pass condition:
 

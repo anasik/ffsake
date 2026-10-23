@@ -101,11 +101,12 @@ Claude Code is invoked non-interactively with stream-JSON output and a temporary
 
 ### Multi-agent suite
 
-The broader benchmark matrix supports Claude Code, Codex, and OpenCode across three task sizes:
+The broader benchmark matrix supports Claude Code, Codex, and OpenCode across four task types:
 
 - `micro`: deterministic repository-wide identifier rename;
 - `medium`: implement a small request-policy engine in an existing file;
-- `app`: complete a JSON-backed issue-tracker application scaffold with hidden verification.
+- `app`: complete a JSON-backed issue-tracker application scaffold with hidden verification;
+- `project` (opt-in): create a three-file persistent CLI package from requirements, verified across separate processes.
 
 Each agent is run in both baseline and FFSAKE modes. Use repeated runs and compare medians:
 
@@ -121,4 +122,26 @@ To test only the installed agents you care about, pass a smaller `--agents` list
 
 Every run gets a fresh committed temporary Git repository. The harness performs correctness verification outside the agent session, retains raw JSON traces, and writes one aggregate report under `docs/agent-benchmark-runs/`.
 
-Known current boundary: the large task completes an existing application scaffold rather than starting from an empty directory because FFSAKE MCP does not yet expose arbitrary create-file/write-new-file operations or a build/test runner. That limitation is intentionally recorded rather than hidden with shell fallback.
+MCP now exposes guarded multiline editing and file create/copy/move/rename/delete through preview/apply and undo/redo. File-operation destinations must be absent; directory operations are not exposed. Build/test execution remains external. The scaffold task is retained for historical comparisons; use `--tasks project` to measure creation from scratch.
+
+
+## Use on a real repository with Claude
+
+Build once, then launch an interactive session for a chosen workspace:
+
+```sh
+cargo build --locked --bin ffsake-mcp
+python3 scripts/ffsake_claude.py /absolute/path/to/worktree
+```
+
+The launcher supplies a temporary MCP configuration, disables Claude's built-in tools with `--tools ""`, loads only this MCP configuration with `--strict-mcp-config`, and approves only the fifteen named FFSAKE tools for this session. It does not use the broad skip-permissions flag or modify user/project configuration. Other host settings, including enterprise policy and startup hooks, are not isolated by this launcher. FFSAKE is an application-level workspace boundary, not an OS sandbox.
+
+Use a separate git worktree for the first pilot. Start with one small repository editing task; run builds/tests and review the git diff in a separate terminal. FFSAKE currently supplies editing/navigation, not a build/test runner. Existing file bytes are journaled; filesystem metadata such as executable bits is not covered by the journal and should be reviewed before committing.
+
+To preview the generated command and MCP configuration without starting Claude:
+
+```sh
+python3 scripts/ffsake_claude.py /absolute/path/to/worktree --dry-run
+```
+
+The launcher's CLI flags follow the [Claude CLI reference](https://code.claude.com/docs/en/cli-reference). Its process/configuration behavior is regression-tested with a fake CLI; interactive tool availability must still be checked with the installed Claude version.

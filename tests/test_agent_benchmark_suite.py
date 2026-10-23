@@ -663,5 +663,66 @@ print(json.dumps(result))
                                  [] if forbidden is None else [forbidden])
 
 
+class ClaudePilotTests(unittest.TestCase):
+    LAUNCHER = SCRIPT.with_name("ffsake_claude.py")
+
+    def test_dry_run_scopes_config_and_approvals_to_known_workspace_tools(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / 'repo with "quotes"'
+            root.mkdir()
+            result = subprocess.run([sys.executable, str(self.LAUNCHER), str(root),
+                                     "--binary", sys.executable, "--claude", sys.executable,
+                                     "--dry-run"], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            data = json.loads(result.stdout)
+            self.assertEqual(data["mcp_config"], {"mcpServers": {"ffsake": {
+                "command": str(Path(sys.executable).resolve()), "args": [str(root.resolve())]}}})
+            self.assertEqual(data["approved_tools"],
+                             ["mcp__ffsake__" + tool for tool in suite.FFSAKE_TOOLS])
+            command = data["command"]
+            self.assertEqual(command[command.index("--tools") + 1], "")
+            self.assertIn("--strict-mcp-config", command)
+            self.assertNotIn("--dangerously-skip-permissions", command)
+            self.assertFalse(Path(command[command.index("--mcp-config") + 1]).exists())
+            self.assertEqual(list(root.iterdir()), [])
+
+    @unittest.skipIf(sys.platform == "win32", "Executable shebang fixture")
+    def test_interactive_launcher_keeps_config_alive_and_preserves_exit_code(self):
+        import os
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            root = folder / "repo"
+            root.mkdir()
+            executable = folder / "fake claude"
+            executable.write_text("#!" + sys.executable + "\n" + '''import json,os,sys
+from pathlib import Path
+args=sys.argv[1:]
+path=Path(args[args.index("--mcp-config")+1])
+print(json.dumps({"cwd":os.getcwd(),"pwd":os.environ["PWD"],"config":json.loads(path.read_text()),"config_path":str(path)}))
+raise SystemExit(7)
+''')
+            executable.chmod(0o755)
+            env = {**os.environ, "PWD": "/incorrect-parent"}
+            result = subprocess.run([sys.executable, str(self.LAUNCHER), str(root),
+                                     "--binary", sys.executable, "--claude", str(executable)],
+                                    capture_output=True, text=True, env=env)
+            self.assertEqual(result.returncode, 7, result.stderr)
+            data = json.loads(result.stdout)
+            self.assertEqual(data["cwd"], str(root.resolve()))
+            self.assertEqual(data["pwd"], str(root.resolve()))
+            self.assertFalse(Path(data["config_path"]).exists())
+            self.assertEqual(list(root.iterdir()), [])
+
+    def test_invalid_workspace_or_missing_binary_fails_without_launch(self):
+        with tempfile.TemporaryDirectory() as td:
+            for workspace, binary in [(str(Path(td) / "missing"), sys.executable),
+                                       (td, str(Path(td) / "missing-binary"))]:
+                result = subprocess.run([sys.executable, str(self.LAUNCHER), workspace,
+                                         "--binary", binary, "--claude", sys.executable],
+                                        capture_output=True, text=True)
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, "")
+
+
 if __name__ == "__main__":
     unittest.main()
