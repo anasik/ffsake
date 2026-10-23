@@ -464,6 +464,11 @@ fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
         .unwrap_or("snapshot");
     let temp = parent.join(format!(".{name}.ffsake-journal-tmp-{}", std::process::id()));
     fs::write(&temp, bytes)?;
+    match fs::metadata(path) {
+        Ok(metadata) => fs::set_permissions(&temp, metadata.permissions())?,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(error) => return Err(error.into()),
+    }
     fs::rename(temp, path)?;
     Ok(())
 }
@@ -472,12 +477,40 @@ fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
 mod tests {
     use super::*;
 
+    fn fixture_at(base: &Path) -> PathBuf {
+        // A timestamp is a candidate name, not a reservation. Never share a
+        // directory with another parallel test, even if their clocks coincide.
+        for suffix in 0u64.. {
+            let root = base.with_extension(suffix.to_string());
+            match fs::create_dir(&root) {
+                Ok(()) => {
+                    fs::create_dir(root.join("src")).unwrap();
+                    fs::write(root.join("src/lib.rs"), b"before").unwrap();
+                    return root;
+                }
+                Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
+                Err(error) => panic!("cannot allocate journal fixture: {error}"),
+            }
+        }
+        unreachable!("fixture suffix space exhausted")
+    }
+
     fn fixture() -> PathBuf {
         let id = transaction_id();
-        let root = std::env::temp_dir().join(format!("ffsake-journal-{id}"));
-        fs::create_dir_all(root.join("src")).unwrap();
-        fs::write(root.join("src/lib.rs"), b"before").unwrap();
-        root
+        fixture_at(&std::env::temp_dir().join(format!("ffsake-journal-{id}")))
+    }
+
+    #[test]
+    fn fixture_name_collisions_do_not_share_directories() {
+        let root = fixture();
+        let base = root.join("collision");
+        let first = fixture_at(&base);
+        fs::write(first.join("src/lib.rs"), b"first fixture").unwrap();
+        let second = fixture_at(&base);
+        assert_ne!(first, second);
+        assert_eq!(fs::read(first.join("src/lib.rs")).unwrap(), b"first fixture");
+        assert_eq!(fs::read(second.join("src/lib.rs")).unwrap(), b"before");
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -576,6 +609,38 @@ mod tests {
 
         journal.undo(&manifest.id).unwrap();
         assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"before");
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn preserves_executable_permissions_across_commit_undo_and_redo() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let root = fixture();
+        let script = root.join("src/run.sh");
+        fs::write(&script, b"#!/bin/sh\necho before\n").unwrap();
+        fs::set_permissions(&script, fs::Permissions::from_mode(0o755)).unwrap();
+        let journal = Journal::open(&root).unwrap();
+        let mode = || fs::metadata(&script).unwrap().permissions().mode() & 0o777;
+
+        let manifest = journal
+            .commit(
+                None,
+                &[("src/run.sh".into(), Some(b"#!/bin/sh\necho after\n".to_vec()))],
+            )
+            .unwrap();
+        assert_eq!(fs::read(&script).unwrap(), b"#!/bin/sh\necho after\n");
+        assert_eq!(mode(), 0o755);
+
+        journal.undo(&manifest.id).unwrap();
+        assert_eq!(fs::read(&script).unwrap(), b"#!/bin/sh\necho before\n");
+        assert_eq!(mode(), 0o755);
+
+        journal.redo(&manifest.id).unwrap();
+        assert_eq!(fs::read(&script).unwrap(), b"#!/bin/sh\necho after\n");
+        assert_eq!(mode(), 0o755);
 
         fs::remove_dir_all(root).unwrap();
     }
