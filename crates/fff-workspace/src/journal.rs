@@ -508,7 +508,10 @@ mod tests {
         fs::write(first.join("src/lib.rs"), b"first fixture").unwrap();
         let second = fixture_at(&base);
         assert_ne!(first, second);
-        assert_eq!(fs::read(first.join("src/lib.rs")).unwrap(), b"first fixture");
+        assert_eq!(
+            fs::read(first.join("src/lib.rs")).unwrap(),
+            b"first fixture"
+        );
         assert_eq!(fs::read(second.join("src/lib.rs")).unwrap(), b"before");
         fs::remove_dir_all(root).unwrap();
     }
@@ -628,7 +631,10 @@ mod tests {
         let manifest = journal
             .commit(
                 None,
-                &[("src/run.sh".into(), Some(b"#!/bin/sh\necho after\n".to_vec()))],
+                &[(
+                    "src/run.sh".into(),
+                    Some(b"#!/bin/sh\necho after\n".to_vec()),
+                )],
             )
             .unwrap();
         assert_eq!(fs::read(&script).unwrap(), b"#!/bin/sh\necho after\n");
