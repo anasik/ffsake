@@ -100,3 +100,31 @@ Four file-operation tools now return preview handles: `ffsake_preview_create(pat
 Plans retain the previewed source bytes and expected destination absence. Apply rechecks those states, and the journal verifies state before applying or undoing. Journal path resolution now rejects symlink components, including symlinks introduced after preview or before history operations, and reserves `.ffsake` paths. This is application-level confinement, not an OS sandbox or protection against concurrent adversarial filesystem races.
 
 The app benchmark still uses its original scaffold so existing results remain comparable; it is not a benchmark of building a project from an empty directory.
+
+
+## Repeated medium/app comparison, 2026-10-23
+
+The supplied `suite-20261023-183724-a1zftuln.json` completed 24/24 correct runs, with three repetitions per agent/task/mode, no timeouts and no observed policy violations. All FFSAKE calls were FFSAKE tools. The accompanying local MCP smoke output reports 80 rejected boundary operations and passing file-operation/history checks.
+
+| Agent | Task | Baseline median | FFSAKE median | Time change | Median calls, baseline → FFSAKE |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Claude | medium | 15.91 s | 16.50 s | +3.7% | 3 → 7 |
+| Claude | app | 13.76 s | 15.28 s | +11.1% | 3 → 3 |
+| Codex | medium | 37.21 s | 42.44 s | +14.1% | 5 → 8 |
+| Codex | app | 45.57 s | 44.06 s | −3.3% | 4 → 6 |
+
+Claude's reported median cost decreased from $0.076004 to $0.054941 for medium (27.7%) and from $0.082130 to $0.050534 for app (38.5%). Codex cost is unavailable. These are small samples, not evidence of universal speed or cost advantages, and observed tool use does not prove host-enforced isolation.
+
+Traces confirm use of one multiline block preview/apply rather than per-function rebuilding. Claude app uses three calls (read, preview, apply); medium adds discovery and README reads. Codex adds search/read verification. No stale-plan recovery is needed in these runs.
+
+## From-scratch project task
+
+The opt-in `project` task begins with only a requirements README and a git repository. It requires three new Python package files implementing a persistent issue-tracker CLI. Both modes receive the same requirements. The verifier checks 15 behaviors using separate CLI processes, including persistence, combined filters, sequential IDs, Unicode/quoted/newline titles, missing database parents and unknown-ID handling without data corruption. It also requires the specified files and rejects additional files or changes to the requirements.
+
+This exercises file creation through agent tools. Existing scaffold tasks and default task selection remain unchanged. It does not yet measure dependency installation, a web application, directory operations or builds through FFSAKE; the host runs correctness checks.
+
+Run one diagnostic repetition for both agents and modes (four model runs):
+
+```bash
+python3 scripts/agent_benchmark_suite.py --agents claude,codex --tasks project --repetitions 1 --timeout 900
+```

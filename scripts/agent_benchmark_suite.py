@@ -148,7 +148,86 @@ def app_verify(root: Path, state):
         return False, {"exception": repr(exc)}
 
 
+PROJECT_FILES = {"tracker/__init__.py", "tracker/storage.py", "tracker/__main__.py"}
+PROJECT_PROMPT = """Build a Python standard-library-only issue tracker from scratch.
+Create exactly tracker/__init__.py, tracker/storage.py and tracker/__main__.py.
+No implementation files exist yet. Keep persistence logic in storage.py and CLI
+logic in __main__.py. Do not change README.md or add any other files.
+The command is: python3 -B -m tracker --db PATH COMMAND [OPTIONS].
+Every successful command prints one JSON value to stdout:
+- create TITLE [--tag TAG ...]: return a new issue object with id, title, tags,
+  status='open'. IDs start at 1 and increase; omitted tags means [].
+- list [--status open|closed] [--tag TAG]: return matching issues in ID order;
+  combine filters when both are supplied.
+- close ID: mark an existing issue closed and return it, including if already closed.
+  Unknown IDs must exit nonzero without changing stored data.
+- stats: return exactly {'open': N, 'closed': N, 'total': N}.
+Persist issues as a JSON list at PATH. A missing database is empty. Create missing
+database parent directories when saving. Preserve Unicode and quoted/newline titles.
+All commands must work across separate process invocations. Stop when complete."""
+
+
+def project_fixture(root: Path):
+    write_files(root, {"README.md": "# From-scratch issue tracker\n\n" + PROJECT_PROMPT + "\n"})
+    git_init(root)
+    return {}
+
+
+def project_verify(root: Path, state):
+    missing = sorted(name for name in PROJECT_FILES if not (root / name).is_file())
+    if missing:
+        return False, {"missing_files": missing}
+    checks = []
+    try:
+        for name in PROJECT_FILES:
+            compile((root / name).read_text(), name, "exec")
+        with tempfile.TemporaryDirectory(prefix="ffsake-project-verify-") as td:
+            db = Path(td) / "nested" / "issues.json"
+            def command(*args, success=True):
+                proc = run_process([sys.executable, "-B", "-m", "tracker", "--db", str(db), *args], root, 5)
+                if proc["timed_out"]:
+                    raise ValueError("CLI verification timed out")
+                if success:
+                    if proc["exit_code"] != 0:
+                        raise ValueError("CLI failed: " + proc["stderr"][:1000])
+                    return json.loads(proc["stdout"])
+                return proc["exit_code"] != 0
+
+            checks.append(command("list") == [])
+            checks.append(command("stats") == {"open": 0, "closed": 0, "total": 0})
+            title = 'café "quoted"\nsecond line'
+            first = command("create", title)
+            checks.append(first == {"id": 1, "title": title, "tags": [], "status": "open"})
+            second = command("create", "second", "--tag", "bug", "--tag", "api")
+            checks.append(second == {"id": 2, "title": "second", "tags": ["bug", "api"], "status": "open"})
+            third = command("create", "third", "--tag", "bug")
+            checks.append(third == {"id": 3, "title": "third", "tags": ["bug"], "status": "open"})
+            checks.append(command("list") == [first, second, third])
+            checks.append(command("list", "--tag", "bug") == [second, third])
+            closed = command("close", "2")
+            checks.append(closed == {**second, "status": "closed"})
+            checks.append(command("close", "2") == closed)
+            checks.append(command("list", "--status", "open", "--tag", "bug") == [third])
+            checks.append(command("stats") == {"open": 2, "closed": 1, "total": 3})
+            before = db.read_bytes()
+            checks.append(command("close", "999", success=False))
+            checks.append(db.read_bytes() == before)
+            checks.append(json.loads(before) == [first, closed, third])
+            fourth = command("create", "fourth")
+            checks.append(fourth == {"id": 4, "title": "fourth", "tags": [], "status": "open"})
+        return all(checks), {"checks": len(checks), "passed": sum(bool(x) for x in checks)}
+    except Exception as exc:
+        return False, {"checks": len(checks), "passed": sum(bool(x) for x in checks),
+                       "exception": repr(exc)}
+
+
 TASKS = {
+    "project": {
+        "fixture": project_fixture,
+        "verify": project_verify,
+        "prompt": PROJECT_PROMPT,
+        "allowed_changes": PROJECT_FILES,
+    },
     "micro": {
         "fixture": micro_fixture,
         "verify": micro_verify,
@@ -610,9 +689,10 @@ def one(agent, task_name, mode, timeout, opencode_model):
         metrics = generic_metrics(agent, events)
         api_errors = provider_errors(agent, events)
         final_files = fixture_files(root)
-        allowed_changes = set(original_files) if task_name == "micro" else {
-            "policy.py" if task_name == "medium" else "issue_tracker.py"}
-        unexpected = sorted(set(original_files) ^ set(final_files) |
+        allowed_changes = set(task.get("allowed_changes", set(original_files) if task_name == "micro" else {
+            "policy.py" if task_name == "medium" else "issue_tracker.py"}))
+        unexpected = sorted((set(original_files) - set(final_files)) |
+                            (set(final_files) - set(original_files) - allowed_changes) |
                             {name for name in original_files.keys() & final_files.keys()
                              if name not in allowed_changes and original_files[name] != final_files[name]})
         changed = sorted(name for name in original_files.keys() | final_files.keys()
@@ -777,7 +857,7 @@ def aggregate(results):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--agents", default="claude,codex,opencode")
-    parser.add_argument("--tasks", default="micro,medium,app")
+    parser.add_argument("--tasks", default="micro,medium,app", help="Comma-separated micro,medium,app,project; project builds new files from scratch")
     parser.add_argument("--modes", default="baseline,ffsake", help="Comma-separated baseline,ffsake; select one for targeted diagnostics")
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--timeout", type=int, default=900)

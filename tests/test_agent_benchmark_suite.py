@@ -556,5 +556,112 @@ class ProviderErrorTests(unittest.TestCase):
         self.assertIn("free tier", console.getvalue())
 
 
+class ProjectTaskTests(unittest.TestCase):
+    STORAGE = '''import json
+from pathlib import Path
+
+def load(path):
+    p = Path(path)
+    return json.loads(p.read_text()) if p.exists() else []
+
+def save(path, items):
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(items))
+'''
+    CLI = '''import argparse
+import json
+from .storage import load, save
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--db", required=True)
+sub = parser.add_subparsers(dest="command", required=True)
+create = sub.add_parser("create")
+create.add_argument("title")
+create.add_argument("--tag", action="append", default=[])
+listing = sub.add_parser("list")
+listing.add_argument("--status")
+listing.add_argument("--tag")
+close = sub.add_parser("close")
+close.add_argument("id", type=int)
+sub.add_parser("stats")
+a = parser.parse_args()
+items = load(a.db)
+if a.command == "create":
+    result = dict(id=max((i["id"] for i in items), default=0)+1,
+                  title=a.title, tags=a.tag, status="open")
+    items.append(result)
+    save(a.db, items)
+elif a.command == "list":
+    result = [i for i in sorted(items, key=lambda i: i["id"])
+              if (a.status is None or i["status"] == a.status)
+              and (a.tag is None or a.tag in i["tags"])]
+elif a.command == "close":
+    result = next((i for i in items if i["id"] == a.id), None)
+    if result is None:
+        parser.error("unknown issue")
+    result["status"] = "closed"
+    save(a.db, items)
+else:
+    result = dict(open=sum(i["status"] == "open" for i in items),
+                  closed=sum(i["status"] == "closed" for i in items), total=len(items))
+print(json.dumps(result))
+'''
+
+    def implementation(self, root):
+        suite.write_files(root, {"tracker/__init__.py": "",
+                                "tracker/storage.py": self.STORAGE,
+                                "tracker/__main__.py": self.CLI})
+
+    def test_fixture_starts_without_implementation_and_verifier_requires_files(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            suite.project_fixture(root)
+            self.assertEqual(set(suite.fixture_files(root)), {"README.md"})
+            ok, details = suite.project_verify(root, {})
+            self.assertFalse(ok)
+            self.assertEqual(set(details["missing_files"]), suite.PROJECT_FILES)
+
+    def test_cli_persistence_and_filters_pass_across_processes(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            suite.project_fixture(root)
+            self.implementation(root)
+            before = suite.fixture_files(root)
+            ok, details = suite.project_verify(root, {})
+            self.assertTrue(ok, details)
+            self.assertEqual(details["passed"], 15)
+            self.assertEqual(suite.fixture_files(root), before)
+
+    def test_verifier_rejects_broken_persistence_and_filtering(self):
+        variants = [
+            ("tracker/storage.py", self.STORAGE.replace('p.write_text(json.dumps(items))', 'pass')),
+            ("tracker/__main__.py", self.CLI.replace('and (a.tag is None or a.tag in i["tags"])', 'and True')),
+            ("tracker/__main__.py", self.CLI.replace('result["status"] = "closed"', 'result["status"] = "open"')),
+        ]
+        for path, content in variants:
+            with self.subTest(path=path), tempfile.TemporaryDirectory() as td:
+                root = Path(td)
+                self.implementation(root)
+                (root / path).write_text(content)
+                self.assertFalse(suite.project_verify(root, {})[0])
+
+    def test_project_allows_required_creations_but_rejects_extra_files_and_readme_changes(self):
+        from unittest.mock import patch
+        for forbidden in [None, "extra.py", "README.md"]:
+            with self.subTest(forbidden=forbidden):
+                def run(root, *args):
+                    self.implementation(root)
+                    if forbidden:
+                        (root / forbidden).write_text("unexpected")
+                    return {"stdout": "", "stderr": "", "exit_code": 0,
+                            "elapsed_ms": 1, "timed_out": False}
+                with patch.object(suite, "codex_run", side_effect=run):
+                    result = suite.one("codex", "project", "baseline", 1, None)
+                self.assertEqual(result["correct"], forbidden is None)
+                self.assertEqual(result["verification"]["unexpected_file_changes"],
+                                 [] if forbidden is None else [forbidden])
+
+
 if __name__ == "__main__":
     unittest.main()
