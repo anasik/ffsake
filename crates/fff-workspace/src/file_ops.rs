@@ -15,6 +15,12 @@ pub enum FileOperation {
     Copy { from: String, to: String },
     Move { from: String, to: String },
     Delete { path: String },
+    Edit {
+        path: String,
+        old_text: String,
+        new_text: String,
+        expected_matches: usize,
+    },
 }
 
 pub(crate) struct FilePlan {
@@ -66,6 +72,31 @@ impl FilePlan {
                     path: to,
                     before: None,
                     after: Some(bytes),
+                });
+            }
+            FileOperation::Edit {
+                path,
+                old_text,
+                new_text,
+                expected_matches,
+            } => {
+                if old_text.is_empty() || expected_matches == 0 {
+                    return Err("old_text must be nonempty and expected_matches positive".into());
+                }
+                let before = snapshot(&journal, &path)?.ok_or("source file does not exist")?;
+                let text = std::str::from_utf8(&before)?;
+                let actual = text.match_indices(old_text.as_str()).count();
+                if actual != expected_matches {
+                    return Err(format!("expected {expected_matches} matches, found {actual}").into());
+                }
+                let after = text.replace(old_text.as_str(), &new_text).into_bytes();
+                if before == after {
+                    return Err("edit produces no changes".into());
+                }
+                changes.push(JournalChange {
+                    path,
+                    before: Some(before),
+                    after: Some(after),
                 });
             }
             FileOperation::Delete { path } => {
@@ -145,7 +176,7 @@ impl FilePlan {
                 };
                 json!({
                     "path": change.path,
-                    "operation": if change.before.is_none() { "create" } else { "delete" },
+                    "operation": if change.before.is_none() { "create" } else if change.after.is_none() { "delete" } else { "edit" },
                     "before_bytes": before.len(), "after_bytes": after.len(),
                     "unified_diff": diff
                 })
@@ -253,6 +284,98 @@ mod tests {
         fs::remove_dir_all(root).unwrap();
     }
 
+    #[test]
+    fn edits_and_creation_share_one_transaction() {
+        let root = fixture();
+        fs::write(root.join("a.py"), "α\r\nold\r\n").unwrap();
+        fs::write(root.join("b.py"), "old old\n").unwrap();
+        let workspace = Workspace::new(&root).unwrap();
+        let plan = FilePlan::preview_batch(
+            &workspace,
+            operations(json!([
+                {"op":"edit","path":"a.py","old_text":"α\r\nold","new_text":"β\r\nnew$1","expected_matches":1},
+                {"op":"edit","path":"b.py","old_text":"old","new_text":"new$2","expected_matches":2},
+                {"op":"create","path":"new.py","content":"created"}
+            ])),
+        )
+        .unwrap();
+        assert_eq!(
+            fs::read_to_string(root.join("a.py")).unwrap(),
+            "α\r\nold\r\n"
+        );
+        assert!(!root.join("new.py").exists());
+        assert_eq!(plan.description()["files"][0]["operation"], "edit");
+        let result = plan.apply(&workspace).unwrap();
+        let id = result["transaction"].as_str().unwrap();
+        let journal = Journal::open(&root).unwrap();
+        assert_eq!(journal.load(id).unwrap().files.len(), 3);
+        assert_eq!(
+            fs::read_to_string(root.join("a.py")).unwrap(),
+            "β\r\nnew$1\r\n"
+        );
+        assert_eq!(
+            fs::read_to_string(root.join("b.py")).unwrap(),
+            "new$2 new$2\n"
+        );
+        journal.undo(id).unwrap();
+        assert_eq!(
+            fs::read_to_string(root.join("a.py")).unwrap(),
+            "α\r\nold\r\n"
+        );
+        assert_eq!(fs::read_to_string(root.join("b.py")).unwrap(), "old old\n");
+        assert!(!root.join("new.py").exists());
+        journal.redo(id).unwrap();
+        assert_eq!(
+            fs::read_to_string(root.join("a.py")).unwrap(),
+            "β\r\nnew$1\r\n"
+        );
+        assert_eq!(fs::read_to_string(root.join("new.py")).unwrap(), "created");
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn invalid_or_stale_edit_never_partially_applies_batch() {
+        let root = fixture();
+        fs::write(root.join("a.py"), "old old").unwrap();
+        fs::write(root.join("binary"), [255]).unwrap();
+        let workspace = Workspace::new(&root).unwrap();
+        for edit in [
+            json!({"op":"edit","path":"a.py","old_text":"","new_text":"new","expected_matches":1}),
+            json!({"op":"edit","path":"a.py","old_text":"old","new_text":"new","expected_matches":0}),
+            json!({"op":"edit","path":"a.py","old_text":"old","new_text":"new","expected_matches":1}),
+            json!({"op":"edit","path":"a.py","old_text":"old","new_text":"old","expected_matches":2}),
+            json!({"op":"edit","path":"missing","old_text":"old","new_text":"new","expected_matches":1}),
+            json!({"op":"edit","path":"binary","old_text":"old","new_text":"new","expected_matches":1}),
+        ] {
+            let plan = FilePlan::preview_batch(
+                &workspace,
+                operations(json!([
+                    {"op":"create","path":"new.py","content":"must not exist"},
+                    edit
+                ])),
+            );
+            assert!(plan.is_err());
+            assert!(!root.join("new.py").exists());
+            assert_eq!(
+                fs::read_to_string(root.join("a.py")).unwrap(),
+                "old old"
+            );
+        }
+        let plan = FilePlan::preview_batch(
+            &workspace,
+            operations(json!([
+                {"op":"create","path":"new.py","content":"must not exist"},
+                {"op":"edit","path":"a.py","old_text":"old","new_text":"new","expected_matches":2}
+            ])),
+        )
+        .unwrap();
+        fs::write(root.join("a.py"), "external").unwrap();
+        assert!(plan.apply(&workspace).is_err());
+        assert!(!root.join("new.py").exists());
+        assert_eq!(fs::read_to_string(root.join("a.py")).unwrap(), "external");
+        fs::remove_dir_all(root).unwrap();
+    }
+
     #[cfg(unix)]
     #[test]
     fn failed_write_rolls_back_earlier_files() {
@@ -269,10 +392,12 @@ mod tests {
             fs::remove_dir_all(root).unwrap();
             return;
         }
+        fs::write(root.join("existing.txt"), b"old").unwrap();
         let workspace = Workspace::new(&root).unwrap();
         let plan = FilePlan::preview_batch(
             &workspace,
             operations(json!([
+                {"op":"edit","path":"existing.txt","old_text":"old","new_text":"new","expected_matches":1},
                 {"op":"create","path":"first.txt","content":"must roll back"},
                 {"op":"create","path":"protected/blocked.txt","content":"cannot write"}
             ])),
@@ -282,6 +407,7 @@ mod tests {
         fs::set_permissions(&protected, fs::Permissions::from_mode(0o755)).unwrap();
         assert!(result.is_err());
         assert!(!root.join("first.txt").exists());
+        assert_eq!(fs::read(root.join("existing.txt")).unwrap(), b"old");
         assert!(!protected.join("blocked.txt").exists());
         fs::remove_dir_all(root).unwrap();
     }

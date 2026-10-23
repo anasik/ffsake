@@ -436,6 +436,84 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         call("ffsake_release", {"handle": release_batch["handle"]})
         call("ffsake_apply", {"handle": release_batch["handle"]}, expect_ok=False)
         assert not (root / "batch/released.txt").exists()
+        # Existing files and structural operations share one transaction.
+        edit_before = "café\r\nold\r\n"
+        edit_after = "你好\r\nnew$1\r\n"
+        (root / "batch/edit-a.txt").write_bytes(edit_before.encode())
+        (root / "batch/edit-b.txt").write_text("old old")
+        (root / "batch/edit-move.txt").write_text("move me")
+        (root / "batch/edit-delete.txt").write_text("delete me")
+        edit_batch = call("ffsake_preview_files", {"operations": [
+            {"op": "edit", "path": "batch/edit-a.txt", "old_text": edit_before,
+             "new_text": edit_after, "expected_matches": 1},
+            {"op": "edit", "path": "batch/edit-b.txt", "old_text": "old",
+             "new_text": "$2", "expected_matches": 2},
+            {"op": "create", "path": "batch/edit-new.txt", "content": "created"},
+            {"op": "move", "from": "batch/edit-move.txt", "to": "batch/edit-moved.txt"},
+            {"op": "delete", "path": "batch/edit-delete.txt"},
+        ]})
+        assert edit_batch["preview"]["changed_files"] == 6
+        assert edit_batch["preview"]["files"][0]["operation"] == "edit"
+        assert (root / "batch/edit-a.txt").read_bytes().decode() == edit_before
+        assert not (root / "batch/edit-new.txt").exists()
+        edit_tx = call("ffsake_apply", {"handle": edit_batch["handle"]})["transaction"]
+        assert (root / "batch/edit-a.txt").read_bytes().decode() == edit_after
+        assert (root / "batch/edit-b.txt").read_text() == "$2 $2"
+        assert (root / "batch/edit-moved.txt").read_text() == "move me"
+        assert not (root / "batch/edit-move.txt").exists()
+        assert not (root / "batch/edit-delete.txt").exists()
+        call("ffsake_undo", {"transaction": edit_tx})
+        assert (root / "batch/edit-a.txt").read_bytes().decode() == edit_before
+        assert (root / "batch/edit-b.txt").read_text() == "old old"
+        assert not (root / "batch/edit-new.txt").exists()
+        assert (root / "batch/edit-move.txt").read_text() == "move me"
+        assert not (root / "batch/edit-moved.txt").exists()
+        assert (root / "batch/edit-delete.txt").read_text() == "delete me"
+        call("ffsake_redo", {"transaction": edit_tx})
+        assert (root / "batch/edit-a.txt").read_bytes().decode() == edit_after
+        assert (root / "batch/edit-new.txt").read_text() == "created"
+
+        valid_edit = {"op": "edit", "path": "batch/edit-b.txt", "old_text": "$2",
+                      "new_text": "new", "expected_matches": 2}
+        (root / "batch/non-utf8.bin").write_bytes(bytes([255]))
+        for overrides in [
+            {"old_text": ""}, {"expected_matches": 0}, {"expected_matches": -1},
+            {"expected_matches": 1}, {"old_text": "missing"}, {"new_text": "$2"},
+            {"path": "batch/non-utf8.bin"}, {"path": "history-dir/outside.txt"},
+            {"path": ".ffsake/internal"}, {"unexpected": True},
+        ]:
+            call("ffsake_preview_files", {"operations": [
+                {"op": "create", "path": "batch/invalid-edit-new.txt", "content": "no"},
+                {**valid_edit, **overrides},
+            ]}, expect_ok=False)
+            assert not (root / "batch/invalid-edit-new.txt").exists()
+            assert (root / "batch/edit-b.txt").read_text() == "$2 $2"
+        for conflicting in [
+            [valid_edit, valid_edit],
+            [valid_edit, {"op": "copy", "from": "batch/edit-b.txt", "to": "batch/alias-copy.txt"}],
+            [{"op": "copy", "from": "batch/edit-b.txt", "to": "batch/alias-copy.txt"}, valid_edit],
+            [valid_edit, {"op": "move", "from": "batch/edit-b.txt", "to": "batch/alias-move.txt"}],
+        ]:
+            call("ffsake_preview_files", {"operations": conflicting}, expect_ok=False)
+            assert not (root / "batch/alias-copy.txt").exists()
+            assert not (root / "batch/alias-move.txt").exists()
+        stale_edit = call("ffsake_preview_files", {"operations": [
+            {"op": "create", "path": "batch/stale-edit-new.txt", "content": "no"},
+            valid_edit,
+        ]})
+        (root / "batch/edit-b.txt").write_text("external edit")
+        call("ffsake_apply", {"handle": stale_edit["handle"]}, expect_ok=False)
+        assert not (root / "batch/stale-edit-new.txt").exists()
+        assert (root / "batch/edit-b.txt").read_text() == "external edit"
+        cleared = call("ffsake_preview_files", {"operations": [{
+            "op": "edit", "path": "batch/edit-b.txt", "old_text": "external edit",
+            "new_text": "", "expected_matches": 1
+        }]})
+        clear_tx = call("ffsake_apply", {"handle": cleared["handle"]})["transaction"]
+        assert (root / "batch/edit-b.txt").read_bytes() == b""
+        call("ffsake_undo", {"transaction": clear_tx})
+        assert (root / "batch/edit-b.txt").read_text() == "external edit"
+        print("MCP batched block edits, mixed history, UTF-8 and stale-edit guards PASS")
         print("MCP batch operations, one-step history, conflicts and stale-state guards PASS")
         print(f"MCP boundary guards: {denied_checks} rejected operations; sentinel and source checks PASS")
     finally:
