@@ -49,6 +49,9 @@ pub enum Request {
         new_text: String,
         expected_matches: usize,
     },
+    PreviewFiles {
+        operations: Vec<FileOperation>,
+    },
     PreviewCreate {
         path: String,
         content: String,
@@ -141,7 +144,11 @@ impl Resident {
     }
 
     fn preview_file(&mut self, operation: FileOperation) -> Result<Value> {
-        let plan = FilePlan::preview(self.session.workspace(), operation)?;
+        self.preview_files(vec![operation])
+    }
+
+    fn preview_files(&mut self, operations: Vec<FileOperation>) -> Result<Value> {
+        let plan = FilePlan::preview_batch(self.session.workspace(), operations)?;
         let preview = plan.description();
         let handle = self.allocate()?;
         self.file_plans.insert(handle, plan);
@@ -257,6 +264,7 @@ impl Resident {
                     max_files: Some(1),
                 })
             }
+            Request::PreviewFiles { operations } => self.preview_files(operations),
             Request::PreviewCreate { path, content } => {
                 self.preview_file(FileOperation::Create { path, content })
             }

@@ -24,7 +24,7 @@ FFSAKE_TOOLS = (
     "ffsake_read", "ffsake_list", "ffsake_target", "ffsake_search",
     "ffsake_preview_matches", "ffsake_preview_edit", "ffsake_apply", "ffsake_undo", "ffsake_redo",
     "ffsake_release", "ffsake_refresh",
-    "ffsake_preview_create", "ffsake_preview_copy", "ffsake_preview_move", "ffsake_preview_delete",
+    "ffsake_preview_files", "ffsake_preview_create", "ffsake_preview_copy", "ffsake_preview_move", "ffsake_preview_delete",
 )
 
 
@@ -275,6 +275,8 @@ def ffsake_prompt(task_prompt: str):
         "and expected_matches (normally 1). Multiline blocks are supported; preserve whitespace exactly. "
         "Group related changes into one contiguous block instead of searching and previewing each line. "
         "Use indexed search and preview_matches for repository-wide replacements. "
+        "For several independent file operations, prefer ffsake_preview_files with an operations "
+        "array, followed by one apply, so the whole batch is one undoable transaction. "
         "For file creation, copy, move/rename or deletion, use the corresponding "
         "ffsake_preview_create/copy/move/delete tool and then apply its handle. "
         "Apply a preview before preparing another edit to the same file: applying changes its hash "

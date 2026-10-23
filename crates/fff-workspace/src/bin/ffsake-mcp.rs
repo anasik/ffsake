@@ -139,6 +139,7 @@ fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
         "ffsake_preview_matches" => "preview_matches",
         "ffsake_preview_edit" => "preview_edit",
         "ffsake_preview_create" => "preview_create",
+        "ffsake_preview_files" => "preview_files",
         "ffsake_preview_copy" => "preview_copy",
         "ffsake_preview_move" => "preview_move",
         "ffsake_preview_delete" => "preview_delete",
@@ -228,6 +229,24 @@ fn tools() -> Vec<Value> {
                     "old_text":{"type":"string","minLength":1},
                     "new_text":{"type":"string"},
                     "expected_matches":{"type":"integer","minimum":1}
+                }
+            }),
+        ),
+        tool(
+            "ffsake_preview_files",
+            "Preview 1..=100 independent file operations together, then commit with one ffsake_apply and undo/redo as one transaction. Prefer this when creating several files. All operations refer to the same initial workspace state; destinations must be absent. Overlapping paths and dependencies between operations are rejected. No directory operations or overwrites.",
+            json!({
+                "type":"object","required":["operations"],"properties":{
+                    "operations":{"type":"array","minItems":1,"maxItems":100,"items":{
+                        "oneOf":[
+                            {"type":"object","required":["op","path","content"],"additionalProperties":false,
+                             "properties":{"op":{"type":"string","enum":["create"]},"path":{"type":"string"},"content":{"type":"string"}}},
+                            {"type":"object","required":["op","from","to"],"additionalProperties":false,
+                             "properties":{"op":{"type":"string","enum":["copy","move"]},"from":{"type":"string"},"to":{"type":"string"}}},
+                            {"type":"object","required":["op","path"],"additionalProperties":false,
+                             "properties":{"op":{"type":"string","enum":["delete"]},"path":{"type":"string"}}}
+                        ]
+                    }}
                 }
             }),
         ),

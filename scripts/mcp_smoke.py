@@ -333,6 +333,110 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         call("ffsake_apply", {"handle": released["handle"]}, expect_ok=False)
         assert not (root / "released.txt").exists()
         print("MCP create/copy/move/delete, history, collision and symlink guards PASS")
+        # Several independent files are one preview, one apply and one
+        # transaction. Any stale member rejects the entire batch before writes.
+        assert "ffsake_preview_files" in names
+        batch_ops = [
+            {"op": "create", "path": "batch/a.txt", "content": "batch needle α\n"},
+            {"op": "create", "path": "batch/b.txt", "content": "batch needle β\n"},
+            {"op": "create", "path": "batch/empty.txt", "content": ""},
+        ]
+        batch = call("ffsake_preview_files", {"operations": batch_ops})
+        assert batch["preview"]["changed_files"] == 3
+        assert not (root / "batch").exists()
+        batch_tx = call("ffsake_apply", {"handle": batch["handle"]})["transaction"]
+        assert (root / "batch/a.txt").read_text() == "batch needle α\n"
+        assert (root / "batch/b.txt").read_text() == "batch needle β\n"
+        assert (root / "batch/empty.txt").read_bytes() == b""
+        found_batch = call("ffsake_search", {"pattern": "batch needle"})
+        assert found_batch["matches"] == 2
+        call("ffsake_release", {"handle": found_batch["handle"]})
+        call("ffsake_undo", {"transaction": batch_tx})
+        assert all(not (root / op["path"]).exists() for op in batch_ops)
+        call("ffsake_redo", {"transaction": batch_tx})
+        assert (root / "batch/a.txt").read_text() == "batch needle α\n"
+        call("ffsake_apply", {"handle": batch["handle"]}, expect_ok=False)
+
+        mixed_ops = [
+            {"op": "copy", "from": "batch/a.txt", "to": "batch/copy.txt"},
+            {"op": "move", "from": "batch/b.txt", "to": "batch/moved.txt"},
+            {"op": "delete", "path": "batch/empty.txt"},
+            {"op": "create", "path": "batch/new.txt", "content": "new"},
+        ]
+        mixed = call("ffsake_preview_files", {"operations": mixed_ops})
+        mixed_tx = call("ffsake_apply", {"handle": mixed["handle"]})["transaction"]
+        assert (root / "batch/copy.txt").read_bytes() == (root / "batch/a.txt").read_bytes()
+        assert (root / "batch/moved.txt").read_text() == "batch needle β\n"
+        assert not (root / "batch/b.txt").exists()
+        assert not (root / "batch/empty.txt").exists()
+        call("ffsake_undo", {"transaction": mixed_tx})
+        assert not (root / "batch/copy.txt").exists()
+        assert not (root / "batch/moved.txt").exists()
+        assert not (root / "batch/new.txt").exists()
+        assert (root / "batch/b.txt").read_text() == "batch needle β\n"
+        assert (root / "batch/empty.txt").read_bytes() == b""
+        call("ffsake_redo", {"transaction": mixed_tx})
+        assert (root / "batch/new.txt").read_text() == "new"
+
+        for bad_ops in [
+            [],
+            [{"op": "create", "path": f"too-many/{n}", "content": ""} for n in range(101)],
+            [{"op": "create", "path": "dupe", "content": "a"},
+             {"op": "create", "path": "./dupe", "content": "b"}],
+            [{"op": "create", "path": "parent", "content": "a"},
+             {"op": "create", "path": "parent/child", "content": "b"}],
+            [{"op": "copy", "from": "batch/a.txt", "to": "copy-again"},
+             {"op": "delete", "path": "batch/a.txt"}],
+            [{"op": "delete", "path": "batch/a.txt"},
+             {"op": "copy", "from": "batch/a.txt", "to": "copy-again"}],
+            [{"op": "create", "path": "first-invalid", "content": "x"},
+             {"op": "create", "path": "../outside.txt", "content": "bad"}],
+            [{"op": "create", "path": "first-invalid", "content": "x"},
+             {"op": "create", "path": "history-dir/outside.txt", "content": "bad"}],
+            [{"op": "create", "path": "dupe", "content": "x", "unknown": True}],
+            [{"op": "shell", "command": "touch forbidden.txt"}],
+        ]:
+            call("ffsake_preview_files", {"operations": bad_ops}, expect_ok=False)
+            assert not (root / "dupe").exists()
+            assert not (root / "parent").exists()
+            assert not (root / "copy-again").exists()
+            assert not (root / "first-invalid").exists()
+            assert not (root / "too-many").exists()
+
+        shared_source = call("ffsake_preview_files", {"operations": [
+            {"op": "copy", "from": "batch/a.txt", "to": "batch/read-copy-1.txt"},
+            {"op": "copy", "from": "batch/a.txt", "to": "batch/read-copy-2.txt"},
+        ]})
+        shared_tx = call("ffsake_apply", {"handle": shared_source["handle"]})["transaction"]
+        assert (root / "batch/read-copy-1.txt").read_bytes() == (root / "batch/a.txt").read_bytes()
+        assert (root / "batch/read-copy-2.txt").read_bytes() == (root / "batch/a.txt").read_bytes()
+        call("ffsake_undo", {"transaction": shared_tx})
+        assert not (root / "batch/read-copy-1.txt").exists()
+        assert not (root / "batch/read-copy-2.txt").exists()
+
+        raced_batch = call("ffsake_preview_files", {"operations": [
+            {"op": "create", "path": "batch/no-partial.txt", "content": "must not appear"},
+            {"op": "create", "path": "batch/raced.txt", "content": "planned"},
+        ]})
+        (root / "batch/raced.txt").write_text("external")
+        call("ffsake_apply", {"handle": raced_batch["handle"]}, expect_ok=False)
+        assert not (root / "batch/no-partial.txt").exists()
+        assert (root / "batch/raced.txt").read_text() == "external"
+        copy_batch = call("ffsake_preview_files", {"operations": [
+            {"op": "create", "path": "batch/no-copy-partial.txt", "content": "must not appear"},
+            {"op": "copy", "from": "batch/a.txt", "to": "batch/stale-copy.txt"},
+        ]})
+        (root / "batch/a.txt").write_text("external source")
+        call("ffsake_apply", {"handle": copy_batch["handle"]}, expect_ok=False)
+        assert not (root / "batch/no-copy-partial.txt").exists()
+        assert not (root / "batch/stale-copy.txt").exists()
+        release_batch = call("ffsake_preview_files", {"operations": [
+            {"op": "create", "path": "batch/released.txt", "content": ""}
+        ]})
+        call("ffsake_release", {"handle": release_batch["handle"]})
+        call("ffsake_apply", {"handle": release_batch["handle"]}, expect_ok=False)
+        assert not (root / "batch/released.txt").exists()
+        print("MCP batch operations, one-step history, conflicts and stale-state guards PASS")
         print(f"MCP boundary guards: {denied_checks} rejected operations; sentinel and source checks PASS")
     finally:
         proc.stdin.close()
