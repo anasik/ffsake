@@ -11,10 +11,21 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 #[derive(Debug, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum FileOperation {
-    Create { path: String, content: String },
-    Copy { from: String, to: String },
-    Move { from: String, to: String },
-    Delete { path: String },
+    Create {
+        path: String,
+        content: String,
+    },
+    Copy {
+        from: String,
+        to: String,
+    },
+    Move {
+        from: String,
+        to: String,
+    },
+    Delete {
+        path: String,
+    },
     Edit {
         path: String,
         old_text: String,
@@ -87,7 +98,9 @@ impl FilePlan {
                 let text = std::str::from_utf8(&before)?;
                 let actual = text.match_indices(old_text.as_str()).count();
                 if actual != expected_matches {
-                    return Err(format!("expected {expected_matches} matches, found {actual}").into());
+                    return Err(
+                        format!("expected {expected_matches} matches, found {actual}").into(),
+                    );
                 }
                 let after = text.replace(old_text.as_str(), &new_text).into_bytes();
                 if before == after {
@@ -356,10 +369,7 @@ mod tests {
             );
             assert!(plan.is_err());
             assert!(!root.join("new.py").exists());
-            assert_eq!(
-                fs::read_to_string(root.join("a.py")).unwrap(),
-                "old old"
-            );
+            assert_eq!(fs::read_to_string(root.join("a.py")).unwrap(), "old old");
         }
         let plan = FilePlan::preview_batch(
             &workspace,
