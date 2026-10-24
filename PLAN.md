@@ -206,7 +206,11 @@ Post-verification auditing now closes the reproduced gap where verifier-executed
 
 CI now has a thirty-minute job deadline after a previous run stalled beyond twenty minutes and needed cancellation/retry. The same complete checks remain required; a timeout is a failed checkpoint requiring diagnosis.
 
-Next: recover/finish the in-progress inspection CI run, publish the separately committed launcher/error/guidance/verifier/CI improvements, and verify the exact pushed head. Keep subsequent work driven by observed workflow gaps; no additional model run is authorized by the earlier single-run approval. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Inspection CI passed at f5ec0b3; the six separately committed launcher/error/guidance/verifier/CI improvements are pushed through 4191cbe and its exact run is in progress.
+
+A failure-injection regression reproduced loss of completed agent traces when either post-run file snapshot raised an OS error. The harness now records these as incorrect/non-comparable results with explicit audit errors and null unknown change lists; incomplete audits are excluded from timing medians. Schema version 4 describes the nullable audit fields. All 80 Python tests pass without model calls.
+
+Next: commit the audit-failure preservation fix separately, publish after 4191cbe CI passes, and verify the exact new head. Keep subsequent work driven by observed workflow gaps; no additional model run is authorized by the earlier single-run approval. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

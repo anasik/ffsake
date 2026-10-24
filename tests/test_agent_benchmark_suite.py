@@ -223,6 +223,35 @@ class RunValidationTests(unittest.TestCase):
                     self.assertEqual(result["verification"]["unexpected_file_changes"], [])
                     self.assertEqual(result["verification"]["verification_file_changes"], [path])
 
+    def test_file_audit_failure_preserves_completed_agent_trace(self):
+        from unittest.mock import patch
+        original = suite.fixture_files
+        for failure_call, phase in ((2, "after_agent"), (3, "after_verification")):
+            with self.subTest(phase=phase):
+                calls = 0
+                def snapshot(root):
+                    nonlocal calls
+                    calls += 1
+                    if calls == failure_call:
+                        raise PermissionError("blocked fixture read")
+                    return original(root)
+                with patch.object(suite, "fixture_files", side_effect=snapshot), \
+                     patch.dict(suite.TASKS["medium"], {"verify": lambda *_: (True, {})}):
+                    result = self.run_mock_agent(lambda _: None, "completed agent trace")
+                self.assertFalse(result["correct"])
+                self.assertFalse(result["comparison_valid"])
+                self.assertIn("file_audit_failed", result["comparison_invalid_reasons"])
+                self.assertEqual(result["stdout"], "completed agent trace")
+                self.assertFalse(result["verification"]["file_audit_complete"])
+                self.assertEqual(result["verification"]["file_audit_errors"][0]["phase"], phase)
+                self.assertIsNone(result["verification"]["verification_file_changes"])
+                row = suite.aggregate([result])[0]
+                self.assertEqual(row["comparison_valid_runs"], 0)
+                self.assertIsNone(row["median_elapsed_ms"])
+                if phase == "after_agent":
+                    self.assertIsNone(result["changed_files"])
+                    self.assertIsNone(result["verification"]["unexpected_file_changes"])
+
     def test_missing_required_file_is_recorded_without_losing_run(self):
         result = self.run_mock_agent(lambda root: (root / "policy.py").unlink())
         self.assertFalse(result["correct"])
@@ -1064,7 +1093,7 @@ class ToolProfileTests(unittest.TestCase):
                 suite.main()
             run.assert_called_once_with("codex", "micro", "ffsake", 900, None, "core")
             report = json.loads(next(Path(td).glob("*.json")).read_text())
-            self.assertEqual(report["schema_version"], 3)
+            self.assertEqual(report["schema_version"], 4)
             self.assertEqual(report["ffsake_tool_profile"], "core")
             self.assertEqual(report["aggregate"][0]["ffsake_tool_profile"], "core")
 

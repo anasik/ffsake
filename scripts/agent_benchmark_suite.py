@@ -895,28 +895,45 @@ def one(agent, task_name, mode, timeout, opencode_model, tool_profile="all"):
         events = parse_jsonl(result["stdout"])
         metrics = generic_metrics(agent, events)
         api_errors = provider_errors(agent, events)
-        final_files = fixture_files(root)
-        allowed_changes = set(task.get("allowed_changes", set(original_files) if task_name == "micro" else {
-            "policy.py" if task_name == "medium" else "issue_tracker.py"}))
-        unexpected = sorted((set(original_files) - set(final_files) - set(task.get("allowed_deletions", ()))) |
-                            (set(final_files) - set(original_files) - allowed_changes) |
-                            {name for name in original_files.keys() & final_files.keys()
-                             if name not in allowed_changes and original_files[name] != final_files[name]})
-        changed = sorted(name for name in original_files.keys() | final_files.keys()
-                         if original_files.get(name) != final_files.get(name))
-        try:
-            correct, verification = task["verify"](root, state)
-        except Exception as exc:
-            correct, verification = False, {"exception": repr(exc)}
-        verified_files = fixture_files(root)
-        verification_changes = sorted(name for name in final_files.keys() | verified_files.keys()
-                                      if final_files.get(name) != verified_files.get(name))
+        audit_errors = []
+        def audit_files(phase):
+            try:
+                return fixture_files(root)
+            except OSError as exc:
+                audit_errors.append({"phase": phase, "error": type(exc).__name__, "message": str(exc)})
+                return None
+
+        final_files = audit_files("after_agent")
+        unexpected = changed = verification_changes = None
+        if final_files is None:
+            correct, verification = False, {"skipped": "task file audit failed before verification"}
+        else:
+            allowed_changes = set(task.get("allowed_changes", set(original_files) if task_name == "micro" else {
+                "policy.py" if task_name == "medium" else "issue_tracker.py"}))
+            unexpected = sorted((set(original_files) - set(final_files) - set(task.get("allowed_deletions", ()))) |
+                                (set(final_files) - set(original_files) - allowed_changes) |
+                                {name for name in original_files.keys() & final_files.keys()
+                                 if name not in allowed_changes and original_files[name] != final_files[name]})
+            changed = sorted(name for name in original_files.keys() | final_files.keys()
+                             if original_files.get(name) != final_files.get(name))
+            try:
+                correct, verification = task["verify"](root, state)
+            except Exception as exc:
+                correct, verification = False, {"exception": repr(exc)}
+            verified_files = audit_files("after_verification")
+            if verified_files is not None:
+                verification_changes = sorted(name for name in final_files.keys() | verified_files.keys()
+                                              if final_files.get(name) != verified_files.get(name))
         verification["unexpected_file_changes"] = unexpected
         verification["verification_file_changes"] = verification_changes
+        verification["file_audit_complete"] = not audit_errors
+        verification["file_audit_errors"] = audit_errors
         policy = permission_audit(agent, use_ffsake, metrics, tool_profile)
         path_violations = workspace_scope_violations(agent, events, root)
         policy["observed_outside_workspace_paths"] = path_violations
         invalid_reasons = []
+        if audit_errors:
+            invalid_reasons.append("file_audit_failed")
         if api_errors:
             invalid_reasons.append("provider_api_error")
         if not metrics["tool_calls"]:
@@ -937,7 +954,7 @@ def one(agent, task_name, mode, timeout, opencode_model, tool_profile="all"):
             "task": task_name,
             "mode": mode,
             "ffsake_tool_profile": tool_profile if use_ffsake else None,
-            "correct": correct and not unexpected and not verification_changes and result["exit_code"] == 0 and not result["timed_out"],
+            "correct": correct and not audit_errors and not unexpected and not verification_changes and result["exit_code"] == 0 and not result["timed_out"],
             "comparison_valid": not invalid_reasons,
             "comparison_invalid_reasons": invalid_reasons,
             "provider_errors": api_errors,
@@ -1140,7 +1157,7 @@ def main():
     results = []
     out = reserve_report_path()
     report = {
-        "schema_version": 3,
+        "schema_version": 4,
         "provenance": benchmark_provenance(),
         "preflight": checks,
         "agents": agents,
