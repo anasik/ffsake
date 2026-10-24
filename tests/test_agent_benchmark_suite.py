@@ -663,6 +663,95 @@ print(json.dumps(result))
                                  [] if forbidden is None else [forbidden])
 
 
+class MaintenanceTaskTests(unittest.TestCase):
+    CONFIG = '''import json
+from pathlib import Path
+
+
+def load_config(path):
+    source = Path(path)
+    data = json.loads(source.read_text()) if source.exists() else {}
+    result = {"request_timeout_ms": data.get("request_timeout_ms", 5000),
+              "retries": data.get("retries", 3)}
+    for key, minimum in [("request_timeout_ms", 1), ("retries", 0)]:
+        if type(result[key]) is not int or result[key] < minimum:
+            raise ValueError(key)
+    return result
+'''
+
+    def implementation(self, root):
+        (root / "dispatch/config.py").write_text(self.CONFIG)
+        (root / "config/defaults.json").write_text(json.dumps(
+            {"request_timeout_ms": 2500, "retries": 2, "region": "eu"}))
+        readme = root / "README.md"
+        readme.write_bytes(readme.read_bytes().replace(b"Config schema: v1", b"Config schema: v2"))
+        (root / "docs/config-v1.md").rename(root / "docs/config-v2.md")
+        (root / "examples/request.snapshot.json").write_bytes((root / "examples/request.json").read_bytes())
+        (root / "scripts/legacy_config.py").unlink()
+        (root / "docs/MIGRATION.md").write_text(
+            "# Config v2\nUse request_timeout_ms instead of timeout_ms.\n")
+
+    def test_fixture_is_runnable_but_does_not_satisfy_migration(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = suite.maintenance_fixture(root)
+            result = suite.run_process([sys.executable, "-B", "-m", "dispatch",
+                                        "config/defaults.json"], root, 5)
+            self.assertEqual(json.loads(result["stdout"]), {"timeout_ms": 2500, "retries": 2})
+            ok, details = suite.maintenance_verify(root, state)
+            self.assertFalse(ok)
+            self.assertIn("new_key", details["failed_checks"])
+
+    def test_reference_migration_passes_without_verifier_mutations(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = suite.maintenance_fixture(root)
+            self.implementation(root)
+            before = suite.fixture_files(root)
+            ok, details = suite.maintenance_verify(root, state)
+            self.assertTrue(ok, details)
+            self.assertEqual(details["checks"], 26)
+            self.assertEqual(suite.fixture_files(root), before)
+
+    def test_verifier_rejects_missing_moves_copies_deletions_and_unrelated_changes(self):
+        variants = ["docs/config-v1.md", "scripts/legacy_config.py", "examples/request.snapshot.json",
+                    "assets/keep.txt", "dispatch/__main__.py", "extra.txt", "README.md", "docs/MIGRATION.md"]
+        for name in variants:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
+                root = Path(td)
+                state = suite.maintenance_fixture(root)
+                self.implementation(root)
+                (root / name).write_text("incorrect")
+                self.assertFalse(suite.maintenance_verify(root, state)[0])
+
+    def test_verifier_rejects_legacy_key_and_boolean_validation_bugs(self):
+        variants = [self.CONFIG.replace('data.get("request_timeout_ms", 5000)', 'data.get("timeout_ms", 5000)'),
+                    self.CONFIG.replace('type(result[key]) is not int', 'not isinstance(result[key], int)')]
+        for config in variants:
+            with self.subTest(config=config), tempfile.TemporaryDirectory() as td:
+                root = Path(td)
+                state = suite.maintenance_fixture(root)
+                self.implementation(root)
+                (root / "dispatch/config.py").write_text(config)
+                self.assertFalse(suite.maintenance_verify(root, state)[0])
+
+    def test_matrix_allows_only_declared_deletions(self):
+        from unittest.mock import patch
+        for remove in [None, "assets/keep.txt", "dispatch/config.py"]:
+            with self.subTest(remove=remove):
+                def run(root, *args):
+                    self.implementation(root)
+                    if remove:
+                        (root / remove).unlink()
+                    return {"stdout": "", "stderr": "", "exit_code": 0,
+                            "elapsed_ms": 1, "timed_out": False}
+                with patch.object(suite, "codex_run", side_effect=run):
+                    result = suite.one("codex", "maintenance", "baseline", 1, None)
+                self.assertEqual(result["correct"], remove is None, result["verification"])
+                self.assertEqual(result["verification"]["unexpected_file_changes"],
+                                 [] if remove is None else [remove])
+
+
 class ClaudePilotTests(unittest.TestCase):
     LAUNCHER = SCRIPT.with_name("ffsake_claude.py")
 

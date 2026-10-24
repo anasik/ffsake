@@ -2,7 +2,7 @@
 """Multi-agent benchmark matrix for FFSAKE.
 
 Runs Claude Code, Codex, and OpenCode in baseline and FFSAKE modes across
-micro, medium, and app-completion tasks. Every run uses a disposable git repo.
+micro, medium, app-completion, project and maintenance tasks. Every run uses a disposable git repo.
 """
 import argparse
 import importlib.util
@@ -221,7 +221,110 @@ def project_verify(root: Path, state):
                        "exception": repr(exc)}
 
 
+MAINTENANCE_PROMPT = """Migrate the existing dispatch CLI to config schema v2 using only the Python standard library.
+Read the existing files first. Keep dispatch/__main__.py and dispatch/__init__.py unchanged.
+- In dispatch/config.py, load_config(path) must read request_timeout_ms instead of timeout_ms.
+  Return exactly {'request_timeout_ms': VALUE, 'retries': VALUE}. Defaults for omitted keys
+  are 5000 and 3. Both values must be integers (not booleans); timeout must be positive
+  and retries must be nonnegative. Raise ValueError for invalid values. Ignore unknown keys,
+  including the retired timeout_ms key. A missing config file still uses both defaults.
+- Migrate config/defaults.json: rename timeout_ms to request_timeout_ms, retaining its value
+  and every other value. Keep it valid JSON.
+- In README.md replace exactly 'Config schema: v1' with 'Config schema: v2'; preserve all other bytes.
+- Move docs/config-v1.md to docs/config-v2.md without changing its bytes.
+- Copy examples/request.json to examples/request.snapshot.json without changing the source or bytes.
+- Delete scripts/legacy_config.py.
+- Create docs/MIGRATION.md containing exactly these two lines, each ending with a newline:
+# Config v2
+Use request_timeout_ms instead of timeout_ms.
+Do not add, remove or change any other files. Preserve existing CLI behavior except for
+these requested config semantics. Stop when complete."""
+
+MAINTENANCE_CHANGES = {
+    "dispatch/config.py", "config/defaults.json", "README.md", "docs/config-v1.md",
+    "docs/config-v2.md", "examples/request.snapshot.json", "scripts/legacy_config.py",
+    "docs/MIGRATION.md",
+}
+MAINTENANCE_DELETIONS = {"docs/config-v1.md", "scripts/legacy_config.py"}
+
+
+def maintenance_fixture(root: Path):
+    files = {
+        "dispatch/__init__.py": "",
+        "dispatch/__main__.py": "import json\nimport sys\nfrom .config import load_config\n\nprint(json.dumps(load_config(sys.argv[1])))\n",
+        "dispatch/config.py": 'import json\nfrom pathlib import Path\n\n\ndef load_config(path):\n    path = Path(path)\n    data = json.loads(path.read_text()) if path.exists() else {}\n    return {"timeout_ms": data.get("timeout_ms", 5000), "retries": data.get("retries", 3)}\n',
+        "config/defaults.json": '{"timeout_ms": 2500, "retries": 2, "region": "eu"}\n',
+        "README.md": "# dispatch\n\nConfig schema: v1\nRun: python3 -B -m dispatch CONFIG_PATH\n",
+        "docs/config-v1.md": "# Configuration reference\n\nSee defaults and migration notes for the active schema.\n",
+        "examples/request.json": '{"message": "café", "items": [1, 2]}\n',
+        "scripts/legacy_config.py": 'print("retired config helper")\n',
+        "assets/keep.txt": "Untouched sentinel: timeout_ms\n",
+    }
+    write_files(root, files)
+    git_init(root)
+    return {"original": {name: (root / name).read_bytes() for name in files}}
+
+
+def maintenance_verify(root: Path, state):
+    checks = {}
+    original = state["original"]
+    final_names = (set(original) - MAINTENANCE_DELETIONS) | {
+        "docs/config-v2.md", "examples/request.snapshot.json", "docs/MIGRATION.md"}
+    actual = fixture_files(root)
+    checks["file_set"] = set(actual) == final_names
+    for name in set(original) - MAINTENANCE_CHANGES:
+        checks["preserved:" + name] = actual.get(name) == original[name]
+    checks["readme"] = actual.get("README.md") == original["README.md"].replace(
+        b"Config schema: v1", b"Config schema: v2")
+    checks["moved_document"] = actual.get("docs/config-v2.md") == original["docs/config-v1.md"]
+    checks["copied_sample"] = actual.get("examples/request.snapshot.json") == original["examples/request.json"]
+    checks["migration_notes"] = actual.get("docs/MIGRATION.md") == (
+        b"# Config v2\nUse request_timeout_ms instead of timeout_ms.\n")
+    try:
+        checks["migrated_defaults"] = json.loads((root / "config/defaults.json").read_text()) == {
+            "request_timeout_ms": 2500, "retries": 2, "region": "eu"}
+        with tempfile.TemporaryDirectory(prefix="ffsake-maintenance-verify-") as td:
+            config = Path(td) / "config.json"
+            def command(data, expected=None, invalid=False):
+                if data is None:
+                    config.unlink(missing_ok=True)
+                else:
+                    config.write_text(json.dumps(data))
+                result = run_process([sys.executable, "-B", "-m", "dispatch", str(config)], root, 5)
+                if result["timed_out"]:
+                    return False
+                if invalid:
+                    return result["exit_code"] != 0 and "ValueError" in result["stderr"]
+                return result["exit_code"] == 0 and json.loads(result["stdout"]) == expected
+
+            defaults = {"request_timeout_ms": 5000, "retries": 3}
+            checks["missing_config"] = command(None, defaults)
+            checks["empty_config"] = command({}, defaults)
+            checks["new_key"] = command({"request_timeout_ms": 1234, "retries": 0},
+                                        {"request_timeout_ms": 1234, "retries": 0})
+            checks["retired_key_ignored"] = command({"timeout_ms": 99, "other": "ignored"}, defaults)
+            checks["new_key_precedence"] = command({"timeout_ms": 99, "request_timeout_ms": 7},
+                                                   {"request_timeout_ms": 7, "retries": 3})
+            for key, values in [("request_timeout_ms", [0, -1, True, "5", 1.5, None]),
+                                ("retries", [-1, False, "3", 2.5, None])]:
+                for index, value in enumerate(values):
+                    checks[f"invalid:{key}:{index}"] = command({key: value}, invalid=True)
+        failed = sorted(name for name, passed in checks.items() if not passed)
+        return not failed, {"checks": len(checks), "passed": sum(checks.values()), "failed_checks": failed}
+    except Exception as exc:
+        return False, {"checks": len(checks), "passed": sum(checks.values()),
+                       "failed_checks": sorted(name for name, passed in checks.items() if not passed),
+                       "exception": repr(exc)}
+
+
 TASKS = {
+    "maintenance": {
+        "fixture": maintenance_fixture,
+        "verify": maintenance_verify,
+        "prompt": MAINTENANCE_PROMPT,
+        "allowed_changes": MAINTENANCE_CHANGES,
+        "allowed_deletions": MAINTENANCE_DELETIONS,
+    },
     "project": {
         "fixture": project_fixture,
         "verify": project_verify,
@@ -696,7 +799,7 @@ def one(agent, task_name, mode, timeout, opencode_model):
         final_files = fixture_files(root)
         allowed_changes = set(task.get("allowed_changes", set(original_files) if task_name == "micro" else {
             "policy.py" if task_name == "medium" else "issue_tracker.py"}))
-        unexpected = sorted((set(original_files) - set(final_files)) |
+        unexpected = sorted((set(original_files) - set(final_files) - set(task.get("allowed_deletions", ()))) |
                             (set(final_files) - set(original_files) - allowed_changes) |
                             {name for name in original_files.keys() & final_files.keys()
                              if name not in allowed_changes and original_files[name] != final_files[name]})
@@ -862,7 +965,7 @@ def aggregate(results):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--agents", default="claude,codex,opencode")
-    parser.add_argument("--tasks", default="micro,medium,app", help="Comma-separated micro,medium,app,project; project builds new files from scratch")
+    parser.add_argument("--tasks", default="micro,medium,app", help="Comma-separated micro,medium,app,project,maintenance; maintenance migrates an existing project")
     parser.add_argument("--modes", default="baseline,ffsake", help="Comma-separated baseline,ffsake; select one for targeted diagnostics")
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--timeout", type=int, default=900)

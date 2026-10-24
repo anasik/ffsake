@@ -88,6 +88,7 @@ Implemented after benchmark feedback:
 - guarded multiline block preview/edit/apply;
 - file create/copy/move/rename/delete previews with journal apply and undo/redo;
 - a from-scratch CLI package task with separate-process persistence checks;
+- an opt-in existing-project maintenance task covering schema migration, mixed file operations, byte preservation and strict validation in separate CLI processes;
 - mixed batches of existing-file literal edits and create/copy/move/delete operations, with one journal transaction and undo/redo;
 - executable permission preservation when edits replace existing files, including undo/redo.
 
@@ -97,7 +98,7 @@ Real-repository pilot completed: Claude used only FFSAKE tools to implement the 
 
 Verification on 2026-10-24: the user's macOS run passed all 47 Rust tests and the MCP smoke suite, including mixed batch history, stale-content rejection, rollback, and 109 rejected boundary operations. CI also passed 51 Python tests, Clippy, and formatting at `a4c947ca50a766a0fd64e37ff0cfcf7967df9083`.
 
-Next: add an existing-project maintenance benchmark that requires both edits and structural file operations, to measure mixed-batch adoption and compare correctness, tool calls, time, and reported cost against baseline. Current project fixtures mostly create files and do not establish the benefit of batched existing-file edits. Do not keep rerunning the same synthetic fixture without a new question.
+Next: run one diagnostic repetition of `--tasks maintenance` for Claude and Codex in both modes, inspect correctness and mixed-batch adoption, then decide whether repeated measurements are useful. The maintenance verifier has 26 checks and regression coverage for valid and deliberately broken migrations; no real-agent results have been collected for it. Do not keep rerunning the same synthetic fixture without a new question.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
