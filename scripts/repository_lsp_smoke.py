@@ -27,6 +27,7 @@ def main():
     diagnostic_iterations = 5 if "--measure-diagnostics" in sys.argv[2:] else 1
     inspection_iterations = 5 if "--measure-inspection" in sys.argv[2:] else 1
     rename_evidence = None
+    relocation_evidence = None
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
     archive = subprocess.check_output(["git", "archive", revision], cwd=repo)
     with tempfile.TemporaryDirectory(prefix="ffsake-repository-lsp-") as temporary:
@@ -69,8 +70,8 @@ def main():
             assert value["ok"], value
             result = value["result"]
             if name.startswith("ffsake_rust_") and name != "ffsake_rust_context_from_manifests":
-                assert result["complete"] is False and set(result["file_hashes"]) == set(files)
-                assert result["analysis_context"]["crate_root"] == library
+                assert result["complete"] is False and set(result["file_hashes"]) == set(arguments["files"])
+                assert result["analysis_context"]["crate_root"] == arguments["crate_root"]
             calls.append({"tool": name, "seconds": round(time.monotonic() - started, 3)})
             return result
 
@@ -271,6 +272,53 @@ def main():
                     "compiler_errors": len(errors), "text_edits": proposal["text_edit_count"],
                     "changed_files": len(changed_paths), "byte_history_passed": True}
 
+
+                # Exercise a compiler-checked project layout change, not just
+                # isolated synthetic directory fixtures. One transaction moves
+                # the crate and updates its workspace membership.
+                old_directory = "crates/fff-workspace"
+                new_directory = "crates/workspace-engine"
+                relocation = call("ffsake_preview_files", {"operations": [
+                    {"op": "move_directory", "from": old_directory, "to": new_directory},
+                    {"op": "edit", "path": "Cargo.toml", "old_text": old_directory,
+                     "new_text": new_directory, "expected_matches": 1}]})
+                assert contents() == original
+                relocation_id = call("ffsake_apply", {"handle": relocation["handle"]})["transaction"]
+                relocated = {path.replace(old_directory + "/", new_directory + "/", 1)
+                    if path.startswith(old_directory + "/") else path: data for path, data in original.items()}
+                relocated["Cargo.toml"] = original["Cargo.toml"].replace(old_directory.encode(), new_directory.encode())
+                assert contents() == relocated and not (root / old_directory).exists()
+                relocated_files = [path.replace(old_directory, new_directory, 1) for path in files]
+                relocated_library = library.replace(old_directory, new_directory, 1)
+                relocated_context = call("ffsake_rust_context_from_manifests", {
+                    "manifests": ["Cargo.toml", new_directory + "/Cargo.toml"],
+                    "files": relocated_files, "crate_root": relocated_library})
+                relocated_arguments = relocated_context["analysis_arguments"]
+                assert set(relocated_context["source_hashes"]) == set(relocated_files)
+                assert len(relocated_arguments["crates"]) == len(crates)
+                relocated_references = call("ffsake_rust_references", {**relocated_arguments,
+                    "path": coordinates.replace(old_directory, new_directory, 1),
+                    "position": declaration, "limit": 1000})
+                assert relocated_references["matches"] == references["matches"]
+                assert all(item["path"].startswith(new_directory + "/")
+                           for item in relocated_references["ranges"])
+                relocated_test, relocated_errors = cargo_test()
+                assert relocated_test.returncode == 0 and not relocated_errors, (
+                    relocated_errors, relocated_test.stderr[-8192:])
+                assert contents() == relocated
+                call("ffsake_undo", {"transaction": relocation_id})
+                assert contents() == original and not (root / new_directory).exists()
+                call("ffsake_redo", {"transaction": relocation_id})
+                assert contents() == relocated and not (root / old_directory).exists()
+                call("ffsake_undo", {"transaction": relocation_id})
+                assert contents() == original
+                restored_test, restored_errors = cargo_test()
+                assert restored_test.returncode == 0 and not restored_errors, (
+                    restored_errors, restored_test.stderr[-8192:])
+                relocation_evidence = {"mixed_operations": 2, "relocated_cargo_tests": "passed",
+                    "restored_cargo_tests": "passed", "reimported_crates": len(relocated_arguments["crates"]),
+                    "relocated_references": relocated_references["matches"], "byte_history_passed": True}
+
         finally:
             proc.stdin.close()
             try:
@@ -286,7 +334,7 @@ def main():
         "context_import": {"manifests": sorted(imported["manifest_hashes"]),
                            "omissions": imported["omissions"], "matches_manual_graph": True},
         "references": references["matches"], "reference_files": len(paths), "outline_symbols": outline["symbol_count"],
-        "byte_history_passed": True, "rename_evidence": rename_evidence, "diagnostic_evidence": diagnostic_evidence, "inspection_evidence": inspection_evidence, "calls": calls, "model_calls": 0,
+        "byte_history_passed": True, "rename_evidence": rename_evidence, "relocation_evidence": relocation_evidence, "diagnostic_evidence": diagnostic_evidence, "inspection_evidence": inspection_evidence, "calls": calls, "model_calls": 0,
         "timing_is_single_model_free_sample": diagnostic_iterations == 1 and inspection_iterations == 1, "complete_analysis": False}, indent=2))
 
 

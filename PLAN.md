@@ -212,7 +212,7 @@ A failure-injection regression reproduced loss of completed agent traces when ei
 
 The audit-failure preservation fix is committed separately as f74852b. CLI configuration regression also reproduced an unnecessary MCP-binary requirement for baseline-only runs; the prerequisite now applies only to FFSAKE mode. Empty/duplicate agent/task/mode selectors reject before preflight, and all 82 model-free Python tests pass.
 
-Next: commit the matrix-validation fix separately, publish both after 4191cbe CI passes, and verify the exact new head. Keep subsequent work driven by observed workflow gaps; no additional model run is authorized by the earlier single-run approval. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+The matrix-validation fix was committed and published, and its exact-head CI passed. Keep subsequent work driven by observed workflow gaps; no additional model run is authorized by the earlier single-run approval. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
@@ -277,3 +277,6 @@ Journal transaction IDs now include an atomic process-local sequence, and all pr
 Independent mixed directory/file batches now share one parent transaction with private child journals. All operations refer to the initial workspace state; root/descendant overlaps and read/write dependencies reject. Ordinary file members merge so shared implicit parents have one owner. Apply and history preflight all members, then roll back completed members on later failures; child transaction IDs cannot be replayed through the root journal. Existing single-kind manifests remain readable. This is application-level recovery, not crash-proof atomicity.
 
 Validation: 144 Rust tests pass locally, including mixed tree moves, retained copies/removals, shared parents, reopened history, stale member rejection, corrupt snapshots, duplicate members, symlinked storage, late undo failure, and parent-manifest persistence failures in both history directions. Clippy and formatting pass. Actual core-profile MCP integration verifies mixed apply/undo/redo and search refresh; MCP boundary/profile and repository byte-history smokes pass. Benchmark guidance and public catalog describe independent mixed batches without adding tools.
+
+
+The real-repository compiler integration now relocates the entire crate and edits workspace Cargo membership in one mixed transaction. On committed source `18969a0` (28 Rust files), reimporting manifests after relocation produced all three crate roots and preserved the reference count at the relocated paths. Offline Cargo tests passed in both relocated and restored layouts; undo/redo restored exact tracked bytes and removed the vacated directory. The existing deliberately incomplete semantic rename still produces only the five expected omitted-macro compiler errors, followed by exact recovery. No model calls were used. This layout scenario runs in the existing CI repository integration step.
