@@ -87,15 +87,22 @@ Synthetic executable benchmark is implemented and passing. The real-agent harnes
 Implemented after benchmark feedback:
 - guarded multiline block preview/edit/apply;
 - file create/copy/move/rename/delete previews with journal apply and undo/redo;
-- a from-scratch CLI package task with separate-process persistence checks.
+- a from-scratch CLI package task with separate-process persistence checks;
+- mixed batches of existing-file literal edits and create/copy/move/delete operations, with one journal transaction and undo/redo;
+- executable permission preservation when edits replace existing files, including undo/redo.
 
 Verified repeated project fixture: 12/12 correct runs, with Claude median time down 42.1% and reported median cost down 48.9%; Codex median time was 1.1% higher. Every FFSAKE run used only FFSAKE tools; this does not establish host-enforced isolation or general performance results.
 
-Next: use the Claude launcher on one real-repository task in a separate worktree and inspect the resulting diff. Do not keep rerunning the same synthetic fixture without a new question.
+Real-repository pilot completed: Claude used only FFSAKE tools to implement the existing-file permission fix and its Unix regression test. The host ran validation separately; a parallel test-fixture collision was subsequently fixed.
+
+Verification on 2026-10-24: the user's macOS run passed all 47 Rust tests and the MCP smoke suite, including mixed batch history, stale-content rejection, rollback, and 109 rejected boundary operations. CI also passed 51 Python tests, Clippy, and formatting at `a4c947ca50a766a0fd64e37ff0cfcf7967df9083`.
+
+Next: add an existing-project maintenance benchmark that requires both edits and structural file operations, to measure mixed-batch adoption and compare correctness, tool calls, time, and reported cost against baseline. Current project fixtures mostly create files and do not establish the benefit of batched existing-file edits. Do not keep rerunning the same synthetic fixture without a new question.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
-- directory operations and filesystem metadata preservation are not covered by the MCP journal;
+- directory operations are not exposed by the MCP journal;
+- metadata restoration when files are recreated (for example, undoing deletion) is not implemented; existing-file edits preserve permissions;
 - native Codex tools are not disabled; enforced isolation remains unverified.
 
 Pass condition:
