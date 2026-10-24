@@ -380,6 +380,31 @@ pub fn rust_diagnostics<'a>(
     )
 }
 
+/// Collect native primary diagnostics for selected files in one shared snapshot.
+pub fn rust_workspace_diagnostics<'a>(
+    workspace: &Workspace,
+    files: &[String],
+    crate_root: &str,
+    paths: Option<&[String]>,
+    context: impl Into<RustContext<'a>>,
+    limit: usize,
+) -> Result<Value> {
+    let context = context.into();
+    navigate(
+        workspace,
+        Query {
+            files,
+            crate_root,
+            path: crate_root,
+            position: TextPosition { line: 1, column: 0 },
+            edition: context.edition,
+            crates: context.crates,
+            limit,
+        },
+        Navigation::WorkspaceDiagnostics { paths },
+    )
+}
+
 /// Return a bounded hierarchical outline for one file in the explicit snapshot.
 pub fn rust_symbols<'a>(
     workspace: &Workspace,
@@ -413,6 +438,7 @@ enum Navigation<'a> {
     Symbols,
     Hover,
     Diagnostics,
+    WorkspaceDiagnostics { paths: Option<&'a [String]> },
     CodeActions { end: TextPosition },
     Rename { new_name: &'a str },
 }
@@ -455,6 +481,18 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
     }
     if !files.iter().any(|p| p == crate_root) || !files.iter().any(|p| p == path) {
         return Err("crate_root and query path must be explicit members of files".into());
+    }
+    if let Navigation::WorkspaceDiagnostics { paths: Some(paths) } = kind
+        && (paths.is_empty()
+            || paths.len() > 32
+            || paths
+                .iter()
+                .collect::<std::collections::BTreeSet<_>>()
+                .len()
+                != paths.len()
+            || paths.iter().any(|path| !files.contains(path)))
+    {
+        return Err("diagnostic paths must be 1..=32 distinct explicit members of files".into());
     }
     let deadline = Instant::now() + Duration::from_secs(30);
     let snapshot = tempfile::tempdir()?;
@@ -566,20 +604,24 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
         Navigation::Definition => ("textDocument/definition", "definition"),
         Navigation::Implementation => ("textDocument/implementation", "implementation"),
         Navigation::Hover => ("textDocument/hover", "hover"),
-        Navigation::Symbols | Navigation::Diagnostics => {
+        Navigation::Symbols | Navigation::Diagnostics | Navigation::WorkspaceDiagnostics { .. } => {
             parameters
                 .as_object_mut()
                 .ok_or("invalid symbol request")?
                 .remove("position");
-            if matches!(kind, Navigation::Diagnostics) {
+            if matches!(kind, Navigation::WorkspaceDiagnostics { .. }) {
+                ("textDocument/diagnostic", "workspace_diagnostics")
+            } else if matches!(kind, Navigation::Diagnostics) {
                 ("textDocument/diagnostic", "diagnostics")
             } else {
                 ("textDocument/documentSymbol", "symbols")
             }
         }
     };
-    if matches!(kind, Navigation::Diagnostics)
-        && !initialized["capabilities"]["diagnosticProvider"].is_object()
+    if matches!(
+        kind,
+        Navigation::Diagnostics | Navigation::WorkspaceDiagnostics { .. }
+    ) && !initialized["capabilities"]["diagnosticProvider"].is_object()
     {
         return Err("rust-analyzer does not advertise pull diagnostics".into());
     }
@@ -589,7 +631,24 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
     {
         return Err("rust-analyzer does not advertise code actions".into());
     }
-    let result = if matches!(kind, Navigation::Rename { .. }) && prepared.is_null() {
+    let result = if matches!(kind, Navigation::WorkspaceDiagnostics { .. }) {
+        let mut batch = crate::lsp_diagnostics::Batch::new(limit);
+        for (path, source) in &sources {
+            if let Navigation::WorkspaceDiagnostics { paths: Some(paths) } = kind
+                && !paths
+                    .iter()
+                    .any(|selected| names[selected.as_str()] == *path)
+            {
+                continue;
+            }
+            let value = client.request(
+                "textDocument/diagnostic",
+                json!({"textDocument":{"uri":uri(&root.join(path))?}}),
+            )?;
+            batch.push(path, source, value)?;
+        }
+        batch.finish()
+    } else if matches!(kind, Navigation::Rename { .. }) && prepared.is_null() {
         Value::Null
     } else {
         client.request(method, parameters)?
@@ -600,6 +659,8 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
             "semantic_validated":false,"compiler_checked":false})
     } else if matches!(kind, Navigation::CodeActions { .. }) {
         crate::lsp_actions::actions(&root, &sources, result, limit)?
+    } else if matches!(kind, Navigation::WorkspaceDiagnostics { .. }) {
+        result
     } else if matches!(kind, Navigation::Diagnostics) {
         crate::lsp_diagnostics::diagnostics(query, query_source, result, limit)?
     } else if matches!(kind, Navigation::Symbols) {
@@ -644,7 +705,10 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
             "Read-only rename proposal, not a mutation capability. Native acceptance does not rule out binding collisions, omitted macro references, compilation failures or changed behavior."
         ));
     }
-    if matches!(kind, Navigation::Diagnostics) {
+    if matches!(
+        kind,
+        Navigation::Diagnostics | Navigation::WorkspaceDiagnostics { .. }
+    ) {
         response["compiler_checked"] = json!(false);
         response["experimental_diagnostics"] = json!(true);
         response["limitations"].as_array_mut().ok_or("invalid limitations")?.push(json!(

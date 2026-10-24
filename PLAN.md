@@ -166,7 +166,9 @@ Full-repository rename evaluation now runs independent offline Cargo tests in a 
 
 Explicit external-macro regression now compiles a real helper rlib and compares omitted versus declared graph edges. Identity, repeated-expression and hygienic-local macros all produce one incomplete edit/E0425 without the edge, versus two source edits and compiler/runtime success with it. Repeated expansions deduplicate original argument edits; unrelated macro-local bindings stay unchanged. UTF-16/CRLF positions and byte-exact history pass. No fabricated standard-library context is shipped.
 
-Next: add bounded workspace diagnostics over all explicitly supplied files in one fresh analyzer session, retaining per-file ranges and aggregate count/text/time budgets. This lets callers inspect missing context across the graph without repeated analyzer startup; it must remain native, incomplete and non-compiler validation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Workspace diagnostics now collect selected primary file reports in one fresh analyzer session with shared count/text/time budgets. Optional paths selects reports while all supplied files remain hash-checked context; clean files are included. Real-server reports match individual queries, and controlled-server checks reject malformed later reports and changed unqueried sources. The full dependency-incomplete repository exceeds the 1000-diagnostic batch cap, so report selection is supported without loosening limits. The shared catalog contains thirty tools.
+
+Next: evaluate selected-file diagnostic batches against individual queries on the full repository archive, recording report equivalence, request count and separate model-free timings. Preserve incomplete-analysis and compiler-validation distinctions, and retain all aggregate limits. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

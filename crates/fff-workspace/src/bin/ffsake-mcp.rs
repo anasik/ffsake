@@ -138,6 +138,7 @@ fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
         "ffsake_target" => "target",
         "ffsake_search" => "search",
         "ffsake_rust_symbols" => "rust_symbols",
+        "ffsake_rust_workspace_diagnostics" => "rust_workspace_diagnostics",
         "ffsake_rust_diagnostics" => "rust_diagnostics",
         "ffsake_preview_rust_rename" => "preview_rust_rename",
         "ffsake_rust_rename_proposal" => "rust_rename_proposal",
@@ -283,6 +284,11 @@ fn tools() -> Vec<Value> {
             "ffsake_rust_code_actions",
             "Discover bounded Rust code actions for a source range in the explicit incomplete snapshot. Returns primary action metadata and original-byte text edits only for actions without unsupported requirements. Commands, resource operations, annotations, snippets, disabled or unresolved actions return reasons and no edits. Returns a resident action_set for a separate guarded preview; it cannot be applied directly. Never applies, executes or resolves actions. Limit 1..=100 actions, 1000 edits and 65536 total text bytes; all original hashes are rechecked. Requires rust-analyzer; only optional explicit local crate edges, no implicit dependency/sysroot/build-script context or semantic correctness guarantee.",
             rust_code_actions_schema(),
+        ),
+        tool(
+            "ffsake_rust_workspace_diagnostics",
+            "Collect native primary diagnostics using one fresh analyzer session. Optional paths selects 1..=32 distinct members of files; omit for every file. All files remain analysis context and are hash-checked. Same files/crate_root/edition/optional crate context as diagnostics, without path or position. Returns one report per selected canonical file including clean files, plus aggregate counts. Limit 1..=1000 diagnostics and 65536 text bytes across the entire batch; existing per-item, source, frame and shared 30-second bounds apply. Any invalid report, overflow or changed original rejects the whole batch. Native experimental analysis only: complete=false, compiler_checked=false, no builds/fixes or mutation handle.",
+            rust_workspace_diagnostics_schema(),
         ),
         tool(
             "ffsake_rust_diagnostics",
@@ -528,5 +534,16 @@ fn rust_rename_schema() -> Value {
         .as_array_mut()
         .unwrap()
         .push(json!("new_name"));
+    schema
+}
+
+fn rust_workspace_diagnostics_schema() -> Value {
+    let mut schema = rust_navigation_schema(false);
+    schema["properties"]["paths"] = json!({"type":"array","minItems":1,"maxItems":32,"uniqueItems":true,"items":{"type":"string","maxLength":4096}});
+    schema["properties"].as_object_mut().unwrap().remove("path");
+    schema["required"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|name| name != "path");
     schema
 }

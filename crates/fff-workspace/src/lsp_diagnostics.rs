@@ -4,6 +4,54 @@ use serde_json::{Value, json};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+/// One all-or-nothing budget across primary reports from the same snapshot.
+pub(crate) struct Batch {
+    reports: Vec<Value>,
+    limit: usize,
+    count: usize,
+    bytes: usize,
+}
+
+impl Batch {
+    pub(crate) fn new(limit: usize) -> Self {
+        Self {
+            reports: Vec::new(),
+            limit,
+            count: 0,
+            bytes: 0,
+        }
+    }
+
+    pub(crate) fn push(&mut self, path: &str, source: &str, value: Value) -> Result<()> {
+        if self.reports.len() >= 32 {
+            return Err("workspace diagnostics exceeds 32 files".into());
+        }
+        let report = diagnostics(path, source, value, self.limit - self.count)?;
+        let count = self.count
+            + report["diagnostic_count"]
+                .as_u64()
+                .ok_or("invalid diagnostic count")? as usize;
+        let bytes = self.bytes
+            + report["text_bytes"]
+                .as_u64()
+                .ok_or("invalid diagnostic bytes")? as usize;
+        if bytes > 65_536 {
+            return Err(
+                "workspace diagnostic text budget exceeded; no partial result returned".into(),
+            );
+        }
+        self.count = count;
+        self.bytes = bytes;
+        self.reports.push(report);
+        Ok(())
+    }
+
+    pub(crate) fn finish(self) -> Value {
+        json!({"reports":self.reports,"file_count":self.reports.len(),
+            "diagnostic_count":self.count,"text_bytes":self.bytes})
+    }
+}
+
 fn text<'a>(value: &'a Value, maximum: usize, bytes: &mut usize) -> Result<&'a str> {
     let text = value.as_str().ok_or("invalid diagnostic text")?;
     *bytes += text.len();
@@ -93,6 +141,46 @@ mod tests {
 
     fn report(items: Vec<Value>) -> Value {
         json!({"kind":"full","items":items})
+    }
+
+    #[test]
+    fn workspace_reports_share_count_text_and_coordinate_guards() {
+        let mut batch = Batch::new(1);
+        batch
+            .push("one.rs", "abc", report(vec![item(0, 1)]))
+            .unwrap();
+        batch.push("empty.rs", "", report(vec![])).unwrap();
+        assert!(
+            batch
+                .push("two.rs", "abc", report(vec![item(0, 1)]))
+                .is_err()
+        );
+        let result = batch.finish();
+        assert_eq!(result["file_count"], 2);
+        assert_eq!(result["diagnostic_count"], 1);
+        assert_eq!(result["reports"][1]["diagnostic_count"], 0);
+        let mut batch = Batch::new(100);
+        let mut large = item(0, 1);
+        large["message"] = json!("x".repeat(8192));
+        batch
+            .push("one.rs", "abc", report(vec![large.clone(); 4]))
+            .unwrap();
+        assert!(batch.push("two.rs", "abc", report(vec![large; 4])).is_err());
+        assert!(
+            batch
+                .push("two.rs", "🚀", report(vec![item(1, 2)]))
+                .is_err()
+        );
+        assert!(
+            batch
+                .push("two.rs", "", json!({"kind":"unchanged"}))
+                .is_err()
+        );
+        let mut batch = Batch::new(1);
+        for _ in 0..32 {
+            batch.push("empty.rs", "", report(vec![])).unwrap();
+        }
+        assert!(batch.push("extra.rs", "", report(vec![])).is_err());
     }
 
     #[test]

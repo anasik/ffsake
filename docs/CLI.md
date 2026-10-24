@@ -242,3 +242,16 @@ The real-server regression checks exact preview identity, stale unedited input a
 The full-repository archive regression also runs external Cargo tests: its baseline passes, while a native type rename leaves references inside omitted macros and produces explicit E0422/E0425 errors. The regression requires those specific errors and exact undo/redo restoration. Compiler execution belongs to the test harness; the analysis/preview endpoints still do not execute builds or claim compiler validation.
 
 Explicit macro dependencies can recover references without ambient discovery: a real helper-crate regression compares omitted versus supplied dependency edges for identity, repeated-expression and hygienic-local macros. Omission leaves the argument reference unchanged and causes E0425 after rename; declaring the helper source yields two source edits and compiler/runtime success. Repeated expansion sites remain one edit per original argument, and an unrelated macro-local binding is unchanged. These cases do not supply or emulate the standard library and do not establish general macro completeness.
+
+
+## Batched workspace diagnostics
+
+```json
+{"op":"rust_workspace_diagnostics","files":["src/lib.rs","src/model.rs"],"crate_root":"src/lib.rs","edition":"2024","limit":100}
+```
+
+`ffsake_rust_workspace_diagnostics` collects native primary reports in one fresh analyzer session. It accepts the existing `files`, `crate_root`, `edition`, optional `crates` and diagnostic `limit`; it has no `path` or `position`. Optional `paths` selects 1–32 distinct exact members of `files`; omission selects all files. All supplied files remain analysis context and are hash-rechecked, including files outside the report selection.
+
+`reports` contains one canonical-path report per selected file, sorted by path and including clean files. Each has `diagnostics`, `diagnostic_count` and `text_bytes`; the response adds aggregate `file_count`, `diagnostic_count` and `text_bytes`. The limit of 1–1000 diagnostics and 65,536 text bytes applies to the **whole batch**, alongside existing per-item/source/protocol bounds and a single shared 30-second analyzer budget. Invalid reports, exceeded limits or changed originals reject the entire call without partial output. A large dependency-incomplete project can exceed the diagnostic cap; select a smaller `paths` group while preserving the full source context.
+
+The batch retains `analysis_context`, all source hashes, `complete: false`, `compiler_checked: false` and `experimental_diagnostics: true`. It runs no builds, returns no fixes or mutation handle, and does not prove that a clean project compiles. Real-server checks compare individual and batch reports, including Unicode/CRLF and fresh clean results; controlled-server checks reject a malformed second report and a changed unqueried input.

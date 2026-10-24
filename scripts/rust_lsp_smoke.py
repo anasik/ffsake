@@ -27,6 +27,7 @@ def send(value):
     data = json.dumps({"jsonrpc":"2.0", **value}).encode()
     sys.stdout.buffer.write(f"Content-Length: {len(data)}\\r\\n\\r\\n".encode()+data)
     sys.stdout.buffer.flush()
+diagnostic_requests = 0
 while True:
     headers = {}
     while True:
@@ -37,11 +38,18 @@ while True:
         headers[key.lower()] = value.strip()
     message = json.loads(sys.stdin.buffer.read(int(headers[b"content-length"])))
     if message.get("method") == "initialize":
-        capabilities = {"positionEncoding":"utf-16"}
+        capabilities = {"positionEncoding":"utf-16", "diagnosticProvider":{}}
         if mode != "rename_unsupported": capabilities["renameProvider"] = {"prepareProvider":True}
         send({"id":message["id"],"result":{"capabilities":capabilities}})
     elif message.get("method") == "initialized":
         send({"method":"experimental/serverStatus","params":{"health":"ok","quiescent":True}})
+    elif message.get("method") == "textDocument/diagnostic":
+        diagnostic_requests += 1
+        pathlib.Path(os.environ["FFSAKE_LSP_TEST_REQUESTS"]).write_text(str(diagnostic_requests))
+        if mode == "batch_stale":
+            pathlib.Path(os.environ["FFSAKE_LSP_TEST_SOURCE"]).write_text("fn external_change() {}")
+        result = {"kind":"unchanged"} if mode == "batch_bad_second" and diagnostic_requests == 2 else {"kind":"full","items":[]}
+        send({"id":message["id"],"result":result})
     elif message.get("method") == "textDocument/prepareRename":
         if mode == "rename_null":
             send({"id":message["id"],"result":None})
@@ -54,7 +62,7 @@ while True:
         pathlib.Path(os.environ["FFSAKE_LSP_TEST_SOURCE"]).write_text("fn external_change() {}")
         send({"id":message["id"],"result":None})
 '''
-    for mode in ["malformed", "stale", "timeout", "rename_stale", "rename_null", "rename_bad_range", "rename_unsupported"]:
+    for mode in ["malformed", "stale", "timeout", "rename_stale", "rename_null", "rename_bad_range", "rename_unsupported", "batch_stale", "batch_bad_second"]:
         with tempfile.TemporaryDirectory(prefix="ffsake-lsp-failure-") as temp:
             directory = Path(temp)
             root = directory / "workspace"
@@ -67,7 +75,7 @@ while True:
             pid_file = directory / "server.pid"
             env = {**os.environ, "PATH": str(directory) + os.pathsep + os.environ.get("PATH", ""),
                    "FFSAKE_LSP_TEST_PID": str(pid_file), "FFSAKE_LSP_TEST_MODE": mode,
-                   "FFSAKE_LSP_TEST_SOURCE": str(path)}
+                   "FFSAKE_LSP_TEST_SOURCE": str(path), "FFSAKE_LSP_TEST_REQUESTS": str(directory / "requests")}
             request = {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {
                 "name": "ffsake_rust_references", "arguments": {"files": ["main.rs"],
                 "crate_root": "main.rs", "path": "main.rs", "edition": "2024", "limit": 10,
@@ -75,6 +83,14 @@ while True:
             if mode.startswith("rename_"):
                 request["params"]["name"] = "ffsake_rust_rename_proposal"
                 request["params"]["arguments"]["new_name"] = "renamed"
+            if mode.startswith("batch_"):
+                (root / "empty.rs").write_text("")
+                request["params"]["name"] = "ffsake_rust_workspace_diagnostics"
+                request["params"]["arguments"].update(files=["main.rs", "empty.rs"])
+                del request["params"]["arguments"]["path"]
+                del request["params"]["arguments"]["position"]
+                if mode == "batch_stale":
+                    request["params"]["arguments"]["paths"] = ["empty.rs"]
             # A second ordinary request verifies resident recovery after the failure.
             read = {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {
                 "name": "ffsake_read", "arguments": {"path": "main.rs"}}}
@@ -88,7 +104,10 @@ while True:
             assert failed["ok"] == (mode == "rename_null") and recovered["ok"] is True, (mode, failed, recovered)
             if mode == "rename_null":
                 assert failed["result"]["prepared"] is None and failed["result"]["proposal"] is None, failed
-            if mode in ("stale", "rename_stale"):
+            if mode.startswith("batch_"):
+                assert (directory / "requests").read_text() == ("1" if mode == "batch_stale" else "2")
+                assert "result" not in failed
+            if mode in ("stale", "rename_stale", "batch_stale"):
                 assert "source changed" in failed["error"], failed
                 assert path.read_text() == "fn external_change() {}"
             else:
@@ -467,6 +486,42 @@ def main():
                             {"cfg_flags": ["local_mode", "local_mode"]}, {"cfg": ["anything"]}]:
                 call({**project, "crates": [crates[0], {**crates[1], **changes}]},
                      ok=False, name="ffsake_rust_diagnostics")
+            batch_sources = {
+                "main.rs": 'mod other; mod empty; fn main() { let _ = "🚀"; let _value: u32 = other::value(); }\r\n',
+                "other.rs": 'pub fn value() -> bool { let _bad: u32 = false; true }\r\n',
+                "empty.rs": "",
+            }
+            for path, content in batch_sources.items():
+                (root / path).write_bytes(content.encode())
+            batch_args = {"files": list(batch_sources), "crate_root": "main.rs", "edition": "2024", "limit": 100}
+            batch = call(batch_args, name="ffsake_rust_workspace_diagnostics")
+            assert batch["file_count"] == 3 and batch["diagnostic_count"] >= 2, batch
+            assert batch["complete"] is False and batch["compiler_checked"] is False
+            assert set(batch["file_hashes"]) == set(batch_sources) and "handle" not in batch
+            assert [item["path"] for item in batch["reports"]] == sorted(batch_sources)
+            assert batch["diagnostic_count"] == sum(item["diagnostic_count"] for item in batch["reports"])
+            assert batch["text_bytes"] == sum(item["text_bytes"] for item in batch["reports"])
+            for item in batch["reports"]:
+                single = call({**batch_args, "path": item["path"]}, name="ffsake_rust_diagnostics")
+                assert item == {key: single[key] for key in ("path", "diagnostics", "diagnostic_count", "text_bytes")}
+                if item["path"] == "empty.rs":
+                    assert item["diagnostic_count"] == 0
+                else:
+                    assert any(d["code"] == "E0308" for d in item["diagnostics"])
+            selected = call({**batch_args, "paths": ["other.rs"]}, name="ffsake_rust_workspace_diagnostics")
+            assert selected["file_count"] == 1 and selected["reports"] == [item for item in batch["reports"] if item["path"] == "other.rs"]
+            assert selected["file_hashes"] == batch["file_hashes"]
+            for changes in ({"limit": 1}, {"limit": 0}, {"limit": 1001}, {"files": []},
+                            {"files": ["main.rs", "missing.rs"]}, {"path": "main.rs"}, {"paths": []},
+                            {"paths": ["other.rs", "other.rs"]}, {"paths": ["omitted.rs"]}):
+                call({**batch_args, **changes}, ok=False, name="ffsake_rust_workspace_diagnostics")
+            batch_sources["other.rs"] = 'pub fn value() -> u32 { 7 }\r\n'
+            (root / "other.rs").write_bytes(batch_sources["other.rs"].encode())
+            clean = call(batch_args, name="ffsake_rust_workspace_diagnostics")
+            assert clean["diagnostic_count"] == 0 and clean["file_count"] == 3, clean
+            assert clean["file_hashes"]["other.rs"] != batch["file_hashes"]["other.rs"]
+            assert all((root / path).read_bytes() == content.encode() for path, content in batch_sources.items())
+            assert not (root / "BUILD_SCRIPT_RAN").exists()
         finally:
             proc.stdin.close()
             try:
@@ -478,7 +533,7 @@ def main():
             proc.stderr.close()
         assert proc.returncode == 0, proc.returncode
     failure_checks(binary)
-    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, native diagnostics, code-action discovery/guarded previews/history, explicit crate graph/features/cfg, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
+    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, single/workspace native diagnostics, code-action discovery/guarded previews/history, explicit crate graph/features/cfg, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
 
 
 if __name__ == "__main__":
