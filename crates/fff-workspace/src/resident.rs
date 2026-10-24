@@ -57,6 +57,14 @@ pub enum Request {
         edition: String,
         limit: usize,
     },
+    RustDefinition {
+        files: Vec<String>,
+        crate_root: String,
+        path: String,
+        position: crate::coordinates::TextPosition,
+        edition: String,
+        limit: usize,
+    },
     SelectRustIdentifiers {
         paths: Vec<String>,
         identifier: String,
@@ -317,6 +325,22 @@ impl Resident {
                 edition,
                 limit,
             } => crate::lsp::rust_references(
+                self.session.workspace(),
+                &files,
+                &crate_root,
+                &path,
+                position,
+                &edition,
+                limit,
+            ),
+            Request::RustDefinition {
+                files,
+                crate_root,
+                path,
+                position,
+                edition,
+                limit,
+            } => crate::lsp::rust_definition(
                 self.session.workspace(),
                 &files,
                 &crate_root,

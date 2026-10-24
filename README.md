@@ -134,7 +134,7 @@ cargo build --locked --bin ffsake-mcp
 python3 scripts/ffsake_claude.py /absolute/path/to/worktree
 ```
 
-The launcher supplies a temporary MCP configuration, disables Claude's built-in tools with `--tools ""`, loads only this MCP configuration with `--strict-mcp-config`, and approves only the twenty named FFSAKE tools for this session. It does not use the broad skip-permissions flag or modify user/project configuration. Other host settings, including enterprise policy and startup hooks, are not isolated by this launcher. FFSAKE is an application-level workspace boundary, not an OS sandbox.
+The launcher supplies a temporary MCP configuration, disables Claude's built-in tools with `--tools ""`, loads only this MCP configuration with `--strict-mcp-config`, and approves only the twenty-one named FFSAKE tools for this session. It does not use the broad skip-permissions flag or modify user/project configuration. Other host settings, including enterprise policy and startup hooks, are not isolated by this launcher. FFSAKE is an application-level workspace boundary, not an OS sandbox.
 
 Use a separate git worktree for the first pilot. Start with one small repository editing task; run builds/tests and review the git diff in a separate terminal. FFSAKE currently supplies editing/navigation, not a build/test runner. Existing-file replacements preserve current permissions. New Unix journal entries also capture ordinary rwx permission bits when committing a deletion, so undo can recreate executable/private files correctly. Older entries and record-after-the-fact calls lack original modes. Copy/move destinations preserve ordinary Unix rwx bits and reject source permission changes after preview. New entries record created-file modes for redo. Ownership, ACLs, extended attributes and special mode bits are not restored.
 
@@ -146,4 +146,4 @@ python3 scripts/ffsake_claude.py /absolute/path/to/worktree --dry-run
 
 The launcher's CLI flags follow the [Claude CLI reference](https://code.claude.com/docs/en/cli-reference). Its process/configuration behavior is regression-tested with a fake CLI; interactive tool availability must still be checked with the installed Claude version.
 
-Rust references are available through `ffsake_rust_references` with an explicit source-file snapshot. Install the optional backend with `rustup component add rust-analyzer`. This read-only mode omits dependencies, sysroot and configured features; it is not a semantic rename tool. See [the CLI contracts](docs/CLI.md).
+Rust references and definition navigation are available through `ffsake_rust_references` and `ffsake_rust_definition` with an explicit source-file snapshot. Install the optional backend with `rustup component add rust-analyzer`. This read-only mode omits dependencies, sysroot and configured features; it is not a semantic rename tool. See [the CLI contracts](docs/CLI.md).

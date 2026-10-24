@@ -119,7 +119,7 @@ impl Client {
     fn remaining(&self) -> Result<Duration> {
         self.deadline
             .checked_duration_since(Instant::now())
-            .ok_or_else(|| "Rust references exceeded 30-second budget".into())
+            .ok_or_else(|| "Rust navigation exceeded 30-second budget".into())
     }
 
     fn send(&self, mut message: Value) -> Result<()> {
@@ -199,13 +199,75 @@ pub fn rust_references(
     edition: &str,
     limit: usize,
 ) -> Result<Value> {
+    navigate(
+        workspace,
+        Query {
+            files,
+            crate_root,
+            path,
+            position,
+            edition,
+            limit,
+        },
+        Navigation::References,
+    )
+}
+
+/// Find definition locations under the same explicit snapshot contract.
+pub fn rust_definition(
+    workspace: &Workspace,
+    files: &[String],
+    crate_root: &str,
+    path: &str,
+    position: TextPosition,
+    edition: &str,
+    limit: usize,
+) -> Result<Value> {
+    navigate(
+        workspace,
+        Query {
+            files,
+            crate_root,
+            path,
+            position,
+            edition,
+            limit,
+        },
+        Navigation::Definition,
+    )
+}
+
+#[derive(Clone, Copy)]
+enum Navigation {
+    References,
+    Definition,
+}
+
+struct Query<'a> {
+    files: &'a [String],
+    crate_root: &'a str,
+    path: &'a str,
+    position: TextPosition,
+    edition: &'a str,
+    limit: usize,
+}
+
+fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result<Value> {
+    let Query {
+        files,
+        crate_root,
+        path,
+        position,
+        edition,
+        limit,
+    } = query;
     if files.is_empty()
         || files.len() > 32
         || !(1..=1000).contains(&limit)
         || !matches!(edition, "2015" | "2018" | "2021" | "2024")
     {
         return Err(
-            "Rust references requires 1..=32 files, limit 1..=1000 and a supported edition".into(),
+            "Rust navigation requires 1..=32 files, limit 1..=1000 and a supported edition".into(),
         );
     }
     if !files.iter().any(|p| p == crate_root) || !files.iter().any(|p| p == path) {
@@ -219,12 +281,12 @@ pub fn rust_references(
     let mut names = BTreeMap::new();
     for file in files {
         if file.len() > 4096 || Path::new(file).extension().is_none_or(|ext| ext != "rs") {
-            return Err("Rust references requires .rs paths of at most 4096 bytes".into());
+            return Err("Rust navigation requires .rs paths of at most 4096 bytes".into());
         }
         let (normalized, bytes) = workspace.read_source_bounded(Path::new(file), 256 * 1024)?;
         let source = String::from_utf8(bytes)?;
         if sources.contains_key(&normalized) {
-            return Err("duplicate Rust reference file".into());
+            return Err("duplicate Rust navigation file".into());
         }
         let destination = root.join(&normalized);
         std::fs::create_dir_all(destination.parent().ok_or("invalid source parent")?)?;
@@ -249,7 +311,7 @@ pub fn rust_references(
     });
     let mut client = Client::start(&root, options.clone(), deadline)?;
     let initialized = client.request("initialize", json!({"processId":null,"rootUri":uri(&root)?,
-        "capabilities":{"general":{"positionEncodings":["utf-16"]},"experimental":{"serverStatusNotification":true}},
+        "capabilities":{"general":{"positionEncodings":["utf-16"]},"textDocument":{"definition":{"linkSupport":false}},"experimental":{"serverStatusNotification":true}},
         "initializationOptions":options}))?;
     if initialized["capabilities"]["positionEncoding"]
         .as_str()
@@ -276,25 +338,44 @@ pub fn rust_references(
             break;
         }
     }
-    let locations = client.request(
-        "textDocument/references",
-        json!({"textDocument":{"uri":uri(&root.join(query))?},
-        "position":position,"context":{"includeDeclaration":true}}),
-    )?;
-    let ranges = scoped_ranges(&root, &sources, locations, limit)?;
+    let mut parameters =
+        json!({"textDocument":{"uri":uri(&root.join(query))?},"position":position});
+    let (method, query_kind) = match kind {
+        Navigation::References => {
+            parameters["context"] = json!({"includeDeclaration":true});
+            ("textDocument/references", "references")
+        }
+        Navigation::Definition => ("textDocument/definition", "definition"),
+    };
+    let locations = normalize_locations(client.request(method, parameters)?, kind)?;
+    let ranges = scoped_ranges(&root, &sources, locations, limit, kind)?;
     for (path, expected) in &hashes {
         let (normalized, bytes) = workspace.read_source_bounded(Path::new(path), 256 * 1024)?;
         if &normalized != path || blake3::hash(&bytes).to_hex().as_str() != expected {
-            return Err("source changed during Rust reference analysis; retry".into());
+            return Err("source changed during Rust navigation analysis; retry".into());
         }
     }
     client.remaining()?;
     Ok(
         json!({"ranges":ranges,"matches":ranges.len(),"file_hashes":hashes,
-        "analysis_mode":"explicit_crate_snapshot","complete":false,
+        "analysis_mode":"explicit_crate_snapshot","query":query_kind,"complete":false,
         "limitations":["No Cargo dependencies, sysroot, build scripts, procedural macros or configured features are loaded.",
                         "Ranges are read-only navigation results, not a semantic rename capability."]}),
     )
+}
+
+fn normalize_locations(value: Value, kind: Navigation) -> Result<Value> {
+    match value {
+        Value::Null | Value::Array(_) => Ok(value),
+        Value::Object(_)
+            if matches!(kind, Navigation::Definition)
+                && value.get("uri").is_some()
+                && value.get("range").is_some() =>
+        {
+            Ok(json!([value]))
+        }
+        _ => Err("invalid LSP navigation locations (LocationLink was not negotiated)".into()),
+    }
 }
 
 fn scoped_ranges(
@@ -302,6 +383,7 @@ fn scoped_ranges(
     sources: &BTreeMap<String, String>,
     locations: Value,
     limit: usize,
+    kind: Navigation,
 ) -> Result<Vec<SearchRange>> {
     let locations = if locations.is_null() {
         vec![]
@@ -309,7 +391,7 @@ fn scoped_ranges(
         locations.as_array().ok_or("invalid LSP locations")?.clone()
     };
     if locations.len() > limit {
-        return Err("Rust reference limit exceeded; no partial result returned".into());
+        return Err("Rust navigation limit exceeded; no partial result returned".into());
     }
     let mut ranges = Vec::new();
     for location in locations {
@@ -339,8 +421,8 @@ fn scoped_ranges(
             source,
             serde_json::from_value::<Utf16Position>(location["range"]["end"].clone())?,
         )?;
-        if start >= end {
-            return Err("invalid LSP reference range".into());
+        if start > end || (start == end && matches!(kind, Navigation::References)) {
+            return Err("invalid LSP navigation range".into());
         }
         ranges.push(SearchRange {
             path,
@@ -361,6 +443,55 @@ fn scoped_ranges(
 mod tests {
     use super::*;
     use std::io::Cursor;
+
+    #[test]
+    fn definition_responses_accept_locations_but_not_unnegotiated_links() {
+        let location = json!({"uri":"file:///snapshot/main.rs","range":{
+            "start":{"line":0,"character":3},"end":{"line":0,"character":7}}});
+        assert_eq!(
+            normalize_locations(location.clone(), Navigation::Definition).unwrap(),
+            json!([location.clone()])
+        );
+        assert!(normalize_locations(location.clone(), Navigation::References).is_err());
+        assert_eq!(
+            normalize_locations(json!([location.clone()]), Navigation::Definition).unwrap(),
+            json!([location])
+        );
+        assert!(
+            normalize_locations(Value::Null, Navigation::Definition)
+                .unwrap()
+                .is_null()
+        );
+        for invalid in [
+            json!(42),
+            json!({}),
+            json!({"targetUri":"file:///snapshot/main.rs","targetSelectionRange":{}}),
+        ] {
+            assert!(normalize_locations(invalid, Navigation::Definition).is_err());
+        }
+    }
+
+    #[test]
+    fn empty_module_definition_is_a_valid_anchor_not_a_reference() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().canonicalize().unwrap();
+        let sources = BTreeMap::from([("empty.rs".to_string(), String::new())]);
+        let locations = json!([{"uri":uri(&root.join("empty.rs")).unwrap(),"range":{
+            "start":{"line":0,"character":0},"end":{"line":0,"character":0}}}]);
+        assert!(
+            scoped_ranges(
+                &root,
+                &sources,
+                locations.clone(),
+                10,
+                Navigation::References
+            )
+            .is_err()
+        );
+        let result = scoped_ranges(&root, &sources, locations, 10, Navigation::Definition).unwrap();
+        assert_eq!(result[0].start_byte, 0);
+        assert_eq!(result[0].end_byte, 0);
+    }
 
     #[test]
     fn bounded_frames_reject_corruption_and_keep_message_boundaries() {
@@ -396,12 +527,27 @@ mod tests {
         let sources = BTreeMap::from([("space é.rs".to_string(), source.to_string())]);
         let valid = json!({"uri":uri(&root.join("space é.rs")).unwrap(),"range":{
             "start":{"line":1,"character":4},"end":{"line":1,"character":11}}});
-        let ranges =
-            scoped_ranges(&root, &sources, json!([valid.clone(), valid.clone()]), 2).unwrap();
+        let ranges = scoped_ranges(
+            &root,
+            &sources,
+            json!([valid.clone(), valid.clone()]),
+            2,
+            Navigation::References,
+        )
+        .unwrap();
         assert_eq!(ranges.len(), 1);
         assert_eq!(&source[ranges[0].start_byte..ranges[0].end_byte], "account");
         assert_eq!(ranges[0].line, 2);
-        assert!(scoped_ranges(&root, &sources, json!([valid.clone(), valid.clone()]), 1).is_err());
+        assert!(
+            scoped_ranges(
+                &root,
+                &sources,
+                json!([valid.clone(), valid.clone()]),
+                1,
+                Navigation::References
+            )
+            .is_err()
+        );
         for path in [
             root.join("missing.rs"),
             root.join(".ffsake/private.rs"),
@@ -409,12 +555,16 @@ mod tests {
         ] {
             let mut bad = valid.clone();
             bad["uri"] = json!(uri(&path).unwrap());
-            assert!(scoped_ranges(&root, &sources, json!([bad]), 10).is_err());
+            assert!(
+                scoped_ranges(&root, &sources, json!([bad]), 10, Navigation::References).is_err()
+            );
         }
         for url in ["https://example.org/source.rs", "file://remote/source.rs"] {
             let mut bad = valid.clone();
             bad["uri"] = json!(url);
-            assert!(scoped_ranges(&root, &sources, json!([bad]), 10).is_err());
+            assert!(
+                scoped_ranges(&root, &sources, json!([bad]), 10, Navigation::References).is_err()
+            );
         }
         for (start, end) in [
             (
@@ -432,10 +582,12 @@ mod tests {
         ] {
             let mut bad = valid.clone();
             bad["range"] = json!({"start":start,"end":end});
-            assert!(scoped_ranges(&root, &sources, json!([bad]), 10).is_err());
+            assert!(
+                scoped_ranges(&root, &sources, json!([bad]), 10, Navigation::References).is_err()
+            );
         }
         assert!(
-            scoped_ranges(&root, &sources, Value::Null, 10)
+            scoped_ranges(&root, &sources, Value::Null, 10, Navigation::References)
                 .unwrap()
                 .is_empty()
         );

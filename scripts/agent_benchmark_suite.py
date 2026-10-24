@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FFSAKE_MCP = (ROOT / "target" / "debug" / "ffsake-mcp").resolve()
 RESULT_DIR = ROOT / "docs" / "agent-benchmark-runs"
 FFSAKE_TOOLS = (
-    "ffsake_read", "ffsake_read_files", "ffsake_list", "ffsake_target", "ffsake_search", "ffsake_select_rust_identifiers", "ffsake_rust_references",
+    "ffsake_read", "ffsake_read_files", "ffsake_list", "ffsake_target", "ffsake_search", "ffsake_select_rust_identifiers", "ffsake_rust_references", "ffsake_rust_definition",
     "ffsake_preview_matches", "ffsake_preview_edit", "ffsake_preview_rename", "ffsake_apply", "ffsake_undo", "ffsake_redo",
     "ffsake_release", "ffsake_refresh",
     "ffsake_preview_files", "ffsake_preview_create", "ffsake_preview_copy", "ffsake_preview_move", "ffsake_preview_delete",
@@ -381,7 +381,7 @@ def ffsake_prompt(task_prompt: str):
         "Use indexed search and preview_matches for repository-wide replacements. "
         "For a case-preserving whole-ASCII-identifier rename, use ffsake_preview_rename with an explicit target, exact expected_matches and max_files; it is textual, not language-aware. "
         "For exact Rust identifier spellings excluding comments, strings and opaque macro/attribute text, use ffsake_select_rust_identifiers with explicit .rs paths and a match limit, then preview_matches with a valid replacement identifier; staged Rust is reparsed, but this does not resolve symbols or establish compiler validity. "
-        "Use ffsake_rust_references for read-only binding references in explicitly supplied Rust files when rust-analyzer is available; it analyzes a dependency-free snapshot, reports complete=false, and returns no edit handle. "
+        "Use ffsake_rust_references or ffsake_rust_definition for read-only binding navigation in explicitly supplied Rust files when rust-analyzer is available; it analyzes a dependency-free snapshot, reports complete=false, and returns no edit handle. "
         "For several independent file operations, prefer ffsake_preview_files with an operations "
         "array, followed by one apply, so the whole batch is one undoable transaction. "
         "Batch entries may also edit distinct existing files using op=edit, path, old_text, "

@@ -104,11 +104,11 @@ def main():
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         request_id = 0
 
-        def call(arguments, ok=True):
+        def call(arguments, ok=True, name="ffsake_rust_references"):
             nonlocal request_id
             request_id += 1
             proc.stdin.write(json.dumps({"jsonrpc": "2.0", "id": request_id, "method": "tools/call",
-                "params": {"name": "ffsake_rust_references", "arguments": arguments}}) + "\n")
+                "params": {"name": name, "arguments": arguments}}) + "\n")
             proc.stdin.flush()
             assert select.select([proc.stdout], [], [], 35)[0], "MCP references timed out"
             response = json.loads(proc.stdout.readline())
@@ -127,12 +127,25 @@ def main():
                 for span in result["ranges"]:
                     assert span["path"] == "main.rs" and span["line"] == line
                     assert source.encode()[span["start_byte"]:span["end_byte"]] == b"account"
+                definition = call({**args, "position": {"line": line,
+                    "column": source.splitlines()[line - 1].rindex("account")}}, name="ffsake_rust_definition")
+                assert definition["matches"] == 1 and definition["query"] == "definition"
+                span = definition["ranges"][0]
+                line_start = len("\n".join(source.split("\n")[:line - 1]).encode()) + 1
+                assert span["start_byte"] == line_start + len(source.splitlines()[line - 1][:column].encode())
+                assert span["line"] == line and span["path"] == "main.rs"
             first_position = {"line": 3, "column": source.splitlines()[2].index("first")}
             result = call({**args, "position": first_position})
             assert result["matches"] == 3 and {r["path"] for r in result["ranges"]} == {"main.rs", "other.rs"}
             for span in result["ranges"]:
                 text = source if span["path"] == "main.rs" else other
                 assert text.encode()[span["start_byte"]:span["end_byte"]] == b"first"
+            definition = call({**args, "path": "other.rs", "position": {
+                "line": 1, "column": other.index("first")}}, name="ffsake_rust_definition")
+            assert definition["matches"] == 1 and definition["complete"] is False and "handle" not in definition
+            span = definition["ranges"][0]
+            assert span["path"] == "main.rs" and span["line"] == 3
+            assert source.encode()[span["start_byte"]:span["end_byte"]] == b"first"
             assert (root / "main.rs").read_bytes() == source.encode()
             assert (root / "other.rs").read_text() == other
             assert {p.name for p in root.iterdir()} <= {"main.rs", "other.rs", ".ffsake"}
@@ -145,6 +158,7 @@ def main():
                             {"files": ["main.rs", ".ffsake/private.rs"]},
                             {"files": ["main.rs", "../outside.rs"]}]:
                 call({**base, **changes}, ok=False)
+            call({**base, "path": "other.rs", "files": ["main.rs"]}, ok=False, name="ffsake_rust_definition")
             (root / "alias.rs").symlink_to(root / "main.rs")
             call({**base, "files": ["main.rs", "alias.rs"]}, ok=False)
             (root / "alias.rs").unlink()
@@ -156,6 +170,14 @@ def main():
             for span in result["ranges"]:
                 assert source.encode()[span["start_byte"]:span["end_byte"]] == b"balance"
             assert (root / "main.rs").read_bytes() == source.encode()
+            # Definitions can legitimately point at the beginning of an empty module.
+            source = "mod empty;\nfn main() {}\n"
+            (root / "main.rs").write_text(source)
+            (root / "empty.rs").write_text("")
+            empty = call({**args, "files": ["main.rs", "empty.rs"],
+                "position": {"line": 1, "column": 4}}, name="ffsake_rust_definition")
+            assert empty["ranges"] == [{"path": "empty.rs", "start_byte": 0, "end_byte": 0, "line": 1}]
+            assert (root / "main.rs").read_text() == source and (root / "empty.rs").read_bytes() == b""
         finally:
             proc.stdin.close()
             try:
@@ -167,7 +189,7 @@ def main():
             proc.stderr.close()
         assert proc.returncode == 0, proc.returncode
     failure_checks(binary)
-    print("MCP Rust references: binding identity, macro/cross-file ranges, UTF-16/CRLF, boundaries, stale rejection, malformed/timeout recovery and child cleanup PASS")
+    print("MCP Rust navigation: binding identity, macro/cross-file references and definitions, UTF-16/CRLF, boundaries, stale rejection, malformed/timeout recovery and child cleanup PASS")
 
 
 if __name__ == "__main__":
