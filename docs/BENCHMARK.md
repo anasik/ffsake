@@ -275,3 +275,6 @@ Definition navigation reuses the same snapshot transport and guards. MCP tests r
 
 
 A document-symbol probe against the then-current LSP module returned 15 top-level entries and 40 total symbols, including structs/fields, implementations/methods, enums and aliases. The bounded outline endpoint now preserves that hierarchy and converts declaration/selection spans to original bytes and one-based lines. Symbol count includes descendants, with depth 32 and 4096-byte name/detail limits; malformed ranges, containment failures and overflow reject without truncating. Fixture coverage includes nested module/struct/impl nodes, Unicode/CRLF, empty documents and exact selection text. A later endpoint check on the expanded module returned 16 top-level entries / 42 symbols. Counts describe those source versions, not a fixed repository benchmark or performance claim.
+
+
+Implementation navigation is verified against a locally declared trait with implementations in two source files, its trait method, a concrete implemented type and an unimplemented type. The server returned the two concrete type anchors and the two method-name ranges; the unimplemented fixture returned no ranges. Count overflow rejects the whole response. This extends the same explicit source-snapshot contract and does not establish dependency/feature completeness.

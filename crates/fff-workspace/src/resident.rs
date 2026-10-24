@@ -65,6 +65,14 @@ pub enum Request {
         edition: String,
         limit: usize,
     },
+    RustImplementation {
+        files: Vec<String>,
+        crate_root: String,
+        path: String,
+        position: crate::coordinates::TextPosition,
+        edition: String,
+        limit: usize,
+    },
     RustSymbols {
         files: Vec<String>,
         crate_root: String,
@@ -348,6 +356,22 @@ impl Resident {
                 edition,
                 limit,
             } => crate::lsp::rust_definition(
+                self.session.workspace(),
+                &files,
+                &crate_root,
+                &path,
+                position,
+                &edition,
+                limit,
+            ),
+            Request::RustImplementation {
+                files,
+                crate_root,
+                path,
+                position,
+                edition,
+                limit,
+            } => crate::lsp::rust_implementation(
                 self.session.workspace(),
                 &files,
                 &crate_root,

@@ -206,6 +206,32 @@ def main():
             empty_outline = call({**outline_args, "files": ["empty.rs"], "crate_root": "empty.rs",
                                   "path": "empty.rs"}, name="ffsake_rust_symbols")
             assert empty_outline["symbol_count"] == 0 and empty_outline["symbols"] == []
+            source = ("mod other;\n"
+                      "pub trait Value { fn value(&self) -> i32; }\n"
+                      "struct A;\n"
+                      "impl Value for A { fn value(&self) -> i32 { 1 } }\n"
+                      "pub struct B;\nstruct Unused;\nfn main() {}\n")
+            other = "use crate::{Value, B};\nimpl Value for B { fn value(&self) -> i32 { 2 } }\n"
+            (root / "main.rs").write_text(source)
+            (root / "other.rs").write_text(other)
+            trait_position = {"line": 2, "column": source.splitlines()[1].index("Value")}
+            implementations = call({**args, "position": trait_position}, name="ffsake_rust_implementation")
+            assert implementations["matches"] == 2 and implementations["query"] == "implementation"
+            assert implementations["complete"] is False and "handle" not in implementations
+            def selected_text(result):
+                return [(source if span["path"] == "main.rs" else other).encode()[
+                    span["start_byte"]:span["end_byte"]].decode() for span in result["ranges"]]
+            assert set(selected_text(implementations)) == {"A", "B"}
+            assert {r["path"] for r in implementations["ranges"]} == {"main.rs", "other.rs"}
+            methods = call({**args, "position": {"line": 2, "column": source.splitlines()[1].index("value")}},
+                           name="ffsake_rust_implementation")
+            assert selected_text(methods) == ["value", "value"]
+            single = call({**args, "position": {"line": 3, "column": 7}}, name="ffsake_rust_implementation")
+            assert selected_text(single) == ["A"]
+            absent = call({**args, "position": {"line": 6, "column": 7}}, name="ffsake_rust_implementation")
+            assert absent["matches"] == 0 and absent["ranges"] == []
+            call({**args, "position": trait_position, "limit": 1}, ok=False, name="ffsake_rust_implementation")
+            assert (root / "main.rs").read_text() == source and (root / "other.rs").read_text() == other
         finally:
             proc.stdin.close()
             try:
@@ -217,7 +243,7 @@ def main():
             proc.stderr.close()
         assert proc.returncode == 0, proc.returncode
     failure_checks(binary)
-    print("MCP Rust navigation: binding references/definitions, hierarchical symbols, UTF-16/CRLF, boundaries, stale rejection, malformed/timeout recovery and child cleanup PASS")
+    print("MCP Rust navigation: references/definitions/implementations, hierarchical symbols, UTF-16/CRLF, boundaries, stale rejection, malformed/timeout recovery and child cleanup PASS")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-//! Read-only Rust references over an explicit, disposable source snapshot.
+//! Read-only Rust navigation over an explicit, disposable source snapshot.
 use crate::Workspace;
 use crate::coordinates::{
     TextPosition, Utf16Position, from_utf16_position, to_byte_offset, to_utf16_position,
@@ -237,6 +237,30 @@ pub fn rust_definition(
     )
 }
 
+/// Find implementation locations under the same explicit snapshot contract.
+pub fn rust_implementation(
+    workspace: &Workspace,
+    files: &[String],
+    crate_root: &str,
+    path: &str,
+    position: TextPosition,
+    edition: &str,
+    limit: usize,
+) -> Result<Value> {
+    navigate(
+        workspace,
+        Query {
+            files,
+            crate_root,
+            path,
+            position,
+            edition,
+            limit,
+        },
+        Navigation::Implementation,
+    )
+}
+
 /// Return a bounded hierarchical outline for one file in the explicit snapshot.
 pub fn rust_symbols(
     workspace: &Workspace,
@@ -264,6 +288,7 @@ pub fn rust_symbols(
 enum Navigation {
     References,
     Definition,
+    Implementation,
     Symbols,
 }
 
@@ -335,7 +360,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     });
     let mut client = Client::start(&root, options.clone(), deadline)?;
     let initialized = client.request("initialize", json!({"processId":null,"rootUri":uri(&root)?,
-        "capabilities":{"general":{"positionEncodings":["utf-16"]},"textDocument":{"definition":{"linkSupport":false},"documentSymbol":{"hierarchicalDocumentSymbolSupport":true,"symbolKind":{"valueSet":(1..=26).collect::<Vec<_>>()}}},"experimental":{"serverStatusNotification":true}},
+        "capabilities":{"general":{"positionEncodings":["utf-16"]},"textDocument":{"definition":{"linkSupport":false},"implementation":{"linkSupport":false},"documentSymbol":{"hierarchicalDocumentSymbolSupport":true,"symbolKind":{"valueSet":(1..=26).collect::<Vec<_>>()}}},"experimental":{"serverStatusNotification":true}},
         "initializationOptions":options}))?;
     if initialized["capabilities"]["positionEncoding"]
         .as_str()
@@ -370,6 +395,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
             ("textDocument/references", "references")
         }
         Navigation::Definition => ("textDocument/definition", "definition"),
+        Navigation::Implementation => ("textDocument/implementation", "implementation"),
         Navigation::Symbols => {
             parameters
                 .as_object_mut()
@@ -408,7 +434,7 @@ fn normalize_locations(value: Value, kind: Navigation) -> Result<Value> {
     match value {
         Value::Null | Value::Array(_) => Ok(value),
         Value::Object(_)
-            if matches!(kind, Navigation::Definition)
+            if matches!(kind, Navigation::Definition | Navigation::Implementation)
                 && value.get("uri").is_some()
                 && value.get("range").is_some() =>
         {
@@ -485,11 +511,15 @@ mod tests {
     use std::io::Cursor;
 
     #[test]
-    fn definition_responses_accept_locations_but_not_unnegotiated_links() {
+    fn navigation_responses_accept_locations_but_not_unnegotiated_links() {
         let location = json!({"uri":"file:///snapshot/main.rs","range":{
             "start":{"line":0,"character":3},"end":{"line":0,"character":7}}});
         assert_eq!(
             normalize_locations(location.clone(), Navigation::Definition).unwrap(),
+            json!([location.clone()])
+        );
+        assert_eq!(
+            normalize_locations(location.clone(), Navigation::Implementation).unwrap(),
             json!([location.clone()])
         );
         assert!(normalize_locations(location.clone(), Navigation::References).is_err());

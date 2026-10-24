@@ -134,7 +134,9 @@ Definition navigation now shares the snapshot backend and all scope/hash/budget 
 
 A real-source document-symbol probe produced 15 top-level entries / 40 symbols from the then-current LSP module. The shipped outline endpoint preserves hierarchy, names, kinds, details and exact original ranges, with total-count/depth/text limits and parent/selection containment checks. MCP coverage includes nested structs, fields, methods, emoji/CRLF offsets, empty documents and overflow rejection. The shared catalog contains twenty-two tools.
 
-Next: add implementation navigation for locally declared traits/types through the existing bounded snapshot backend, and verify multiple implementations plus an empty result. Keep dependency-aware analysis and semantic rename separate; reference ranges must not become rename capabilities until collision and analysis-completeness behavior are established. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Implementation navigation now uses the same snapshot backend and result guards. Real MCP fixtures cover two trait implementations across files, trait-method implementations, one concrete type implementation, an empty result and overflow rejection. All results remain read-only and explicitly incomplete. The shared catalog contains twenty-three tools.
+
+Next: add bounded hover/type information for local symbols, treating returned documentation as source data, preserving optional source ranges and retaining the same snapshot/incomplete-analysis contract. Keep dependency-aware analysis and semantic rename separate; reference ranges must not become rename capabilities until collision and analysis-completeness behavior are established. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
@@ -159,11 +161,11 @@ Implemented through an explicitly incomplete dependency-free rust-analyzer sourc
 
 - definitions;
 - references;
-- hierarchical document symbols.
+- hierarchical document symbols;
+- implementations.
 
 Still to add/evaluate:
 
-- implementations;
 - semantic rename;
 - hover/types;
 - diagnostics/code actions.

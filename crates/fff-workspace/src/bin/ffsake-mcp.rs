@@ -138,6 +138,7 @@ fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
         "ffsake_target" => "target",
         "ffsake_search" => "search",
         "ffsake_rust_symbols" => "rust_symbols",
+        "ffsake_rust_implementation" => "rust_implementation",
         "ffsake_rust_definition" => "rust_definition",
         "ffsake_rust_references" => "rust_references",
         "ffsake_select_rust_identifiers" => "select_rust_identifiers",
@@ -236,6 +237,11 @@ fn tools() -> Vec<Value> {
         tool(
             "ffsake_rust_definition",
             "Read-only rust-analyzer definition locations in a temporary snapshot of 1..=32 explicit .rs files, each <=256 KiB. Requires rust-analyzer installed on PATH. crate_root and query path must be members of files; position uses one-based line and zero-based Unicode scalar column. Explicit edition required. No Cargo dependencies, sysroot, build scripts, procedural macros or configured features: results always report complete=false and are not a rename handle. Original source hashes are rechecked before returning canonical paths and byte ranges. 30-second budget; unsafe/missing/symlinked files, unhealthy server, invalid/out-of-snapshot ranges and result-limit overflow reject without partial results. No workspace writes.",
+            rust_navigation_schema(true),
+        ),
+        tool(
+            "ffsake_rust_implementation",
+            "Read-only rust-analyzer implementation locations for locally declared traits/types/methods in a temporary snapshot of 1..=32 explicit .rs files, each <=256 KiB. Requires rust-analyzer installed on PATH. crate_root and query path must be members of files; position uses one-based line and zero-based Unicode scalar column. Explicit edition required. No Cargo dependencies, sysroot, build scripts, procedural macros or configured features: results always report complete=false and are not a rename handle. Original source hashes are rechecked before returning canonical paths and byte ranges. 30-second budget; unsafe/missing/symlinked files, unhealthy server, invalid/out-of-snapshot ranges and result-limit overflow reject without partial results. No workspace writes.",
             rust_navigation_schema(true),
         ),
         tool(
