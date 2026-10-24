@@ -239,7 +239,7 @@ impl Journal {
     ) -> Result<TransactionManifest> {
         self.verify_directory(&directory, SnapshotSide::Before)?;
         let manifest = TransactionManifest {
-            id: transaction_id(),
+            id: self.reserve_transaction()?,
             state: TransactionState::Prepared,
             label: Some("empty directory operation".into()),
             files: vec![],
@@ -376,7 +376,7 @@ impl Journal {
     ) -> Result<TransactionManifest> {
         movement.verify(self, false)?;
         let manifest = TransactionManifest {
-            id: transaction_id(),
+            id: self.reserve_transaction()?,
             state: TransactionState::Prepared,
             label: Some("directory move".into()),
             files: vec![],
@@ -435,7 +435,7 @@ impl Journal {
         archive: TransactionTreeArchive,
     ) -> Result<TransactionManifest> {
         let manifest = TransactionManifest {
-            id: transaction_id(),
+            id: self.reserve_transaction()?,
             state: TransactionState::Prepared,
             label: Some("directory archive".into()),
             files: vec![],
@@ -456,7 +456,7 @@ impl Journal {
     ) -> Result<TransactionManifest> {
         copy.movement.verify(self, false)?;
         let manifest = TransactionManifest {
-            id: transaction_id(),
+            id: self.reserve_transaction()?,
             state: TransactionState::Prepared,
             label: Some("directory copy".into()),
             files: vec![],
@@ -560,7 +560,7 @@ impl Journal {
         label: Option<String>,
         changes: &[JournalChange],
     ) -> Result<TransactionManifest> {
-        let id = transaction_id();
+        let id = self.reserve_transaction()?;
         let tx_root = self.journal_root.join(&id);
         let before_root = tx_root.join("before");
         let after_root = tx_root.join("after");
@@ -616,7 +616,7 @@ impl Journal {
     ) -> Result<TransactionManifest> {
         let created_directories =
             crate::journal_parents::collect(self, &self.workspace_root, changes)?;
-        let id = transaction_id();
+        let id = self.reserve_transaction()?;
         let tx_root = self.journal_root.join(&id);
         let before_root = tx_root.join("before");
         let after_root = tx_root.join("after");
@@ -998,6 +998,29 @@ impl Journal {
         Ok(path)
     }
 
+    fn reserve_named_transaction(&self, id: &str) -> Result<()> {
+        validate_transaction_id(id)?;
+        let path = self.journal_root.join(id);
+        self.check_internal_path(&path)?;
+        fs::create_dir(path)?;
+        Ok(())
+    }
+
+    fn reserve_transaction(&self) -> Result<String> {
+        for _ in 0..128 {
+            let id = transaction_id();
+            match self.reserve_named_transaction(&id) {
+                Ok(()) => return Ok(id),
+                Err(JournalError::Io(error)) if error.kind() == io::ErrorKind::AlreadyExists => {}
+                Err(error) => return Err(error),
+            }
+        }
+        Err(JournalError::Io(io::Error::new(
+            io::ErrorKind::AlreadyExists,
+            "unable to reserve a unique transaction directory",
+        )))
+    }
+
     fn write_manifest(&self, manifest: &TransactionManifest) -> Result<()> {
         validate_transaction_id(&manifest.id)?;
         let tx_root = self.journal_root.join(&manifest.id);
@@ -1087,7 +1110,17 @@ fn transaction_id() -> String {
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_nanos();
-    format!("tx-{nanos}-{}", std::process::id())
+    transaction_id_at(nanos)
+}
+
+fn transaction_id_at(nanos: u128) -> String {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static NEXT: AtomicU64 = AtomicU64::new(0);
+    format!(
+        "tx-{nanos}-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    )
 }
 
 pub(crate) fn unix_mode(path: &Path) -> Result<Option<u32>> {
@@ -1159,6 +1192,80 @@ mod tests {
     fn fixture() -> PathBuf {
         let id = transaction_id();
         fixture_at(&std::env::temp_dir().join(format!("ffsake-journal-{id}")))
+    }
+
+    #[test]
+    fn fixed_timestamp_ids_and_reserved_directories_do_not_collide() {
+        let threads = (0..16)
+            .map(|_| {
+                std::thread::spawn(|| (0..64).map(|_| transaction_id_at(42)).collect::<Vec<_>>())
+            })
+            .collect::<Vec<_>>();
+        let ids = threads
+            .into_iter()
+            .flat_map(|thread| thread.join().unwrap())
+            .collect::<std::collections::BTreeSet<_>>();
+        assert_eq!(ids.len(), 16 * 64);
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        journal.reserve_named_transaction("tx-collision").unwrap();
+        let sentinel = journal.journal_root.join("tx-collision/keep");
+        fs::write(&sentinel, b"keep").unwrap();
+        assert!(
+            matches!(journal.reserve_named_transaction("tx-collision"), Err(JournalError::Io(error)) if error.kind() == io::ErrorKind::AlreadyExists)
+        );
+        assert_eq!(fs::read(sentinel).unwrap(), b"keep");
+    }
+
+    #[test]
+    fn concurrent_disjoint_commits_keep_independent_snapshots() {
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        let threads = (0..24)
+            .map(|index| {
+                let journal = journal.clone();
+                std::thread::spawn(move || {
+                    journal
+                        .commit(
+                            None,
+                            &[(
+                                format!("file-{index}"),
+                                Some(format!("value-{index}").into_bytes()),
+                            )],
+                        )
+                        .unwrap()
+                })
+            })
+            .collect::<Vec<_>>();
+        let transactions = threads
+            .into_iter()
+            .map(|thread| thread.join().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            transactions
+                .iter()
+                .map(|tx| &tx.id)
+                .collect::<std::collections::BTreeSet<_>>()
+                .len(),
+            24
+        );
+        for (index, transaction) in transactions.iter().enumerate() {
+            assert_eq!(
+                fs::read(root.path().join(format!("file-{index}"))).unwrap(),
+                format!("value-{index}").as_bytes()
+            );
+            journal.undo(&transaction.id).unwrap();
+            assert!(!root.path().join(format!("file-{index}")).exists());
+        }
+        for transaction in &transactions {
+            journal.redo(&transaction.id).unwrap();
+        }
+        for index in 0..24 {
+            assert_eq!(
+                fs::read(root.path().join(format!("file-{index}"))).unwrap(),
+                format!("value-{index}").as_bytes()
+            );
+        }
     }
 
     #[test]
