@@ -198,7 +198,9 @@ Launcher validation passed all 76 model-free Python tests and the change is comm
 
 Native rejection messages now retain the method, signed error code and bounded quoted reason, addressing the observed opaque alias-rename failure. Invalid/oversized messages use fixed fallbacks; arbitrary backend data is withheld. All 104 Rust tests, Clippy, the real rename matrix and controlled failure/recovery/process-cleanup checks pass.
 
-Next: publish queued commits after inspection CI passes. Audit active guidance for stale descriptions of explicit crate context and catalog profiles, preserving historical measurement statements. Keep subsequent work driven by observed workflow gaps; no additional model run is authorized by the earlier single-run approval. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Active navigation guidance now describes explicit optional local crate context, and profile documentation distinguishes the current full catalog from historical thirty-tool measurements. Core guidance and historical numeric evidence remain unchanged.
+
+Next: publish queued commits after inspection CI passes and verify their exact head. Keep subsequent work driven by observed workflow gaps; no additional model run is authorized by the earlier single-run approval. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

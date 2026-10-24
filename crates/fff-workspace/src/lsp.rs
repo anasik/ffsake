@@ -206,7 +206,7 @@ fn uri(path: &Path) -> Result<String> {
 }
 
 /// No mutation capability is returned. Results describe only this explicit
-/// dependency-free snapshot, not a complete Cargo build configuration.
+/// source snapshot and optional declared local crate context, not a complete Cargo build configuration.
 pub fn rust_references<'a>(
     workspace: &Workspace,
     files: &[String],
