@@ -289,3 +289,6 @@ The new CRLF layout fixture exposed ambient Git autocrlf normalization: with a t
 
 
 Layout review reproduced two directory-accounting gaps without model calls: a generated `.codex` runner directory caused false failure, while adding an empty task directory did not change fixture provenance. File/directory snapshots now share existing harness-control exclusions. Provenance manifest version 2 includes sorted directory paths/modes; ordinary extra task directories still fail verification and external symlink targets are not traversed. Historical reports remain unchanged.
+
+
+A core-prompt regression exposed directory-operation and file-payload guidance accidentally placed inside the full-only Rust guidance block. Both profiles now receive that shared guidance while core still omits disabled Rust tools. The existing profile regression now checks directory operations, the retained-payload limit and overlap rejection; interactive Claude launchers reuse the corrected prompt. Tool catalog and permissions are unchanged.

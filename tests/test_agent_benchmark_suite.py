@@ -1056,6 +1056,9 @@ class ToolProfileTests(unittest.TestCase):
         core = suite.ffsake_prompt("task", "core")
         self.assertIn("ffsake_read_files", core)
         self.assertIn("ffsake_preview_files", core)
+        for guidance in ["move_directory", "copy_directory", "delete_directory", "create_directory",
+                         "16 MiB", "overlapping paths or dependencies reject"]:
+            self.assertIn(guidance, core)
         for tool in set(suite.FFSAKE_TOOLS) - set(suite.FFSAKE_CORE_TOOLS):
             self.assertNotIn(tool, core)
         self.assertLess(len(core), len(suite.ffsake_prompt("task")))
