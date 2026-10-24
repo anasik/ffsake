@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Native rename feasibility only: disposable source, no production rename tool."""
+"""Native rename feasibility: disposable source, raw LSP, no workspace mutations."""
 import json
 from pathlib import Path
 import subprocess
@@ -66,8 +66,8 @@ def check_program(directory, sources, expected):
         assert expected == "passes" and ran.returncode == 0, ran.stderr
 
 
-def main():
-    cases = [
+def rename_cases():
+    return [
         ("distinct_bindings", "main.rs", 2, "passes", {"main.rs":
             'fn first() -> u32 { let account = 1; account }\n'
             'fn second() -> u32 { let account = 2; account }\n'
@@ -85,6 +85,10 @@ def main():
         ("module_resource_rename", "main.rs", None, "not_applied", {
             "main.rs": 'mod account; fn main() { account::value(); }\n', "account.rs": 'pub fn value() {}\n'}),
     ]
+
+
+def main():
+    cases = rename_cases()
     results = []
     version = subprocess.check_output(["rust-analyzer", "--version"], text=True, timeout=5).strip()
     for name, query, count, outcome, sources in cases:
@@ -145,7 +149,7 @@ def main():
                     assert 'let account = 2; account' in staged["main.rs"]
                 check_program(base / "after", staged, outcome)
             results.append({"case": name, "text_edits": count, "outcome": outcome, "analysis_source_unchanged": True})
-    print(json.dumps({"server": version, "cases": results, "production_rename_tool": False,
+    print(json.dumps({"server": version, "cases": results, "production_tool_used": False,
                       "complete_analysis": False, "model_calls": 0}, indent=2))
 
 

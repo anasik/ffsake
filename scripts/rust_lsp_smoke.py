@@ -37,14 +37,24 @@ while True:
         headers[key.lower()] = value.strip()
     message = json.loads(sys.stdin.buffer.read(int(headers[b"content-length"])))
     if message.get("method") == "initialize":
-        send({"id":message["id"],"result":{"capabilities":{"positionEncoding":"utf-16"}}})
+        capabilities = {"positionEncoding":"utf-16"}
+        if mode != "rename_unsupported": capabilities["renameProvider"] = {"prepareProvider":True}
+        send({"id":message["id"],"result":{"capabilities":capabilities}})
     elif message.get("method") == "initialized":
         send({"method":"experimental/serverStatus","params":{"health":"ok","quiescent":True}})
+    elif message.get("method") == "textDocument/prepareRename":
+        if mode == "rename_null":
+            send({"id":message["id"],"result":None})
+        else:
+            send({"id":message["id"],"result":{"start":{"line":0,"character":3},"end":{"line":0,"character":999 if mode == "rename_bad_range" else 7}}})
+    elif message.get("method") == "textDocument/rename":
+        pathlib.Path(os.environ["FFSAKE_LSP_TEST_SOURCE"]).write_text("fn external_change() {}")
+        send({"id":message["id"],"result":None})
     elif message.get("method") == "textDocument/references":
         pathlib.Path(os.environ["FFSAKE_LSP_TEST_SOURCE"]).write_text("fn external_change() {}")
         send({"id":message["id"],"result":None})
 '''
-    for mode in ["malformed", "stale", "timeout"]:
+    for mode in ["malformed", "stale", "timeout", "rename_stale", "rename_null", "rename_bad_range", "rename_unsupported"]:
         with tempfile.TemporaryDirectory(prefix="ffsake-lsp-failure-") as temp:
             directory = Path(temp)
             root = directory / "workspace"
@@ -62,6 +72,9 @@ while True:
                 "name": "ffsake_rust_references", "arguments": {"files": ["main.rs"],
                 "crate_root": "main.rs", "path": "main.rs", "edition": "2024", "limit": 10,
                 "position": {"line": 1, "column": 3}}}}
+            if mode.startswith("rename_"):
+                request["params"]["name"] = "ffsake_rust_rename_proposal"
+                request["params"]["arguments"]["new_name"] = "renamed"
             # A second ordinary request verifies resident recovery after the failure.
             read = {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {
                 "name": "ffsake_read", "arguments": {"path": "main.rs"}}}
@@ -72,8 +85,10 @@ while True:
             assert len(responses) == 2, responses
             failed = json.loads(responses[0]["result"]["content"][0]["text"])
             recovered = json.loads(responses[1]["result"]["content"][0]["text"])
-            assert failed["ok"] is False and recovered["ok"] is True, (mode, failed, recovered)
-            if mode == "stale":
+            assert failed["ok"] == (mode == "rename_null") and recovered["ok"] is True, (mode, failed, recovered)
+            if mode == "rename_null":
+                assert failed["result"]["prepared"] is None and failed["result"]["proposal"] is None, failed
+            if mode in ("stale", "rename_stale"):
                 assert "source changed" in failed["error"], failed
                 assert path.read_text() == "fn external_change() {}"
             else:

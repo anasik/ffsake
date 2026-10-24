@@ -70,6 +70,17 @@ pub enum Request {
         crates: Vec<crate::lsp::CrateSpec>,
         limit: usize,
     },
+    RustRenameProposal {
+        files: Vec<String>,
+        crate_root: String,
+        path: String,
+        position: crate::coordinates::TextPosition,
+        new_name: String,
+        edition: String,
+        #[serde(default)]
+        crates: Vec<crate::lsp::CrateSpec>,
+        limit: usize,
+    },
     RustCodeActions {
         files: Vec<String>,
         crate_root: String,
@@ -419,6 +430,30 @@ impl Resident {
                 &crate_root,
                 &path,
                 position,
+                crate::lsp::RustContext {
+                    edition: &edition,
+                    crates: &crates,
+                },
+                limit,
+            ),
+            Request::RustRenameProposal {
+                files,
+                crate_root,
+                path,
+                position,
+                new_name,
+                edition,
+                crates,
+                limit,
+            } => crate::lsp::rust_rename_proposal(
+                self.session.workspace(),
+                &files,
+                &crate_root,
+                &path,
+                crate::lsp::RenameTarget {
+                    position,
+                    new_name: &new_name,
+                },
                 crate::lsp::RustContext {
                     edition: &edition,
                     crates: &crates,

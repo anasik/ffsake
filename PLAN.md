@@ -158,7 +158,9 @@ Ambient-config regression reproduced silent suppression of a type diagnostic by 
 
 Source-loading regression now calibrates module paths, builtin include! and include_str! with explicit-file positive controls. Fifteen real-server cases distinguish supplied relative files from omitted files, absolute external/original paths and escaping paths; external sentinel contents never appear, definition locations remain confined, and fixture bytes remain unchanged. This observes exposed results, not process read access or OS isolation.
 
-Next: implement bounded read-only native rename proposal discovery using the existing snapshot/context and workspace-edit validation. Preserve the measured collision/macro limitations explicitly; proposals must not claim semantic equivalence, create mutation capabilities or partially expose unsupported resource operations. Keep compiler/runtime negative cases and all source/hash guards. Guarded application is a separate checkpoint. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Bounded native rename discovery is now exposed as read-only proposals. It requires prepare-rename support, validates an exact Rust identifier and the prepared original range, and reuses whole-workspace-edit scope/overlap/resource/budget checks. All analysis hashes and explicit context are retained; no cache or mutation handle is created. Real MCP fixtures preserve distinct bindings, declared macros and cross-file Unicode/CRLF, while independently reproducing omitted-macro compilation failure and binding-collision behavior changes. Resource rename withholds every edit. The shared catalog contains twenty-eight tools.
+
+Next: add guarded previews for frozen supported rename proposals through the existing hash/syntax/journal pipeline, with exact selection/name/count checks and unchanged explicit analysis context. Preserve the compiler/runtime negative cases and explicit lack of semantic equivalence; do not promote unsupported resource operations. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
@@ -188,11 +190,12 @@ Implemented through explicitly incomplete rust-analyzer source snapshots, option
 - hover/types;
 - native primary diagnostics (explicitly incomplete, not compiler validation);
 - read-only code-action discovery with bounded text proposals and unsupported-action classification;
-- guarded plain-text action previews/apply through the existing journal.
+- guarded plain-text action previews/apply through the existing journal;
+- read-only native rename proposals with explicit correctness limitations.
 
 Still to add/evaluate:
 
-- semantic rename;
+- guarded native rename previews/application;
 - broader action/rename correctness boundaries and project context.
 
 ## Later

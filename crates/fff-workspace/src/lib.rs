@@ -15,6 +15,7 @@ mod lsp_actions;
 mod lsp_diagnostics;
 mod lsp_hover;
 mod lsp_project;
+mod lsp_rename;
 mod lsp_symbols;
 pub mod preview;
 pub mod resident;

@@ -92,6 +92,16 @@ fn validate_identifier(parser: &mut Parser, identifier: &str, deadline: Instant)
     Ok(())
 }
 
+pub(crate) fn validate_name(identifier: &str) -> Result<()> {
+    let mut parser = Parser::new();
+    parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
+    validate_identifier(
+        &mut parser,
+        identifier,
+        Instant::now() + Duration::from_secs(5),
+    )
+}
+
 /// Build an ordinary guarded transform from a server-owned syntax selection,
 /// validating the replacement and the complete staged source without writes.
 pub(crate) fn rename_transform(

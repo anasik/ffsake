@@ -320,6 +320,41 @@ pub fn rust_code_actions<'a>(
     )
 }
 
+/// Requested identifier and source position for read-only rename discovery.
+pub struct RenameTarget<'a> {
+    pub position: TextPosition,
+    pub new_name: &'a str,
+}
+
+/// Inspect a native rename proposal without caching it or creating a mutation capability.
+pub fn rust_rename_proposal<'a>(
+    workspace: &Workspace,
+    files: &[String],
+    crate_root: &str,
+    path: &str,
+    target: RenameTarget<'_>,
+    context: impl Into<RustContext<'a>>,
+    limit: usize,
+) -> Result<Value> {
+    crate::syntax::validate_name(target.new_name)?;
+    let context = context.into();
+    navigate(
+        workspace,
+        Query {
+            files,
+            crate_root,
+            path,
+            position: target.position,
+            edition: context.edition,
+            crates: context.crates,
+            limit,
+        },
+        Navigation::Rename {
+            new_name: target.new_name,
+        },
+    )
+}
+
 /// Return native primary diagnostics, not a compiler/build result.
 pub fn rust_diagnostics<'a>(
     workspace: &Workspace,
@@ -371,7 +406,7 @@ pub fn rust_symbols<'a>(
 }
 
 #[derive(Clone, Copy)]
-enum Navigation {
+enum Navigation<'a> {
     References,
     Definition,
     Implementation,
@@ -379,6 +414,7 @@ enum Navigation {
     Hover,
     Diagnostics,
     CodeActions { end: TextPosition },
+    Rename { new_name: &'a str },
 }
 
 struct Query<'a> {
@@ -391,7 +427,7 @@ struct Query<'a> {
     limit: usize,
 }
 
-fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result<Value> {
+fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Result<Value> {
     let Query {
         files,
         crate_root,
@@ -468,7 +504,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     });
     let mut client = Client::start(&root, options.clone(), deadline)?;
     let initialized = client.request("initialize", json!({"processId":null,"rootUri":uri(&root)?,
-        "capabilities":{"workspace":{"workspaceEdit":{"documentChanges":true,"resourceOperations":["create","rename","delete"]}},"general":{"positionEncodings":["utf-16"]},"textDocument":{"codeAction":{"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source"]}},"isPreferredSupport":true,"disabledSupport":true,"dataSupport":false},"diagnostic":{"relatedDocumentSupport":false},"hover":{"contentFormat":["markdown","plaintext"]},"definition":{"linkSupport":false},"implementation":{"linkSupport":false},"documentSymbol":{"hierarchicalDocumentSymbolSupport":true,"symbolKind":{"valueSet":(1..=26).collect::<Vec<_>>()}}},"experimental":{"serverStatusNotification":true}},
+        "capabilities":{"workspace":{"workspaceEdit":{"documentChanges":true,"resourceOperations":["create","rename","delete"]}},"general":{"positionEncodings":["utf-16"]},"textDocument":{"rename":{"prepareSupport":true},"codeAction":{"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source"]}},"isPreferredSupport":true,"disabledSupport":true,"dataSupport":false},"diagnostic":{"relatedDocumentSupport":false},"hover":{"contentFormat":["markdown","plaintext"]},"definition":{"linkSupport":false},"implementation":{"linkSupport":false},"documentSymbol":{"hierarchicalDocumentSymbolSupport":true,"symbolKind":{"valueSet":(1..=26).collect::<Vec<_>>()}}},"experimental":{"serverStatusNotification":true}},
         "initializationOptions":options}))?;
     if initialized["capabilities"]["positionEncoding"]
         .as_str()
@@ -499,7 +535,20 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     }
     let mut parameters =
         json!({"textDocument":{"uri":uri(&root.join(query))?},"position":position});
+    let mut prepared = Value::Null;
     let (method, query_kind) = match kind {
+        Navigation::Rename { new_name } => {
+            if initialized["capabilities"]["renameProvider"]["prepareProvider"] != true {
+                return Err("rust-analyzer does not advertise rename preparation".into());
+            }
+            prepared = crate::lsp_rename::prepare(
+                query_source,
+                byte,
+                client.request("textDocument/prepareRename", parameters.clone())?,
+            )?;
+            parameters["newName"] = json!(new_name);
+            ("textDocument/rename", "rename_proposal")
+        }
         Navigation::CodeActions { .. } => {
             parameters
                 .as_object_mut()
@@ -540,8 +589,16 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     {
         return Err("rust-analyzer does not advertise code actions".into());
     }
-    let result = client.request(method, parameters)?;
-    let mut response = if matches!(kind, Navigation::CodeActions { .. }) {
+    let result = if matches!(kind, Navigation::Rename { .. }) && prepared.is_null() {
+        Value::Null
+    } else {
+        client.request(method, parameters)?
+    };
+    let mut response = if let Navigation::Rename { new_name } = kind {
+        json!({"path":query,"new_name":new_name,"prepared":prepared,
+            "proposal":crate::lsp_rename::proposal(&root, &sources, result, limit)?,
+            "semantic_validated":false,"compiler_checked":false})
+    } else if matches!(kind, Navigation::CodeActions { .. }) {
         crate::lsp_actions::actions(&root, &sources, result, limit)?
     } else if matches!(kind, Navigation::Diagnostics) {
         crate::lsp_diagnostics::diagnostics(query, query_source, result, limit)?
@@ -582,6 +639,11 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
         },
         "Results are read-only navigation data, not a semantic rename capability."
     ]);
+    if matches!(kind, Navigation::Rename { .. }) {
+        response["limitations"].as_array_mut().ok_or("invalid limitations")?.push(json!(
+            "Read-only rename proposal, not a mutation capability. Native acceptance does not rule out binding collisions, omitted macro references, compilation failures or changed behavior."
+        ));
+    }
     if matches!(kind, Navigation::Diagnostics) {
         response["compiler_checked"] = json!(false);
         response["experimental_diagnostics"] = json!(true);
@@ -592,7 +654,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     Ok(response)
 }
 
-fn normalize_locations(value: Value, kind: Navigation) -> Result<Value> {
+fn normalize_locations(value: Value, kind: Navigation<'_>) -> Result<Value> {
     match value {
         Value::Null | Value::Array(_) => Ok(value),
         Value::Object(_)
@@ -637,7 +699,7 @@ fn scoped_ranges(
     sources: &BTreeMap<String, String>,
     locations: Value,
     limit: usize,
-    kind: Navigation,
+    kind: Navigation<'_>,
 ) -> Result<Vec<SearchRange>> {
     let locations = if locations.is_null() {
         vec![]

@@ -139,6 +139,7 @@ fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
         "ffsake_search" => "search",
         "ffsake_rust_symbols" => "rust_symbols",
         "ffsake_rust_diagnostics" => "rust_diagnostics",
+        "ffsake_rust_rename_proposal" => "rust_rename_proposal",
         "ffsake_rust_code_actions" => "rust_code_actions",
         "ffsake_rust_implementation" => "rust_implementation",
         "ffsake_rust_hover" => "rust_hover",
@@ -259,6 +260,11 @@ fn tools() -> Vec<Value> {
             json!({"type":"object","required":["action_set","action_index","expected_title","expected_edits"],"additionalProperties":false,
                 "properties":{"action_set":{"type":"integer","minimum":1},"action_index":{"type":"integer","minimum":0,"maximum":99},
                 "expected_title":{"type":"string","minLength":1,"maxLength":4096},"expected_edits":{"type":"integer","minimum":1,"maximum":1000}}}),
+        ),
+        tool(
+            "ffsake_rust_rename_proposal",
+            "Inspect a read-only native Rust rename proposal in the explicit incomplete snapshot. Requires prepare-rename support, an exact Rust 2024 identifier new_name (1..=256 UTF-8 bytes, raw spelling allowed), and limit 1..=1000 text edits. Returns a validated original selection and bounded plain-text edits; resource/annotation/snippet requirements withhold the whole proposal. No cache, preview or mutation handle. Native acceptance does not establish binding-collision safety, macro completeness, compilation or unchanged behavior. Same explicit local graph/features, source/hash checks and 30-second backend budget as navigation. Never executes or applies the proposal.",
+            rust_rename_schema(),
         ),
         tool(
             "ffsake_rust_code_actions",
@@ -499,5 +505,15 @@ fn rust_code_actions_schema() -> Value {
             *name = json!("range");
         }
     }
+    schema
+}
+
+fn rust_rename_schema() -> Value {
+    let mut schema = rust_navigation_schema(true);
+    schema["properties"]["new_name"] = json!({"type":"string","minLength":1,"maxLength":256});
+    schema["required"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!("new_name"));
     schema
 }
