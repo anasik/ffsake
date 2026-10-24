@@ -171,6 +171,11 @@ impl Journal {
         for (path, after) in planned {
             let resolved = self.resolve(path)?;
             let before = if resolved.exists() {
+                if !fs::symlink_metadata(&resolved)?.is_file() {
+                    return Err(JournalError::InvalidPath(
+                        "journal source must be a regular file".into(),
+                    ));
+                }
                 Some(fs::read(&resolved)?)
             } else {
                 None
@@ -780,7 +785,7 @@ impl Journal {
                     return Err(JournalError::StateConflict {
                         path: file.path.clone(),
                         expected: "<absent>".to_string(),
-                        actual: hash_path(&path)?,
+                        actual: "<existing path>".into(),
                     });
                 }
                 (Some(expected), false) => {
@@ -1160,7 +1165,42 @@ fn hash_bytes(bytes: &[u8]) -> String {
 }
 
 fn hash_path(path: &Path) -> Result<String> {
-    Ok(hash_bytes(&fs::read(path)?))
+    // Reject FIFOs/devices before open; hashing a conflict must never wait for
+    // another process to supply data. Also avoid allocating the entire file.
+    if !fs::symlink_metadata(path)?.is_file() {
+        return Err(JournalError::InvalidPath(
+            "journal target must be a regular file".into(),
+        ));
+    }
+    let source = fs::File::open(path)?;
+    let metadata = source.metadata()?;
+    if !metadata.is_file() {
+        return Err(JournalError::InvalidPath(
+            "journal target must be a regular file".into(),
+        ));
+    }
+    let limit = metadata
+        .len()
+        .checked_add(1)
+        .ok_or_else(|| JournalError::InvalidPath("file length overflow".into()))?;
+    let mut source = source.take(limit);
+    let mut hasher = blake3::Hasher::new();
+    let mut buffer = [0u8; 65536];
+    let mut bytes = 0u64;
+    loop {
+        let count = source.read(&mut buffer)?;
+        if count == 0 {
+            break;
+        }
+        bytes += count as u64;
+        hasher.update(&buffer[..count]);
+    }
+    if bytes != metadata.len() {
+        return Err(JournalError::InvalidPath(
+            "journal target changed size while hashing".into(),
+        ));
+    }
+    Ok(hasher.finalize().to_hex().to_string())
 }
 
 fn transaction_id() -> String {

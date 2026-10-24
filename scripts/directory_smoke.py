@@ -192,6 +192,18 @@ def main():
             call("ffsake_redo", {"transaction": mixed_id})
             assert (root / "batch-config").read_text() == "after"
             search("mixed_search_sentinel", ["batch-moved/item"])
+            if hasattr(os, "mkfifo"):
+                (root / "fifo-target").write_text("before")
+                pending = call("ffsake_preview_files", {"operations": [
+                    {"op": "edit", "path": "fifo-target", "old_text": "before", "new_text": "after", "expected_matches": 1}]})
+                fifo_id = call("ffsake_apply", {"handle": pending["handle"]})["transaction"]
+                (root / "fifo-target").unlink()
+                os.mkfifo(root / "fifo-target")
+                call("ffsake_undo", {"transaction": fifo_id}, False)
+                (root / "fifo-target").unlink()
+                (root / "fifo-target").write_text("after")
+                call("ffsake_undo", {"transaction": fifo_id})
+                assert (root / "fifo-target").read_text() == "before"
             for path in (".", "../outside", ".ffsake/hidden", "missing/child"):
                 preview("create_directory", path, False)
             pending = preview("create_directory", "collision")
