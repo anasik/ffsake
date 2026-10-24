@@ -420,9 +420,8 @@ def layout_verify(root: Path, state):
         directories |= {name.replace("templates", "templates_snapshot", 1)
                         for name in state["directories"] if name == "templates" or name.startswith("templates/")}
         directories.add("reports")
-        visible = [path for path in root.rglob("*")
-                   if not {".git", ".ffsake"}.intersection(path.relative_to(root).parts)]
-        checks["exact_directories"] = {str(path.relative_to(root)) for path in visible if path.is_dir()} == directories
+        visible = fixture_paths(root)
+        checks["exact_directories"] = set(fixture_directories(root)) == directories
         checks["no_symlinks"] = all(not path.is_symlink() for path in visible)
         if os.name == "posix":
             modes = {destination(name): mode for name, mode in state["modes"].items()
@@ -786,14 +785,25 @@ def permission_audit(agent, use_ffsake, metrics, tool_profile="all"):
     }
 
 
+FIXTURE_EXCLUDED = {".git", ".ffsake", ".codex", ".ffsake-claude-mcp.json", "opencode.json"}
+
+
+def fixture_paths(root):
+    """Visible task paths using the same exclusions for bytes and metadata."""
+    return [path for path in root.rglob("*")
+            if not FIXTURE_EXCLUDED.intersection(path.relative_to(root).parts)]
+
+
+def fixture_directories(root):
+    return {str(path.relative_to(root)): path.lstat().st_mode & 0o7777
+            for path in fixture_paths(root) if not path.is_symlink() and path.is_dir()}
+
+
 def fixture_files(root):
     """Snapshot task files, excluding harness configuration and journal state."""
-    excluded = {".git", ".ffsake", ".codex", ".ffsake-claude-mcp.json", "opencode.json"}
     return {str(p.relative_to(root)): (b"SYMLINK:" + os.fsencode(os.readlink(p))
                                       if p.is_symlink() else p.read_bytes())
-            for p in root.rglob("*")
-            if not excluded.intersection(p.relative_to(root).parts)
-            and (p.is_symlink() or p.is_file())}
+            for p in fixture_paths(root) if p.is_symlink() or p.is_file()}
 
 
 def file_sha256(path):
@@ -831,11 +841,13 @@ def task_provenance(root, files, prompt):
         entries.append({"path": name, "kind": "symlink" if path.is_symlink() else "file",
                         "mode": path.lstat().st_mode & 0o7777,
                         "sha256": hashlib.sha256(contents).hexdigest()})
-    manifest = json.dumps(entries, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    directories = [{"path": name, "mode": mode} for name, mode in sorted(fixture_directories(root).items())]
+    manifest = json.dumps({"files": entries, "directories": directories},
+                          ensure_ascii=True, sort_keys=True, separators=(",", ":"))
     return {"prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
             "fixture_manifest_sha256": hashlib.sha256(manifest.encode()).hexdigest(),
-            "fixture_files": entries,
-            "fixture_scope": "task files before runner configuration; excludes harness control directories"}
+            "fixture_files": entries, "fixture_directories": directories, "fixture_manifest_version": 2,
+            "fixture_scope": "task files and directories before runner configuration; excludes harness control directories"}
 
 
 def claude_run(root: Path, prompt: str, use_ffsake: bool, timeout: int, tool_profile="all"):

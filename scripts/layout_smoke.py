@@ -46,8 +46,7 @@ def main():
             assert suite.fixture_files(root) == before
             call("ffsake_undo", {"transaction": transaction})
             assert suite.fixture_files(root) == state["original"]
-            directories = {str(path.relative_to(root)) for path in root.rglob("*") if path.is_dir()
-                           and not {".git", ".ffsake"}.intersection(path.relative_to(root).parts)}
+            directories = set(suite.fixture_directories(root))
             assert directories == state["directories"]
             call("ffsake_redo", {"transaction": transaction})
             ok, details = suite.layout_verify(root, state)

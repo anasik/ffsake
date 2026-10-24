@@ -1182,6 +1182,21 @@ class ToolProfileTests(unittest.TestCase):
 
 
 class ProvenanceTests(unittest.TestCase):
+    def test_empty_directories_and_their_modes_change_fixture_identity(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            def identity():
+                return suite.task_provenance(root, suite.fixture_files(root), "task")
+            original = identity()
+            (root / "empty").mkdir()
+            added = identity()
+            self.assertNotEqual(original["fixture_manifest_sha256"], added["fixture_manifest_sha256"])
+            (root / ".codex").mkdir()
+            self.assertEqual(added, identity())
+            if sys.platform != "win32":
+                (root / "empty").chmod(0o700 if (root / "empty").stat().st_mode & 0o777 == 0o750 else 0o750)
+                self.assertNotEqual(added["fixture_manifest_sha256"], identity()["fixture_manifest_sha256"])
+
     def test_fixture_identity_is_root_independent_but_tracks_bytes_paths_modes_and_prompt(self):
         with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
             roots = [Path(first), Path(second)]
@@ -1253,6 +1268,18 @@ class ProvenanceTests(unittest.TestCase):
 
 
 class LayoutTaskTests(unittest.TestCase):
+    def test_layout_accepts_runner_control_directories_but_not_task_extras(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = suite.layout_fixture(root)
+            self.implement(root)
+            (root / ".codex").mkdir()
+            (root / ".codex/config.toml").write_text("# generated runner config\n")
+            ok, details = suite.layout_verify(root, state)
+            self.assertTrue(ok, details)
+            (root / "extra-task-directory").mkdir()
+            self.assertFalse(suite.layout_verify(root, state)[0])
+
     @staticmethod
     def implement(root):
         import shutil

@@ -286,3 +286,6 @@ Prepared an opt-in `layout` agent-acceptance task for the newly completed direct
 
 
 The new CRLF layout fixture exposed ambient Git autocrlf normalization: with a temporary global `core.autocrlf=true`, the initial commit contained LF bytes while the working fixture retained CRLF. A failing regression reproduces this difference. Disposable fixture setup now overrides autocrlf locally, preserving the exact initial committed bytes without changing user configuration; the regression checks both HEAD and the working file.
+
+
+Layout review reproduced two directory-accounting gaps without model calls: a generated `.codex` runner directory caused false failure, while adding an empty task directory did not change fixture provenance. File/directory snapshots now share existing harness-control exclusions. Provenance manifest version 2 includes sorted directory paths/modes; ordinary extra task directories still fail verification and external symlink targets are not traversed. Historical reports remain unchanged.
