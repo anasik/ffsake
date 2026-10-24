@@ -176,7 +176,11 @@ Parallel validation exposed a timestamp-only fixture collision: concurrent trans
 
 The shared benchmark harness now accepts --tool-profile all|core, with matching guidance, launch configuration, trace auditing and schema-version-3 result/aggregate metadata. Default all guidance remains byte-identical; baseline configuration is unchanged. Seventy Python tests and the real core catalog preflight pass without model calls. The server core allowlist explicitly excludes future tools. User-local benchmark changes remain untouched, and OpenCode checks are mocked only.
 
-Next: complete exact-commit CI publication, then use a targeted Codex maintenance run to determine whether the core catalog configuration is adopted and produces a valid trace. This is a new profile-adoption question; do not infer speed/cost benefits from catalog bytes or a single run. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+The explicitly approved core-profile Codex maintenance diagnostic at a807c4f passed 26/26 checks with a valid trace: read_files, preview_files, apply, read_files; all four succeeded with no observed policy/profile violations. Its 32.869 s single sample establishes adoption, not speed/cost or host-isolation benefits. No further model run is authorized by this one-run approval.
+
+Publication is pending recovery of the preceding GitHub CI run, which stalled without step details and intermittently returned HTTP 502; cancellation completed and the same revision was submitted for rerun. Three implementation/fix commits remain local pending that result.
+
+Next: record source/binary and exact prompt/fixture identities in benchmark reports so future comparisons can distinguish changed implementations or local fixtures. Validate this provenance without additional model calls, then finish exact-commit CI publication. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
