@@ -1,7 +1,7 @@
 //! Read-only Rust navigation over an explicit, disposable source snapshot.
 use crate::Workspace;
 use crate::coordinates::{
-    TextPosition, Utf16Position, from_utf16_position, to_byte_offset, to_utf16_position,
+    TextPosition, TextRange, Utf16Position, from_utf16_position, to_byte_offset, to_utf16_position,
 };
 use crate::search::SearchRange;
 use serde_json::{Value, json};
@@ -285,6 +285,30 @@ pub fn rust_implementation(
     )
 }
 
+/// Discover code actions without creating any mutation capability.
+pub fn rust_code_actions(
+    workspace: &Workspace,
+    files: &[String],
+    crate_root: &str,
+    path: &str,
+    range: TextRange,
+    edition: &str,
+    limit: usize,
+) -> Result<Value> {
+    navigate(
+        workspace,
+        Query {
+            files,
+            crate_root,
+            path,
+            position: range.start,
+            edition,
+            limit,
+        },
+        Navigation::CodeActions { end: range.end },
+    )
+}
+
 /// Return native primary diagnostics, not a compiler/build result.
 pub fn rust_diagnostics(
     workspace: &Workspace,
@@ -339,6 +363,7 @@ enum Navigation {
     Symbols,
     Hover,
     Diagnostics,
+    CodeActions { end: TextPosition },
 }
 
 struct Query<'a> {
@@ -361,6 +386,8 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     } = query;
     let maximum = if matches!(kind, Navigation::Hover) {
         65_536
+    } else if matches!(kind, Navigation::CodeActions { .. }) {
+        100
     } else {
         1000
     };
@@ -405,6 +432,15 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     let query_source = &sources[query];
     let byte = to_byte_offset(query_source, position)?;
     let position = to_utf16_position(query_source, byte)?;
+    let end_position = if let Navigation::CodeActions { end } = kind {
+        let end_byte = to_byte_offset(query_source, end)?;
+        if byte > end_byte {
+            return Err("reversed code-action selection".into());
+        }
+        Some(to_utf16_position(query_source, end_byte)?)
+    } else {
+        None
+    };
     let options = json!({
         "linkedProjects":[{"crates":[{"root_module":root.join(&names[crate_root]),"edition":edition,
             "deps":[],"cfg":[],"env":{},"is_workspace_member":true,
@@ -415,7 +451,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     });
     let mut client = Client::start(&root, options.clone(), deadline)?;
     let initialized = client.request("initialize", json!({"processId":null,"rootUri":uri(&root)?,
-        "capabilities":{"general":{"positionEncodings":["utf-16"]},"textDocument":{"diagnostic":{"relatedDocumentSupport":false},"hover":{"contentFormat":["markdown","plaintext"]},"definition":{"linkSupport":false},"implementation":{"linkSupport":false},"documentSymbol":{"hierarchicalDocumentSymbolSupport":true,"symbolKind":{"valueSet":(1..=26).collect::<Vec<_>>()}}},"experimental":{"serverStatusNotification":true}},
+        "capabilities":{"workspace":{"workspaceEdit":{"documentChanges":true,"resourceOperations":["create","rename","delete"]}},"general":{"positionEncodings":["utf-16"]},"textDocument":{"codeAction":{"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source"]}},"isPreferredSupport":true,"disabledSupport":true,"dataSupport":false},"diagnostic":{"relatedDocumentSupport":false},"hover":{"contentFormat":["markdown","plaintext"]},"definition":{"linkSupport":false},"implementation":{"linkSupport":false},"documentSymbol":{"hierarchicalDocumentSymbolSupport":true,"symbolKind":{"valueSet":(1..=26).collect::<Vec<_>>()}}},"experimental":{"serverStatusNotification":true}},
         "initializationOptions":options}))?;
     if initialized["capabilities"]["positionEncoding"]
         .as_str()
@@ -447,6 +483,16 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     let mut parameters =
         json!({"textDocument":{"uri":uri(&root.join(query))?},"position":position});
     let (method, query_kind) = match kind {
+        Navigation::CodeActions { .. } => {
+            parameters
+                .as_object_mut()
+                .ok_or("invalid action request")?
+                .remove("position");
+            parameters["range"] =
+                json!({"start":position,"end":end_position.ok_or("missing selection end")?});
+            parameters["context"] = json!({"diagnostics":[],"triggerKind":1});
+            ("textDocument/codeAction", "code_actions")
+        }
         Navigation::References => {
             parameters["context"] = json!({"includeDeclaration":true});
             ("textDocument/references", "references")
@@ -471,8 +517,16 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     {
         return Err("rust-analyzer does not advertise pull diagnostics".into());
     }
+    if matches!(kind, Navigation::CodeActions { .. })
+        && initialized["capabilities"]["codeActionProvider"] != true
+        && !initialized["capabilities"]["codeActionProvider"].is_object()
+    {
+        return Err("rust-analyzer does not advertise code actions".into());
+    }
     let result = client.request(method, parameters)?;
-    let mut response = if matches!(kind, Navigation::Diagnostics) {
+    let mut response = if matches!(kind, Navigation::CodeActions { .. }) {
+        crate::lsp_actions::actions(&root, &sources, result, limit)?
+    } else if matches!(kind, Navigation::Diagnostics) {
         crate::lsp_diagnostics::diagnostics(query, query_source, result, limit)?
     } else if matches!(kind, Navigation::Symbols) {
         crate::lsp_symbols::outline(query, query_source, result, limit)?
@@ -522,6 +576,32 @@ fn normalize_locations(value: Value, kind: Navigation) -> Result<Value> {
     }
 }
 
+pub(crate) fn snapshot_path(
+    root: &Path,
+    sources: &BTreeMap<String, String>,
+    value: &str,
+) -> Result<String> {
+    let url = Url::parse(value)?;
+    if url.scheme() != "file"
+        || url.host_str().is_some()
+        || url.query().is_some()
+        || url.fragment().is_some()
+    {
+        return Err("non-local LSP result".into());
+    }
+    let absolute = url.to_file_path().map_err(|_| "invalid LSP file URI")?;
+    let path = absolute
+        .strip_prefix(root)
+        .map_err(|_| "LSP result outside snapshot")?
+        .to_str()
+        .ok_or("non-UTF-8 LSP result path")?
+        .to_string();
+    if !sources.contains_key(&path) {
+        return Err("LSP result outside explicit source files".into());
+    }
+    Ok(path)
+}
+
 fn scoped_ranges(
     root: &Path,
     sources: &BTreeMap<String, String>,
@@ -539,24 +619,12 @@ fn scoped_ranges(
     }
     let mut ranges = Vec::new();
     for location in locations {
-        let url = Url::parse(location["uri"].as_str().ok_or("missing LSP URI")?)?;
-        if url.scheme() != "file"
-            || url.host_str().is_some()
-            || url.query().is_some()
-            || url.fragment().is_some()
-        {
-            return Err("non-local LSP result".into());
-        }
-        let absolute = url.to_file_path().map_err(|_| "invalid LSP file URI")?;
-        let path = absolute
-            .strip_prefix(root)
-            .map_err(|_| "LSP result outside snapshot")?
-            .to_str()
-            .ok_or("non-UTF-8 LSP result path")?
-            .to_string();
-        let source = sources
-            .get(&path)
-            .ok_or("LSP result outside explicit source files")?;
+        let path = snapshot_path(
+            root,
+            sources,
+            location["uri"].as_str().ok_or("missing LSP URI")?,
+        )?;
+        let source = &sources[&path];
         let start = from_utf16_position(
             source,
             serde_json::from_value::<Utf16Position>(location["range"]["start"].clone())?,

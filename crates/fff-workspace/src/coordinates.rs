@@ -9,6 +9,14 @@ pub struct TextPosition {
     pub column: usize,
 }
 
+/// Source selection in FFSAKE's one-based line/scalar-column coordinates.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TextRange {
+    pub start: TextPosition,
+    pub end: TextPosition,
+}
+
 /// LSP position after explicitly negotiating UTF-16. Unlike TextPosition, both
 /// coordinates are zero-based and the column counts UTF-16 code units.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]

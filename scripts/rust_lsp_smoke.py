@@ -295,6 +295,46 @@ def main():
             assert clean["complete"] is False and clean["compiler_checked"] is False
             assert (root / "main.rs").read_bytes() == source.encode()
             assert not (root / "BUILD_SCRIPT_RAN").exists()
+            source = 'fn main() { let _ = "🚀"; let count = 1_u32; assert_eq!(count, 1); }\r\n'
+            (root / "main.rs").write_bytes(source.encode())
+            column = source.index("count")
+            selection = {"start": {"line": 1, "column": column},
+                         "end": {"line": 1, "column": column + len("count")}}
+            action_args = {**diagnostic_args, "range": selection}
+            discovered = call(action_args, name="ffsake_rust_code_actions")
+            assert discovered["query"] == "code_actions" and discovered["complete"] is False
+            assert "handle" not in discovered and discovered["action_count"] >= 2
+            annotation = [item for item in discovered["actions"] if item["title"] == "Insert explicit type `u32`"]
+            assert len(annotation) == 1 and annotation[0]["unsupported_reasons"] == [], discovered
+            edits = annotation[0]["edits"]
+            assert len(edits) == 1 and edits[0]["path"] == "main.rs"
+            updated = source.encode()
+            for edit in sorted(edits, key=lambda e: (e["start_byte"], e["end_byte"]), reverse=True):
+                updated = updated[:edit["start_byte"]] + edit["replacement"].encode() + updated[edit["end_byte"]:]
+            assert updated == source.replace("count =", "count: u32 =", 1).encode()
+            # Compilation/execution is an external fixture verifier, never an MCP action.
+            with tempfile.TemporaryDirectory(prefix="ffsake-action-compile-") as compiled:
+                executable = Path(compiled) / "fixture"
+                checked = subprocess.run(["rustc", "--edition=2024", "-o", str(executable), "-"],
+                                         input=updated, capture_output=True, timeout=20)
+                assert checked.returncode == 0, checked.stderr.decode()
+                checked = subprocess.run([str(executable)], capture_output=True, timeout=5)
+                assert checked.returncode == 0, checked.stderr.decode()
+            assert (root / "main.rs").read_bytes() == source.encode()
+            for changes in [{"limit": 1}, {"limit": 0}, {"limit": 101},
+                            {"range": {"start": selection["end"], "end": selection["start"]}},
+                            {"range": {"start": {"line": 1, "column": 9999}, "end": selection["end"]}},
+                            {"position": selection["start"]}]:
+                call({**action_args, **changes}, ok=False, name="ffsake_rust_code_actions")
+            source = 'mod inline { pub fn value() {} } fn main() {}'
+            (root / "main.rs").write_text(source)
+            resource = call({**action_args, "range": {"start": {"line": 1, "column": 4},
+                "end": {"line": 1, "column": 10}}}, name="ffsake_rust_code_actions")
+            module_actions = [item for item in resource["actions"] if item["title"] == "Extract module to file"]
+            assert len(module_actions) == 1 and module_actions[0]["edits"] is None, resource
+            assert "resource_operation" in module_actions[0]["unsupported_reasons"]
+            assert (root / "main.rs").read_text() == source and not (root / "inline.rs").exists()
+            assert not (root / "BUILD_SCRIPT_RAN").exists()
         finally:
             proc.stdin.close()
             try:
@@ -306,7 +346,7 @@ def main():
             proc.stderr.close()
         assert proc.returncode == 0, proc.returncode
     failure_checks(binary)
-    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, native diagnostics, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
+    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, native diagnostics, read-only code actions, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
 
 
 if __name__ == "__main__":

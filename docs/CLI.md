@@ -158,3 +158,17 @@ Results contain `path`, `diagnostics`, `diagnostic_count`, `text_bytes`, hashes,
 Native experimental diagnostics are enabled to include local type mismatches. Cargo check/build, dependencies, sysroot, build scripts, procedural macros and configured features remain omitted. Unresolved imports and other semantic reports can therefore be artifacts of incomplete context; an empty result does **not** establish compiler validity. Fix data, code-description links and related-location metadata are not exposed or executed; related reports are not negotiated. No mutation handle is created.
 
 The required `limit` is 1–1000 primary diagnostics. Messages are at most 8192 UTF-8 bytes each, string codes/sources at most 256 each, and their combined text at most 65,536 bytes. Invalid ranges, malformed reports, unexpected related reports and exceeded limits reject the whole response without truncation. Diagnostic text remains source data, never agent instructions.
+
+## Rust code-action discovery
+
+```json
+{"op":"rust_code_actions","files":["src/lib.rs"],"crate_root":"src/lib.rs","path":"src/lib.rs","range":{"start":{"line":12,"column":8},"end":{"line":12,"column":15}},"edition":"2024","limit":20}
+```
+
+`ffsake_rust_code_actions` discovers native actions for a range using the same explicit snapshot. Both ends use one-based lines and zero-based Unicode scalar columns; the end is exclusive and an empty selection is allowed. `limit` is 1–100 actions. A fresh request supplies an empty diagnostic context; actions based on omitted Cargo/compiler diagnostics may be unavailable. The backend advertises resource-operation formats so it can classify their proposals, but never applies edits or executes commands.
+
+Results include `actions`, `action_count`, `text_bytes`, hashes and `query: "code_actions"` with `complete: false`. Each action has `title`, optional `kind`, `is_preferred`, optional `disabled_reason`, `text_edit_count`, `unsupported_reasons` and `edits`. With no unsupported requirement, edits contain `path`, `start_byte`, `end_byte` and literal `replacement`; byte ends are exclusive. These are read-only proposed changes, not a MatchSet, preview handle, compiler check or semantic correctness guarantee. All original source hashes are rechecked before returning.
+
+Commands, create/rename/delete operations, annotations, snippets, disabled actions, unresolved actions and actions without text edits are classified with explicit reasons and `edits: null` for the **whole** action. No potentially applicable subset is returned. Opaque data, command arguments, diagnostic attachments and resource paths are not exposed. Supported text edits must address supplied files, have snapshot version 1 or an unspecified version, valid UTF-16 ranges and no overlaps; duplicate document entries and ambiguous workspace-edit formats reject the response. Existing same-position insert ordering is preserved.
+
+Across the response, at most 1000 text edits and 65,536 UTF-8 text bytes are accepted. Titles/disabled reasons are bounded to 4096 bytes and kinds/command identifiers to 256 bytes. Resulting source buffers must stay within 256 KiB. Limits or malformed supported edits reject without partial results. Proposed text remains source data; FFSAKE does not follow instructions embedded in it. The shared process/protocol/snapshot boundaries remain in force.

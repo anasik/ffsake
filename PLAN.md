@@ -140,7 +140,9 @@ Hover/type information now shares the snapshot transport, with a 1–65,536-byte
 
 Native diagnostic evaluation isolated a startup-order issue: opening documents before the explicit project finished loading silently suppressed syntax errors, while opening after healthy/quiescent readiness returned parser, local type and unresolved-import diagnostics. The backend now opens documents after readiness. A bounded primary pull-diagnostics endpoint reports native experimental diagnostics with exact original ranges, source hashes, count/text limits and explicit incomplete/non-compiler metadata. Real MCP fixtures cover syntax anchors, local and cross-file type mismatches, emoji/CRLF, omitted-dependency errors, a fresh clean result and an untouched build-script sentinel. The shared catalog contains twenty-five tools.
 
-Next: evaluate code-action responses on the explicit snapshot, starting with read-only action discovery and distinguishing pure text edits from commands, resource operations, and actions requiring missing project context. Compiler execution and semantic rename remain separate; reference ranges must not become rename capabilities until collision and analysis-completeness behavior are established. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Code-action evaluation found plain text edits for local type annotations/extraction and resource operations for module extraction. Read-only discovery now returns bounded action metadata and exact original-byte edits for text-only actions. Commands, resources, annotations, snippets, disabled/unresolved actions return explicit reasons and no partial edits. A real-server fixture verifies a Unicode/CRLF type annotation, independently compiles/runs its proposed bytes, and verifies module extraction never creates a file. All discovery remains explicitly incomplete and creates no mutation capability. The shared catalog contains twenty-six tools.
+
+Next: evaluate guarded previewing of the discovered plain-text actions through the existing transform/journal, including source-hash provenance, exact action identity, parser validation, collision/behavioral limits and atomic undo/redo. Unsupported action classes remain unavailable. Compiler execution and semantic rename remain separate; reference ranges must not become rename capabilities until collision and analysis-completeness behavior are established. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
@@ -168,12 +170,13 @@ Implemented through an explicitly incomplete dependency-free rust-analyzer sourc
 - hierarchical document symbols;
 - implementations;
 - hover/types;
-- native primary diagnostics (explicitly incomplete, not compiler validation).
+- native primary diagnostics (explicitly incomplete, not compiler validation);
+- read-only code-action discovery with bounded text proposals and unsupported-action classification.
 
 Still to add/evaluate:
 
 - semantic rename;
-- code actions.
+- guarded code-action previews/apply.
 
 ## Later
 
