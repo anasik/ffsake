@@ -479,7 +479,9 @@ impl Resident {
                     &expected_title,
                     expected_edits,
                 )?;
+                let context = cached.report["analysis_context"].clone();
                 let mut result = self.preview(plan)?;
+                result["analysis_context"] = context;
                 result["action_title"] = json!(expected_title);
                 result["semantic_validated"] = json!(false);
                 Ok(result)

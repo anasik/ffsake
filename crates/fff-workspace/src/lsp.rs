@@ -569,13 +569,15 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     if !crates.is_empty() {
         response["project_crates"] = json!(crates);
     }
+    response["analysis_context"] =
+        json!({"crate_root":names[crate_root],"edition":edition,"crates":crates});
     response["query"] = json!(query_kind);
     response["complete"] = json!(false);
     response["limitations"] = json!([
         if crates.is_empty() {
             "No Cargo dependencies, sysroot, build scripts, procedural macros or configured features are loaded."
         } else {
-            "Only explicit local crate edges are loaded. No Cargo discovery, unspecified dependencies, sysroot, build scripts, procedural macros or configured features are loaded."
+            "Only explicit local crate edges, features and custom cfg flags are loaded. No Cargo discovery, unspecified dependencies, sysroot, build scripts, procedural macros or implicit feature expansion are loaded."
         },
         "Results are read-only navigation data, not a semantic rename capability."
     ]);

@@ -14,6 +14,10 @@ pub struct CrateSpec {
     pub edition: Option<String>,
     #[serde(default)]
     pub dependencies: BTreeMap<String, String>,
+    #[serde(default)]
+    pub features: Vec<String>,
+    #[serde(default)]
+    pub cfg_flags: Vec<String>,
 }
 
 #[derive(Clone, Copy)]
@@ -51,6 +55,48 @@ fn dependency_name(name: &str) -> bool {
         .contains(&name)
 }
 
+fn explicit_cfg(krate: &CrateSpec) -> Result<Vec<String>> {
+    if krate.features.len() > 32 || krate.cfg_flags.len() > 32 {
+        return Err("crate exceeds 32 features or 32 custom cfg flags".into());
+    }
+    let mut seen = BTreeSet::new();
+    let mut result = Vec::new();
+    for feature in &krate.features {
+        if feature.is_empty()
+            || feature.len() > 128
+            || !feature
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'+'))
+            || !seen.insert(feature)
+        {
+            return Err("invalid or duplicate explicit feature name".into());
+        }
+        result.push(format!("feature=\"{feature}\""));
+    }
+    seen.clear();
+    for flag in &krate.cfg_flags {
+        if !dependency_name(flag)
+            || flag.starts_with("target_")
+            || [
+                "unix",
+                "windows",
+                "debug_assertions",
+                "proc_macro",
+                "test",
+                "panic",
+                "rust_analyzer",
+                "miri",
+            ]
+            .contains(&flag.as_str())
+            || !seen.insert(flag)
+        {
+            return Err("invalid, reserved or duplicate custom cfg flag".into());
+        }
+        result.push(flag.clone());
+    }
+    Ok(result)
+}
+
 pub(crate) fn graph(
     snapshot: &Path,
     names: &BTreeMap<&str, String>,
@@ -62,6 +108,8 @@ pub(crate) fn graph(
         root: primary.into(),
         edition: None,
         dependencies: BTreeMap::new(),
+        features: vec![],
+        cfg_flags: vec![],
     }];
     let crates = if explicit.is_empty() {
         &default[..]
@@ -114,7 +162,7 @@ pub(crate) fn graph(
         graph.push(
             json!({"root_module":snapshot.join(&names[krate.root.as_str()]),
             "edition":krate.edition.as_deref().unwrap_or(default_edition),"deps":dependencies,
-            "cfg":[],"env":{},"is_workspace_member":true,
+            "cfg":explicit_cfg(krate)?,"env":{},"is_workspace_member":true,
             "source":{"include_dirs":[snapshot],"exclude_dirs":[]}}),
         );
     }
@@ -153,13 +201,106 @@ mod tests {
                 root: "app.rs".into(),
                 edition: None,
                 dependencies: BTreeMap::from([("account_model".into(), "model.rs".into())]),
+                features: vec![],
+                cfg_flags: vec![],
             },
             CrateSpec {
                 root: "model.rs".into(),
                 edition: Some("2021".into()),
                 dependencies: BTreeMap::new(),
+                features: vec![],
+                cfg_flags: vec![],
             },
         ]
+    }
+
+    #[test]
+    fn features_and_custom_flags_are_literal_bounded_configuration() {
+        let mut krate = specs().remove(1);
+        krate.features = vec!["fast".into(), "serde-json".into()];
+        krate.cfg_flags = vec!["local_mode".into()];
+        assert_eq!(
+            explicit_cfg(&krate).unwrap(),
+            vec!["feature=\"fast\"", "feature=\"serde-json\"", "local_mode"]
+        );
+        for feature in [
+            "",
+            "dep/feature",
+            "dep:feature",
+            "quoted\"",
+            "white space",
+            "café",
+            &"x".repeat(129),
+        ] {
+            let mut invalid = krate.clone();
+            invalid.features = vec![feature.into()];
+            assert!(explicit_cfg(&invalid).is_err());
+        }
+        for flag in [
+            "unix",
+            "windows",
+            "target_os",
+            "debug_assertions",
+            "test",
+            "rust_analyzer",
+            "feature=\"x\"",
+            "foo-bar",
+        ] {
+            let mut invalid = krate.clone();
+            invalid.cfg_flags = vec![flag.into()];
+            assert!(explicit_cfg(&invalid).is_err());
+        }
+        let mut duplicate = krate.clone();
+        duplicate.features.push("fast".into());
+        assert!(explicit_cfg(&duplicate).is_err());
+        duplicate = krate.clone();
+        duplicate.cfg_flags.push("local_mode".into());
+        assert!(explicit_cfg(&duplicate).is_err());
+        for feature_list in [true, false] {
+            let mut many = krate.clone();
+            let values = (0..33).map(|n| format!("name{n}")).collect();
+            if feature_list {
+                many.features = values;
+            } else {
+                many.cfg_flags = values;
+            }
+            assert!(explicit_cfg(&many).is_err());
+        }
+        // The total edge budget is independent of per-crate dependency bounds.
+        let roots: Vec<_> = (0..6).map(|n| format!("crate{n}.rs")).collect();
+        let names = roots
+            .iter()
+            .map(|root| (root.as_str(), root.clone()))
+            .collect();
+        let graph_specs: Vec<_> = roots
+            .iter()
+            .enumerate()
+            .map(|(index, root)| CrateSpec {
+                root: root.clone(),
+                edition: None,
+                features: vec![],
+                cfg_flags: vec![],
+                dependencies: if index == 5 {
+                    BTreeMap::new()
+                } else {
+                    (0..16)
+                        .map(|n| (format!("alias{n}"), roots[5].clone()))
+                        .collect()
+                },
+            })
+            .collect();
+        assert!(
+            graph(
+                &std::env::temp_dir(),
+                &names,
+                &roots[0],
+                "2024",
+                &graph_specs
+            )
+            .unwrap_err()
+            .to_string()
+            .contains("64 dependency edges")
+        );
     }
 
     #[test]

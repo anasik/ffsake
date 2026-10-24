@@ -419,6 +419,39 @@ def main():
                             [{"root": "../outside.rs"}], crates * 9]:
                 call({**project, "crates": invalid}, ok=False, name="ffsake_rust_diagnostics")
             assert not (root / "BUILD_SCRIPT_RAN").exists()
+            model = ('#[cfg(all(feature = "fast", local_mode))] pub fn value() -> u32 { 7 }\r\n'
+                     '#[cfg(not(all(feature = "fast", local_mode)))] pub fn value() -> bool { true }\r\n')
+            (root / "model/lib.rs").write_bytes(model.encode())
+            configured = [dict(crate) for crate in crates]
+            configured[1].update(features=["fast"], cfg_flags=["local_mode"])
+            for graph, expected_line, mismatch in [(crates, 2, True),
+                    ([crates[0], {**crates[1], "features": ["fast"]}], 2, True), (configured, 1, False)]:
+                analyzed = call({**project, "crates": graph}, name="ffsake_rust_diagnostics")
+                assert any(item["code"] == "E0308" for item in analyzed["diagnostics"]) is mismatch, analyzed
+                definition = call({**project, "crates": graph,
+                    "position": {"line": 2, "column": app.splitlines()[1].index("value")}}, name="ffsake_rust_definition")
+                assert definition["matches"] == 1 and definition["ranges"][0]["line"] == expected_line
+            action_range = {"start": {"line": 2, "column": amount}, "end": {"line": 2, "column": amount + 6}}
+            active = call({**project, "crates": configured, "range": action_range}, name="ffsake_rust_code_actions")
+            inactive = call({**project, "crates": crates, "range": action_range}, name="ffsake_rust_code_actions")
+            assert any(item["title"] == "Insert explicit type `bool`" for item in inactive["actions"]), inactive
+            index = next(i for i, item in enumerate(active["actions"]) if item["title"] == "Insert explicit type `u32`")
+            item = active["actions"][index]
+            staged = call({"action_set": active["action_set"], "action_index": index,
+                           "expected_title": item["title"], "expected_edits": item["text_edit_count"]},
+                          name="ffsake_preview_rust_action")
+            assert staged["analysis_context"] == active["analysis_context"]
+            assert staged["analysis_context"]["crates"][1]["features"] == ["fast"]
+            assert staged["analysis_context"]["crates"][1]["cfg_flags"] == ["local_mode"]
+            assert (root / "app/main.rs").read_bytes() == app.encode()
+            call({"handle": staged["handle"]}, name="ffsake_release")
+            for report in [active, inactive]:
+                call({"handle": report["action_set"]}, name="ffsake_release")
+            for changes in [{"features": ["fast", "fast"]}, {"features": ["dep/fast"]},
+                            {"cfg_flags": ["unix"]}, {"cfg_flags": ["target_os"]},
+                            {"cfg_flags": ["local_mode", "local_mode"]}, {"cfg": ["anything"]}]:
+                call({**project, "crates": [crates[0], {**crates[1], **changes}]},
+                     ok=False, name="ffsake_rust_diagnostics")
         finally:
             proc.stdin.close()
             try:
@@ -430,7 +463,7 @@ def main():
             proc.stderr.close()
         assert proc.returncode == 0, proc.returncode
     failure_checks(binary)
-    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, native diagnostics, code-action discovery/guarded previews/history, explicit crate graph, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
+    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, native diagnostics, code-action discovery/guarded previews/history, explicit crate graph/features/cfg, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
 
 
 if __name__ == "__main__":
