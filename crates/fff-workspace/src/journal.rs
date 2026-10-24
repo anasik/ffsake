@@ -4,7 +4,7 @@ pub use crate::tree_move::TreeMove as TransactionTreeMove;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs;
-use std::io;
+use std::io::{self, Read};
 use std::path::{Component, Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -95,11 +95,16 @@ pub struct TransactionFile {
     pub path: String,
     pub snapshot_key: String,
     pub before_hash: Option<String>,
+    /// Recorded lengths bound snapshot reads. Legacy manifests omit these fields.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub before_bytes: Option<u64>,
     /// Ordinary Unix rwx bits for recreating the before-side file. Older
     /// journals and record-after-the-fact callers have no original metadata.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub before_unix_mode: Option<u32>,
     pub after_hash: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub after_bytes: Option<u64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub after_unix_mode: Option<u32>,
 }
@@ -593,8 +598,10 @@ impl Journal {
                 path: change.path.clone(),
                 snapshot_key,
                 before_hash: change.before.as_deref().map(hash_bytes),
+                before_bytes: change.before.as_ref().map(|bytes| bytes.len() as u64),
                 before_unix_mode: None,
                 after_hash: change.after.as_deref().map(hash_bytes),
+                after_bytes: change.after.as_ref().map(|bytes| bytes.len() as u64),
                 after_unix_mode: if change.after.is_some() {
                     unix_mode(&self.resolve(&change.path)?)?
                 } else {
@@ -650,12 +657,14 @@ impl Journal {
                 path: change.path.clone(),
                 snapshot_key,
                 before_hash: change.before.as_deref().map(hash_bytes),
+                before_bytes: change.before.as_ref().map(|bytes| bytes.len() as u64),
                 before_unix_mode: if change.before.is_some() {
                     unix_mode(&self.resolve(&change.path)?)?
                 } else {
                     None
                 },
                 after_hash: change.after.as_deref().map(hash_bytes),
+                after_bytes: change.after.as_ref().map(|bytes| bytes.len() as u64),
                 after_unix_mode: destination_modes.get(&change.path).copied(),
             });
         }
@@ -951,12 +960,44 @@ impl Journal {
             .join(side.directory_name())
             .join(&file.snapshot_key);
         self.check_internal_path(&path)?;
-        if !fs::metadata(&path)?.is_file() {
+        // Reject special files before open, which could block on a FIFO.
+        if !fs::symlink_metadata(&path)?.is_file() {
             return Err(JournalError::InvalidPath(
                 "snapshot must be a regular file".into(),
             ));
         }
-        let bytes = fs::read(&path)?;
+        let mut source = fs::File::open(&path)?;
+        let metadata = source.metadata()?;
+        if !metadata.is_file() {
+            return Err(JournalError::InvalidPath(
+                "snapshot must be a regular file".into(),
+            ));
+        }
+        let expected_bytes = match side {
+            SnapshotSide::Before => file.before_bytes,
+            SnapshotSide::After => file.after_bytes,
+        };
+        let mut bytes = Vec::new();
+        if let Some(expected) = expected_bytes {
+            let mismatch = |actual| JournalError::StateConflict {
+                path: format!("journal snapshot for {}", file.path),
+                expected: format!("{expected} snapshot bytes"),
+                actual: format!("{actual} snapshot bytes"),
+            };
+            if metadata.len() != expected {
+                return Err(mismatch(metadata.len()));
+            }
+            let limit = expected
+                .checked_add(1)
+                .ok_or_else(|| JournalError::InvalidPath("snapshot length overflow".into()))?;
+            source.take(limit).read_to_end(&mut bytes)?;
+            if bytes.len() as u64 != expected {
+                return Err(mismatch(bytes.len() as u64));
+            }
+        } else {
+            // Legacy manifests lack lengths; retain their hash-only contract.
+            source.read_to_end(&mut bytes)?;
+        }
         let actual = hash_bytes(&bytes);
         if side.hash(file).as_ref() != Some(&actual) {
             return Err(JournalError::StateConflict {
@@ -1744,6 +1785,56 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn snapshot_lengths_reject_growth_and_truncation_before_history_writes() {
+        let root = fixture();
+        let journal = Journal::open(&root).unwrap();
+        let manifest = journal
+            .commit(None, &[("src/lib.rs".into(), Some(b"after".to_vec()))])
+            .unwrap();
+        let path = journal
+            .journal_root
+            .join(&manifest.id)
+            .join("before")
+            .join(&manifest.files[0].snapshot_key);
+        let original = fs::read(&path).unwrap();
+        assert_eq!(manifest.files[0].before_bytes, Some(original.len() as u64));
+        assert_eq!(manifest.files[0].after_bytes, Some(5));
+        for length in [0, 16 * 1024 * 1024] {
+            fs::OpenOptions::new()
+                .write(true)
+                .open(&path)
+                .unwrap()
+                .set_len(length)
+                .unwrap();
+            let error = journal.undo(&manifest.id).unwrap_err();
+            assert!(error.to_string().contains("snapshot bytes"), "{error}");
+            assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"after");
+        }
+        fs::write(&path, &original).unwrap();
+        Journal::open(&root).unwrap().undo(&manifest.id).unwrap();
+        journal.redo(&manifest.id).unwrap();
+        // Removing new optional metadata exercises genuine legacy deserialization.
+        let path = journal
+            .journal_root
+            .join(&manifest.id)
+            .join("manifest.json");
+        let mut value: serde_json::Value =
+            serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        for file in value["files"].as_array_mut().unwrap() {
+            file.as_object_mut().unwrap().remove("before_bytes");
+            file.as_object_mut().unwrap().remove("after_bytes");
+        }
+        fs::write(path, serde_json::to_vec(&value).unwrap()).unwrap();
+        assert_eq!(
+            journal.load(&manifest.id).unwrap().files[0].before_bytes,
+            None
+        );
+        journal.undo(&manifest.id).unwrap();
+        journal.redo(&manifest.id).unwrap();
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[cfg(unix)]

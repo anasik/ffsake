@@ -292,3 +292,6 @@ Layout review reproduced two directory-accounting gaps without model calls: a ge
 
 
 A core-prompt regression exposed directory-operation and file-payload guidance accidentally placed inside the full-only Rust guidance block. Both profiles now receive that shared guidance while core still omits disabled Rust tools. The existing profile regression now checks directory operations, the retained-payload limit and overlap rejection; interactive Claude launchers reuse the corrected prompt. Tool catalog and permissions are unchanged.
+
+
+New file journal entries record before/after snapshot lengths alongside hashes. Replay checks the opened regular file's size and caps its read at the recorded length plus one, rejecting growth or truncation before workspace writes; exact hashes still detect same-length corruption. Special files reject before opening to avoid FIFO blocking. Legacy manifests without lengths retain their prior hash-only read behavior. Local validation passes all 145 Rust tests, Clippy/formatting, 171 MCP boundary rejections, directory/layout history and repository byte-history checks. The new regression covers growth, truncation, reopened replay and legacy deserialization.
