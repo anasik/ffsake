@@ -304,6 +304,19 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         call("ffsake_redo", {"transaction": history_tx})
         assert (root / "history-first.txt").read_text() == "after first"
 
+        # Damage a later persisted snapshot: reject before reverting any member.
+        history_root = root / ".ffsake" / "journal" / history_tx
+        history_manifest = json.loads((history_root / "manifest.json").read_text())
+        damaged = history_root / "before" / history_manifest["files"][1]["snapshot_key"]
+        saved_snapshot = damaged.read_bytes()
+        damaged.write_bytes(b"corrupt journal data")
+        call("ffsake_undo", {"transaction": history_tx}, expect_ok=False)
+        assert (root / "history-first.txt").read_text() == "after first"
+        assert (root / "history-second.txt").read_text() == "after second"
+        damaged.write_bytes(saved_snapshot)
+        call("ffsake_undo", {"transaction": history_tx})
+        assert (root / "history-first.txt").read_text() == "before first"
+
         print("MCP multiline preview/edit/apply/undo/redo and stale-content guards PASS")
         # File operations share the preview/apply/history flow. Destinations
         # must be absent; source and destination state are frozen at preview.

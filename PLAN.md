@@ -114,7 +114,9 @@ Copy/move destination and redo mode gaps are now covered: previews retain and di
 
 History failure evaluation reproduced partial undo when a later atomic write failed. Undo/redo now reverse earlier members on write or final manifest failure, keep the previous persisted transaction state on successful recovery, and report incomplete rollback with affected paths. Rollback recreation preserves current Unix permissions. Deterministic obstruction tests cover failed undo/redo, retries, manifest failure, mode recovery and explicit incomplete-recovery reporting.
 
-Next: validate persisted snapshot integrity before history replay; damaged or missing journal data must be rejected before changing workspace files. These changes provide ordinary error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Persisted history now preflights both snapshot sides and verifies each hash again at use; missing/corrupt data rejects before workspace writes. Journal loads validate transaction identity, snapshot keys are bound to their original paths, and manifest/snapshot symlink components are rejected. Tests cover both directions, recovery data, repair-and-retry, malformed identity/keys and symlinked journal paths. Local validation passed 63 Rust tests, 57 Python tests and the full executable/MCP/repository checks.
+
+Next: check atomic-write temporary-file creation for pre-existing aliases or collisions, then reconcile the resident interface documentation with the completed capabilities. These changes provide ordinary error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

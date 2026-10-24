@@ -283,11 +283,19 @@ impl Journal {
     }
 
     pub fn load(&self, id: &str) -> Result<TransactionManifest> {
+        validate_transaction_id(id)?;
         let path = self.journal_root.join(id).join("manifest.json");
+        self.check_internal_path(&path)?;
         if !path.is_file() {
             return Err(JournalError::MissingTransaction(id.to_string()));
         }
-        Ok(serde_json::from_slice(&fs::read(path)?)?)
+        let manifest: TransactionManifest = serde_json::from_slice(&fs::read(path)?)?;
+        if manifest.id != id {
+            return Err(JournalError::InvalidPath(
+                "manifest transaction id mismatch".into(),
+            ));
+        }
+        Ok(manifest)
     }
 
     pub fn undo(&self, id: &str) -> Result<TransactionManifest> {
@@ -366,6 +374,9 @@ impl Journal {
         side: SnapshotSide,
         state: TransactionState,
     ) -> Result<TransactionManifest> {
+        // Both sides must be intact before writes: the opposite side is needed
+        // for recovery if a later member fails. apply_one rechecks before use.
+        self.verify_snapshots(&manifest)?;
         let restore = side.opposite();
         // History intentionally permits chmod on existing files. If rollback
         // recreates one of those files, retain its permissions at operation start.
@@ -425,14 +436,10 @@ impl Journal {
         file: &TransactionFile,
         side: SnapshotSide,
     ) -> Result<Option<u32>> {
-        let snapshot_root = self
-            .journal_root
-            .join(&manifest.id)
-            .join(side.directory_name());
         let path = self.resolve(&file.path)?;
 
         if side.hash(file).is_some() {
-            let bytes = fs::read(snapshot_root.join(&file.snapshot_key))?;
+            let bytes = self.read_snapshot(manifest, file, side)?;
             if let Some(parent) = path.parent() {
                 fs::create_dir_all(parent)?;
             }
@@ -448,6 +455,78 @@ impl Journal {
         }
 
         Ok(None)
+    }
+
+    fn verify_snapshots(&self, manifest: &TransactionManifest) -> Result<()> {
+        for file in &manifest.files {
+            for side in [SnapshotSide::Before, SnapshotSide::After] {
+                if side.hash(file).is_some() {
+                    self.read_snapshot(manifest, file, side)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn read_snapshot(
+        &self,
+        manifest: &TransactionManifest,
+        file: &TransactionFile,
+        side: SnapshotSide,
+    ) -> Result<Vec<u8>> {
+        validate_transaction_id(&manifest.id)?;
+        validate_relative(Path::new(&file.path))?;
+        if file.snapshot_key != blake3::hash(file.path.as_bytes()).to_hex().as_str() {
+            return Err(JournalError::InvalidPath("invalid snapshot key".into()));
+        }
+        let path = self
+            .journal_root
+            .join(&manifest.id)
+            .join(side.directory_name())
+            .join(&file.snapshot_key);
+        self.check_internal_path(&path)?;
+        if !fs::metadata(&path)?.is_file() {
+            return Err(JournalError::InvalidPath(
+                "snapshot must be a regular file".into(),
+            ));
+        }
+        let bytes = fs::read(&path)?;
+        let actual = hash_bytes(&bytes);
+        if side.hash(file).as_ref() != Some(&actual) {
+            return Err(JournalError::StateConflict {
+                path: format!(
+                    "journal snapshot {}/{} for {}",
+                    manifest.id,
+                    side.directory_name(),
+                    file.path
+                ),
+                expected: side.hash(file).clone().unwrap_or_else(|| "<absent>".into()),
+                actual,
+            });
+        }
+        Ok(bytes)
+    }
+
+    fn check_internal_path(&self, path: &Path) -> Result<()> {
+        let relative = path
+            .strip_prefix(&self.workspace_root)
+            .map_err(|_| JournalError::InvalidPath(path.display().to_string()))?;
+        let mut current = self.workspace_root.clone();
+        for part in relative.components() {
+            if !matches!(part, Component::Normal(_)) {
+                return Err(JournalError::InvalidPath(path.display().to_string()));
+            }
+            current.push(part);
+            match fs::symlink_metadata(&current) {
+                Ok(metadata) if metadata.file_type().is_symlink() => {
+                    return Err(JournalError::InvalidPath(current.display().to_string()));
+                }
+                Ok(_) => {}
+                Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Ok(())
     }
 
     pub(crate) fn resolve(&self, relative: &str) -> Result<PathBuf> {
@@ -471,7 +550,9 @@ impl Journal {
     }
 
     fn write_manifest(&self, manifest: &TransactionManifest) -> Result<()> {
+        validate_transaction_id(&manifest.id)?;
         let tx_root = self.journal_root.join(&manifest.id);
+        self.check_internal_path(&tx_root.join("manifest.json"))?;
         fs::create_dir_all(&tx_root)?;
         let data = serde_json::to_vec_pretty(manifest)?;
         atomic_write(&tx_root.join("manifest.json"), &data)?;
@@ -506,6 +587,17 @@ impl SnapshotSide {
             Self::After => "after",
         }
     }
+}
+
+fn validate_transaction_id(id: &str) -> Result<()> {
+    if id.is_empty()
+        || !id
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+    {
+        return Err(JournalError::InvalidPath("invalid transaction id".into()));
+    }
+    Ok(())
 }
 
 fn validate_relative(path: &Path) -> Result<()> {
@@ -996,7 +1088,18 @@ mod tests {
             .join("src")
             .join(format!(".lib.rs.ffsake-journal-tmp-{}", std::process::id()));
         fs::create_dir(&obstruction).unwrap();
-        let error = journal.undo(&manifest.id).unwrap_err();
+        journal
+            .apply_one(&manifest, &manifest.files[0], SnapshotSide::Before)
+            .unwrap();
+        let original = journal
+            .apply_one(&manifest, &manifest.files[1], SnapshotSide::Before)
+            .unwrap_err();
+        let error = journal.rollback(
+            &manifest,
+            &manifest.files[..1],
+            SnapshotSide::After,
+            original,
+        );
         assert!(
             matches!(&error, JournalError::RollbackFailed { failures, .. } if failures.len() == 1 && failures[0].contains("created.txt"))
         );
@@ -1005,6 +1108,141 @@ mod tests {
             journal.load(&manifest.id).unwrap().state,
             TransactionState::Applied
         );
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn corrupt_snapshot_is_rejected_before_any_history_write() {
+        let root = fixture();
+        fs::write(root.join("second.txt"), b"second before").unwrap();
+        let journal = Journal::open(&root).unwrap();
+        let manifest = journal
+            .commit(
+                None,
+                &[
+                    ("src/lib.rs".into(), Some(b"first after".to_vec())),
+                    ("second.txt".into(), Some(b"second after".to_vec())),
+                ],
+            )
+            .unwrap();
+        let snapshot = root
+            .join(".ffsake/journal")
+            .join(&manifest.id)
+            .join("before")
+            .join(&manifest.files[1].snapshot_key);
+        fs::write(snapshot, b"corrupted snapshot").unwrap();
+        assert!(journal.undo(&manifest.id).is_err());
+        assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"first after");
+        assert_eq!(fs::read(root.join("second.txt")).unwrap(), b"second after");
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn missing_or_corrupt_snapshots_in_either_direction_are_fail_closed() {
+        for redo in [false, true] {
+            for side in ["before", "after"] {
+                for missing in [false, true] {
+                    let root = fixture();
+                    let journal = Journal::open(&root).unwrap();
+                    let manifest = journal
+                        .commit(None, &[("src/lib.rs".into(), Some(b"after".to_vec()))])
+                        .unwrap();
+                    if redo {
+                        journal.undo(&manifest.id).unwrap();
+                    }
+                    let snapshot = root
+                        .join(".ffsake/journal")
+                        .join(&manifest.id)
+                        .join(side)
+                        .join(&manifest.files[0].snapshot_key);
+                    let original = fs::read(&snapshot).unwrap();
+                    if missing {
+                        fs::remove_file(&snapshot).unwrap();
+                    } else {
+                        fs::write(&snapshot, b"corrupt").unwrap();
+                    }
+                    let result = if redo {
+                        journal.redo(&manifest.id)
+                    } else {
+                        journal.undo(&manifest.id)
+                    };
+                    assert!(result.is_err());
+                    assert_eq!(
+                        fs::read(root.join("src/lib.rs")).unwrap(),
+                        if redo {
+                            b"before".as_slice()
+                        } else {
+                            b"after".as_slice()
+                        }
+                    );
+                    fs::write(&snapshot, original).unwrap();
+                    if redo {
+                        journal.redo(&manifest.id).unwrap();
+                    } else {
+                        journal.undo(&manifest.id).unwrap();
+                    }
+                    fs::remove_dir_all(root).unwrap();
+                }
+            }
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn journal_snapshot_and_manifest_symlinks_are_rejected() {
+        use std::os::unix::fs::symlink;
+        let root = fixture();
+        let other = fixture();
+        let journal = Journal::open(&root).unwrap();
+        let manifest = journal
+            .commit(None, &[("src/lib.rs".into(), Some(b"after".to_vec()))])
+            .unwrap();
+        let tx = root.join(".ffsake/journal").join(&manifest.id);
+        for path in [
+            tx.join("before").join(&manifest.files[0].snapshot_key),
+            tx.join("manifest.json"),
+        ] {
+            let bytes = fs::read(&path).unwrap();
+            let external = other.join("external");
+            fs::write(&external, &bytes).unwrap();
+            fs::remove_file(&path).unwrap();
+            symlink(&external, &path).unwrap();
+            assert!(journal.undo(&manifest.id).is_err());
+            assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"after");
+            assert_eq!(fs::read(&external).unwrap(), bytes);
+            fs::remove_file(&path).unwrap();
+            fs::write(&path, bytes).unwrap();
+        }
+        let external_tx = other.join("tx");
+        fs::rename(&tx, &external_tx).unwrap();
+        symlink(&external_tx, &tx).unwrap();
+        assert!(journal.undo(&manifest.id).is_err());
+        assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"after");
+        fs::remove_dir_all(root).unwrap();
+        fs::remove_dir_all(other).unwrap();
+    }
+
+    #[test]
+    fn journal_rejects_invalid_ids_and_snapshot_keys() {
+        let root = fixture();
+        let journal = Journal::open(&root).unwrap();
+        for id in ["", "..", "../elsewhere", "/tmp/elsewhere"] {
+            assert!(journal.load(id).is_err());
+        }
+        let manifest = journal
+            .commit(None, &[("src/lib.rs".into(), Some(b"after".to_vec()))])
+            .unwrap();
+        let path = root
+            .join(".ffsake/journal")
+            .join(&manifest.id)
+            .join("manifest.json");
+        let mut altered = manifest.clone();
+        altered.id = "different-id".into();
+        fs::write(&path, serde_json::to_vec(&altered).unwrap()).unwrap();
+        assert!(journal.load(&manifest.id).is_err());
+        altered = manifest.clone();
+        altered.files[0].snapshot_key = "../../outside".into();
+        fs::write(&path, serde_json::to_vec(&altered).unwrap()).unwrap();
+        assert!(journal.undo(&manifest.id).is_err());
+        assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"after");
         fs::remove_dir_all(root).unwrap();
     }
 }
