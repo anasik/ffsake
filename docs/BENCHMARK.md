@@ -255,3 +255,12 @@ Tree-sitter selection is bounded to explicit Rust files and excludes comments, l
 | Replacement collides with an existing binding | 2 | Compiles, but shadowing changes the value and the runtime assertion fails |
 
 All four baselines compile/run; preview leaves bytes unchanged; undo restores the exact source and passing baseline; redo reproduces both bytes and the expected compiler/runtime outcome. Compiler/runtime failures in the last two rows are required evidence of the documented limitations, not skipped checks. The script runs in CI without models or network. Runtime execution remains an external verification step. These results justify investigating symbol-aware references and collision handling before semantic rename, rather than treating parser success as behavioral correctness.
+
+
+## Read-only Rust LSP feasibility
+
+`python3 scripts/rust_lsp_probe.py` passed with rust-analyzer 1.99.1. It supplies an explicit dependency-free Rust project graph, disabling Cargo build scripts, procedural macros and check-on-save. Two unrelated same-spelling bindings each returned exactly their own declaration and reference; the second reference was inside a locally defined declarative macro. UTF-16 offsets mapped exactly to original UTF-8 bytes after an emoji, with CRLF and a percent-encoded Unicode/space workspace URI. The probe waits for healthy, quiescent server status, bounds time and response sizes, rejects unsupported server requests, and confines returned file ranges. Its source/Cargo/build-script fixture remains byte-identical with no extra files.
+
+An initial probe with Cargo autoreload disabled reported a quiescent warning about an unloaded workspace change. Leaving autoreload at its default while providing the explicit graph produced healthy readiness. The regression requires healthy status rather than accepting that warning. This fixed-fixture evaluation runs in CI with the rust-analyzer toolchain component. It does not expose an LSP tool, execute semantic rename, prove full Cargo/dependency/sysroot analysis, or establish an OS sandbox.
+
+Configuration and protocol follow the official [rust-analyzer settings](https://rust-analyzer.github.io/book/configuration.html), [explicit project format](https://rust-analyzer.github.io/book/non_cargo_based_projects.html), and [server-status extension](https://rust-analyzer.github.io/book/contributing/lsp-extensions.html#server-status).

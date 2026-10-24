@@ -14,6 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rust-analyzer
       - run: cargo test --locked --workspace
       - run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - run: cargo fmt --all -- --check
@@ -23,5 +25,7 @@ jobs:
       - run: python3 scripts/mcp_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/repository_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/rust_syntax_smoke.py target/debug/ffsake-mcp
+      - run: python3 -m unittest discover -s tests -p 'test_rust_lsp_probe.py' -v
+      - run: python3 scripts/rust_lsp_probe.py
       - run: python3 -m py_compile scripts/agent_benchmark.py scripts/agent_benchmark_suite.py
       - run: python3 -m unittest discover -s tests -p 'test_agent_benchmark_suite.py' -v

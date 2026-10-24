@@ -126,7 +126,9 @@ Real-source syntax evaluation parsed lib.rs, syntax.rs and resident.rs successfu
 
 Compiler-backed evaluation now covers four disposable fixtures: ordinary binding rename compiles and passes; same-spelling unrelated bindings are both renamed; excluded macro arguments can leave unresolved references; and a new name can shadow another binding, compiling but changing runtime behavior. All preview/apply/undo/redo byte checks pass. scripts/rust_syntax_smoke.py records these intended limitations in CI, with no model calls.
 
-Next: evaluate a bounded, read-only rust-analyzer references query on the same fixtures, with project build scripts/procedural macros and check-on-save disabled. Establish position encoding, readiness and workspace result confinement before exposing an LSP capability. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Read-only rust-analyzer feasibility passed with an explicit dependency-free Rust project graph: each same-spelling binding produced only its own declaration/reference, including a declarative macro argument. The probe negotiates UTF-16, verifies byte offsets after emoji and CRLF, waits for quiescent healthy status, enforces frame/time/result-path limits, and checks an unchanged fixture including a dormant Cargo build-script sentinel. No production LSP endpoint is exposed yet; dependency/sysroot/procedural macro completeness is unverified.
+
+Next: implement the reusable UTF-16 coordinate boundary needed by LSP, then a bounded read-only Rust references endpoint with explicit crate-root scope, guarded workspace results and clear dependency-free analysis limitations. Do not turn reference ranges into rename capabilities until collision and analysis-completeness behavior are established. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
