@@ -148,7 +148,9 @@ Compiler/runtime evaluation of native actions now records four cases in scripts/
 
 Native prepare-rename/rename feasibility is now captured by scripts/rust_rename_probe.py: distinct bindings, declared macro references and cross-file Unicode/CRLF proposals pass independent compiler/runtime checks; omitted standard-library macros leave unresolved references, and an accepted colliding name compiles with changed behavior. Module rename yields a resource operation that the probe inspects without applying. Analysis sources remain unchanged and no production rename endpoint is added.
 
-Next: evaluate explicit dependency edges for bounded multi-crate Rust snapshots, including cross-crate references/diagnostics and all-input provenance, without invoking Cargo or loading files beyond the explicit source set. This improves known incomplete context while retaining complete=false; it does not solve semantic equivalence or authorize generic rename. Unsupported action classes remain unavailable. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Explicit multi-crate snapshot context is implemented as an optional crates array on every Rust analysis request. Bounded declared roots/editions/dependency names map only to supplied files; cycles, unknown roots and oversized graphs reject before startup. A model-free comparison changed one declaration-only reference to three cross-crate references and cleared unresolved imports. Dependency type changes produce fresh diagnostics and invalidate cached actions/previews through all-input hashes. No Cargo discovery/builds/downloads, sysroot or implicit dependencies are added, and complete=false remains mandatory.
+
+Next: evaluate bounded explicit cfg/features for those crate graphs, including active/inactive symbol selection, changed diagnostics and ensuring cached actions retain the exact analysis configuration. Avoid importing user Cargo configuration or executing build scripts. Semantic rename and unsupported action classes remain unavailable. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
@@ -169,7 +171,7 @@ Pass condition:
 
 Before full LSP, consider parser/tree-sitter-backed syntax-aware mutation for identifiers, comments, strings, imports, and AST node kinds.
 
-Implemented through an explicitly incomplete dependency-free rust-analyzer source snapshot:
+Implemented through explicitly incomplete rust-analyzer source snapshots, optionally with declared local crate dependencies:
 
 - definitions;
 - references;

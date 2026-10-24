@@ -56,6 +56,8 @@ pub enum Request {
         path: String,
         position: crate::coordinates::TextPosition,
         edition: String,
+        #[serde(default)]
+        crates: Vec<crate::lsp::CrateSpec>,
         limit: usize,
     },
     RustDefinition {
@@ -64,6 +66,8 @@ pub enum Request {
         path: String,
         position: crate::coordinates::TextPosition,
         edition: String,
+        #[serde(default)]
+        crates: Vec<crate::lsp::CrateSpec>,
         limit: usize,
     },
     RustCodeActions {
@@ -72,6 +76,8 @@ pub enum Request {
         path: String,
         range: crate::coordinates::TextRange,
         edition: String,
+        #[serde(default)]
+        crates: Vec<crate::lsp::CrateSpec>,
         limit: usize,
     },
     RustHover {
@@ -80,6 +86,8 @@ pub enum Request {
         path: String,
         position: crate::coordinates::TextPosition,
         edition: String,
+        #[serde(default)]
+        crates: Vec<crate::lsp::CrateSpec>,
         max_bytes: usize,
     },
     RustImplementation {
@@ -88,6 +96,8 @@ pub enum Request {
         path: String,
         position: crate::coordinates::TextPosition,
         edition: String,
+        #[serde(default)]
+        crates: Vec<crate::lsp::CrateSpec>,
         limit: usize,
     },
     RustSymbols {
@@ -95,6 +105,8 @@ pub enum Request {
         crate_root: String,
         path: String,
         edition: String,
+        #[serde(default)]
+        crates: Vec<crate::lsp::CrateSpec>,
         limit: usize,
     },
     RustDiagnostics {
@@ -102,6 +114,8 @@ pub enum Request {
         crate_root: String,
         path: String,
         edition: String,
+        #[serde(default)]
+        crates: Vec<crate::lsp::CrateSpec>,
         limit: usize,
     },
     SelectRustIdentifiers {
@@ -377,6 +391,7 @@ impl Resident {
                 path,
                 position,
                 edition,
+                crates,
                 limit,
             } => crate::lsp::rust_references(
                 self.session.workspace(),
@@ -384,7 +399,10 @@ impl Resident {
                 &crate_root,
                 &path,
                 position,
-                &edition,
+                crate::lsp::RustContext {
+                    edition: &edition,
+                    crates: &crates,
+                },
                 limit,
             ),
             Request::RustDefinition {
@@ -393,6 +411,7 @@ impl Resident {
                 path,
                 position,
                 edition,
+                crates,
                 limit,
             } => crate::lsp::rust_definition(
                 self.session.workspace(),
@@ -400,7 +419,10 @@ impl Resident {
                 &crate_root,
                 &path,
                 position,
-                &edition,
+                crate::lsp::RustContext {
+                    edition: &edition,
+                    crates: &crates,
+                },
                 limit,
             ),
             Request::RustCodeActions {
@@ -409,6 +431,7 @@ impl Resident {
                 path,
                 range,
                 edition,
+                crates,
                 limit,
             } => {
                 let mut report = crate::lsp::rust_code_actions(
@@ -417,7 +440,10 @@ impl Resident {
                     &crate_root,
                     &path,
                     range,
-                    &edition,
+                    crate::lsp::RustContext {
+                        edition: &edition,
+                        crates: &crates,
+                    },
                     limit,
                 )?;
                 let bytes = serde_json::to_vec(&report)?.len();
@@ -464,6 +490,7 @@ impl Resident {
                 path,
                 position,
                 edition,
+                crates,
                 max_bytes,
             } => crate::lsp::rust_hover(
                 self.session.workspace(),
@@ -471,7 +498,10 @@ impl Resident {
                 &crate_root,
                 &path,
                 position,
-                &edition,
+                crate::lsp::RustContext {
+                    edition: &edition,
+                    crates: &crates,
+                },
                 max_bytes,
             ),
             Request::RustImplementation {
@@ -480,6 +510,7 @@ impl Resident {
                 path,
                 position,
                 edition,
+                crates,
                 limit,
             } => crate::lsp::rust_implementation(
                 self.session.workspace(),
@@ -487,7 +518,10 @@ impl Resident {
                 &crate_root,
                 &path,
                 position,
-                &edition,
+                crate::lsp::RustContext {
+                    edition: &edition,
+                    crates: &crates,
+                },
                 limit,
             ),
             Request::RustSymbols {
@@ -495,13 +529,17 @@ impl Resident {
                 crate_root,
                 path,
                 edition,
+                crates,
                 limit,
             } => crate::lsp::rust_symbols(
                 self.session.workspace(),
                 &files,
                 &crate_root,
                 &path,
-                &edition,
+                crate::lsp::RustContext {
+                    edition: &edition,
+                    crates: &crates,
+                },
                 limit,
             ),
             Request::RustDiagnostics {
@@ -509,13 +547,17 @@ impl Resident {
                 crate_root,
                 path,
                 edition,
+                crates,
                 limit,
             } => crate::lsp::rust_diagnostics(
                 self.session.workspace(),
                 &files,
                 &crate_root,
                 &path,
-                &edition,
+                crate::lsp::RustContext {
+                    edition: &edition,
+                    crates: &crates,
+                },
                 limit,
             ),
             Request::SelectRustIdentifiers {

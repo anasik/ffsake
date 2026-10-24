@@ -368,6 +368,57 @@ def main():
             assert call({"handle": resource["action_set"]}, name="ffsake_release")["released"]
             assert (root / "main.rs").read_text() == source and not (root / "inline.rs").exists()
             assert not (root / "BUILD_SCRIPT_RAN").exists()
+            (root / "app").mkdir()
+            (root / "model").mkdir()
+            app = ('use account_model::value;\r\n'
+                   'fn main() { let _ = "🚀"; let amount = value(); let expected: u32 = amount; let _ = expected; }\r\n')
+            model = 'pub fn value() -> u32 { 7 }\r\n'
+            (root / "app/main.rs").write_bytes(app.encode())
+            (root / "model/lib.rs").write_bytes(model.encode())
+            project = {"files": ["app/main.rs", "model/lib.rs"], "crate_root": "app/main.rs",
+                       "path": "app/main.rs", "edition": "2024", "limit": 100}
+            absent_edge = call(project, name="ffsake_rust_diagnostics")
+            assert any(item["code"] == "E0432" for item in absent_edge["diagnostics"]), absent_edge
+            crates = [{"root": "app/main.rs", "dependencies": {"account_model": "model/lib.rs"}},
+                      {"root": "model/lib.rs", "edition": "2021"}]
+            project["crates"] = crates
+            checked = call(project, name="ffsake_rust_diagnostics")
+            assert checked["diagnostic_count"] == 0 and checked["analysis_mode"] == "explicit_project_snapshot", checked
+            assert checked["complete"] is False and set(checked["file_hashes"]) == set(project["files"])
+            references = call({**project, "path": "model/lib.rs", "position": {"line": 1, "column": 7}})
+            assert references["matches"] == 3 and {item["path"] for item in references["ranges"]} == set(project["files"])
+            definition = call({**project, "position": {"line": 2, "column": app.splitlines()[1].index("value")}},
+                              name="ffsake_rust_definition")
+            assert definition["matches"] == 1 and definition["ranges"][0]["path"] == "model/lib.rs"
+            amount = app.splitlines()[1].index("amount")
+            proposed = call({**project, "range": {"start": {"line": 2, "column": amount},
+                "end": {"line": 2, "column": amount + 6}}}, name="ffsake_rust_code_actions")
+            candidates = [(index, item) for index, item in enumerate(proposed["actions"])
+                          if item["title"] == "Insert explicit type `u32`"]
+            assert len(candidates) == 1, proposed
+            index, item = candidates[0]
+            select_action = {"action_set": proposed["action_set"], "action_index": index,
+                             "expected_title": item["title"], "expected_edits": item["text_edit_count"]}
+            staged = call(select_action, name="ffsake_preview_rust_action")
+            (root / "model/lib.rs").write_text('pub fn value() -> bool { true }\n')
+            fresh = call(project, name="ffsake_rust_diagnostics")
+            assert any(item["code"] == "E0308" for item in fresh["diagnostics"]), fresh
+            call(select_action, ok=False, name="ffsake_preview_rust_action")
+            call({"handle": staged["handle"]}, ok=False, name="ffsake_apply")
+            assert (root / "app/main.rs").read_bytes() == app.encode()
+            (root / "model/lib.rs").write_bytes(model.encode())
+            applied = call({"handle": staged["handle"]}, name="ffsake_apply")
+            assert (root / "app/main.rs").read_bytes() == app.replace("amount =", "amount: u32 =", 1).encode()
+            call({"transaction": applied["transaction"]}, name="ffsake_undo")
+            assert (root / "app/main.rs").read_bytes() == app.encode()
+            call({"handle": proposed["action_set"]}, name="ffsake_release")
+            for invalid in [crates + [crates[0]], [crates[1]],
+                            [{"root": "app/main.rs", "dependencies": {"model": "missing.rs"}}],
+                            [{"root": "app/main.rs", "dependencies": {"cycle": "app/main.rs"}}],
+                            [{"root": "app/main.rs", "command": "never execute"}],
+                            [{"root": "../outside.rs"}], crates * 9]:
+                call({**project, "crates": invalid}, ok=False, name="ffsake_rust_diagnostics")
+            assert not (root / "BUILD_SCRIPT_RAN").exists()
         finally:
             proc.stdin.close()
             try:
@@ -379,7 +430,7 @@ def main():
             proc.stderr.close()
         assert proc.returncode == 0, proc.returncode
     failure_checks(binary)
-    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, native diagnostics, code-action discovery/guarded previews/history, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
+    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, native diagnostics, code-action discovery/guarded previews/history, explicit crate graph, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
 
 
 if __name__ == "__main__":

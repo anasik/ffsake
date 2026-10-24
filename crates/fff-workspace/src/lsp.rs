@@ -3,6 +3,7 @@ use crate::Workspace;
 use crate::coordinates::{
     TextPosition, TextRange, Utf16Position, from_utf16_position, to_byte_offset, to_utf16_position,
 };
+pub use crate::lsp_project::{CrateSpec, RustContext};
 use crate::search::SearchRange;
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
@@ -190,15 +191,16 @@ fn uri(path: &Path) -> Result<String> {
 
 /// No mutation capability is returned. Results describe only this explicit
 /// dependency-free snapshot, not a complete Cargo build configuration.
-pub fn rust_references(
+pub fn rust_references<'a>(
     workspace: &Workspace,
     files: &[String],
     crate_root: &str,
     path: &str,
     position: TextPosition,
-    edition: &str,
+    context: impl Into<RustContext<'a>>,
     limit: usize,
 ) -> Result<Value> {
+    let context = context.into();
     navigate(
         workspace,
         Query {
@@ -206,7 +208,8 @@ pub fn rust_references(
             crate_root,
             path,
             position,
-            edition,
+            edition: context.edition,
+            crates: context.crates,
             limit,
         },
         Navigation::References,
@@ -214,15 +217,16 @@ pub fn rust_references(
 }
 
 /// Find definition locations under the same explicit snapshot contract.
-pub fn rust_definition(
+pub fn rust_definition<'a>(
     workspace: &Workspace,
     files: &[String],
     crate_root: &str,
     path: &str,
     position: TextPosition,
-    edition: &str,
+    context: impl Into<RustContext<'a>>,
     limit: usize,
 ) -> Result<Value> {
+    let context = context.into();
     navigate(
         workspace,
         Query {
@@ -230,7 +234,8 @@ pub fn rust_definition(
             crate_root,
             path,
             position,
-            edition,
+            edition: context.edition,
+            crates: context.crates,
             limit,
         },
         Navigation::Definition,
@@ -238,15 +243,16 @@ pub fn rust_definition(
 }
 
 /// Get bounded hover/type documentation under the same explicit snapshot contract.
-pub fn rust_hover(
+pub fn rust_hover<'a>(
     workspace: &Workspace,
     files: &[String],
     crate_root: &str,
     path: &str,
     position: TextPosition,
-    edition: &str,
+    context: impl Into<RustContext<'a>>,
     max_bytes: usize,
 ) -> Result<Value> {
+    let context = context.into();
     navigate(
         workspace,
         Query {
@@ -254,7 +260,8 @@ pub fn rust_hover(
             crate_root,
             path,
             position,
-            edition,
+            edition: context.edition,
+            crates: context.crates,
             limit: max_bytes,
         },
         Navigation::Hover,
@@ -262,15 +269,16 @@ pub fn rust_hover(
 }
 
 /// Find implementation locations under the same explicit snapshot contract.
-pub fn rust_implementation(
+pub fn rust_implementation<'a>(
     workspace: &Workspace,
     files: &[String],
     crate_root: &str,
     path: &str,
     position: TextPosition,
-    edition: &str,
+    context: impl Into<RustContext<'a>>,
     limit: usize,
 ) -> Result<Value> {
+    let context = context.into();
     navigate(
         workspace,
         Query {
@@ -278,7 +286,8 @@ pub fn rust_implementation(
             crate_root,
             path,
             position,
-            edition,
+            edition: context.edition,
+            crates: context.crates,
             limit,
         },
         Navigation::Implementation,
@@ -286,15 +295,16 @@ pub fn rust_implementation(
 }
 
 /// Discover code actions without creating any mutation capability.
-pub fn rust_code_actions(
+pub fn rust_code_actions<'a>(
     workspace: &Workspace,
     files: &[String],
     crate_root: &str,
     path: &str,
     range: TextRange,
-    edition: &str,
+    context: impl Into<RustContext<'a>>,
     limit: usize,
 ) -> Result<Value> {
+    let context = context.into();
     navigate(
         workspace,
         Query {
@@ -302,7 +312,8 @@ pub fn rust_code_actions(
             crate_root,
             path,
             position: range.start,
-            edition,
+            edition: context.edition,
+            crates: context.crates,
             limit,
         },
         Navigation::CodeActions { end: range.end },
@@ -310,14 +321,15 @@ pub fn rust_code_actions(
 }
 
 /// Return native primary diagnostics, not a compiler/build result.
-pub fn rust_diagnostics(
+pub fn rust_diagnostics<'a>(
     workspace: &Workspace,
     files: &[String],
     crate_root: &str,
     path: &str,
-    edition: &str,
+    context: impl Into<RustContext<'a>>,
     limit: usize,
 ) -> Result<Value> {
+    let context = context.into();
     navigate(
         workspace,
         Query {
@@ -325,7 +337,8 @@ pub fn rust_diagnostics(
             crate_root,
             path,
             position: TextPosition { line: 1, column: 0 },
-            edition,
+            edition: context.edition,
+            crates: context.crates,
             limit,
         },
         Navigation::Diagnostics,
@@ -333,14 +346,15 @@ pub fn rust_diagnostics(
 }
 
 /// Return a bounded hierarchical outline for one file in the explicit snapshot.
-pub fn rust_symbols(
+pub fn rust_symbols<'a>(
     workspace: &Workspace,
     files: &[String],
     crate_root: &str,
     path: &str,
-    edition: &str,
+    context: impl Into<RustContext<'a>>,
     limit: usize,
 ) -> Result<Value> {
+    let context = context.into();
     navigate(
         workspace,
         Query {
@@ -348,7 +362,8 @@ pub fn rust_symbols(
             crate_root,
             path,
             position: TextPosition { line: 1, column: 0 },
-            edition,
+            edition: context.edition,
+            crates: context.crates,
             limit,
         },
         Navigation::Symbols,
@@ -372,6 +387,7 @@ struct Query<'a> {
     path: &'a str,
     position: TextPosition,
     edition: &'a str,
+    crates: &'a [CrateSpec],
     limit: usize,
 }
 
@@ -382,6 +398,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
         path,
         position,
         edition,
+        crates,
         limit,
     } = query;
     let maximum = if matches!(kind, Navigation::Hover) {
@@ -441,10 +458,9 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     } else {
         None
     };
+    let graph = crate::lsp_project::graph(&root, &names, crate_root, edition, crates)?;
     let options = json!({
-        "linkedProjects":[{"crates":[{"root_module":root.join(&names[crate_root]),"edition":edition,
-            "deps":[],"cfg":[],"env":{},"is_workspace_member":true,
-            "source":{"include_dirs":[root],"exclude_dirs":[]}}]}],
+        "linkedProjects":[{"crates":graph}],
         "cargo":{"buildScripts":{"enable":false},"noDeps":true,"sysroot":null},
         "procMacro":{"enable":false},"checkOnSave":false,
         "diagnostics":{"enable":true,"experimental":{"enable":true}},"cachePriming":{"enable":false},"numThreads":2
@@ -545,11 +561,22 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     }
     client.remaining()?;
     response["file_hashes"] = json!(hashes);
-    response["analysis_mode"] = json!("explicit_crate_snapshot");
+    response["analysis_mode"] = json!(if crates.is_empty() {
+        "explicit_crate_snapshot"
+    } else {
+        "explicit_project_snapshot"
+    });
+    if !crates.is_empty() {
+        response["project_crates"] = json!(crates);
+    }
     response["query"] = json!(query_kind);
     response["complete"] = json!(false);
     response["limitations"] = json!([
-        "No Cargo dependencies, sysroot, build scripts, procedural macros or configured features are loaded.",
+        if crates.is_empty() {
+            "No Cargo dependencies, sysroot, build scripts, procedural macros or configured features are loaded."
+        } else {
+            "Only explicit local crate edges are loaded. No Cargo discovery, unspecified dependencies, sysroot, build scripts, procedural macros or configured features are loaded."
+        },
         "Results are read-only navigation data, not a semantic rename capability."
     ]);
     if matches!(kind, Navigation::Diagnostics) {
