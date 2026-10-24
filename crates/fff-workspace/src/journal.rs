@@ -1,3 +1,4 @@
+pub use crate::journal_parents::CreatedDirectory;
 pub use crate::tree_move::TreeMove as TransactionTreeMove;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -124,6 +125,8 @@ pub struct TransactionManifest {
     pub state: TransactionState,
     pub label: Option<String>,
     pub files: Vec<TransactionFile>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub created_directories: Vec<CreatedDirectory>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub directory: Option<TransactionDirectory>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -188,6 +191,7 @@ impl Journal {
     ) -> Result<TransactionManifest> {
         let mut manifest = self.prepare(label, changes, destination_modes)?;
         self.verify_side(&manifest, SnapshotSide::Before)?;
+        crate::journal_parents::create(self, &mut manifest.created_directories, false)?;
 
         let mut applied = Vec::new();
         for index in 0..manifest.files.len() {
@@ -239,6 +243,7 @@ impl Journal {
             state: TransactionState::Prepared,
             label: Some("empty directory operation".into()),
             files: vec![],
+            created_directories: vec![],
             directory: Some(directory),
             tree_move: None,
             tree_archive: None,
@@ -375,6 +380,7 @@ impl Journal {
             state: TransactionState::Prepared,
             label: Some("directory move".into()),
             files: vec![],
+            created_directories: vec![],
             directory: None,
             tree_move: Some(movement),
             tree_archive: None,
@@ -433,6 +439,7 @@ impl Journal {
             state: TransactionState::Prepared,
             label: Some("directory archive".into()),
             files: vec![],
+            created_directories: vec![],
             directory: None,
             tree_move: None,
             tree_archive: Some(archive),
@@ -453,6 +460,7 @@ impl Journal {
             state: TransactionState::Prepared,
             label: Some("directory copy".into()),
             files: vec![],
+            created_directories: vec![],
             directory: None,
             tree_move: None,
             tree_archive: Some(TransactionTreeArchive {
@@ -591,6 +599,7 @@ impl Journal {
             state: TransactionState::Applied,
             label,
             files,
+            created_directories: vec![],
             directory: None,
             tree_move: None,
             tree_archive: None,
@@ -605,6 +614,8 @@ impl Journal {
         changes: &[JournalChange],
         destination_modes: &BTreeMap<String, u32>,
     ) -> Result<TransactionManifest> {
+        let created_directories =
+            crate::journal_parents::collect(self, &self.workspace_root, changes)?;
         let id = transaction_id();
         let tx_root = self.journal_root.join(&id);
         let before_root = tx_root.join("before");
@@ -644,6 +655,7 @@ impl Journal {
             state: TransactionState::Prepared,
             label,
             files,
+            created_directories,
             directory: None,
             tree_move: None,
             tree_archive: None,
@@ -703,6 +715,21 @@ impl Journal {
     }
 
     fn verify_side(&self, manifest: &TransactionManifest, side: SnapshotSide) -> Result<()> {
+        if !manifest.created_directories.is_empty()
+            && (manifest.directory.is_some()
+                || manifest.tree_move.is_some()
+                || manifest.tree_archive.is_some())
+        {
+            return Err(JournalError::InvalidPath(
+                "mixed implicit-parent transaction".into(),
+            ));
+        }
+        crate::journal_parents::verify(
+            self,
+            &manifest.created_directories,
+            &manifest.files,
+            matches!(side, SnapshotSide::After),
+        )?;
         if manifest.tree_archive.is_some() {
             return self.verify_tree_archive(manifest, matches!(side, SnapshotSide::After));
         }
@@ -786,12 +813,20 @@ impl Journal {
                 }
             }
         }
+        if matches!(side, SnapshotSide::After) {
+            crate::journal_parents::create(self, &mut manifest.created_directories, false)?;
+        }
         let mut applied = Vec::new();
         for (file, rollback_file) in manifest.files.iter().zip(rollback_files) {
             if let Err(error) = self.apply_one(&manifest, file, side) {
                 return Err(self.rollback(&manifest, &applied, restore, error));
             }
             applied.push(rollback_file);
+        }
+        if matches!(side, SnapshotSide::Before)
+            && let Err(error) = crate::journal_parents::remove(self, &manifest.created_directories)
+        {
+            return Err(self.rollback(&manifest, &applied, restore, error));
         }
         manifest.state = state;
         if let Err(error) = self.write_manifest(&manifest) {
@@ -807,15 +842,29 @@ impl Journal {
         side: SnapshotSide,
         original: JournalError,
     ) -> JournalError {
-        let failures = applied
-            .iter()
-            .rev()
-            .filter_map(|file| {
-                self.apply_one(manifest, file, side)
-                    .err()
-                    .map(|error| format!("{}: {error}", file.path))
-            })
-            .collect::<Vec<_>>();
+        let mut failures = Vec::new();
+        if matches!(side, SnapshotSide::After) {
+            let mut directories = manifest.created_directories.clone();
+            if let Err(error) = crate::journal_parents::create(self, &mut directories, true) {
+                failures.push(error.to_string());
+            }
+        }
+        failures.extend(
+            applied
+                .iter()
+                .rev()
+                .filter_map(|file| {
+                    self.apply_one(manifest, file, side)
+                        .err()
+                        .map(|error| format!("{}: {error}", file.path))
+                })
+                .collect::<Vec<_>>(),
+        );
+        if matches!(side, SnapshotSide::Before)
+            && let Err(error) = crate::journal_parents::remove(self, &manifest.created_directories)
+        {
+            failures.push(error.to_string());
+        }
         if failures.is_empty() {
             original
         } else {
@@ -1663,6 +1712,171 @@ mod tests {
 #[cfg(test)]
 mod directory_tests {
     use super::*;
+
+    #[test]
+    fn implicit_parent_history_rejects_extra_content_and_preserves_existing_parents() {
+        let root = tempfile::tempdir().unwrap();
+        fs::create_dir(root.path().join("existing")).unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        let transaction = journal
+            .commit(
+                None,
+                &[
+                    ("new/nested/a".into(), Some(b"a".to_vec())),
+                    ("new/nested/b".into(), Some(b"b".to_vec())),
+                    ("existing/c".into(), Some(b"c".to_vec())),
+                ],
+            )
+            .unwrap();
+        assert_eq!(transaction.created_directories.len(), 2);
+        fs::write(root.path().join("new/keep"), b"keep").unwrap();
+        assert!(journal.undo(&transaction.id).is_err());
+        assert_eq!(fs::read(root.path().join("new/nested/a")).unwrap(), b"a");
+        assert_eq!(fs::read(root.path().join("new/keep")).unwrap(), b"keep");
+        fs::remove_file(root.path().join("new/keep")).unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        journal.undo(&transaction.id).unwrap();
+        assert!(!root.path().join("new").exists());
+        assert!(root.path().join("existing").is_dir());
+        journal.redo(&transaction.id).unwrap();
+        assert_eq!(fs::read(root.path().join("new/nested/b")).unwrap(), b"b");
+    }
+
+    #[test]
+    fn failed_file_commit_and_redo_remove_owned_parents() {
+        let root = tempfile::tempdir().unwrap();
+        fs::write(root.path().join("blocked"), b"before").unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        let changes = [
+            ("new/nested/a".into(), Some(b"a".to_vec())),
+            ("blocked".into(), Some(b"after".to_vec())),
+        ];
+        let obstruction = root.path().join(format!(
+            ".blocked.ffsake-journal-tmp-{}",
+            std::process::id()
+        ));
+        fs::create_dir(&obstruction).unwrap();
+        assert!(journal.commit(None, &changes).is_err());
+        assert!(!root.path().join("new").exists());
+        assert_eq!(fs::read(root.path().join("blocked")).unwrap(), b"before");
+        fs::remove_dir(&obstruction).unwrap();
+        let transaction = journal.commit(None, &changes).unwrap();
+        journal.undo(&transaction.id).unwrap();
+        fs::create_dir(&obstruction).unwrap();
+        assert!(journal.redo(&transaction.id).is_err());
+        assert!(!root.path().join("new").exists());
+        assert_eq!(
+            journal.load(&transaction.id).unwrap().state,
+            TransactionState::Undone
+        );
+        fs::remove_dir(&obstruction).unwrap();
+        journal.redo(&transaction.id).unwrap();
+        assert_eq!(fs::read(root.path().join("new/nested/a")).unwrap(), b"a");
+    }
+
+    #[test]
+    fn parent_removal_and_manifest_failures_restore_owned_structure() {
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        let transaction = journal
+            .commit(None, &[("new/nested/a".into(), Some(b"a".to_vec()))])
+            .unwrap();
+        fs::remove_file(root.path().join("new/nested/a")).unwrap();
+        fs::write(root.path().join("new/late"), b"keep").unwrap();
+        let error =
+            crate::journal_parents::remove(&journal, &transaction.created_directories).unwrap_err();
+        assert!(!root.path().join("new/nested").exists());
+        let recovered =
+            journal.rollback(&transaction, &transaction.files, SnapshotSide::After, error);
+        assert!(!matches!(recovered, JournalError::RollbackFailed { .. }));
+        assert_eq!(fs::read(root.path().join("new/nested/a")).unwrap(), b"a");
+        assert_eq!(fs::read(root.path().join("new/late")).unwrap(), b"keep");
+        fs::remove_file(root.path().join("new/late")).unwrap();
+        let path = journal
+            .journal_root
+            .join(&transaction.id)
+            .join("manifest.json");
+        fs::remove_file(&path).unwrap();
+        fs::create_dir(&path).unwrap();
+        assert!(
+            journal
+                .transition(transaction, SnapshotSide::Before, TransactionState::Undone)
+                .is_err()
+        );
+        assert_eq!(fs::read(root.path().join("new/nested/a")).unwrap(), b"a");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn implicit_parent_modes_reject_changes_and_survive_redo() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        let transaction = journal
+            .commit(None, &[("new/nested/a".into(), Some(b"a".to_vec()))])
+            .unwrap();
+        let original = transaction.created_directories[0].unix_mode.unwrap();
+        fs::set_permissions(
+            root.path().join("new"),
+            fs::Permissions::from_mode(original ^ 0o040),
+        )
+        .unwrap();
+        assert!(journal.undo(&transaction.id).is_err());
+        assert_eq!(fs::read(root.path().join("new/nested/a")).unwrap(), b"a");
+        fs::set_permissions(
+            root.path().join("new"),
+            fs::Permissions::from_mode(original),
+        )
+        .unwrap();
+        journal.undo(&transaction.id).unwrap();
+        journal.redo(&transaction.id).unwrap();
+        for directory in &transaction.created_directories {
+            assert_eq!(
+                unix_mode(&root.path().join(&directory.path)).unwrap(),
+                directory.unix_mode
+            );
+        }
+    }
+
+    #[test]
+    fn implicit_parent_metadata_cannot_target_unrelated_directory() {
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        fs::create_dir(root.path().join("unrelated")).unwrap();
+        let mut transaction = journal
+            .commit(None, &[("new/a".into(), Some(b"a".to_vec()))])
+            .unwrap();
+        transaction.created_directories.push(CreatedDirectory {
+            path: "unrelated".into(),
+            unix_mode: unix_mode(&root.path().join("unrelated")).unwrap(),
+        });
+        journal.write_manifest(&transaction).unwrap();
+        assert!(journal.undo(&transaction.id).is_err());
+        assert!(root.path().join("unrelated").is_dir());
+        assert_eq!(fs::read(root.path().join("new/a")).unwrap(), b"a");
+    }
+
+    #[test]
+    fn legacy_history_without_parent_metadata_keeps_old_behavior() {
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        let transaction = journal
+            .commit(None, &[("new/a".into(), Some(b"a".to_vec()))])
+            .unwrap();
+        let path = journal
+            .journal_root
+            .join(&transaction.id)
+            .join("manifest.json");
+        let mut legacy = serde_json::to_value(&transaction).unwrap();
+        legacy
+            .as_object_mut()
+            .unwrap()
+            .remove("created_directories");
+        fs::write(path, serde_json::to_vec(&legacy).unwrap()).unwrap();
+        journal.undo(&transaction.id).unwrap();
+        assert!(root.path().join("new").is_dir());
+        assert!(!root.path().join("new/a").exists());
+    }
 
     #[test]
     fn empty_directory_history_survives_reopening_and_rejects_added_contents() {

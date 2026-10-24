@@ -10,6 +10,7 @@ pub mod edits;
 mod file_ops;
 pub use file_ops::FileOperation;
 pub mod journal;
+mod journal_parents;
 pub mod lsp;
 mod lsp_actions;
 mod lsp_diagnostics;

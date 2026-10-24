@@ -176,3 +176,10 @@ limit each input/output file to 4 MiB and retained content/metadata to 16 MiB pe
 batch and across cached file-operation plans. Apply or release unused handles to
 free capacity. These are payload budgets, not a bound on total process memory;
 transform previews and native Rust proposal caches have separate contracts.
+
+New file transactions record parent directories they actually create (up to 1000
+per transaction). Undo removes those directories only after verifying their
+contents and ordinary permissions; unrelated added files or directories reject
+before any file changes. Pre-existing parents are preserved, and failed writes
+restore or remove owned parents along with file rollback. Legacy journal entries
+without parent metadata retain their prior file-only history behavior.

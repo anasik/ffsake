@@ -145,6 +145,17 @@ def main():
             assert (root / "copy-source/blob").read_bytes() == b"independent source"
             if os.name == "posix":
                 assert (root / "copy-result/blob").stat().st_mode & 0o777 == 0o751
+            automatic = call("ffsake_preview_create", {"path": "automatic/src/main.rs", "content": "fn main() {}\n"})
+            automatic_id = call("ffsake_apply", {"handle": automatic["handle"]})["transaction"]
+            (root / "automatic/extra").write_text("keep")
+            call("ffsake_undo", {"transaction": automatic_id}, False)
+            assert (root / "automatic/src/main.rs").read_text() == "fn main() {}\n"
+            assert (root / "automatic/extra").read_text() == "keep"
+            (root / "automatic/extra").unlink()
+            call("ffsake_undo", {"transaction": automatic_id})
+            assert not (root / "automatic").exists()
+            call("ffsake_redo", {"transaction": automatic_id})
+            assert (root / "automatic/src/main.rs").read_text() == "fn main() {}\n"
             for path in (".", "../outside", ".ffsake/hidden", "missing/child"):
                 preview("create_directory", path, False)
             pending = preview("create_directory", "collision")
@@ -159,7 +170,7 @@ def main():
             proc.stdin.close()
             proc.wait(timeout=10)
             assert proc.returncode == 0, proc.stderr.read()
-        print(json.dumps({"ok": True, "directory_history": True, "tree_move_history": True, "tree_archive_history": True, "independent_copy_history": True, "stale_content_preserved": True,
+        print(json.dumps({"ok": True, "directory_history": True, "tree_move_history": True, "tree_archive_history": True, "independent_copy_history": True, "implicit_parent_history": True, "stale_content_preserved": True,
                           "recursive_removal": False, "core_profile": True}))
 
 
