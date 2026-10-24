@@ -295,3 +295,17 @@ The `--verify-rename` mode adds independent `cargo test --locked --offline --wor
 Selected diagnostics at `59c0db9` retained all 24 Rust files as context and requested reports for `coordinates.rs` and `edits.rs`. Batch and individual queries returned identical 65 diagnostics / 3,579 text bytes. Five local iterations alternated request order: median batch time was 0.480 s for one request, versus 0.954 s combined for two individual requests. `--measure-diagnostics` reproduces the five-iteration comparison; ordinary CI checks one iteration without a speed threshold. This measures fresh-analyzer request overhead in this explicit, dependency-incomplete snapshot, not agent speed, diagnostic accuracy or general performance. The many native diagnostics do not contradict the independently passing Cargo baseline, which has different dependency context.
 
 The opt-in MCP core profile retains eighteen generic file tools and rejects the twelve Rust-specific tools. A serialized tool-definition audit measured 34,866 UTF-8 bytes for all thirty tools versus 11,691 bytes for core (23,175 bytes removed). The full catalog remains the default. This is a context-size observation only; no token count, billed-cost reduction or agent-speed benefit has been measured.
+
+
+## Optional core profile in the shared agent harness
+
+`--tool-profile core` selects the eighteen generic file tools for FFSAKE runs; omitted/default `all` preserves the existing thirty-tool catalog and guidance. Baseline launches and task requirements are unchanged. Profile-aware launch configuration and guidance apply consistently to supported runners; OpenCode coverage here is mocked configuration testing, not a restart of paused model experiments.
+
+```sh
+python3 scripts/agent_benchmark_suite.py --agents claude,codex --tool-profile core --preflight-only
+python3 scripts/agent_benchmark_suite.py --agents codex --tasks maintenance --modes ffsake --tool-profile core --repetitions 1 --timeout 900
+```
+
+Core preflight launches only the local MCP server in a disposable workspace and checks its exact catalog before any model call. The first command passed locally with eighteen tools / 11,691 serialized catalog bytes and zero model calls. It checks CLI/configuration readiness, not authentication, future model success or host isolation. The second command is an example of a targeted adoption diagnostic; it has not yet supplied performance evidence.
+
+Schema version 3 reports record the requested profile, tag each FFSAKE result and keep aggregate groups separate by profile. Baseline rows have a null profile; untagged legacy FFSAKE rows are grouped as `all`. An observed call outside the selected core allowlist invalidates comparison even if the task verifier passes. Native Codex tools remain available, so trace auditing still does not establish enforced filesystem or shell isolation. The core server uses an explicit allowlist so future tool additions do not silently expand this profile.

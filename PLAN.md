@@ -174,7 +174,9 @@ Catalog audit measured 34,866 UTF-8 bytes for all thirty tools versus 11,691 for
 
 Parallel validation exposed a timestamp-only fixture collision: concurrent transform tests shared inputs and observed one match instead of three. Remaining timestamp-only helpers now atomically reserve temporary directories. A 32-worker isolation regression and twenty complete Rust suite repetitions at 32 test threads pass; production transaction guards are unchanged.
 
-Next: thread the optional tool profile through the shared agent benchmark harness with profile-aware guidance, launch configuration and report metadata, preserving default all behavior and the user’s local benchmark changes. Verify configuration/preflight behavior without restarting paused OpenCode experiments or claiming performance before measurement. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+The shared benchmark harness now accepts --tool-profile all|core, with matching guidance, launch configuration, trace auditing and schema-version-3 result/aggregate metadata. Default all guidance remains byte-identical; baseline configuration is unchanged. Seventy Python tests and the real core catalog preflight pass without model calls. The server core allowlist explicitly excludes future tools. User-local benchmark changes remain untouched, and OpenCode checks are mocked only.
+
+Next: complete exact-commit CI publication, then use a targeted Codex maintenance run to determine whether the core catalog configuration is adopted and produces a valid trace. This is a new profile-adoption question; do not infer speed/cost benefits from catalog bytes or a single run. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

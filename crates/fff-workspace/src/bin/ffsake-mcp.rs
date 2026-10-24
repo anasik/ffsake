@@ -13,11 +13,27 @@ impl ToolProfile {
     fn allows(self, name: &str) -> bool {
         match self {
             Self::All => true,
-            Self::Core => {
-                !name.starts_with("ffsake_rust_")
-                    && !name.starts_with("ffsake_preview_rust_")
-                    && name != "ffsake_select_rust_identifiers"
-            }
+            Self::Core => matches!(
+                name,
+                "ffsake_read"
+                    | "ffsake_read_files"
+                    | "ffsake_list"
+                    | "ffsake_target"
+                    | "ffsake_search"
+                    | "ffsake_preview_matches"
+                    | "ffsake_preview_edit"
+                    | "ffsake_preview_rename"
+                    | "ffsake_apply"
+                    | "ffsake_undo"
+                    | "ffsake_redo"
+                    | "ffsake_release"
+                    | "ffsake_refresh"
+                    | "ffsake_preview_files"
+                    | "ffsake_preview_create"
+                    | "ffsake_preview_copy"
+                    | "ffsake_preview_move"
+                    | "ffsake_preview_delete"
+            ),
         }
     }
 }
@@ -159,9 +175,6 @@ fn handle_message(runtime: &mut Resident, profile: ToolProfile, message: Value) 
 }
 
 fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments: Value) -> Value {
-    if !profile.allows(name) {
-        return json!({"ok":false,"error":format!("tool disabled by core profile: {name}")});
-    }
     let op = match name {
         "ffsake_read" => "read",
         "ffsake_read_files" => "read_files",
@@ -195,6 +208,10 @@ fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments
         "ffsake_refresh" => "refresh",
         _ => return json!({"ok":false,"error":format!("unknown tool: {name}")}),
     };
+
+    if !profile.allows(name) {
+        return json!({"ok":false,"error":format!("tool disabled by core profile: {name}")});
+    }
 
     let mut request = match arguments {
         Value::Object(map) => Value::Object(map),
@@ -577,4 +594,16 @@ fn rust_workspace_diagnostics_schema() -> Value {
         .unwrap()
         .retain(|name| name != "path");
     schema
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ToolProfile;
+
+    #[test]
+    fn core_profile_does_not_implicitly_enable_future_tools() {
+        assert!(ToolProfile::Core.allows("ffsake_read_files"));
+        assert!(!ToolProfile::Core.allows("ffsake_future_execution"));
+        assert!(!ToolProfile::Core.allows("ffsake_rust_hover"));
+    }
 }

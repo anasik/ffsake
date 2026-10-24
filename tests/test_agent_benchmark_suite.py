@@ -375,7 +375,7 @@ class ModeSelectionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td, contextlib.redirect_stdout(io.StringIO()):
             with patch.object(sys, "argv", ["suite", "--agents", "codex", "--tasks", "micro", "--modes", "ffsake", "--repetitions", "1"]), patch.object(suite, "preflight", return_value={"ok": True}), patch.object(suite, "FFSAKE_MCP", Path(__file__)), patch.object(suite, "RESULT_DIR", Path(td)), patch.object(suite, "one", return_value=result) as run:
                 suite.main()
-            run.assert_called_once_with("codex", "micro", "ffsake", 900, None)
+            run.assert_called_once_with("codex", "micro", "ffsake", 900, None, "all")
             report = json.loads(next(Path(td).glob("*.json")).read_text())
             self.assertTrue(report["complete"])
             self.assertEqual(report["modes"], ["ffsake"])
@@ -829,6 +829,138 @@ raise SystemExit(7)
                                         capture_output=True, text=True)
                 self.assertEqual(result.returncode, 2)
                 self.assertEqual(result.stdout, "")
+
+
+
+
+class ToolProfileTests(unittest.TestCase):
+    def test_core_guidance_omits_disabled_tools_and_default_stays_full(self):
+        self.assertEqual(suite.ffsake_prompt("task"), suite.ffsake_prompt("task", "all"))
+        core = suite.ffsake_prompt("task", "core")
+        self.assertIn("ffsake_read_files", core)
+        self.assertIn("ffsake_preview_files", core)
+        for tool in set(suite.FFSAKE_TOOLS) - set(suite.FFSAKE_CORE_TOOLS):
+            self.assertNotIn(tool, core)
+        self.assertLess(len(core), len(suite.ffsake_prompt("task")))
+        with self.assertRaises(ValueError):
+            suite.ffsake_prompt("task", "unknown")
+
+    def test_core_codex_config_scopes_catalog_and_approval_to_core(self):
+        import tomllib
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td, patch.object(suite, "run_process", return_value={}) as run:
+            root = Path(td)
+            suite.codex_run(root, "task", True, 1, "core")
+            server = tomllib.loads((root / ".codex/config.toml").read_text())["mcp_servers"]["ffsake"]
+            self.assertEqual(server["args"], [str(root), "--profile", "core"])
+            self.assertEqual(set(server["enabled_tools"]), set(suite.FFSAKE_CORE_TOOLS))
+            self.assertEqual(server["tools"], {name: {"approval_mode": "approve"} for name in suite.FFSAKE_CORE_TOOLS})
+            self.assertEqual(run.call_args.args[0][-1], suite.ffsake_prompt("task", "core"))
+
+    def test_claude_and_opencode_core_launch_configuration(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td, patch.object(suite, "run_process", return_value={}) as run:
+            root = Path(td)
+            suite.claude_run(root, "task", True, 1, "core")
+            server = json.loads((root / ".ffsake-claude-mcp.json").read_text())["mcpServers"]["ffsake"]
+            self.assertEqual(server["args"], [str(root), "--profile", "core"])
+            command = run.call_args.args[0]
+            self.assertEqual(command[command.index("-p") + 1], suite.ffsake_prompt("task", "core"))
+            self.assertEqual(command[command.index("--tools") + 1], "")
+            config = suite.configure_opencode(root, True, "core")
+            self.assertEqual(config["mcp"]["ffsake"]["command"], [str(suite.FFSAKE_MCP), str(root), "--profile", "core"])
+            self.assertEqual(suite.configure_opencode(root, False, "core"), suite.configure_opencode(root, False))
+
+    def test_profile_does_not_change_baseline_commands(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td, patch.object(suite, "run_process", return_value={}) as run:
+            for runner in (suite.claude_run, suite.codex_run):
+                runner(Path(td), "task", False, 1)
+                default = run.call_args.args[0]
+                runner(Path(td), "task", False, 1, "core")
+                self.assertEqual(run.call_args.args[0], default)
+
+    def test_core_preflight_reads_only_catalog_and_rejects_mismatch(self):
+        from unittest.mock import patch
+        from subprocess import CompletedProcess
+        response = {"jsonrpc": "2.0", "id": 1, "result": {"tools": [{"name": name} for name in suite.FFSAKE_CORE_TOOLS]}}
+        with patch.object(suite, "FFSAKE_MCP", Path(__file__)), patch.object(suite.subprocess, "run",
+                return_value=CompletedProcess([], 0, json.dumps(response), "")) as run:
+            checked = suite.mcp_profile_preflight("core")
+            self.assertTrue(checked["ok"])
+            self.assertEqual(checked["tool_count"], len(suite.FFSAKE_CORE_TOOLS))
+            self.assertEqual(checked["model_calls"], 0)
+            self.assertEqual(json.loads(run.call_args.kwargs["input"])["method"], "tools/list")
+            self.assertEqual(run.call_args.args[0][-2:], ["--profile", "core"])
+            response["result"]["tools"].append({"name": "ffsake_rust_hover"})
+            run.return_value = CompletedProcess([], 0, json.dumps(response), "")
+            self.assertEqual(suite.mcp_profile_preflight("core")["error"], "mcp_catalog_mismatch")
+            run.return_value = CompletedProcess([], 2, "", "usage")
+            self.assertEqual(suite.mcp_profile_preflight("core")["error"], "mcp_launch_failed")
+
+    def test_core_trace_audit_recognizes_aliases_and_disabled_attempts(self):
+        names = ["mcp__ffsake__read", "mcp__ffsake__ffsake_read", "ffsake_ffsake_read", "ffsake.read"]
+        self.assertEqual(suite.permission_audit("codex", True, {"tool_names": names}, "core")["observed_profile_violations"], [])
+        names.append("mcp__ffsake__ffsake_rust_hover")
+        audit = suite.permission_audit("codex", True, {"tool_names": names}, "core")
+        self.assertEqual(audit["observed_profile_violations"], [names[-1]])
+        self.assertEqual(audit["trace_policy_status"], "violation")
+        self.assertFalse(audit["permission_isolation_verified"])
+
+    def test_results_record_profile_and_invalidate_disabled_attempts(self):
+        from unittest.mock import patch
+        event = {"type": "item.completed", "item": {"id": "1", "type": "mcp_tool_call",
+                 "server": "ffsake", "tool": "ffsake_rust_hover"}}
+        output = {"stdout": json.dumps(event), "stderr": "", "exit_code": 0, "elapsed_ms": 1, "timed_out": False}
+        with patch.object(suite, "codex_run", return_value=output):
+            result = suite.one("codex", "micro", "ffsake", 1, None, "core")
+        self.assertEqual(result["ffsake_tool_profile"], "core")
+        self.assertIn("tool_profile_violation", result["comparison_invalid_reasons"])
+        self.assertFalse(result["comparison_valid"])
+
+    def test_aggregate_keeps_profiles_separate_and_defaults_legacy_to_all(self):
+        result = {"agent": "codex", "task": "micro", "mode": "ffsake", "comparison_valid": True,
+                  "correct": True, "elapsed_ms": 100, "exit_code": 0, "timed_out": False,
+                  "trace": {"tool_calls": 1, "ffsake_tool_calls": 1, "shell_tool_calls": 0,
+                            "output_tokens": 1, "total_cost_usd": None}}
+        rows = suite.aggregate([result, {**result, "ffsake_tool_profile": "core", "elapsed_ms": 200}])
+        self.assertEqual({row["ffsake_tool_profile"]: row["median_elapsed_ms"] for row in rows}, {"all": 100, "core": 200})
+
+    def test_core_cli_forwards_profile_and_saves_it_before_model_runs(self):
+        import contextlib
+        import io
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td, contextlib.redirect_stdout(io.StringIO()):
+            with patch.object(sys, "argv", ["suite", "--agents", "codex", "--tool-profile", "core", "--preflight-only"]), \
+                 patch.object(suite, "preflight", return_value={"ok": True, "model_calls": 0}) as check, \
+                 patch.object(suite, "RESULT_DIR", Path(td)), patch.object(suite, "one") as run:
+                suite.main()
+            check.assert_called_once_with(["codex"], "core")
+            run.assert_not_called()
+            report = json.loads(next(Path(td).glob("*.json")).read_text())
+            self.assertEqual(report["ffsake_tool_profile"], "core")
+            self.assertFalse(report["complete"])
+
+    def test_core_run_records_profile_in_report_and_aggregate(self):
+        import contextlib
+        import io
+        from unittest.mock import patch
+        result = {"agent": "codex", "task": "micro", "mode": "ffsake", "ffsake_tool_profile": "core",
+                  "comparison_valid": True, "correct": True, "exit_code": 0, "timed_out": False, "elapsed_ms": 1,
+                  "trace": {"tool_calls": 1, "ffsake_tool_calls": 1, "shell_tool_calls": 0,
+                            "output_tokens": 1, "total_cost_usd": None}}
+        arguments = ["suite", "--agents", "codex", "--tasks", "micro", "--modes", "ffsake",
+                     "--tool-profile", "core", "--repetitions", "1"]
+        with tempfile.TemporaryDirectory() as td, contextlib.redirect_stdout(io.StringIO()):
+            with patch.object(sys, "argv", arguments), patch.object(suite, "preflight", return_value={"ok": True}), \
+                 patch.object(suite, "FFSAKE_MCP", Path(__file__)), patch.object(suite, "RESULT_DIR", Path(td)), \
+                 patch.object(suite, "one", return_value=result) as run:
+                suite.main()
+            run.assert_called_once_with("codex", "micro", "ffsake", 900, None, "core")
+            report = json.loads(next(Path(td).glob("*.json")).read_text())
+            self.assertEqual(report["schema_version"], 3)
+            self.assertEqual(report["ffsake_tool_profile"], "core")
+            self.assertEqual(report["aggregate"][0]["ffsake_tool_profile"], "core")
 
 
 if __name__ == "__main__":
