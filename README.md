@@ -156,6 +156,8 @@ The launcher's CLI flags follow the [Claude CLI reference](https://code.claude.c
 
 Rust references, definitions, implementations, combined symbol inspection, document outlines, hover/type information, native diagnostics and code-action discovery are available through `ffsake_rust_references`, `ffsake_rust_definition`, `ffsake_rust_inspect`, `ffsake_rust_implementation`, `ffsake_rust_symbols`, `ffsake_rust_hover`, `ffsake_rust_diagnostics` and `ffsake_rust_code_actions` with an explicit source-file snapshot. Install the optional backend with `rustup component add rust-analyzer`. These analyses accept optional explicit local crate dependencies, features and custom cfg flags but omit Cargo discovery, unspecified dependencies, sysroot and implicit feature expansion. Supported code actions can be staged separately with `ffsake_preview_rust_action`, then applied through the journal; syntax checking does not establish semantic correctness. See [the CLI contracts](docs/CLI.md).
 
+The opt-in benchmark task `--tasks layout` checks a runnable package move, template-tree copy, retired-tree removal, empty-directory creation and a README edit. It verifies binary/CRLF bytes, exact directories, ordinary permissions and runtime behavior. The default benchmark task set is unchanged. `python3 scripts/layout_smoke.py target/debug/ffsake-mcp` exercises the same task through the core MCP profile without model calls.
+
 ### Importing explicit Rust project context
 
 `ffsake_rust_context_from_manifests` accepts `manifests` (1–16 explicit

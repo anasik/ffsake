@@ -2,7 +2,7 @@
 """Multi-agent benchmark matrix for FFSAKE.
 
 Runs Claude Code, Codex, and OpenCode in baseline and FFSAKE modes across
-micro, medium, app-completion, project and maintenance tasks. Every run uses a disposable git repo.
+micro, medium, app-completion, project, maintenance and layout tasks. Every run uses a disposable git repo.
 """
 import argparse
 import hashlib
@@ -353,7 +353,97 @@ def maintenance_verify(root: Path, state):
                        "exception": repr(exc)}
 
 
+LAYOUT_PROMPT = """Reorganize this runnable Python project without changing its behavior.
+- Move the entire service_old directory to service_next, preserving all file bytes,
+  empty directories and ordinary permissions.
+- Copy the entire templates directory to templates_snapshot with the same bytes,
+  empty directories and ordinary permissions. Keep templates unchanged.
+- Remove the entire retired directory and its contents.
+- Create an empty reports directory.
+- In README.md replace exactly 'python3 -B -m service_old' with
+  'python3 -B -m service_next', preserving every other byte.
+Do not change any other files or directories. The relocated package must still run
+using only the Python standard library. Stop when complete."""
+
+LAYOUT_FILES = {
+    "service_old/__init__.py": b"",
+    "service_old/__main__.py": b'import json\nfrom pathlib import Path\nprint(json.dumps(json.loads((Path(__file__).parent / "data/config.json").read_text())))\n',
+    "service_old/data/config.json": '{"message": "café", "retries": 2}\n'.encode(),
+    "templates/sample.bin": b"\x00\xff\r\nbinary template\x00",
+    "templates/start.sh": b"#!/bin/sh\nprintf 'template\\n'\n",
+    "retired/nested/old.txt": b"retired\n",
+    "README.md": b"# Service\r\nRun: python3 -B -m service_old\r\nKeep this line.\r\n",
+    "assets/keep.bin": b"\x00service_old\xff",
+}
+LAYOUT_DELETIONS = {name for name in LAYOUT_FILES if name.startswith(("service_old/", "retired/"))}
+LAYOUT_ADDITIONS = {name.replace("service_old/", "service_next/", 1) for name in LAYOUT_FILES
+                    if name.startswith("service_old/")} | {
+                    name.replace("templates/", "templates_snapshot/", 1) for name in LAYOUT_FILES
+                    if name.startswith("templates/")}
+
+
+def layout_fixture(root: Path):
+    for name, data in LAYOUT_FILES.items():
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    for name in ("service_old/cache", "templates/empty"):
+        (root / name).mkdir()
+    if os.name == "posix":
+        (root / "templates/start.sh").chmod(0o751)
+        (root / "service_old/data").chmod(0o750)
+    git_init(root)
+    paths = [path for path in root.rglob("*") if ".git" not in path.relative_to(root).parts]
+    return {"original": dict(LAYOUT_FILES),
+            "directories": {str(path.relative_to(root)) for path in paths if path.is_dir()},
+            "modes": {str(path.relative_to(root)): path.stat().st_mode & 0o777 for path in paths}}
+
+
+def layout_verify(root: Path, state):
+    checks = {}
+    def destination(name):
+        return name.replace("service_old", "service_next", 1) if name == "service_old" or name.startswith("service_old/") else name
+    expected = {destination(name): data for name, data in state["original"].items()
+                if not name.startswith("retired/")}
+    expected.update({name.replace("templates/", "templates_snapshot/", 1): data
+                     for name, data in state["original"].items() if name.startswith("templates/")})
+    expected["README.md"] = expected["README.md"].replace(b"python3 -B -m service_old", b"python3 -B -m service_next")
+    try:
+        result = run_process([sys.executable, "-B", "-m", "service_next"], root, 5)
+        checks["relocated_cli"] = (not result["timed_out"] and result["exit_code"] == 0
+                                  and json.loads(result["stdout"]) == {"message": "café", "retries": 2})
+        actual = fixture_files(root)
+        checks["exact_files_and_bytes"] = actual == expected
+        directories = {destination(name) for name in state["directories"]
+                       if name != "retired" and not name.startswith("retired/")}
+        directories |= {name.replace("templates", "templates_snapshot", 1)
+                        for name in state["directories"] if name == "templates" or name.startswith("templates/")}
+        directories.add("reports")
+        visible = [path for path in root.rglob("*")
+                   if not {".git", ".ffsake"}.intersection(path.relative_to(root).parts)]
+        checks["exact_directories"] = {str(path.relative_to(root)) for path in visible if path.is_dir()} == directories
+        checks["no_symlinks"] = all(not path.is_symlink() for path in visible)
+        if os.name == "posix":
+            modes = {destination(name): mode for name, mode in state["modes"].items()
+                     if name != "retired" and not name.startswith("retired/")}
+            modes.update({name.replace("templates", "templates_snapshot", 1): mode
+                          for name, mode in state["modes"].items() if name == "templates" or name.startswith("templates/")})
+            checks["ordinary_modes"] = all((root / name).stat().st_mode & 0o777 == mode for name, mode in modes.items())
+        failed = sorted(name for name, passed in checks.items() if not passed)
+        return not failed, {"checks": len(checks), "passed": sum(checks.values()), "failed_checks": failed}
+    except Exception as exc:
+        return False, {"checks": len(checks), "passed": sum(checks.values()),
+                       "failed_checks": sorted(name for name, passed in checks.items() if not passed), "exception": repr(exc)}
+
+
 TASKS = {
+    "layout": {
+        "fixture": layout_fixture,
+        "verify": layout_verify,
+        "prompt": LAYOUT_PROMPT,
+        "allowed_changes": LAYOUT_DELETIONS | LAYOUT_ADDITIONS | {"README.md"},
+        "allowed_deletions": LAYOUT_DELETIONS,
+    },
     "maintenance": {
         "fixture": maintenance_fixture,
         "verify": maintenance_verify,
@@ -1129,7 +1219,7 @@ def aggregate(results):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--agents", default="claude,codex,opencode")
-    parser.add_argument("--tasks", default="micro,medium,app", help="Comma-separated micro,medium,app,project,maintenance; maintenance migrates an existing project")
+    parser.add_argument("--tasks", default="micro,medium,app", help="Comma-separated micro,medium,app,project,maintenance,layout; maintenance migrates config and layout reorganizes directory trees")
     parser.add_argument("--modes", default="baseline,ffsake", help="Comma-separated baseline,ffsake; select one for targeted diagnostics")
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--timeout", type=int, default=900)

@@ -336,3 +336,12 @@ Schema version 4 preserves completed agent output when an operating-system error
 
 
 Matrix selectors (`--agents`, `--tasks`, `--modes`) must be nonempty and contain distinct values; use `--repetitions` for intentional repeated samples. Invalid selections stop before CLI preflight or model calls. The harness's local MCP-binary prerequisite applies only when FFSAKE mode is selected. Baseline-only matrices skip that prerequisite and the core-catalog preflight, while retaining agent CLI/configuration checks and trace auditing.
+
+
+## Directory layout acceptance task, 2026-10-25
+
+The opt-in `layout` task reorganizes an existing runnable Python package, copies a template tree containing binary bytes and an executable file, removes a populated retired tree, creates an empty output directory, and edits the package invocation in a CRLF README. Both modes receive identical behavior requirements; a correct solution need not use any particular sequence or tool. Default task selection is unchanged.
+
+The verifier checks the exact file/byte mapping, exact directories (including empty ones), absence of symlinks, ordinary Unix modes when applicable, and relocated CLI output. Filesystem checks run after the CLI so runtime-created directories or mode changes cannot evade them. Regression tests reject binary changes, missing/extra empty directories, altered permissions, broken runtime and sentinel changes.
+
+`python3 scripts/layout_smoke.py target/debug/ffsake-mcp` passed using the core profile with one five-operation preview, apply, undo and redo. The original file and directory set returned after undo, and the verifier passed after apply and redo. CI runs this model-free smoke. No agent run, timing comparison, discoverability claim or new isolation claim has been made for this task.

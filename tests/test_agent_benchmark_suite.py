@@ -1234,5 +1234,68 @@ class ProvenanceTests(unittest.TestCase):
         self.assertEqual(identity["fixture_files"][0]["sha256"], hashlib.sha256(b"before").hexdigest())
         self.assertEqual(identity["prompt_sha256"], hashlib.sha256(suite.ffsake_prompt("do task", "core").encode()).hexdigest())
 
+
+
+class LayoutTaskTests(unittest.TestCase):
+    @staticmethod
+    def implement(root):
+        import shutil
+        (root / "service_old").rename(root / "service_next")
+        shutil.copytree(root / "templates", root / "templates_snapshot")
+        shutil.rmtree(root / "retired")
+        (root / "reports").mkdir()
+        path = root / "README.md"
+        path.write_bytes(path.read_bytes().replace(b"python3 -B -m service_old", b"python3 -B -m service_next"))
+
+    def test_reference_layout_passes_and_verification_preserves_files(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = suite.layout_fixture(root)
+            self.assertFalse(suite.layout_verify(root, state)[0])
+            self.implement(root)
+            before = suite.fixture_files(root)
+            ok, details = suite.layout_verify(root, state)
+            self.assertTrue(ok, details)
+            self.assertEqual(suite.fixture_files(root), before)
+            task = suite.TASKS["layout"]
+            self.assertEqual(set(state["original"]) - set(before), task["allowed_deletions"])
+            self.assertLessEqual(set(before) - set(state["original"]), task["allowed_changes"])
+
+    def test_layout_rejects_binary_directory_permission_and_runtime_damage(self):
+        import os
+        for variant in ["binary", "empty", "extra", "runtime", "sentinel"] + (["mode"] if os.name == "posix" else []):
+            with self.subTest(variant=variant), tempfile.TemporaryDirectory() as td:
+                root = Path(td)
+                state = suite.layout_fixture(root)
+                self.implement(root)
+                if variant == "binary":
+                    (root / "templates_snapshot/sample.bin").write_bytes(b"changed")
+                elif variant == "empty":
+                    (root / "templates_snapshot/empty").rmdir()
+                elif variant == "extra":
+                    (root / "unexpected-empty").mkdir()
+                elif variant == "runtime":
+                    (root / "service_next/__main__.py").write_text("raise RuntimeError('broken')")
+                elif variant == "sentinel":
+                    (root / "assets/keep.bin").write_bytes(b"changed")
+                else:
+                    (root / "templates_snapshot/start.sh").chmod(0o644)
+                self.assertFalse(suite.layout_verify(root, state)[0])
+
+    def test_layout_checks_empty_directories_after_runtime_verification(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = suite.layout_fixture(root)
+            self.implement(root)
+            def changed(*args, **kwargs):
+                (root / "runtime-side-effect").mkdir()
+                return {"timed_out": False, "exit_code": 0, "stdout": '{"message":"café","retries":2}'}
+            with patch.object(suite, "run_process", side_effect=changed):
+                ok, details = suite.layout_verify(root, state)
+            self.assertFalse(ok)
+            self.assertIn("exact_directories", details["failed_checks"])
+
+
 if __name__ == "__main__":
     unittest.main()
