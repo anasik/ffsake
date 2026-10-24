@@ -110,12 +110,14 @@ Repository workflow evaluation: a disposable archive of `b7b02a5` covered 33 tra
 
 Local validation passed: 53 Rust tests, 57 Python tests, Clippy, formatting, executable benchmark, MCP smoke, and the repository workflow including executable recreation. Parallel library-test fixtures now reserve unique directories atomically after an observed timestamp collision.
 
-Next: address the remaining copy/move destination and redo mode gaps using the same explicit metadata contract, then evaluate journal history failure recovery before expanding the editing interface.
+Copy/move destination and redo mode gaps are now covered: previews retain and display source rwx bits, apply rejects changed source modes before any batch member writes, and the journal stores the mode actually created for redo. Reopened copy/move histories and new-file modes have focused regression coverage. No new tool or user-controlled chmod operation was added.
+
+Next: evaluate journal history failure recovery before expanding the editing interface; ordinary apply has rollback but undo/redo needs the same failure-path scrutiny.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
 - directory operations are not exposed by the MCP journal;
-- metadata beyond ordinary Unix rwx bits remains unrecorded; copy/move destinations and redo of new files still use default permissions, while undo of new recorded deletions restores original rwx bits;
+- metadata beyond ordinary Unix rwx bits remains unrecorded, and legacy manifests cannot recover metadata they never captured;
 - native Codex tools are not disabled; enforced isolation remains unverified.
 
 Pass condition:

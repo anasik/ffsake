@@ -1,7 +1,8 @@
 use crate::Workspace;
-use crate::journal::{Journal, JournalChange};
+use crate::journal::{Journal, JournalChange, unix_mode};
 use serde::Deserialize;
 use serde_json::{Value, json};
+use std::collections::BTreeMap;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -37,6 +38,8 @@ pub enum FileOperation {
 pub(crate) struct FilePlan {
     changes: Vec<JournalChange>,
     checks: Vec<(String, Option<Vec<u8>>)>,
+    mode_checks: BTreeMap<String, u32>,
+    destination_modes: BTreeMap<String, u32>,
 }
 
 fn snapshot(journal: &Journal, path: &str) -> Result<Option<Vec<u8>>> {
@@ -54,6 +57,8 @@ impl FilePlan {
         let journal = Journal::open(workspace.root())?;
         let mut changes = Vec::new();
         let mut checks = Vec::new();
+        let mut mode_checks = BTreeMap::new();
+        let mut destination_modes = BTreeMap::new();
         let moving = matches!(&operation, FileOperation::Move { .. });
         match operation {
             FileOperation::Create { path, content } => {
@@ -70,6 +75,10 @@ impl FilePlan {
                 let bytes = snapshot(&journal, &from)?.ok_or("source file does not exist")?;
                 if snapshot(&journal, &to)?.is_some() {
                     return Err("destination already exists; overwriting is not allowed".into());
+                }
+                if let Some(mode) = unix_mode(&journal.resolve(&from)?)? {
+                    mode_checks.insert(from.clone(), mode);
+                    destination_modes.insert(to.clone(), mode);
                 }
                 checks.push((from.clone(), Some(bytes.clone())));
                 if moving {
@@ -121,7 +130,12 @@ impl FilePlan {
                 });
             }
         }
-        Ok(Self { changes, checks })
+        Ok(Self {
+            changes,
+            checks,
+            mode_checks,
+            destination_modes,
+        })
     }
 
     pub(crate) fn preview_batch(
@@ -135,6 +149,8 @@ impl FilePlan {
         let mut combined = Self {
             changes: Vec::new(),
             checks: Vec::new(),
+            mode_checks: BTreeMap::new(),
+            destination_modes: BTreeMap::new(),
         };
         let mut writes: Vec<PathBuf> = Vec::new();
         let mut reads: Vec<PathBuf> = Vec::new();
@@ -167,6 +183,8 @@ impl FilePlan {
             reads.extend(new_reads);
             combined.changes.extend(plan.changes);
             combined.checks.extend(plan.checks);
+            combined.mode_checks.extend(plan.mode_checks);
+            combined.destination_modes.extend(plan.destination_modes);
         }
         Ok(combined)
     }
@@ -191,7 +209,8 @@ impl FilePlan {
                     "path": change.path,
                     "operation": if change.before.is_none() { "create" } else if change.after.is_none() { "delete" } else { "edit" },
                     "before_bytes": before.len(), "after_bytes": after.len(),
-                    "unified_diff": diff
+                    "unified_diff": diff,
+                    "after_unix_mode": self.destination_modes.get(&change.path)
                 })
             })
             .collect::<Vec<_>>();
@@ -205,8 +224,16 @@ impl FilePlan {
                 return Err("source changed since preview".into());
             }
         }
-        let transaction =
-            journal.commit_changes(Some("resident file operation".into()), &self.changes)?;
+        for (path, expected) in &self.mode_checks {
+            if unix_mode(&journal.resolve(path)?)? != Some(*expected) {
+                return Err("source permissions changed since preview".into());
+            }
+        }
+        let transaction = journal.commit_changes_with_modes(
+            Some("resident file operation".into()),
+            &self.changes,
+            &self.destination_modes,
+        )?;
         Ok(json!({"transaction": transaction.id, "changed_files": self.changes.len()}))
     }
 }
@@ -419,6 +446,115 @@ mod tests {
         assert!(!root.join("first.txt").exists());
         assert_eq!(fs::read(root.join("existing.txt")).unwrap(), b"old");
         assert!(!protected.join("blocked.txt").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[cfg(unix)]
+    #[test]
+    fn copy_and_move_preserve_permissions_through_reopened_history() {
+        use std::os::unix::fs::PermissionsExt;
+        for operation in ["copy", "move"] {
+            let root = fixture();
+            let source = root.join("script.sh");
+            let destination = root.join("nested/script.sh");
+            fs::write(&source, b"#!/bin/sh\nexit 0\n").unwrap();
+            fs::set_permissions(&source, fs::Permissions::from_mode(0o751)).unwrap();
+            let workspace = Workspace::new(&root).unwrap();
+            let plan = FilePlan::preview_batch(
+                &workspace,
+                operations(json!([
+                    {"op":operation,"from":"script.sh","to":"nested/script.sh"},
+                    {"op":"create","path":"new.txt","content":"created"}
+                ])),
+            )
+            .unwrap();
+            let result = plan.apply(&workspace).unwrap();
+            let id = result["transaction"].as_str().unwrap();
+            let journal = Journal::open(&root).unwrap();
+            let manifest = journal.load(id).unwrap();
+            assert_eq!(
+                manifest
+                    .files
+                    .iter()
+                    .find(|f| f.path == "nested/script.sh")
+                    .unwrap()
+                    .after_unix_mode,
+                Some(0o751)
+            );
+            let created_mode = fs::metadata(root.join("new.txt"))
+                .unwrap()
+                .permissions()
+                .mode()
+                & 0o777;
+            assert_eq!(
+                manifest
+                    .files
+                    .iter()
+                    .find(|f| f.path == "new.txt")
+                    .unwrap()
+                    .after_unix_mode,
+                Some(created_mode)
+            );
+            for _ in 0..2 {
+                assert_eq!(fs::read(&destination).unwrap(), b"#!/bin/sh\nexit 0\n");
+                assert_eq!(
+                    fs::metadata(&destination).unwrap().permissions().mode() & 0o7777,
+                    0o751
+                );
+                assert_eq!(source.exists(), operation == "copy");
+                journal.undo(id).unwrap();
+                assert!(!destination.exists());
+                assert!(!root.join("new.txt").exists());
+                assert_eq!(
+                    fs::metadata(&source).unwrap().permissions().mode() & 0o7777,
+                    0o751
+                );
+                journal.redo(id).unwrap();
+                assert_eq!(
+                    fs::metadata(root.join("new.txt"))
+                        .unwrap()
+                        .permissions()
+                        .mode()
+                        & 0o777,
+                    created_mode
+                );
+            }
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn stale_source_permissions_reject_the_entire_batch() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = fixture();
+        fs::write(root.join("source"), b"unchanged bytes").unwrap();
+        fs::set_permissions(root.join("source"), fs::Permissions::from_mode(0o755)).unwrap();
+        let workspace = Workspace::new(&root).unwrap();
+        let plan = FilePlan::preview_batch(
+            &workspace,
+            operations(json!([
+                {"op":"create","path":"first","content":"must not be created"},
+                {"op":"copy","from":"source","to":"copy"}
+            ])),
+        )
+        .unwrap();
+        fs::set_permissions(root.join("source"), fs::Permissions::from_mode(0o700)).unwrap();
+        assert!(
+            plan.apply(&workspace)
+                .unwrap_err()
+                .to_string()
+                .contains("permissions changed")
+        );
+        assert!(!root.join("first").exists());
+        assert!(!root.join("copy").exists());
+        assert_eq!(
+            fs::metadata(root.join("source"))
+                .unwrap()
+                .permissions()
+                .mode()
+                & 0o777,
+            0o700
+        );
         fs::remove_dir_all(root).unwrap();
     }
 }

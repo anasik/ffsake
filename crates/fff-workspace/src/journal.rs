@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::fs;
 use std::io;
 use std::path::{Component, Path, PathBuf};
@@ -85,6 +86,8 @@ pub struct TransactionFile {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub before_unix_mode: Option<u32>,
     pub after_hash: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub after_unix_mode: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -140,19 +143,31 @@ impl Journal {
         label: Option<String>,
         changes: &[JournalChange],
     ) -> Result<TransactionManifest> {
-        let mut manifest = self.prepare(label, changes)?;
+        self.commit_changes_with_modes(label, changes, &BTreeMap::new())
+    }
+
+    pub(crate) fn commit_changes_with_modes(
+        &self,
+        label: Option<String>,
+        changes: &[JournalChange],
+        destination_modes: &BTreeMap<String, u32>,
+    ) -> Result<TransactionManifest> {
+        let mut manifest = self.prepare(label, changes, destination_modes)?;
         self.verify_side(&manifest, SnapshotSide::Before)?;
 
         let mut applied = Vec::new();
-        for file in &manifest.files {
-            let result = self.apply_one(&manifest, file, SnapshotSide::After);
-            if let Err(error) = result {
-                for applied_file in applied.iter().rev() {
-                    let _ = self.apply_one(&manifest, applied_file, SnapshotSide::Before);
+        for index in 0..manifest.files.len() {
+            let file = manifest.files[index].clone();
+            match self.apply_one(&manifest, &file, SnapshotSide::After) {
+                Ok(mode) => manifest.files[index].after_unix_mode = mode,
+                Err(error) => {
+                    for applied_file in applied.iter().rev() {
+                        let _ = self.apply_one(&manifest, applied_file, SnapshotSide::Before);
+                    }
+                    return Err(error);
                 }
-                return Err(error);
             }
-            applied.push(file.clone());
+            applied.push(file);
         }
 
         manifest.state = TransactionState::Applied;
@@ -191,6 +206,11 @@ impl Journal {
                 before_hash: change.before.as_deref().map(hash_bytes),
                 before_unix_mode: None,
                 after_hash: change.after.as_deref().map(hash_bytes),
+                after_unix_mode: if change.after.is_some() {
+                    unix_mode(&self.resolve(&change.path)?)?
+                } else {
+                    None
+                },
             });
         }
 
@@ -208,6 +228,7 @@ impl Journal {
         &self,
         label: Option<String>,
         changes: &[JournalChange],
+        destination_modes: &BTreeMap<String, u32>,
     ) -> Result<TransactionManifest> {
         let id = transaction_id();
         let tx_root = self.journal_root.join(&id);
@@ -239,6 +260,7 @@ impl Journal {
                     None
                 },
                 after_hash: change.after.as_deref().map(hash_bytes),
+                after_unix_mode: destination_modes.get(&change.path).copied(),
             });
         }
 
@@ -348,7 +370,7 @@ impl Journal {
         manifest: &TransactionManifest,
         file: &TransactionFile,
         side: SnapshotSide,
-    ) -> Result<()> {
+    ) -> Result<Option<u32>> {
         let snapshot_root = self
             .journal_root
             .join(&manifest.id)
@@ -362,16 +384,16 @@ impl Journal {
             }
             let recreate_mode = match side {
                 SnapshotSide::Before => file.before_unix_mode,
-                SnapshotSide::After => None,
+                SnapshotSide::After => file.after_unix_mode,
             };
-            atomic_write_with_mode(&path, &bytes, recreate_mode)?;
+            return atomic_write_with_mode(&path, &bytes, recreate_mode);
         } else if path.is_file() {
             fs::remove_file(path)?;
         } else if path.is_dir() {
             fs::remove_dir_all(path)?;
         }
 
-        Ok(())
+        Ok(None)
     }
 
     pub(crate) fn resolve(&self, relative: &str) -> Result<PathBuf> {
@@ -466,7 +488,7 @@ fn transaction_id() -> String {
     format!("tx-{nanos}-{}", std::process::id())
 }
 
-fn unix_mode(path: &Path) -> Result<Option<u32>> {
+pub(crate) fn unix_mode(path: &Path) -> Result<Option<u32>> {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
@@ -484,10 +506,14 @@ fn unix_mode(path: &Path) -> Result<Option<u32>> {
 }
 
 fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
-    atomic_write_with_mode(path, bytes, None)
+    atomic_write_with_mode(path, bytes, None).map(|_| ())
 }
 
-fn atomic_write_with_mode(path: &Path, bytes: &[u8], recreate_mode: Option<u32>) -> Result<()> {
+fn atomic_write_with_mode(
+    path: &Path,
+    bytes: &[u8],
+    recreate_mode: Option<u32>,
+) -> Result<Option<u32>> {
     let parent = path
         .parent()
         .ok_or_else(|| JournalError::InvalidPath(path.display().to_string()))?;
@@ -513,8 +539,9 @@ fn atomic_write_with_mode(path: &Path, bytes: &[u8], recreate_mode: Option<u32>)
         }
         Err(error) => return Err(error.into()),
     }
+    let mode = unix_mode(&temp)?;
     fs::rename(temp, path)?;
-    Ok(())
+    Ok(mode)
 }
 
 #[cfg(test)]

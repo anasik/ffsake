@@ -382,6 +382,22 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
             executable = root / "executable.sh"
             executable.write_text("#!/bin/sh\nexit 0\n")
             executable.chmod(0o751)
+            for operation in ["copy", "move"]:
+                copied = call("ffsake_preview_" + operation, {"from": "executable.sh", "to": "destination.sh"})
+                copied_tx = call("ffsake_apply", {"handle": copied["handle"]})["transaction"]
+                destination = root / "destination.sh"
+                assert destination.stat().st_mode & 0o7777 == 0o751
+                call("ffsake_undo", {"transaction": copied_tx})
+                assert executable.stat().st_mode & 0o7777 == 0o751
+                assert not destination.exists()
+                call("ffsake_redo", {"transaction": copied_tx})
+                assert destination.stat().st_mode & 0o7777 == 0o751
+                call("ffsake_undo", {"transaction": copied_tx})
+            stale_mode = call("ffsake_preview_copy", {"from": "executable.sh", "to": "destination.sh"})
+            executable.chmod(0o700)
+            call("ffsake_apply", {"handle": stale_mode["handle"]}, expect_ok=False)
+            assert not (root / "destination.sh").exists()
+            executable.chmod(0o751)
             delete_executable = call("ffsake_preview_delete", {"path": "executable.sh"})
             executable_tx = call("ffsake_apply", {"handle": delete_executable["handle"]})["transaction"]
             for _ in range(2):

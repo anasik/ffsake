@@ -277,7 +277,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_preview_copy",
-            "Preview copying one existing file, including binary files. Destination must not exist. No directory copies or overwrites. Source contents are checked again on apply. Use ffsake_apply to commit.",
+            "Preview copying one existing file, including binary files. Destination must not exist. No directory copies or overwrites. Source contents and ordinary Unix permissions are checked again on apply; Unix rwx bits are preserved. Use ffsake_apply to commit.",
             json!({
                 "type":"object","required":["from","to"],"properties":{
                     "from":{"type":"string"},"to":{"type":"string"}
@@ -286,7 +286,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_preview_move",
-            "Preview moving or renaming one existing file in a single journal transaction. Destination must not exist. No directory moves or overwrites. Use ffsake_apply to commit; undo restores the original path.",
+            "Preview moving or renaming one existing file in a single journal transaction. Destination must not exist. No directory moves or overwrites. Ordinary Unix rwx bits are preserved and rechecked on apply. Use ffsake_apply to commit; undo restores the original path.",
             json!({
                 "type":"object","required":["from","to"],"properties":{
                     "from":{"type":"string"},"to":{"type":"string"}
