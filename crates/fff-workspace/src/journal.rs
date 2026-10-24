@@ -629,8 +629,12 @@ impl Journal {
             return atomic_write_with_mode(&path, &bytes, recreate_mode);
         } else if path.is_file() {
             fs::remove_file(path)?;
-        } else if path.is_dir() {
-            fs::remove_dir_all(path)?;
+        } else if path.exists() {
+            return Err(JournalError::StateConflict {
+                path: file.path.clone(),
+                expected: "file or absent path".into(),
+                actual: "non-file appeared during file transaction".into(),
+            });
         }
 
         Ok(None)
@@ -1462,6 +1466,27 @@ mod directory_tests {
         journal.undo(&removed.id).unwrap();
         journal.redo(&removed.id).unwrap();
         assert!(!root.path().join("empty").exists());
+    }
+
+    #[test]
+    fn file_replay_never_recursively_removes_an_unexpected_directory() {
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        fs::write(root.path().join("entry"), b"original").unwrap();
+        let removed = journal.commit(None, &[("entry".into(), None)]).unwrap();
+        fs::create_dir(root.path().join("entry")).unwrap();
+        fs::write(root.path().join("entry/keep"), b"preserve").unwrap();
+        // Exercise the write-time check directly, simulating a directory
+        // appearing after the transaction-wide preflight has already passed.
+        assert!(
+            journal
+                .apply_one(&removed, &removed.files[0], SnapshotSide::After)
+                .is_err()
+        );
+        assert_eq!(
+            fs::read(root.path().join("entry/keep")).unwrap(),
+            b"preserve"
+        );
     }
 
     #[test]
