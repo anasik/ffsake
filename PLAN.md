@@ -136,7 +136,9 @@ A real-source document-symbol probe produced 15 top-level entries / 40 symbols f
 
 Implementation navigation now uses the same snapshot backend and result guards. Real MCP fixtures cover two trait implementations across files, trait-method implementations, one concrete type implementation, an empty result and overflow rejection. All results remain read-only and explicitly incomplete. The shared catalog contains twenty-three tools.
 
-Next: add bounded hover/type information for local symbols, treating returned documentation as source data, preserving optional source ranges and retaining the same snapshot/incomplete-analysis contract. Keep dependency-aware analysis and semantic rename separate; reference ranges must not become rename capabilities until collision and analysis-completeness behavior are established. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Hover/type information now shares the snapshot transport, with a 1–65,536-byte text budget, at most 32 normalized content parts, optional original source ranges and no mutation handle. Markdown/plaintext/code formats and documentation remain data. Coverage includes local inferred integer types, documented signatures, emoji/CRLF ranges, null hover and overflow/schema rejection. The shared catalog contains twenty-four tools.
+
+Next: evaluate rust-analyzer native diagnostics on the same explicit snapshots, establishing supported protocol/readiness and distinguishing parser/type diagnostics from omitted-dependency errors before exposing a bounded read-only result. Compiler execution and code actions remain separate; reference ranges must not become rename capabilities until collision and analysis-completeness behavior are established. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
@@ -162,12 +164,12 @@ Implemented through an explicitly incomplete dependency-free rust-analyzer sourc
 - definitions;
 - references;
 - hierarchical document symbols;
-- implementations.
+- implementations;
+- hover/types.
 
 Still to add/evaluate:
 
 - semantic rename;
-- hover/types;
 - diagnostics/code actions.
 
 ## Later

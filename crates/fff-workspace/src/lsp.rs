@@ -237,6 +237,30 @@ pub fn rust_definition(
     )
 }
 
+/// Get bounded hover/type documentation under the same explicit snapshot contract.
+pub fn rust_hover(
+    workspace: &Workspace,
+    files: &[String],
+    crate_root: &str,
+    path: &str,
+    position: TextPosition,
+    edition: &str,
+    max_bytes: usize,
+) -> Result<Value> {
+    navigate(
+        workspace,
+        Query {
+            files,
+            crate_root,
+            path,
+            position,
+            edition,
+            limit: max_bytes,
+        },
+        Navigation::Hover,
+    )
+}
+
 /// Find implementation locations under the same explicit snapshot contract.
 pub fn rust_implementation(
     workspace: &Workspace,
@@ -290,6 +314,7 @@ enum Navigation {
     Definition,
     Implementation,
     Symbols,
+    Hover,
 }
 
 struct Query<'a> {
@@ -310,13 +335,18 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
         edition,
         limit,
     } = query;
+    let maximum = if matches!(kind, Navigation::Hover) {
+        65_536
+    } else {
+        1000
+    };
     if files.is_empty()
         || files.len() > 32
-        || !(1..=1000).contains(&limit)
+        || !(1..=maximum).contains(&limit)
         || !matches!(edition, "2015" | "2018" | "2021" | "2024")
     {
         return Err(
-            "Rust navigation requires 1..=32 files, limit 1..=1000 and a supported edition".into(),
+            format!("Rust navigation requires 1..=32 files, a result bound in 1..={maximum} and a supported edition").into(),
         );
     }
     if !files.iter().any(|p| p == crate_root) || !files.iter().any(|p| p == path) {
@@ -360,7 +390,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     });
     let mut client = Client::start(&root, options.clone(), deadline)?;
     let initialized = client.request("initialize", json!({"processId":null,"rootUri":uri(&root)?,
-        "capabilities":{"general":{"positionEncodings":["utf-16"]},"textDocument":{"definition":{"linkSupport":false},"implementation":{"linkSupport":false},"documentSymbol":{"hierarchicalDocumentSymbolSupport":true,"symbolKind":{"valueSet":(1..=26).collect::<Vec<_>>()}}},"experimental":{"serverStatusNotification":true}},
+        "capabilities":{"general":{"positionEncodings":["utf-16"]},"textDocument":{"hover":{"contentFormat":["markdown","plaintext"]},"definition":{"linkSupport":false},"implementation":{"linkSupport":false},"documentSymbol":{"hierarchicalDocumentSymbolSupport":true,"symbolKind":{"valueSet":(1..=26).collect::<Vec<_>>()}}},"experimental":{"serverStatusNotification":true}},
         "initializationOptions":options}))?;
     if initialized["capabilities"]["positionEncoding"]
         .as_str()
@@ -396,6 +426,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
         }
         Navigation::Definition => ("textDocument/definition", "definition"),
         Navigation::Implementation => ("textDocument/implementation", "implementation"),
+        Navigation::Hover => ("textDocument/hover", "hover"),
         Navigation::Symbols => {
             parameters
                 .as_object_mut()
@@ -407,6 +438,8 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     let result = client.request(method, parameters)?;
     let mut response = if matches!(kind, Navigation::Symbols) {
         crate::lsp_symbols::outline(query, query_source, result, limit)?
+    } else if matches!(kind, Navigation::Hover) {
+        crate::lsp_hover::hover(query, query_source, result, limit)?
     } else {
         let locations = normalize_locations(result, kind)?;
         let ranges = scoped_ranges(&root, &sources, locations, limit, kind)?;

@@ -278,3 +278,6 @@ A document-symbol probe against the then-current LSP module returned 15 top-leve
 
 
 Implementation navigation is verified against a locally declared trait with implementations in two source files, its trait method, a concrete implemented type and an unimplemented type. The server returned the two concrete type anchors and the two method-name ranges; the unimplemented fixture returned no ranges. Count overflow rejects the whole response. This extends the same explicit source-snapshot contract and does not establish dependency/feature completeness.
+
+
+Hover/type integration covers a locally inferred `u32` binding and a documented `u32` → `u64` function signature. Returned hover ranges preserve original bytes after emoji and CRLF; text budgets count UTF-8 bytes across normalized content parts. The empty-file case returns a null hover, while oversized content and invalid limits/schema reject. Unit checks cover markdown/plaintext/code formats, optional ranges and malformed content. Documentation remains untrusted source data, and omitted dependencies/features still prevent completeness or compiler-validity claims.

@@ -65,6 +65,14 @@ pub enum Request {
         edition: String,
         limit: usize,
     },
+    RustHover {
+        files: Vec<String>,
+        crate_root: String,
+        path: String,
+        position: crate::coordinates::TextPosition,
+        edition: String,
+        max_bytes: usize,
+    },
     RustImplementation {
         files: Vec<String>,
         crate_root: String,
@@ -363,6 +371,22 @@ impl Resident {
                 position,
                 &edition,
                 limit,
+            ),
+            Request::RustHover {
+                files,
+                crate_root,
+                path,
+                position,
+                edition,
+                max_bytes,
+            } => crate::lsp::rust_hover(
+                self.session.workspace(),
+                &files,
+                &crate_root,
+                &path,
+                position,
+                &edition,
+                max_bytes,
             ),
             Request::RustImplementation {
                 files,

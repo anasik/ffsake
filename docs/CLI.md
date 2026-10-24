@@ -134,3 +134,13 @@ Results contain `ranges`, `matches`, `file_hashes`, `analysis_mode: "explicit_cr
 The positive `limit` bounds all descendants, not just top-level entries. Maximum depth is 32; names/details are at most 4096 UTF-8 bytes each. Invalid UTF-16/ranges, selections outside declarations, children outside their parent range, nonhierarchical responses and exceeded limits reject the entire outline. Empty documents return zero symbols. No edit handle is returned, and source is rechecked before the response.
 
 `ffsake_rust_implementation` (resident `rust_implementation`) accepts the same positional arguments as references/definitions and returns `query: "implementation"`. It locates implementations of locally declared traits, types and trait methods within the explicit snapshot. Multiple implementations are returned together, subject to the exact result limit; no results yields an empty range array. Scope/hash/coordinate/server-budget checks and `complete: false` remain identical. Missing implementations in omitted dependencies or feature configurations are not evidence that a symbol has no implementations.
+
+## Rust hover and types
+
+```json
+{"op":"rust_hover","files":["src/lib.rs"],"crate_root":"src/lib.rs","path":"src/lib.rs","position":{"line":12,"column":8},"edition":"2024","max_bytes":4096}
+```
+
+`ffsake_rust_hover` uses the same positional snapshot scope, with `max_bytes` (1–65,536) replacing the navigation result count. It returns `path`, `hover`, `text_bytes`, hashes and the shared incomplete-analysis metadata. `hover.contents` is an array of normalized parts with `format: "markdown" | "plaintext" | "code"`, original `text` and an optional code `language`. An optional `hover.range` contains original byte offsets and one-based start/end lines. A null hover means the server supplied no information.
+
+The byte budget covers the sum of UTF-8 text bytes across at most 32 parts; each code-language label is separately bounded to 64 bytes. Oversized/malformed content and invalid/reversed ranges reject without truncation. Documentation stays source data: this endpoint does not render HTML, execute snippets, follow links, or treat documentation as instructions. Local inferred types/signatures can be useful despite omitted dependencies, but `complete: false` still applies and no compiler-validity or semantic-rename guarantee is made.

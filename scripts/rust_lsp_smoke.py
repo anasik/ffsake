@@ -232,6 +232,30 @@ def main():
             assert absent["matches"] == 0 and absent["ranges"] == []
             call({**args, "position": trait_position, "limit": 1}, ok=False, name="ffsake_rust_implementation")
             assert (root / "main.rs").read_text() == source and (root / "other.rs").read_text() == other
+            source = ("/// Converts a local value.\r\n"
+                      "fn convert(value: u32) -> u64 { value as u64 }\r\n"
+                      'fn main() { let _ = "🚀"; let amount = 7_u32; let _ = convert(amount); }\r\n')
+            (root / "main.rs").write_bytes(source.encode())
+            hover_args = {key: value for key, value in args.items() if key != "limit"}
+            hover_args.update(files=["main.rs"], max_bytes=4096)
+            amount_position = {"line": 3, "column": source.splitlines()[2].rindex("amount")}
+            hovered = call({**hover_args, "position": amount_position}, name="ffsake_rust_hover")
+            assert hovered["query"] == "hover" and hovered["complete"] is False and "handle" not in hovered
+            contents = hovered["hover"]["contents"]
+            assert "u32" in "\n".join(part["text"] for part in contents)
+            assert hovered["text_bytes"] == sum(len(part["text"].encode()) for part in contents)
+            span = hovered["hover"]["range"]
+            assert source.encode()[span["start_byte"]:span["end_byte"]] == b"amount"
+            documented = call({**hover_args, "position": {"line": 3,
+                "column": source.splitlines()[2].index("convert")}}, name="ffsake_rust_hover")
+            text = "\n".join(part["text"] for part in documented["hover"]["contents"])
+            assert "Converts a local value." in text and "u64" in text
+            for changes in [{"max_bytes": 1}, {"max_bytes": 0}, {"max_bytes": 65537}, {"limit": 10}]:
+                call({**hover_args, "position": amount_position, **changes}, ok=False, name="ffsake_rust_hover")
+            empty_hover = call({**hover_args, "files": ["empty.rs"], "crate_root": "empty.rs",
+                "path": "empty.rs", "position": {"line": 1, "column": 0}}, name="ffsake_rust_hover")
+            assert empty_hover["hover"] is None and empty_hover["text_bytes"] == 0
+            assert (root / "main.rs").read_bytes() == source.encode()
         finally:
             proc.stdin.close()
             try:
@@ -243,7 +267,7 @@ def main():
             proc.stderr.close()
         assert proc.returncode == 0, proc.returncode
     failure_checks(binary)
-    print("MCP Rust navigation: references/definitions/implementations, hierarchical symbols, UTF-16/CRLF, boundaries, stale rejection, malformed/timeout recovery and child cleanup PASS")
+    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
 
 
 if __name__ == "__main__":
