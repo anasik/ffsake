@@ -100,7 +100,11 @@ Verification on 2026-10-24: the user's macOS run passed all 47 Rust tests and th
 
 Maintenance diagnostic on 2026-10-24: both FFSAKE agents used one seven-operation batch and one apply and passed 26/26 checks. Codex baseline also passed; Claude baseline passed all behavior/content checks but generated Python bytecode during its own CLI verification, failing the exact-file-set audit. The harness now suppresses bytecode through a shared child-process environment rather than excluding unexpected files. See docs/BENCHMARK.md for timings and limitations.
 
-Next: repeat `--tasks maintenance` after the bytecode environment fix to measure correctness and performance without that artifact. Codex's 23 FFSAKE calls comprise one preview/apply pair and 21 reads/searches, identifying multi-file reading and verification as the next interface area to investigate. Do not treat one diagnostic repetition as a general performance result.
+The completed post-fix maintenance report has 12/12 correct, valid runs. Median baseline → FFSAKE time: Claude 19.333 → 13.555 s, Codex 38.514 → 32.872 s. Codex still used 24 median calls. Added bounded explicit multi-file reads with missing-file results, shared agent guidance and allowlists, preserving single-file compatibility and mutation guards. See docs/BENCHMARK.md for limits and evidence. These small repeated samples do not establish universal performance or host-enforced isolation.
+
+Targeted Codex diagnostic confirmed adoption: 26/26 checks, four calls (batch read → seven-operation preview → apply → batch verification), 28.637 s. This is one timing sample, not a repeated speed claim. All required local checks passed: 48 Rust and 57 Python tests, Clippy, formatting, executable benchmark and MCP smoke (130 rejected operations).
+
+Next: evaluate larger real-repository workflows before adding more interface primitives; keep runtime execution and metadata recreation gaps explicit.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

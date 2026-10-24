@@ -13,12 +13,23 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 const MAX_HANDLES: usize = 128;
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReadFile {
+    path: String,
+    start: Option<usize>,
+    end: Option<usize>,
+}
+
+#[derive(Debug, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
     Read {
         path: String,
         start: Option<usize>,
         end: Option<usize>,
+    },
+    ReadFiles {
+        files: Vec<ReadFile>,
     },
     List {
         path: String,
@@ -179,6 +190,38 @@ impl Resident {
             Request::Read { path, start, end } => Ok(serde_json::to_value(
                 self.session.workspace().read_text(path, start, end)?,
             )?),
+            Request::ReadFiles { files } => {
+                if files.is_empty() || files.len() > 32 {
+                    return Err("files must contain 1..=32 entries".into());
+                }
+                let mut results = Vec::new();
+                let mut remaining = 1024 * 1024;
+                for file in files {
+                    if file.path.len() > 4096
+                        || file.start == Some(0)
+                        || file.end == Some(0)
+                        || matches!((file.start, file.end), (Some(start), Some(end)) if start > end)
+                    {
+                        return Err("invalid batch read path or line range".into());
+                    }
+                    match self.session.workspace().read_text_bounded(
+                        std::path::Path::new(&file.path),
+                        file.start,
+                        file.end,
+                        256 * 1024,
+                    )? {
+                        Some(read) => {
+                            if read.text.len() > remaining {
+                                return Err("batch read output exceeds 1 MiB text limit".into());
+                            }
+                            remaining -= read.text.len();
+                            results.push(json!({"path":file.path,"status":"ok","read":read}));
+                        }
+                        None => results.push(json!({"path":file.path,"status":"missing"})),
+                    }
+                }
+                Ok(json!({"files":results}))
+            }
             Request::List { path } => Ok(serde_json::to_value(
                 self.session.workspace().list_dir(path)?,
             )?),

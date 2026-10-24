@@ -129,6 +129,40 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
             assert outside.read_text() == "outside-only-secret\n"
             return payload.get("result")
 
+        assert "ffsake_read_files" in names
+        (root / "unicode.txt").write_text("α\nβ\n")
+        batch = call("ffsake_read_files", {"files": [
+            {"path": "unicode.txt", "start": 2, "end": 2},
+            {"path": "missing/AGENTS.md"}, {"path": "a.txt"},
+        ]})["files"]
+        assert [r["status"] for r in batch] == ["ok", "missing", "ok"]
+        assert batch[0]["read"]["text"] == "β"
+        assert batch[0]["read"]["total_lines"] == 2
+        assert batch[2]["read"] == call("ffsake_read", {"path": "a.txt"})
+        (root / "unicode.txt").unlink()
+        for files in [[], [{"path": "a.txt"}] * 33,
+                      [{"path": "a.txt", "unexpected": True}],
+                      [{"path": "a.txt", "start": 0}],
+                      [{"path": "a.txt", "start": 2, "end": 1}]]:
+            call("ffsake_read_files", {"files": files}, expect_ok=False)
+        for path in ["../outside.txt", str(outside), ".ffsake", ".ffsake/missing", "."]:
+            call("ffsake_read_files", {"files": [{"path": "a.txt"}, {"path": path}]}, expect_ok=False)
+        (root / "binary.dat").write_bytes(b"\xff")
+        call("ffsake_read_files", {"files": [{"path": "binary.dat"}]}, expect_ok=False)
+        (root / "binary.dat").unlink()
+        (root / "large.txt").write_text("x" * (256 * 1024))
+        assert len(call("ffsake_read_files", {"files": [{"path": "large.txt"}]})["files"][0]["read"]["text"]) == 256 * 1024
+        call("ffsake_read_files", {"files": [{"path": "large.txt"}] * 4})
+        call("ffsake_read_files", {"files": [{"path": "large.txt"}] * 5}, expect_ok=False)
+        (root / "large.txt").write_text("x" * (256 * 1024 + 1))
+        call("ffsake_read_files", {"files": [{"path": "large.txt", "end": 1}]}, expect_ok=False)
+        (root / "large.txt").unlink()
+        for target in [outside, root / "a.txt", root / "missing", root / ".ffsake"]:
+            (root / "batch-link").symlink_to(target)
+            call("ffsake_read_files", {"files": [{"path": "batch-link"}]}, expect_ok=False)
+            call("ffsake_read_files", {"files": [{"path": "batch-link/missing"}]}, expect_ok=False)
+            (root / "batch-link").unlink()
+
         search_tool = next(tool for tool in listed["result"]["tools"] if tool["name"] == "ffsake_search")
         selector = search_tool["inputSchema"]["properties"]["target"]
         variants = selector["properties"]["include"]["items"]["anyOf"]

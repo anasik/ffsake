@@ -252,18 +252,70 @@ impl Workspace {
         String::from_utf8(bytes).map_err(|_| WorkspaceError::NotUtf8(path))
     }
 
+    /// Bounded explicit-file read. Missing paths are data; symlinks are rejected
+    /// before probing descendants, including dangling and internal aliases.
+    pub fn read_text_bounded(
+        &self,
+        relative: &Path,
+        start: Option<usize>,
+        end: Option<usize>,
+        max_bytes: usize,
+    ) -> Result<Option<ReadResult>> {
+        let clean = self.validate_relative(relative)?;
+        let mut candidate = self.root.clone();
+        for component in clean.components() {
+            candidate.push(component);
+            match fs::symlink_metadata(&candidate) {
+                Ok(metadata) if metadata.file_type().is_symlink() => {
+                    return Err(WorkspaceError::InvalidPath(
+                        "symlinks are not allowed in batch reads".into(),
+                    ));
+                }
+                Ok(_) => {}
+                Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+                Err(error) => return Err(error.into()),
+            }
+        }
+        self.read_text_impl(relative, start, end, Some(max_bytes))
+            .map(Some)
+    }
+
     pub fn read_text(
         &self,
         relative: impl AsRef<Path>,
         start_line: Option<usize>,
         end_line: Option<usize>,
     ) -> Result<ReadResult> {
+        self.read_text_impl(relative.as_ref(), start_line, end_line, None)
+    }
+
+    fn read_text_impl(
+        &self,
+        relative: &Path,
+        start_line: Option<usize>,
+        end_line: Option<usize>,
+        max_bytes: Option<usize>,
+    ) -> Result<ReadResult> {
         let path = self.resolve_existing(relative.as_ref())?;
         if !path.is_file() {
             return Err(WorkspaceError::InvalidPath(self.relative_display(&path)));
         }
 
-        let bytes = fs::read(&path)?;
+        let bytes = if let Some(limit) = max_bytes {
+            use std::io::Read;
+            let mut bytes = Vec::new();
+            fs::File::open(&path)?
+                .take(limit as u64 + 1)
+                .read_to_end(&mut bytes)?;
+            if bytes.len() > limit {
+                return Err(WorkspaceError::InvalidPath(
+                    "batch read source exceeds byte limit".into(),
+                ));
+            }
+            bytes
+        } else {
+            fs::read(&path)?
+        };
         let text = String::from_utf8(bytes).map_err(|_| WorkspaceError::NotUtf8(path.clone()))?;
         let lines: Vec<&str> = text.lines().collect();
         let total = lines.len();
@@ -847,6 +899,37 @@ mod tests {
         fs::create_dir_all(root.join("src")).unwrap();
         fs::write(root.join("src/lib.rs"), "one\ntwo\nthree\n").unwrap();
         root
+    }
+
+    #[test]
+    fn bounded_reads_preserve_ranges_and_reject_oversized_sources() {
+        let root = fixture();
+        let ws = Workspace::new(&root).unwrap();
+        let path = Path::new("src/lib.rs");
+        let read = ws
+            .read_text_bounded(path, Some(2), Some(3), 14)
+            .unwrap()
+            .unwrap();
+        assert_eq!(read, ws.read_text(path, Some(2), Some(3)).unwrap());
+        assert!(ws.read_text_bounded(path, Some(1), Some(1), 13).is_err());
+        assert!(
+            ws.read_text_bounded(Path::new("missing/child"), None, None, 14)
+                .unwrap()
+                .is_none()
+        );
+        assert!(
+            ws.read_text_bounded(Path::new(".ffsake/missing"), None, None, 14)
+                .is_err()
+        );
+        fs::write(root.join("empty"), "").unwrap();
+        assert_eq!(
+            ws.read_text_bounded(Path::new("empty"), None, None, 0)
+                .unwrap()
+                .unwrap()
+                .text,
+            ""
+        );
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

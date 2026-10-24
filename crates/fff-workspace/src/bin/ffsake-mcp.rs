@@ -133,6 +133,7 @@ fn handle_message(runtime: &mut Resident, message: Value) -> Option<Value> {
 fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
     let op = match name {
         "ffsake_read" => "read",
+        "ffsake_read_files" => "read_files",
         "ffsake_list" => "list",
         "ffsake_target" => "target",
         "ffsake_search" => "search",
@@ -180,6 +181,19 @@ fn tools() -> Vec<Value> {
                     "end":{"type":"integer","minimum":1}
                 }
             }),
+        ),
+        tool(
+            "ffsake_read_files",
+            "Read 1–32 explicitly selected files/ranges in one call, including verification and absence checks. Ordered results have status ok with read data, or missing. Maximum source 256 KiB per file and 1 MiB returned text total; no truncation. Symlinks, unsafe paths, invalid UTF-8, invalid ranges and limit violations fail the entire call. Reads are sequential, not an atomic snapshot.",
+            json!({"type":"object","required":["files"],"properties":{
+                "files":{"type":"array","minItems":1,"maxItems":32,"items":{
+                    "type":"object","additionalProperties":false,"required":["path"],"properties":{
+                        "path":{"type":"string","maxLength":4096},
+                        "start":{"type":"integer","minimum":1},
+                        "end":{"type":"integer","minimum":1}
+                    }
+                }}
+            }}),
         ),
         tool(
             "ffsake_list",

@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FFSAKE_MCP = (ROOT / "target" / "debug" / "ffsake-mcp").resolve()
 RESULT_DIR = ROOT / "docs" / "agent-benchmark-runs"
 FFSAKE_TOOLS = (
-    "ffsake_read", "ffsake_list", "ffsake_target", "ffsake_search",
+    "ffsake_read", "ffsake_read_files", "ffsake_list", "ffsake_target", "ffsake_search",
     "ffsake_preview_matches", "ffsake_preview_edit", "ffsake_apply", "ffsake_undo", "ffsake_redo",
     "ffsake_release", "ffsake_refresh",
     "ffsake_preview_files", "ffsake_preview_create", "ffsake_preview_copy", "ffsake_preview_move", "ffsake_preview_delete",
@@ -374,6 +374,7 @@ def ffsake_prompt(task_prompt: str):
         "After apply, undo, or redo, the next search refreshes the index automatically; "
         "reserve explicit refresh for external filesystem changes. "
         "For count-only verification, omit details or set it to false. "
+        "Prefer ffsake_read_files with files=[{path, start?, end?}, ...] for known files, instruction-file probes and post-apply verification; missing paths return status=missing. "
         "For code edits in a known file, read it then use ffsake_preview_edit with exact old_text/new_text "
         "and expected_matches (normally 1). Multiline blocks are supported; preserve whitespace exactly. "
         "Group related changes into one contiguous block instead of searching and previewing each line. "

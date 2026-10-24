@@ -48,7 +48,7 @@ These settings follow the [Claude CLI reference](https://code.claude.com/docs/en
 Per-run trace audits detect recognized calls that violate the requested tool policy. Invalid comparisons and runs without recognized tool calls are excluded from performance medians. Protected-file changes and added/deleted fixture files fail correctness separately from behavioral verification.
 
 
-Codex benchmark workspaces explicitly enable the sixteen known FFSAKE MCP tools and set `approval_mode = "approve"` for each of those tools only. This avoids the CLI's noninteractive `approval_policy = "never"` rejecting the calls before server execution. The disposable project config does not change global approval or sandbox settings, and this approval configuration is not a claim that native Codex tools are disabled. Approval-blocked attempts are recorded and invalidate performance comparisons.
+Codex benchmark workspaces explicitly enable the seventeen known FFSAKE MCP tools and set `approval_mode = "approve"` for each of those tools only. This avoids the CLI's noninteractive `approval_policy = "never"` rejecting the calls before server execution. The disposable project config does not change global approval or sandbox settings, and this approval configuration is not a claim that native Codex tools are disabled. Approval-blocked attempts are recorded and invalidate performance comparisons.
 
 For targeted diagnosis after a baseline is already known to work, use `--modes ffsake` (or `--modes baseline`). The default remains both modes. Rebuild `ffsake-mcp` after changes to the server. Selector schemas now expose `"All"`, `{"Exact":"path"}`, `{"Glob":"pattern"}` and `{"Regex":"pattern"}`. An empty include list deliberately selects no files; omission of the search target uses the current target or the whole workspace.
 
@@ -188,3 +188,24 @@ Both FFSAKE agents submitted all seven requested operations in one `ffsake_previ
 Claude's baseline implementation passed every behavior/content check. Its own Python CLI verification created three `dispatch/__pycache__/*.pyc` files, causing the exact-file-set check and unexpected-file audit to fail. This is not evidence of a faulty implementation or a correctness advantage for FFSAKE. The original report remains unchanged.
 
 The harness now sets `PYTHONDONTWRITEBYTECODE=1` for every spawned agent and verifier process, inherited by ordinary Python child commands in either mode. A regression test launches a nested Python import without `-B` and checks that no cache appears and the host environment is unchanged. Unexpected files, including deliberately created bytecode files, still fail verification; caches are not excluded from the audit. Agents that explicitly clear the environment or force bytecode generation can still create artifacts. Repeat the comparison with this environment fix before making broader claims.
+
+
+## Repeated maintenance comparison and bounded reads, 2026-10-24
+
+The post-bytecode-fix report `suite-20261024-154808-cmfz2q51.json` completed all 12 runs: every run passed 26/26 checks and comparison audits, with no timeouts or provider errors. This existing report was analyzed rather than rerun.
+
+| Agent | Baseline median | FFSAKE median | Median calls baseline → FFSAKE | Median cost baseline → FFSAKE |
+| --- | ---: | ---: | ---: | ---: |
+| Claude | 19.333 s | 13.555 s | 9 → 7 | $0.0990739 → $0.0575753 |
+| Codex | 38.514 s | 32.872 s | 3 → 24 | unavailable |
+
+These are three repetitions per mode on a small synthetic task, not universal performance results. Observed tool-policy compliance does not establish host-enforced isolation. Codex cost remains unavailable.
+
+`ffsake_read_files` (resident `read_files`) now accepts `files: [{path, start?, end?}, ...]`. It returns ordered `files` entries with the requested path and `status: "ok"` plus the existing `read` result, or `status: "missing"` for absent paths. Use it for explicitly selected source files, instruction-file probes and verification of changed/deleted paths. Single-file `ffsake_read` remains compatible.
+
+Limits are 1–32 entries, 4096 UTF-8 path bytes, 256 KiB source bytes per file and 1 MiB returned text across the batch; JSON escaping adds bounded encoding overhead. Limits reject instead of truncating, even when a range selects only part of an oversized source. Invalid ranges, non-UTF-8 files, directories, internal/traversal/absolute paths and all symlinks reject the entire call without returning partial results. Missing paths alone are successful data. Reads occur sequentially and are not an atomic snapshot; mutation hash guards remain necessary. The seventeen-tool allowlist and shared agent guidance include this tool.
+
+
+Targeted post-change Codex diagnostic `suite-20261024-155821-5xt6g6r5.json`: 26/26 checks passed, valid comparison audit, four FFSAKE calls and no tool errors: read_files → preview_files (seven operations) → apply → read_files. The first call read eight existing files and probed six instruction-file paths; the final call verified eleven paths, including both required deletions. Elapsed time was 28.637 s; this single diagnostic demonstrates interface adoption, not a repeated performance improvement. No new baseline runs were needed. Codex cost and host-enforced isolation remain unavailable/unverified.
+
+Local validation: 48 Rust tests, 57 Python tests, Clippy with warnings denied, formatting, both binary builds, executable benchmark and MCP smoke passed. Smoke includes 130 rejected operations, with new checks for ordered mixed existing/missing reads, Unicode ranges, single-file equivalence, exact source/output limits, invalid ranges/schema, invalid UTF-8 and symlink/internal/workspace boundaries.
