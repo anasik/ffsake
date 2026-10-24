@@ -112,7 +112,9 @@ Local validation passed: 53 Rust tests, 57 Python tests, Clippy, formatting, exe
 
 Copy/move destination and redo mode gaps are now covered: previews retain and display source rwx bits, apply rejects changed source modes before any batch member writes, and the journal stores the mode actually created for redo. Reopened copy/move histories and new-file modes have focused regression coverage. No new tool or user-controlled chmod operation was added.
 
-Next: evaluate journal history failure recovery before expanding the editing interface; ordinary apply has rollback but undo/redo needs the same failure-path scrutiny.
+History failure evaluation reproduced partial undo when a later atomic write failed. Undo/redo now reverse earlier members on write or final manifest failure, keep the previous persisted transaction state on successful recovery, and report incomplete rollback with affected paths. Rollback recreation preserves current Unix permissions. Deterministic obstruction tests cover failed undo/redo, retries, manifest failure, mode recovery and explicit incomplete-recovery reporting.
+
+Next: validate persisted snapshot integrity before history replay; damaged or missing journal data must be rejected before changing workspace files. These changes provide ordinary error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

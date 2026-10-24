@@ -281,6 +281,29 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         call("ffsake_apply", {"handle": stale["handle"]}, expect_ok=False)
         assert (root / "code.py").read_text() == "external code edit\n"
         assert (root / "a.txt").read_text() == "external edit must survive\n"
+        # A failed later undo/redo write must restore earlier members.
+        (root / "history-first.txt").write_text("before first")
+        (root / "history-second.txt").write_text("before second")
+        history_plan = call("ffsake_preview_files", {"operations": [
+            {"op": "edit", "path": path, "old_text": "before", "new_text": "after", "expected_matches": 1}
+            for path in ["history-first.txt", "history-second.txt"]
+        ]})
+        history_tx = call("ffsake_apply", {"handle": history_plan["handle"]})["transaction"]
+        obstruction = root / f".history-second.txt.ffsake-journal-tmp-{proc.pid}"
+        obstruction.mkdir()
+        call("ffsake_undo", {"transaction": history_tx}, expect_ok=False)
+        assert (root / "history-first.txt").read_text() == "after first"
+        assert (root / "history-second.txt").read_text() == "after second"
+        obstruction.rmdir()
+        call("ffsake_undo", {"transaction": history_tx})
+        obstruction.mkdir()
+        call("ffsake_redo", {"transaction": history_tx}, expect_ok=False)
+        assert (root / "history-first.txt").read_text() == "before first"
+        assert (root / "history-second.txt").read_text() == "before second"
+        obstruction.rmdir()
+        call("ffsake_redo", {"transaction": history_tx})
+        assert (root / "history-first.txt").read_text() == "after first"
+
         print("MCP multiline preview/edit/apply/undo/redo and stale-content guards PASS")
         # File operations share the preview/apply/history flow. Destinations
         # must be absent; source and destination state are frozen at preview.

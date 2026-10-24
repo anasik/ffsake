@@ -221,3 +221,10 @@ New Unix journal entries store optional `before_unix_mode` rwx bits for before-s
 
 
 The follow-up closes the Unix copy/move and new-file redo mode gaps. Copy/move previews capture source rwx bits, include destination mode in preview data, and reject a changed source mode before any batch writes. The journal records optional `after_unix_mode` from the actual atomic-write temporary file before rename, so recreated files keep that mode on redo. Existing-file replacement still preserves current permissions, and legacy manifests without the fields retain compatibility. Regression checks cover both copy and move over repeated reopened undo/redo, default-mode creation, and stale permission rejection of a mixed batch. No general chmod tool or metadata scripting interface was added.
+
+
+## Journal history failure recovery
+
+A deterministic two-file regression blocked the second atomic-write temporary path during undo. Before the fix, the first file reverted while the second remained applied. Undo/redo now restore earlier members in reverse order when a later write or final manifest update fails. A successful recovery leaves the persisted transaction state unchanged and permits retry after the obstruction is removed. Commit also rolls back workspace changes if its final manifest write fails.
+
+Recovery preserves current ordinary Unix permissions when it must recreate a file removed earlier in the failed operation. If recovery itself fails, the returned error explicitly says `rollback incomplete` and includes affected paths; it does not claim atomic success. Tests include late write failures in both directions, manifest-write failure, retry, mode preservation and missing recovery data. This does not provide power-loss/crash atomicity or protection against hostile concurrent filesystem changes.

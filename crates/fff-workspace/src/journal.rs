@@ -14,6 +14,10 @@ pub enum JournalError {
     Json(serde_json::Error),
     InvalidPath(String),
     MissingTransaction(String),
+    RollbackFailed {
+        original: String,
+        failures: Vec<String>,
+    },
     StateConflict {
         path: String,
         expected: String,
@@ -28,6 +32,11 @@ impl std::fmt::Display for JournalError {
             Self::Json(error) => write!(f, "{error}"),
             Self::InvalidPath(path) => write!(f, "invalid journal path: {path}"),
             Self::MissingTransaction(id) => write!(f, "transaction not found: {id}"),
+            Self::RollbackFailed { original, failures } => write!(
+                f,
+                "{original}; rollback incomplete: {}",
+                failures.join("; ")
+            ),
             Self::StateConflict {
                 path,
                 expected,
@@ -161,17 +170,16 @@ impl Journal {
             match self.apply_one(&manifest, &file, SnapshotSide::After) {
                 Ok(mode) => manifest.files[index].after_unix_mode = mode,
                 Err(error) => {
-                    for applied_file in applied.iter().rev() {
-                        let _ = self.apply_one(&manifest, applied_file, SnapshotSide::Before);
-                    }
-                    return Err(error);
+                    return Err(self.rollback(&manifest, &applied, SnapshotSide::Before, error));
                 }
             }
             applied.push(file);
         }
 
         manifest.state = TransactionState::Applied;
-        self.write_manifest(&manifest)?;
+        if let Err(error) = self.write_manifest(&manifest) {
+            return Err(self.rollback(&manifest, &applied, SnapshotSide::Before, error));
+        }
         Ok(manifest)
     }
 
@@ -283,7 +291,7 @@ impl Journal {
     }
 
     pub fn undo(&self, id: &str) -> Result<TransactionManifest> {
-        let mut manifest = self.load(id)?;
+        let manifest = self.load(id)?;
         if manifest.state == TransactionState::Undone {
             return Ok(manifest);
         }
@@ -296,14 +304,11 @@ impl Journal {
         }
 
         self.verify_side(&manifest, SnapshotSide::After)?;
-        self.apply_side(&manifest, SnapshotSide::Before)?;
-        manifest.state = TransactionState::Undone;
-        self.write_manifest(&manifest)?;
-        Ok(manifest)
+        self.transition(manifest, SnapshotSide::Before, TransactionState::Undone)
     }
 
     pub fn redo(&self, id: &str) -> Result<TransactionManifest> {
-        let mut manifest = self.load(id)?;
+        let manifest = self.load(id)?;
         if manifest.state == TransactionState::Applied {
             return Ok(manifest);
         }
@@ -316,10 +321,7 @@ impl Journal {
         }
 
         self.verify_side(&manifest, SnapshotSide::Before)?;
-        self.apply_side(&manifest, SnapshotSide::After)?;
-        manifest.state = TransactionState::Applied;
-        self.write_manifest(&manifest)?;
-        Ok(manifest)
+        self.transition(manifest, SnapshotSide::After, TransactionState::Applied)
     }
 
     fn verify_side(&self, manifest: &TransactionManifest, side: SnapshotSide) -> Result<()> {
@@ -358,11 +360,63 @@ impl Journal {
         Ok(())
     }
 
-    fn apply_side(&self, manifest: &TransactionManifest, side: SnapshotSide) -> Result<()> {
-        for file in &manifest.files {
-            self.apply_one(manifest, file, side)?;
+    fn transition(
+        &self,
+        mut manifest: TransactionManifest,
+        side: SnapshotSide,
+        state: TransactionState,
+    ) -> Result<TransactionManifest> {
+        let restore = side.opposite();
+        // History intentionally permits chmod on existing files. If rollback
+        // recreates one of those files, retain its permissions at operation start.
+        let mut rollback_files = manifest.files.clone();
+        for file in &mut rollback_files {
+            if restore.hash(file).is_some() {
+                let mode = unix_mode(&self.resolve(&file.path)?)?;
+                match restore {
+                    SnapshotSide::Before => file.before_unix_mode = mode,
+                    SnapshotSide::After => file.after_unix_mode = mode,
+                }
+            }
         }
-        Ok(())
+        let mut applied = Vec::new();
+        for (file, rollback_file) in manifest.files.iter().zip(rollback_files) {
+            if let Err(error) = self.apply_one(&manifest, file, side) {
+                return Err(self.rollback(&manifest, &applied, restore, error));
+            }
+            applied.push(rollback_file);
+        }
+        manifest.state = state;
+        if let Err(error) = self.write_manifest(&manifest) {
+            return Err(self.rollback(&manifest, &applied, restore, error));
+        }
+        Ok(manifest)
+    }
+
+    fn rollback(
+        &self,
+        manifest: &TransactionManifest,
+        applied: &[TransactionFile],
+        side: SnapshotSide,
+        original: JournalError,
+    ) -> JournalError {
+        let failures = applied
+            .iter()
+            .rev()
+            .filter_map(|file| {
+                self.apply_one(manifest, file, side)
+                    .err()
+                    .map(|error| format!("{}: {error}", file.path))
+            })
+            .collect::<Vec<_>>();
+        if failures.is_empty() {
+            original
+        } else {
+            JournalError::RollbackFailed {
+                original: original.to_string(),
+                failures,
+            }
+        }
     }
 
     fn apply_one(
@@ -432,6 +486,13 @@ enum SnapshotSide {
 }
 
 impl SnapshotSide {
+    fn opposite(self) -> Self {
+        match self {
+            Self::Before => Self::After,
+            Self::After => Self::Before,
+        }
+    }
+
     fn hash<'a>(&self, file: &'a TransactionFile) -> &'a Option<String> {
         match self {
             Self::Before => &file.before_hash,
@@ -798,6 +859,152 @@ mod tests {
         assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"before");
         journal.redo(&manifest.id).unwrap();
         assert!(!root.join("src/lib.rs").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn failed_history_write_rolls_back_prior_files_and_can_retry() {
+        let root = fixture();
+        fs::write(root.join("second.txt"), b"second before").unwrap();
+        let journal = Journal::open(&root).unwrap();
+        let manifest = journal
+            .commit(
+                None,
+                &[
+                    ("src/lib.rs".into(), Some(b"first after".to_vec())),
+                    ("second.txt".into(), Some(b"second after".to_vec())),
+                ],
+            )
+            .unwrap();
+        let obstruction = root.join(format!(
+            ".second.txt.ffsake-journal-tmp-{}",
+            std::process::id()
+        ));
+        fs::create_dir(&obstruction).unwrap();
+        assert!(journal.undo(&manifest.id).is_err());
+        assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"first after");
+        assert_eq!(fs::read(root.join("second.txt")).unwrap(), b"second after");
+        assert_eq!(
+            journal.load(&manifest.id).unwrap().state,
+            TransactionState::Applied
+        );
+        fs::remove_dir(&obstruction).unwrap();
+        journal.undo(&manifest.id).unwrap();
+        fs::create_dir(&obstruction).unwrap();
+        assert!(journal.redo(&manifest.id).is_err());
+        assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"before");
+        assert_eq!(fs::read(root.join("second.txt")).unwrap(), b"second before");
+        assert_eq!(
+            journal.load(&manifest.id).unwrap().state,
+            TransactionState::Undone
+        );
+        fs::remove_dir(&obstruction).unwrap();
+        journal.redo(&manifest.id).unwrap();
+        assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"first after");
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn history_manifest_failure_restores_files_and_previous_state() {
+        let root = fixture();
+        let journal = Journal::open(&root).unwrap();
+        let manifest = journal
+            .commit(None, &[("src/lib.rs".into(), Some(b"after".to_vec()))])
+            .unwrap();
+        let obstruction = root
+            .join(".ffsake/journal")
+            .join(&manifest.id)
+            .join(format!(
+                ".manifest.json.ffsake-journal-tmp-{}",
+                std::process::id()
+            ));
+        fs::create_dir(&obstruction).unwrap();
+        assert!(journal.undo(&manifest.id).is_err());
+        assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"after");
+        assert_eq!(
+            journal.load(&manifest.id).unwrap().state,
+            TransactionState::Applied
+        );
+        fs::remove_dir(&obstruction).unwrap();
+        journal.undo(&manifest.id).unwrap();
+        fs::create_dir(&obstruction).unwrap();
+        assert!(journal.redo(&manifest.id).is_err());
+        assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"before");
+        assert_eq!(
+            journal.load(&manifest.id).unwrap().state,
+            TransactionState::Undone
+        );
+        fs::remove_dir(&obstruction).unwrap();
+        journal.redo(&manifest.id).unwrap();
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn undo_rollback_recreates_current_permissions() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = fixture();
+        let journal = Journal::open(&root).unwrap();
+        let manifest = journal
+            .commit(
+                None,
+                &[
+                    ("created.sh".into(), Some(b"created".to_vec())),
+                    ("src/lib.rs".into(), Some(b"after".to_vec())),
+                ],
+            )
+            .unwrap();
+        fs::set_permissions(root.join("created.sh"), fs::Permissions::from_mode(0o700)).unwrap();
+        let obstruction = root
+            .join("src")
+            .join(format!(".lib.rs.ffsake-journal-tmp-{}", std::process::id()));
+        fs::create_dir(&obstruction).unwrap();
+        assert!(journal.undo(&manifest.id).is_err());
+        assert_eq!(fs::read(root.join("created.sh")).unwrap(), b"created");
+        assert_eq!(
+            fs::metadata(root.join("created.sh"))
+                .unwrap()
+                .permissions()
+                .mode()
+                & 0o777,
+            0o700
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn incomplete_history_rollback_is_reported_explicitly() {
+        let root = fixture();
+        let journal = Journal::open(&root).unwrap();
+        let manifest = journal
+            .commit(
+                None,
+                &[
+                    ("created.txt".into(), Some(b"created".to_vec())),
+                    ("src/lib.rs".into(), Some(b"after".to_vec())),
+                ],
+            )
+            .unwrap();
+        // Undo removes the created file, then fails on the second write. Its
+        // recovery snapshot has been lost, so rollback must not claim success.
+        fs::remove_file(
+            root.join(".ffsake/journal")
+                .join(&manifest.id)
+                .join("after")
+                .join(&manifest.files[0].snapshot_key),
+        )
+        .unwrap();
+        let obstruction = root
+            .join("src")
+            .join(format!(".lib.rs.ffsake-journal-tmp-{}", std::process::id()));
+        fs::create_dir(&obstruction).unwrap();
+        let error = journal.undo(&manifest.id).unwrap_err();
+        assert!(
+            matches!(&error, JournalError::RollbackFailed { failures, .. } if failures.len() == 1 && failures[0].contains("created.txt"))
+        );
+        assert!(error.to_string().contains("rollback incomplete"));
+        assert_eq!(
+            journal.load(&manifest.id).unwrap().state,
+            TransactionState::Applied
+        );
         fs::remove_dir_all(root).unwrap();
     }
 }
