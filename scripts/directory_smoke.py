@@ -32,6 +32,12 @@ def main():
         def preview(operation, path, ok=True):
             return call("ffsake_preview_files", {"operations": [{"op": operation, "path": path}]}, ok)
 
+        def search(pattern, paths):
+            report = call("ffsake_search", {"pattern": pattern, "details": True})
+            assert report["matches"] == len(paths), report
+            assert {item["path"] for item in report["ranges"]} == set(paths), report
+            call("ffsake_release", {"handle": report["handle"]})
+
         try:
             pending = preview("create_directory", "empty")
             assert pending["preview"]["changed_directories"] == 1 and not (root / "empty").exists()
@@ -83,8 +89,10 @@ def main():
 
             (root / "package/empty").mkdir()
             (root / "package/blob").write_bytes(b"\x00\xff\r\n")
+            (root / "package/search.txt").write_text("tree_search_sentinel\n")
+            search("tree_search_sentinel", ["package/search.txt"])
             movement = move_preview()
-            assert movement["preview"]["changed_files"] == 2
+            assert movement["preview"]["changed_files"] == 3
             assert not (root / "renamed").exists()
             (root / "package/extra").write_text("keep")
             call("ffsake_apply", {"handle": movement["handle"]}, False)
@@ -93,6 +101,7 @@ def main():
             movement = move_preview()
             moved = call("ffsake_apply", {"handle": movement["handle"]})["transaction"]
             assert not (root / "package").exists() and (root / "renamed/empty").is_dir()
+            search("tree_search_sentinel", ["renamed/search.txt"])
             assert (root / "renamed/blob").read_bytes() == b"\x00\xff\r\n"
             (root / "renamed/blob").write_bytes(b"changed")
             call("ffsake_undo", {"transaction": moved}, False)
@@ -100,8 +109,10 @@ def main():
             (root / "renamed/blob").write_bytes(b"\x00\xff\r\n")
             call("ffsake_undo", {"transaction": moved})
             assert (root / "package/empty").is_dir() and not (root / "renamed").exists()
+            search("tree_search_sentinel", ["package/search.txt"])
             call("ffsake_redo", {"transaction": moved})
             assert (root / "renamed/src/main.rs").read_text() == "fn main() {}\n"
+            search("tree_search_sentinel", ["renamed/search.txt"])
             deletion = preview("delete_directory", "renamed")
             assert deletion["preview"]["retained_in_journal"] is True
             assert (root / "renamed/blob").exists()
@@ -112,10 +123,13 @@ def main():
             deletion = preview("delete_directory", "renamed")
             archived = call("ffsake_apply", {"handle": deletion["handle"]})["transaction"]
             assert not (root / "renamed").exists()
+            search("tree_search_sentinel", [])
             call("ffsake_undo", {"transaction": archived})
+            search("tree_search_sentinel", ["renamed/search.txt"])
             assert (root / "renamed/empty").is_dir()
             assert (root / "renamed/blob").read_bytes() == b"\x00\xff\r\n"
             call("ffsake_redo", {"transaction": archived})
+            search("tree_search_sentinel", [])
             assert not (root / "renamed").exists()
             (root / "renamed").mkdir()
             (root / "renamed/keep").write_text("keep")
@@ -123,6 +137,7 @@ def main():
             assert (root / "renamed/keep").read_text() == "keep"
             (root / "copy-source/empty").mkdir(parents=True)
             (root / "copy-source/blob").write_bytes(b"original\x00\xff")
+            (root / "copy-source/search.txt").write_text("copy_search_sentinel\n")
             if os.name == "posix":
                 (root / "copy-source/blob").chmod(0o751)
             def copy_preview():
@@ -137,10 +152,13 @@ def main():
             copying = copy_preview()
             copied = call("ffsake_apply", {"handle": copying["handle"]})["transaction"]
             assert (root / "copy-result/empty").is_dir()
+            search("copy_search_sentinel", ["copy-source/search.txt", "copy-result/search.txt"])
             assert (root / "copy-result/blob").read_bytes() == b"original\x00\xff"
             call("ffsake_undo", {"transaction": copied})
+            search("copy_search_sentinel", ["copy-source/search.txt"])
             (root / "copy-source/blob").write_bytes(b"independent source")
             call("ffsake_redo", {"transaction": copied})
+            search("copy_search_sentinel", ["copy-source/search.txt", "copy-result/search.txt"])
             assert (root / "copy-result/blob").read_bytes() == b"original\x00\xff"
             assert (root / "copy-source/blob").read_bytes() == b"independent source"
             if os.name == "posix":
@@ -170,7 +188,7 @@ def main():
             proc.stdin.close()
             proc.wait(timeout=10)
             assert proc.returncode == 0, proc.stderr.read()
-        print(json.dumps({"ok": True, "directory_history": True, "tree_move_history": True, "tree_archive_history": True, "independent_copy_history": True, "implicit_parent_history": True, "stale_content_preserved": True,
+        print(json.dumps({"ok": True, "directory_history": True, "tree_move_history": True, "tree_archive_history": True, "independent_copy_history": True, "implicit_parent_history": True, "search_scope_and_refresh": True, "stale_content_preserved": True,
                           "recursive_removal": False, "core_profile": True}))
 
 
