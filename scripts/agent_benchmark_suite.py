@@ -28,6 +28,11 @@ FFSAKE_TOOLS = (
 )
 
 
+FFSAKE_CORE_TOOLS = tuple(name for name in FFSAKE_TOOLS
+                         if not name.startswith(("ffsake_rust_", "ffsake_preview_rust_"))
+                         and name != "ffsake_select_rust_identifiers")
+
+
 def git_init(root: Path):
     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
     subprocess.run(["git", "config", "user.name", "FFSAKE Benchmark"], cwd=root, check=True)

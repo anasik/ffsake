@@ -170,7 +170,9 @@ Workspace diagnostics now collect selected primary file reports in one fresh ana
 
 Selected diagnostic evaluation at 59c0db9 retained all 24 source files and produced identical reports for coordinates.rs/edits.rs (65 diagnostics, 3579 text bytes). Five alternating local samples measured 0.480 s median for one batch versus 0.954 s for two individual requests. CI checks report equivalence with no timing threshold; these are model-free, dependency-incomplete observations, not agent speed or compiler accuracy claims.
 
-Next: audit the expanded MCP catalog cost for non-Rust maintenance tasks and, if materially smaller, add an explicit core tool profile while preserving the default full catalog and rejecting disabled calls. Keep benchmark/profile evidence separate from token-cost or agent-speed claims; do not modify the user’s local benchmark changes or restart paused OpenCode work. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Catalog audit measured 34,866 UTF-8 bytes for all thirty tools versus 11,691 for the eighteen generic file tools. An opt-in --profile core now advertises only those tools and rejects Rust-specific dispatch before backend work. The default/all catalog and all workspace/history protections remain unchanged. Real-process checks verify catalog equality, disabled calls, no analyzer launch, malformed arguments and core Unicode/CRLF executable-file history. This does not measure agent speed/cost or establish host isolation.
+
+Next: thread the optional tool profile through the shared agent benchmark harness with profile-aware guidance, launch configuration and report metadata, preserving default all behavior and the user’s local benchmark changes. Verify configuration/preflight behavior without restarting paused OpenCode experiments or claiming performance before measurement. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

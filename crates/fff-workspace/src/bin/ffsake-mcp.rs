@@ -3,20 +3,48 @@ use fff_workspace::resident::{Request, Resident};
 use serde_json::{Value, json};
 use std::io::{self, BufRead, Write};
 
+#[derive(Clone, Copy)]
+enum ToolProfile {
+    All,
+    Core,
+}
+
+impl ToolProfile {
+    fn allows(self, name: &str) -> bool {
+        match self {
+            Self::All => true,
+            Self::Core => {
+                !name.starts_with("ffsake_rust_")
+                    && !name.starts_with("ffsake_preview_rust_")
+                    && name != "ffsake_select_rust_identifiers"
+            }
+        }
+    }
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
-    if args.len() != 1 {
-        eprintln!("usage: ffsake-mcp WORKSPACE");
-        std::process::exit(2);
-    }
+    let (root, profile) = match args.as_slice() {
+        [root] => (root, ToolProfile::All),
+        [root, flag, profile] if flag == "--profile" && profile == "all" => {
+            (root, ToolProfile::All)
+        }
+        [root, flag, profile] if flag == "--profile" && profile == "core" => {
+            (root, ToolProfile::Core)
+        }
+        _ => {
+            eprintln!("usage: ffsake-mcp WORKSPACE [--profile all|core]");
+            std::process::exit(2);
+        }
+    };
 
-    let mut runtime = Resident::open(Workspace::new(&args[0])?)?;
+    let mut runtime = Resident::open(Workspace::new(root)?)?;
     let mut input = io::stdin().lock();
     let mut output = io::stdout().lock();
 
     while let Some(message) = read_message(&mut input)? {
         let response = match serde_json::from_slice::<Value>(&message) {
-            Ok(message) => handle_message(&mut runtime, message),
+            Ok(message) => handle_message(&mut runtime, profile, message),
             Err(error) => Some(json!({
                 "jsonrpc":"2.0",
                 "id":null,
@@ -69,7 +97,7 @@ fn read_message(input: &mut impl BufRead) -> io::Result<Option<Vec<u8>>> {
     }
 }
 
-fn handle_message(runtime: &mut Resident, message: Value) -> Option<Value> {
+fn handle_message(runtime: &mut Resident, profile: ToolProfile, message: Value) -> Option<Value> {
     if message.get("__oversized") == Some(&Value::Bool(true)) {
         return Some(json!({
             "jsonrpc":"2.0","id":null,
@@ -99,7 +127,7 @@ fn handle_message(runtime: &mut Resident, message: Value) -> Option<Value> {
         "tools/list" => json!({
             "jsonrpc":"2.0",
             "id":id,
-            "result":{"tools":tools()}
+            "result":{"tools":tools().into_iter().filter(|tool| tool["name"].as_str().is_some_and(|name| profile.allows(name))).collect::<Vec<_>>()}
         }),
         "tools/call" => {
             let name = message
@@ -111,7 +139,7 @@ fn handle_message(runtime: &mut Resident, message: Value) -> Option<Value> {
                 .cloned()
                 .unwrap_or_else(|| json!({}));
 
-            let result = call_tool(runtime, name, arguments);
+            let result = call_tool(runtime, profile, name, arguments);
             let is_error = result.get("ok") == Some(&Value::Bool(false));
             json!({
                 "jsonrpc":"2.0",
@@ -130,7 +158,10 @@ fn handle_message(runtime: &mut Resident, message: Value) -> Option<Value> {
     })
 }
 
-fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
+fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments: Value) -> Value {
+    if !profile.allows(name) {
+        return json!({"ok":false,"error":format!("tool disabled by core profile: {name}")});
+    }
     let op = match name {
         "ffsake_read" => "read",
         "ffsake_read_files" => "read_files",
