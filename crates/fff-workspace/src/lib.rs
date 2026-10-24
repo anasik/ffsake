@@ -902,10 +902,21 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let root = std::env::temp_dir().join(format!("fff-workspace-{id}"));
-        fs::create_dir_all(root.join("src")).unwrap();
-        fs::write(root.join("src/lib.rs"), "one\ntwo\nthree\n").unwrap();
-        root
+        // Clock resolution can yield the same timestamp to parallel tests.
+        // Reserve the directory atomically rather than sharing create_dir_all.
+        for suffix in 0u64.. {
+            let root = std::env::temp_dir().join(format!("fff-workspace-{id}-{suffix}"));
+            match fs::create_dir(&root) {
+                Ok(()) => {
+                    fs::create_dir(root.join("src")).unwrap();
+                    fs::write(root.join("src/lib.rs"), "one\ntwo\nthree\n").unwrap();
+                    return root;
+                }
+                Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
+                Err(error) => panic!("cannot create test fixture: {error}"),
+            }
+        }
+        unreachable!()
     }
 
     #[test]

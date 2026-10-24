@@ -106,12 +106,16 @@ Targeted Codex diagnostic confirmed adoption: 26/26 checks, four calls (batch re
 
 Boundary follow-up: an executable probe showed that single-file read, directory list and exact selection could follow an alias into `.ffsake`. Resolved paths now enforce the reserved namespace too, and recursive selection skips nested reserved directories. Ordinary in-workspace read aliases retain compatibility. Regression coverage includes read/hash/selection/write/delete/move and MCP endpoints.
 
-Next: evaluate larger real-repository workflows before adding more interface primitives; keep runtime execution and metadata recreation gaps explicit.
+Repository workflow evaluation: a disposable archive of `b7b02a5` covered 33 tracked files / 459,711 bytes, two batched reads, six mixed operations and byte-exact undo/redo. The executable deletion probe exposed mode loss (0755 → 0644); new Unix manifests now capture ordinary before-side rwx bits and restore them only when recreating an absent file. Older manifests load unchanged, and existing-file permissions retain precedence. Added `scripts/repository_smoke.py` to repeat this model-free integration check in CI. It is not a real-agent timing or isolation comparison.
+
+Local validation passed: 53 Rust tests, 57 Python tests, Clippy, formatting, executable benchmark, MCP smoke, and the repository workflow including executable recreation. Parallel library-test fixtures now reserve unique directories atomically after an observed timestamp collision.
+
+Next: address the remaining copy/move destination and redo mode gaps using the same explicit metadata contract, then evaluate journal history failure recovery before expanding the editing interface.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
 - directory operations are not exposed by the MCP journal;
-- metadata restoration when files are recreated (for example, undoing deletion) is not implemented; existing-file edits preserve permissions;
+- metadata beyond ordinary Unix rwx bits remains unrecorded; copy/move destinations and redo of new files still use default permissions, while undo of new recorded deletions restores original rwx bits;
 - native Codex tools are not disabled; enforced isolation remains unverified.
 
 Pass condition:

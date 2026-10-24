@@ -80,6 +80,10 @@ pub struct TransactionFile {
     pub path: String,
     pub snapshot_key: String,
     pub before_hash: Option<String>,
+    /// Ordinary Unix rwx bits for recreating the before-side file. Older
+    /// journals and record-after-the-fact callers have no original metadata.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub before_unix_mode: Option<u32>,
     pub after_hash: Option<String>,
 }
 
@@ -185,6 +189,7 @@ impl Journal {
                 path: change.path.clone(),
                 snapshot_key,
                 before_hash: change.before.as_deref().map(hash_bytes),
+                before_unix_mode: None,
                 after_hash: change.after.as_deref().map(hash_bytes),
             });
         }
@@ -228,6 +233,11 @@ impl Journal {
                 path: change.path.clone(),
                 snapshot_key,
                 before_hash: change.before.as_deref().map(hash_bytes),
+                before_unix_mode: if change.before.is_some() {
+                    unix_mode(&self.resolve(&change.path)?)?
+                } else {
+                    None
+                },
                 after_hash: change.after.as_deref().map(hash_bytes),
             });
         }
@@ -350,7 +360,11 @@ impl Journal {
             if let Some(parent) = path.parent() {
                 fs::create_dir_all(parent)?;
             }
-            atomic_write(&path, &bytes)?;
+            let recreate_mode = match side {
+                SnapshotSide::Before => file.before_unix_mode,
+                SnapshotSide::After => None,
+            };
+            atomic_write_with_mode(&path, &bytes, recreate_mode)?;
         } else if path.is_file() {
             fs::remove_file(path)?;
         } else if path.is_dir() {
@@ -452,7 +466,28 @@ fn transaction_id() -> String {
     format!("tx-{nanos}-{}", std::process::id())
 }
 
+fn unix_mode(path: &Path) -> Result<Option<u32>> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        match fs::metadata(path) {
+            Ok(metadata) => Ok(Some(metadata.permissions().mode() & 0o777)),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
+            Err(error) => Err(error.into()),
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = path;
+        Ok(None)
+    }
+}
+
 fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
+    atomic_write_with_mode(path, bytes, None)
+}
+
+fn atomic_write_with_mode(path: &Path, bytes: &[u8], recreate_mode: Option<u32>) -> Result<()> {
     let parent = path
         .parent()
         .ok_or_else(|| JournalError::InvalidPath(path.display().to_string()))?;
@@ -466,7 +501,16 @@ fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
     fs::write(&temp, bytes)?;
     match fs::metadata(path) {
         Ok(metadata) => fs::set_permissions(&temp, metadata.permissions())?,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            #[cfg(unix)]
+            if let Some(mode) = recreate_mode {
+                use std::os::unix::fs::PermissionsExt;
+                // Never restore setuid/setgid/sticky flags from a manifest.
+                fs::set_permissions(&temp, fs::Permissions::from_mode(mode & 0o777))?;
+            }
+            #[cfg(not(unix))]
+            let _ = recreate_mode;
+        }
         Err(error) => return Err(error.into()),
     }
     fs::rename(temp, path)?;
@@ -648,6 +692,85 @@ mod tests {
         assert_eq!(fs::read(&script).unwrap(), b"#!/bin/sh\necho after\n");
         assert_eq!(mode(), 0o755);
 
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[cfg(unix)]
+    #[test]
+    fn deleted_file_permissions_survive_reopened_history() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = fixture();
+        let path = root.join("src/lib.rs");
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o751)).unwrap();
+        let manifest = Journal::open(&root)
+            .unwrap()
+            .commit(None, &[("src/lib.rs".into(), None)])
+            .unwrap();
+        assert_eq!(manifest.files[0].before_unix_mode, Some(0o751));
+        assert!(!path.exists());
+        let journal = Journal::open(&root).unwrap();
+        for _ in 0..2 {
+            journal.undo(&manifest.id).unwrap();
+            assert_eq!(fs::read(&path).unwrap(), b"before");
+            assert_eq!(
+                fs::metadata(&path).unwrap().permissions().mode() & 0o7777,
+                0o751
+            );
+            journal.redo(&manifest.id).unwrap();
+            assert!(!path.exists());
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn history_preserves_current_permissions_when_file_still_exists() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = fixture();
+        let path = root.join("src/lib.rs");
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+        let journal = Journal::open(&root).unwrap();
+        let manifest = journal
+            .commit(None, &[("src/lib.rs".into(), Some(b"after".to_vec()))])
+            .unwrap();
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).unwrap();
+        journal.undo(&manifest.id).unwrap();
+        assert_eq!(
+            fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+            0o700
+        );
+        journal.redo(&manifest.id).unwrap();
+        assert_eq!(
+            fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+            0o700
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn legacy_manifest_without_permissions_remains_usable() {
+        let root = fixture();
+        let journal = Journal::open(&root).unwrap();
+        let manifest = journal
+            .commit(None, &[("src/lib.rs".into(), None)])
+            .unwrap();
+        let mut legacy = serde_json::to_value(&manifest).unwrap();
+        legacy["files"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove("before_unix_mode");
+        let manifest_path = root
+            .join(".ffsake/journal")
+            .join(&manifest.id)
+            .join("manifest.json");
+        fs::write(manifest_path, serde_json::to_vec(&legacy).unwrap()).unwrap();
+        assert_eq!(
+            journal.load(&manifest.id).unwrap().files[0].before_unix_mode,
+            None
+        );
+        journal.undo(&manifest.id).unwrap();
+        assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"before");
+        journal.redo(&manifest.id).unwrap();
+        assert!(!root.join("src/lib.rs").exists());
         fs::remove_dir_all(root).unwrap();
     }
 }

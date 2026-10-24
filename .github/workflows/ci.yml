@@ -21,5 +21,6 @@ jobs:
       - run: cargo build --locked --bin ffsake-mcp
       - run: python3 scripts/benchmark.py target/debug/ffsake
       - run: python3 scripts/mcp_smoke.py target/debug/ffsake-mcp
+      - run: python3 scripts/repository_smoke.py target/debug/ffsake-mcp
       - run: python3 -m py_compile scripts/agent_benchmark.py scripts/agent_benchmark_suite.py
       - run: python3 -m unittest discover -s tests -p 'test_agent_benchmark_suite.py' -v

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -377,6 +378,19 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         assert (root / "empty.txt").read_bytes() == b""
         call("ffsake_undo", {"transaction": empty_tx})
         assert not (root / "empty.txt").exists()
+        if os.name == "posix":
+            executable = root / "executable.sh"
+            executable.write_text("#!/bin/sh\nexit 0\n")
+            executable.chmod(0o751)
+            delete_executable = call("ffsake_preview_delete", {"path": "executable.sh"})
+            executable_tx = call("ffsake_apply", {"handle": delete_executable["handle"]})["transaction"]
+            for _ in range(2):
+                assert not executable.exists()
+                call("ffsake_undo", {"transaction": executable_tx})
+                assert executable.read_text() == "#!/bin/sh\nexit 0\n"
+                assert executable.stat().st_mode & 0o7777 == 0o751
+                call("ffsake_redo", {"transaction": executable_tx})
+
         released = call("ffsake_preview_create", {"path": "released.txt", "content": "x"})
         call("ffsake_release", {"handle": released["handle"]})
         call("ffsake_apply", {"handle": released["handle"]}, expect_ok=False)

@@ -136,7 +136,7 @@ python3 scripts/ffsake_claude.py /absolute/path/to/worktree
 
 The launcher supplies a temporary MCP configuration, disables Claude's built-in tools with `--tools ""`, loads only this MCP configuration with `--strict-mcp-config`, and approves only the seventeen named FFSAKE tools for this session. It does not use the broad skip-permissions flag or modify user/project configuration. Other host settings, including enterprise policy and startup hooks, are not isolated by this launcher. FFSAKE is an application-level workspace boundary, not an OS sandbox.
 
-Use a separate git worktree for the first pilot. Start with one small repository editing task; run builds/tests and review the git diff in a separate terminal. FFSAKE currently supplies editing/navigation, not a build/test runner. Existing file bytes are journaled; filesystem metadata such as executable bits is not covered by the journal and should be reviewed before committing.
+Use a separate git worktree for the first pilot. Start with one small repository editing task; run builds/tests and review the git diff in a separate terminal. FFSAKE currently supplies editing/navigation, not a build/test runner. Existing-file replacements preserve current permissions. New Unix journal entries also capture ordinary rwx permission bits when committing a deletion, so undo can recreate executable/private files correctly. Older entries and record-after-the-fact calls lack original modes. Ownership, ACLs, extended attributes, special mode bits, destination modes for copy/move, and new-file modes across redo are not restored.
 
 To preview the generated command and MCP configuration without starting Claude:
 
