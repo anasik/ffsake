@@ -445,6 +445,45 @@ class CodexApprovalTests(unittest.TestCase):
 
 
 class ModeSelectionTests(unittest.TestCase):
+    def test_baseline_only_does_not_require_mcp_binary(self):
+        from unittest.mock import patch
+        import contextlib
+        import io
+        result = {"agent": "codex", "task": "micro", "mode": "baseline", "comparison_valid": True,
+                  "correct": True, "exit_code": 0, "timed_out": False, "elapsed_ms": 1,
+                  "trace": {"tool_calls": 1, "ffsake_tool_calls": 0, "shell_tool_calls": 1,
+                            "output_tokens": 1, "total_cost_usd": None}}
+        with tempfile.TemporaryDirectory() as td, contextlib.redirect_stdout(io.StringIO()):
+            arguments = ["suite", "--agents", "codex", "--tasks", "micro", "--modes", "baseline",
+                         "--tool-profile", "core", "--repetitions", "1"]
+            with patch.object(sys, "argv", arguments), patch.object(suite, "preflight", return_value={"ok": True}) as check, \
+                 patch.object(suite, "FFSAKE_MCP", Path(td) / "missing"), patch.object(suite, "RESULT_DIR", Path(td)), \
+                 patch.object(suite, "one", return_value=result) as run:
+                suite.main()
+            check.assert_called_once_with(["codex"], "all")
+            run.assert_called_once_with("codex", "micro", "baseline", 900, None, "core")
+            report = json.loads(next(Path(td).glob("*.json")).read_text())
+            self.assertTrue(report["complete"])
+            self.assertIsNone(report["provenance"]["mcp_binary_sha256"])
+            arguments[arguments.index("baseline")] = "ffsake"
+            with patch.object(sys, "argv", arguments), patch.object(suite, "preflight", return_value={"ok": True}), \
+                 patch.object(suite, "FFSAKE_MCP", Path(td) / "missing"), patch.object(suite, "one") as run:
+                with self.assertRaisesRegex(SystemExit, "build first"):
+                    suite.main()
+                run.assert_not_called()
+
+    def test_empty_or_duplicate_matrix_selections_fail_before_preflight(self):
+        from unittest.mock import patch
+        for flag, value in (("--agents", ""), ("--tasks", ","), ("--modes", ""),
+                            ("--agents", "codex,codex"), ("--tasks", "micro,micro"),
+                            ("--modes", "baseline,baseline")):
+            with self.subTest(flag=flag, value=value), \
+                 patch.object(sys, "argv", ["suite", flag, value]), \
+                 patch.object(suite, "preflight", side_effect=AssertionError("preflight must not run")) as check:
+                with self.assertRaises(SystemExit):
+                    suite.main()
+                check.assert_not_called()
+
     def test_targeted_mode_does_not_rerun_baseline(self):
         from unittest.mock import patch
         import contextlib

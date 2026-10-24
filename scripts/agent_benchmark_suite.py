@@ -1132,7 +1132,10 @@ def main():
     agents = [x.strip() for x in args.agents.split(",") if x.strip()]
     tasks = [x.strip() for x in args.tasks.split(",") if x.strip()]
     modes = [x.strip() for x in args.modes.split(",") if x.strip()]
-    if not modes or any(mode not in {"baseline", "ffsake"} for mode in modes):
+    for flag, values in (("agents", agents), ("tasks", tasks), ("modes", modes)):
+        if not values or len(values) != len(set(values)):
+            raise SystemExit(f"--{flag} must be nonempty without duplicates; use --repetitions for repeated runs")
+    if any(mode not in {"baseline", "ffsake"} for mode in modes):
         raise SystemExit("--modes must select baseline and/or ffsake")
     for agent in agents:
         if agent not in {"claude", "codex", "opencode"}:
@@ -1151,7 +1154,7 @@ def main():
         if not checks["ok"]:
             raise SystemExit("Preflight failed; no model calls were made")
         return
-    if not FFSAKE_MCP.exists():
+    if "ffsake" in modes and not FFSAKE_MCP.exists():
         raise SystemExit("build first: cargo build --locked --bin ffsake-mcp")
 
     results = []

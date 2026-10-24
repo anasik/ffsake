@@ -210,7 +210,9 @@ Inspection CI passed at f5ec0b3; the six separately committed launcher/error/gui
 
 A failure-injection regression reproduced loss of completed agent traces when either post-run file snapshot raised an OS error. The harness now records these as incorrect/non-comparable results with explicit audit errors and null unknown change lists; incomplete audits are excluded from timing medians. Schema version 4 describes the nullable audit fields. All 80 Python tests pass without model calls.
 
-Next: commit the audit-failure preservation fix separately, publish after 4191cbe CI passes, and verify the exact new head. Keep subsequent work driven by observed workflow gaps; no additional model run is authorized by the earlier single-run approval. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+The audit-failure preservation fix is committed separately as f74852b. CLI configuration regression also reproduced an unnecessary MCP-binary requirement for baseline-only runs; the prerequisite now applies only to FFSAKE mode. Empty/duplicate agent/task/mode selectors reject before preflight, and all 82 model-free Python tests pass.
+
+Next: commit the matrix-validation fix separately, publish both after 4191cbe CI passes, and verify the exact new head. Keep subsequent work driven by observed workflow gaps; no additional model run is authorized by the earlier single-run approval. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

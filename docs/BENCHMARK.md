@@ -333,3 +333,6 @@ New suite results also audit task files after verification. `verification.verifi
 
 
 Schema version 4 preserves completed agent output when an operating-system error prevents either post-run file audit. Such results have `correct: false`, `comparison_valid: false` and the reason `file_audit_failed`, so they cannot contribute performance medians. `verification.file_audit_errors` records the failed phase and error; `file_audit_complete` is false. Unknown change lists are null rather than empty. A failed pre-verification snapshot skips behavioral checks; a failed post-verification snapshot retains the behavioral result details but cannot establish correctness. Successful audits retain ordinary change lists. Input-fixture failures before any agent starts still stop normally.
+
+
+Matrix selectors (`--agents`, `--tasks`, `--modes`) must be nonempty and contain distinct values; use `--repetitions` for intentional repeated samples. Invalid selections stop before CLI preflight or model calls. The harness's local MCP-binary prerequisite applies only when FFSAKE mode is selected. Baseline-only matrices skip that prerequisite and the core-catalog preflight, while retaining agent CLI/configuration checks and trace auditing.
