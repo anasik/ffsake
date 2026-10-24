@@ -363,13 +363,12 @@ mod tests {
     fn guarded_selection_transform_rejects_stale_source() {
         use crate::transform::execute;
         use std::fs;
-        use std::time::{SystemTime, UNIX_EPOCH};
 
-        let id = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
+        let root = tempfile::Builder::new()
+            .prefix("ffsake-selection-guard-")
+            .tempdir()
             .unwrap()
-            .as_nanos();
-        let root = std::env::temp_dir().join(format!("ffsake-selection-guard-{id}"));
+            .keep();
         fs::create_dir_all(&root).unwrap();
         fs::write(root.join("a.txt"), "abcdef").unwrap();
 
@@ -398,13 +397,12 @@ mod tests {
     fn guarded_cross_file_move_commits_atomically() {
         use crate::transform::execute;
         use std::fs;
-        use std::time::{SystemTime, UNIX_EPOCH};
 
-        let id = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
+        let root = tempfile::Builder::new()
+            .prefix("ffsake-selection-move-")
+            .tempdir()
             .unwrap()
-            .as_nanos();
-        let root = std::env::temp_dir().join(format!("ffsake-selection-move-{id}"));
+            .keep();
         fs::create_dir_all(&root).unwrap();
         fs::write(root.join("a.txt"), "abcdef").unwrap();
         fs::write(root.join("b.txt"), "XYZ").unwrap();

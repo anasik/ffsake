@@ -172,6 +172,8 @@ Selected diagnostic evaluation at 59c0db9 retained all 24 source files and produ
 
 Catalog audit measured 34,866 UTF-8 bytes for all thirty tools versus 11,691 for the eighteen generic file tools. An opt-in --profile core now advertises only those tools and rejects Rust-specific dispatch before backend work. The default/all catalog and all workspace/history protections remain unchanged. Real-process checks verify catalog equality, disabled calls, no analyzer launch, malformed arguments and core Unicode/CRLF executable-file history. This does not measure agent speed/cost or establish host isolation.
 
+Parallel validation exposed a timestamp-only fixture collision: concurrent transform tests shared inputs and observed one match instead of three. Remaining timestamp-only helpers now atomically reserve temporary directories. A 32-worker isolation regression and twenty complete Rust suite repetitions at 32 test threads pass; production transaction guards are unchanged.
+
 Next: thread the optional tool profile through the shared agent benchmark harness with profile-aware guidance, launch configuration and report metadata, preserving default all behavior and the user’s local benchmark changes. Verify configuration/preflight behavior without restarting paused OpenCode experiments or claiming performance before measurement. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:

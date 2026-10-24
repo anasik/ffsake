@@ -326,14 +326,13 @@ mod tests {
     use super::*;
     use crate::transform::execute;
     use std::fs;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     fn fixture(name: &str) -> std::path::PathBuf {
-        let id = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
+        let root = tempfile::Builder::new()
+            .prefix(&format!("ffsake-search-{name}-"))
+            .tempdir()
             .unwrap()
-            .as_nanos();
-        let root = std::env::temp_dir().join(format!("ffsake-search-{name}-{id}"));
+            .keep();
         fs::create_dir_all(&root).unwrap();
         root
     }

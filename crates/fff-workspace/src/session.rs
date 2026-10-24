@@ -229,14 +229,13 @@ mod tests {
     use crate::{PathSelector, ReplaceMode};
     use std::fs;
     use std::path::PathBuf;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     fn fixture() -> PathBuf {
-        let id = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
+        let root = tempfile::Builder::new()
+            .prefix("ffsake-session-")
+            .tempdir()
             .unwrap()
-            .as_nanos();
-        let root = std::env::temp_dir().join(format!("ffsake-session-{id}"));
+            .keep();
         fs::create_dir_all(root.join("src")).unwrap();
         fs::write(root.join("src/a.rs"), "A").unwrap();
         fs::write(root.join("src/b.rs"), "A").unwrap();

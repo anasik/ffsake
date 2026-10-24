@@ -79,15 +79,14 @@ mod tests {
     use crate::transform::Mutation;
     use crate::{FileSelector, ReplaceMode};
     use std::fs;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn preview_does_not_mutate_workspace() {
-        let id = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
+        let root = tempfile::Builder::new()
+            .prefix("ffsake-preview-")
+            .tempdir()
             .unwrap()
-            .as_nanos();
-        let root = std::env::temp_dir().join(format!("ffsake-preview-{id}"));
+            .keep();
         fs::create_dir_all(&root).unwrap();
         fs::write(root.join("a.txt"), "hello\n").unwrap();
 

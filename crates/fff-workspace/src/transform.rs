@@ -809,18 +809,43 @@ fn apply_replace(
 mod tests {
     use super::*;
     use crate::PathSelector;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     fn fixture() -> PathBuf {
-        let id = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
+        let root = tempfile::Builder::new()
+            .prefix("ffsake-transform-")
+            .tempdir()
             .unwrap()
-            .as_nanos();
-        let root = std::env::temp_dir().join(format!("ffsake-transform-{id}"));
+            .keep();
         fs::create_dir_all(root.join("src")).unwrap();
         fs::write(root.join("src/a.rs"), "User User").unwrap();
         fs::write(root.join("src/b.rs"), "User").unwrap();
         root
+    }
+
+    #[test]
+    fn parallel_fixtures_keep_independent_contents() {
+        let barrier = std::sync::Arc::new(std::sync::Barrier::new(32));
+        let workers: Vec<_> = (0..32)
+            .map(|index| {
+                let barrier = barrier.clone();
+                std::thread::spawn(move || {
+                    barrier.wait();
+                    let root = fixture();
+                    let expected = format!("worker {index}");
+                    fs::write(root.join("src/a.rs"), &expected).unwrap();
+                    barrier.wait();
+                    assert_eq!(fs::read_to_string(root.join("src/a.rs")).unwrap(), expected);
+                    assert_eq!(fs::read_to_string(root.join("src/b.rs")).unwrap(), "User");
+                    fs::remove_dir_all(&root).unwrap();
+                    root
+                })
+            })
+            .collect();
+        let roots: std::collections::HashSet<_> = workers
+            .into_iter()
+            .map(|worker| worker.join().unwrap())
+            .collect();
+        assert_eq!(roots.len(), 32);
     }
 
     #[test]
