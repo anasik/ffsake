@@ -10,6 +10,7 @@ pub mod edits;
 mod file_ops;
 pub use file_ops::FileOperation;
 pub mod journal;
+pub mod lsp;
 pub mod preview;
 pub mod resident;
 pub mod search;

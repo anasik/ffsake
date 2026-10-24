@@ -49,6 +49,14 @@ pub enum Request {
         #[serde(default)]
         details: bool,
     },
+    RustReferences {
+        files: Vec<String>,
+        crate_root: String,
+        path: String,
+        position: crate::coordinates::TextPosition,
+        edition: String,
+        limit: usize,
+    },
     SelectRustIdentifiers {
         paths: Vec<String>,
         identifier: String,
@@ -301,6 +309,22 @@ impl Resident {
                 );
                 Ok(response)
             }
+            Request::RustReferences {
+                files,
+                crate_root,
+                path,
+                position,
+                edition,
+                limit,
+            } => crate::lsp::rust_references(
+                self.session.workspace(),
+                &files,
+                &crate_root,
+                &path,
+                position,
+                &edition,
+                limit,
+            ),
             Request::SelectRustIdentifiers {
                 paths,
                 identifier,

@@ -137,6 +137,7 @@ fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
         "ffsake_list" => "list",
         "ffsake_target" => "target",
         "ffsake_search" => "search",
+        "ffsake_rust_references" => "rust_references",
         "ffsake_select_rust_identifiers" => "select_rust_identifiers",
         "ffsake_preview_matches" => "preview_matches",
         "ffsake_preview_edit" => "preview_edit",
@@ -224,6 +225,18 @@ fn tools() -> Vec<Value> {
                     "details":{"type":"boolean","description":"Return individual ranges. Omit or use false for count-only verification."}
                 }
             }),
+        ),
+        tool(
+            "ffsake_rust_references",
+            "Read-only rust-analyzer references (including declaration) in a temporary snapshot of 1..=32 explicit .rs files, each <=256 KiB. Requires rust-analyzer installed on PATH. crate_root and query path must be members of files; position uses one-based line and zero-based Unicode scalar column. Explicit edition required. No Cargo dependencies, sysroot, build scripts, procedural macros or configured features: results always report complete=false and are not a rename handle. Original source hashes are rechecked before returning canonical paths and byte ranges. 30-second budget; unsafe/missing/symlinked files, unhealthy server, invalid/out-of-snapshot ranges and match-limit overflow reject without partial results. No workspace writes.",
+            json!({"type":"object","required":["files","crate_root","path","position","edition","limit"],"properties":{
+                "files":{"type":"array","minItems":1,"maxItems":32,"items":{"type":"string","maxLength":4096}},
+                "crate_root":{"type":"string","maxLength":4096},"path":{"type":"string","maxLength":4096},
+                "position":{"type":"object","required":["line","column"],"additionalProperties":false,
+                    "properties":{"line":{"type":"integer","minimum":1},"column":{"type":"integer","minimum":0}}},
+                "edition":{"type":"string","enum":["2015","2018","2021","2024"]},
+                "limit":{"type":"integer","minimum":1,"maximum":1000}
+            }}),
         ),
         tool(
             "ffsake_select_rust_identifiers",

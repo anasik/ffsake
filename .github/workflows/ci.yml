@@ -27,5 +27,6 @@ jobs:
       - run: python3 scripts/rust_syntax_smoke.py target/debug/ffsake-mcp
       - run: python3 -m unittest discover -s tests -p 'test_rust_lsp_probe.py' -v
       - run: python3 scripts/rust_lsp_probe.py
+      - run: python3 scripts/rust_lsp_smoke.py target/debug/ffsake-mcp
       - run: python3 -m py_compile scripts/agent_benchmark.py scripts/agent_benchmark_suite.py
       - run: python3 -m unittest discover -s tests -p 'test_agent_benchmark_suite.py' -v

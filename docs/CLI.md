@@ -108,3 +108,15 @@ The benchmark runs the actual JSONL executable, checks protocol recovery and saf
 Limits: 1–32 explicit distinct `.rs` files, 256 KiB per file, 1–1000 matches and a shared five-second parse/walk budget. Symlinks, missing files, invalid UTF-8, parser errors and exceeded limits reject the whole request, without creating a partial selection. Tree-sitter parsing does not establish compiler validity.
 
 Selection preserves original bytes, including CRLF, and hashes every input file. `preview_matches` enforces the exact expected count and rejects stale files; apply uses the existing frozen preview and journal. For a Rust syntax-selection handle, `preview_matches` requires a valid Rust 2024 replacement identifier and reparses every staged file within a five-second budget; invalid syntax or files larger than 256 KiB reject without writes. Ordinary indexed-search handles retain literal replacement behavior. These checks do not detect name collisions, resolve bindings, expand macros, or establish compiler validity. Compile/test externally after applying.
+
+## Read-only Rust references
+
+```json
+{"op":"rust_references","files":["src/lib.rs","src/model.rs"],"crate_root":"src/lib.rs","path":"src/model.rs","position":{"line":12,"column":8},"edition":"2024","limit":100}
+```
+
+MCP exposes `ffsake_rust_references` with the same arguments. The optional backend must be installed on PATH (`rustup component add rust-analyzer`). `position.line` is one-based and `position.column` counts zero-based Unicode scalar values, matching existing FFSAKE coordinates. The client negotiates UTF-16 internally and strictly converts returned positions to original byte ranges; invalid positions, split surrogate pairs and the interior of CRLF reject rather than clamp.
+
+Each request copies 1–32 explicit distinct UTF-8 `.rs` files, at most 256 KiB each, into a fresh temporary workspace and supplies an explicit crate graph. `crate_root` and `path` must appear in `files` exactly; `edition` must be 2015, 2018, 2021 or 2024. It waits for a healthy, quiescent server, queries references including the declaration, validates all locations against the supplied snapshot, then rechecks every original source hash. Missing/unsafe/symlinked inputs, stale originals, unhealthy analysis, invalid ranges and exceeded limits return an error without partial results. The call has a shared 30-second budget, 8 KiB headers, 1 MiB per inbound LSP message and 8 MiB total inbound data. The child is terminated after each query, including failure.
+
+Results contain `ranges`, `matches`, `file_hashes`, `analysis_mode: "explicit_crate_snapshot"`, and `complete: false`. They are read-only navigation data, with no MatchSet or preview handle. Cargo dependencies, standard-library sources, configured features, build scripts and procedural macros are omitted; references can therefore be missing even when the server is healthy. Locally defined declarative macros are analyzed. Empty results do not prove there are no references. The snapshot prevents modifications to original files, and returned ranges are confined to explicit source files; this is not an OS sandbox for the external server.
