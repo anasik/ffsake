@@ -144,3 +144,17 @@ The positive `limit` bounds all descendants, not just top-level entries. Maximum
 `ffsake_rust_hover` uses the same positional snapshot scope, with `max_bytes` (1–65,536) replacing the navigation result count. It returns `path`, `hover`, `text_bytes`, hashes and the shared incomplete-analysis metadata. `hover.contents` is an array of normalized parts with `format: "markdown" | "plaintext" | "code"`, original `text` and an optional code `language`. An optional `hover.range` contains original byte offsets and one-based start/end lines. A null hover means the server supplied no information.
 
 The byte budget covers the sum of UTF-8 text bytes across at most 32 parts; each code-language label is separately bounded to 64 bytes. Oversized/malformed content and invalid/reversed ranges reject without truncation. Documentation stays source data: this endpoint does not render HTML, execute snippets, follow links, or treat documentation as instructions. Local inferred types/signatures can be useful despite omitted dependencies, but `complete: false` still applies and no compiler-validity or semantic-rename guarantee is made.
+
+## Rust native diagnostics
+
+```json
+{"op":"rust_diagnostics","files":["src/lib.rs"],"crate_root":"src/lib.rs","path":"src/lib.rs","edition":"2024","limit":100}
+```
+
+`ffsake_rust_diagnostics` accepts the outline arguments and returns primary native rust-analyzer diagnostics for one file. The server must advertise pull diagnostics. Project loading reaches healthy/quiescent status before documents are opened; opening earlier reproduced silently empty diagnostics in the explicit graph. Each request obtains a fresh full report and rechecks all original hashes under the shared snapshot and 30-second budget.
+
+Results contain `path`, `diagnostics`, `diagnostic_count`, `text_bytes`, hashes, `query: "diagnostics"`, `complete: false`, `compiler_checked: false` and `experimental_diagnostics: true`. Each diagnostic contains an original byte/line `range` (zero-width anchors allowed), numeric LSP `severity` (1 error, 2 warning, 3 information, 4 hint; null if unspecified), string/integer/null `code`, optional `source`, literal `message` and numeric `tags`. `category` is `syntax` for `syntax-error`, otherwise `semantic`; this does not determine whether an error is caused by an omitted dependency.
+
+Native experimental diagnostics are enabled to include local type mismatches. Cargo check/build, dependencies, sysroot, build scripts, procedural macros and configured features remain omitted. Unresolved imports and other semantic reports can therefore be artifacts of incomplete context; an empty result does **not** establish compiler validity. Fix data, code-description links and related-location metadata are not exposed or executed; related reports are not negotiated. No mutation handle is created.
+
+The required `limit` is 1–1000 primary diagnostics. Messages are at most 8192 UTF-8 bytes each, string codes/sources at most 256 each, and their combined text at most 65,536 bytes. Invalid ranges, malformed reports, unexpected related reports and exceeded limits reject the whole response without truncation. Diagnostic text remains source data, never agent instructions.

@@ -160,13 +160,13 @@ def main():
                 "initializationOptions": options})
             assert initialized["capabilities"].get("positionEncoding", "utf-16") == "utf-16"
             client.send({"method": "initialized", "params": {}})
-            client.send({"method": "textDocument/didOpen", "params": {"textDocument": {
-                "uri": path.as_uri(), "languageId": "rust", "version": 1, "text": source}}})
             while True:
                 message = client.receive()
                 if message.get("method") == "experimental/serverStatus" and message["params"]["quiescent"]:
                     assert message["params"]["health"] == "ok", message
                     break
+            client.send({"method": "textDocument/didOpen", "params": {"textDocument": {
+                "uri": path.as_uri(), "languageId": "rust", "version": 1, "text": source}}})
             for line, label in [(1, "first_binding"), (2, "declarative_macro_binding")]:
                 text = source.split("\n")[line]
                 column = len(text[:text.index("account")].encode("utf-16-le")) // 2

@@ -88,6 +88,13 @@ pub enum Request {
         edition: String,
         limit: usize,
     },
+    RustDiagnostics {
+        files: Vec<String>,
+        crate_root: String,
+        path: String,
+        edition: String,
+        limit: usize,
+    },
     SelectRustIdentifiers {
         paths: Vec<String>,
         identifier: String,
@@ -411,6 +418,20 @@ impl Resident {
                 edition,
                 limit,
             } => crate::lsp::rust_symbols(
+                self.session.workspace(),
+                &files,
+                &crate_root,
+                &path,
+                &edition,
+                limit,
+            ),
+            Request::RustDiagnostics {
+                files,
+                crate_root,
+                path,
+                edition,
+                limit,
+            } => crate::lsp::rust_diagnostics(
                 self.session.workspace(),
                 &files,
                 &crate_root,

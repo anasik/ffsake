@@ -256,6 +256,45 @@ def main():
                 "path": "empty.rs", "position": {"line": 1, "column": 0}}, name="ffsake_rust_hover")
             assert empty_hover["hover"] is None and empty_hover["text_bytes"] == 0
             assert (root / "main.rs").read_bytes() == source.encode()
+            diagnostic_args = {**args, "files": ["main.rs"]}
+            # A dormant user build script must never run during native diagnostics.
+            (root / "Cargo.toml").write_text('[package]\nname="unused"\nversion="0.1.0"\n')
+            (root / "build.rs").write_text('fn main() { std::fs::write("BUILD_SCRIPT_RAN", "bad").unwrap(); }')
+            source = 'fn main( {'
+            (root / "main.rs").write_text(source)
+            syntax = call(diagnostic_args, name="ffsake_rust_diagnostics")
+            assert syntax["diagnostic_count"] >= 2 and syntax["query"] == "diagnostics", syntax
+            assert all(item["code"] == "syntax-error" and item["category"] == "syntax"
+                       for item in syntax["diagnostics"]), syntax
+            assert any(item["range"]["start_byte"] == item["range"]["end_byte"]
+                       for item in syntax["diagnostics"])
+            for changes in [{"limit": 1}, {"limit": 0}, {"limit": 1001},
+                            {"position": {"line": 1, "column": 0}}]:
+                call({**diagnostic_args, **changes}, ok=False, name="ffsake_rust_diagnostics")
+            source = 'mod other;\r\nfn main() { let _ = "🚀"; let number: u32 = true; let _ = number; }\r\n'
+            other = 'pub fn value() -> u32 { false }\r\n'
+            (root / "main.rs").write_bytes(source.encode())
+            (root / "other.rs").write_bytes(other.encode())
+            for path, content, token in [("main.rs", source, b"true"), ("other.rs", other, b"false")]:
+                result = call({**args, "path": path}, name="ffsake_rust_diagnostics")
+                assert result["complete"] is False and result["compiler_checked"] is False
+                assert result["experimental_diagnostics"] is True and "handle" not in result
+                assert set(result["file_hashes"]) == {"main.rs", "other.rs"}
+                mismatch = [item for item in result["diagnostics"] if item["code"] == "E0308"]
+                assert len(mismatch) == 1, result
+                span = mismatch[0]["range"]
+                assert content.encode()[span["start_byte"]:span["end_byte"]] == token
+                assert mismatch[0]["category"] == "semantic" and mismatch[0]["severity"] == 1
+            (root / "main.rs").write_text('use absent_dependency::Thing; fn main() {}')
+            missing = call(diagnostic_args, name="ffsake_rust_diagnostics")
+            assert any(item["code"] == "E0432" for item in missing["diagnostics"]), missing
+            source = 'fn main() { let number: u32 = 1; let _ = number; }\r\n'
+            (root / "main.rs").write_bytes(source.encode())
+            clean = call(diagnostic_args, name="ffsake_rust_diagnostics")
+            assert clean["diagnostic_count"] == 0 and clean["diagnostics"] == [], clean
+            assert clean["complete"] is False and clean["compiler_checked"] is False
+            assert (root / "main.rs").read_bytes() == source.encode()
+            assert not (root / "BUILD_SCRIPT_RAN").exists()
         finally:
             proc.stdin.close()
             try:
@@ -267,7 +306,7 @@ def main():
             proc.stderr.close()
         assert proc.returncode == 0, proc.returncode
     failure_checks(binary)
-    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
+    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, native diagnostics, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
 
 
 if __name__ == "__main__":

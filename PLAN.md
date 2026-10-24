@@ -138,7 +138,9 @@ Implementation navigation now uses the same snapshot backend and result guards. 
 
 Hover/type information now shares the snapshot transport, with a 1–65,536-byte text budget, at most 32 normalized content parts, optional original source ranges and no mutation handle. Markdown/plaintext/code formats and documentation remain data. Coverage includes local inferred integer types, documented signatures, emoji/CRLF ranges, null hover and overflow/schema rejection. The shared catalog contains twenty-four tools.
 
-Next: evaluate rust-analyzer native diagnostics on the same explicit snapshots, establishing supported protocol/readiness and distinguishing parser/type diagnostics from omitted-dependency errors before exposing a bounded read-only result. Compiler execution and code actions remain separate; reference ranges must not become rename capabilities until collision and analysis-completeness behavior are established. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Native diagnostic evaluation isolated a startup-order issue: opening documents before the explicit project finished loading silently suppressed syntax errors, while opening after healthy/quiescent readiness returned parser, local type and unresolved-import diagnostics. The backend now opens documents after readiness. A bounded primary pull-diagnostics endpoint reports native experimental diagnostics with exact original ranges, source hashes, count/text limits and explicit incomplete/non-compiler metadata. Real MCP fixtures cover syntax anchors, local and cross-file type mismatches, emoji/CRLF, omitted-dependency errors, a fresh clean result and an untouched build-script sentinel. The shared catalog contains twenty-five tools.
+
+Next: evaluate code-action responses on the explicit snapshot, starting with read-only action discovery and distinguishing pure text edits from commands, resource operations, and actions requiring missing project context. Compiler execution and semantic rename remain separate; reference ranges must not become rename capabilities until collision and analysis-completeness behavior are established. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
@@ -165,12 +167,13 @@ Implemented through an explicitly incomplete dependency-free rust-analyzer sourc
 - references;
 - hierarchical document symbols;
 - implementations;
-- hover/types.
+- hover/types;
+- native primary diagnostics (explicitly incomplete, not compiler validation).
 
 Still to add/evaluate:
 
 - semantic rename;
-- diagnostics/code actions.
+- code actions.
 
 ## Later
 

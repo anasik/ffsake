@@ -285,6 +285,29 @@ pub fn rust_implementation(
     )
 }
 
+/// Return native primary diagnostics, not a compiler/build result.
+pub fn rust_diagnostics(
+    workspace: &Workspace,
+    files: &[String],
+    crate_root: &str,
+    path: &str,
+    edition: &str,
+    limit: usize,
+) -> Result<Value> {
+    navigate(
+        workspace,
+        Query {
+            files,
+            crate_root,
+            path,
+            position: TextPosition { line: 1, column: 0 },
+            edition,
+            limit,
+        },
+        Navigation::Diagnostics,
+    )
+}
+
 /// Return a bounded hierarchical outline for one file in the explicit snapshot.
 pub fn rust_symbols(
     workspace: &Workspace,
@@ -315,6 +338,7 @@ enum Navigation {
     Implementation,
     Symbols,
     Hover,
+    Diagnostics,
 }
 
 struct Query<'a> {
@@ -386,11 +410,12 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
             "deps":[],"cfg":[],"env":{},"is_workspace_member":true,
             "source":{"include_dirs":[root],"exclude_dirs":[]}}]}],
         "cargo":{"buildScripts":{"enable":false},"noDeps":true,"sysroot":null},
-        "procMacro":{"enable":false},"checkOnSave":false,"cachePriming":{"enable":false},"numThreads":2
+        "procMacro":{"enable":false},"checkOnSave":false,
+        "diagnostics":{"enable":true,"experimental":{"enable":true}},"cachePriming":{"enable":false},"numThreads":2
     });
     let mut client = Client::start(&root, options.clone(), deadline)?;
     let initialized = client.request("initialize", json!({"processId":null,"rootUri":uri(&root)?,
-        "capabilities":{"general":{"positionEncodings":["utf-16"]},"textDocument":{"hover":{"contentFormat":["markdown","plaintext"]},"definition":{"linkSupport":false},"implementation":{"linkSupport":false},"documentSymbol":{"hierarchicalDocumentSymbolSupport":true,"symbolKind":{"valueSet":(1..=26).collect::<Vec<_>>()}}},"experimental":{"serverStatusNotification":true}},
+        "capabilities":{"general":{"positionEncodings":["utf-16"]},"textDocument":{"diagnostic":{"relatedDocumentSupport":false},"hover":{"contentFormat":["markdown","plaintext"]},"definition":{"linkSupport":false},"implementation":{"linkSupport":false},"documentSymbol":{"hierarchicalDocumentSymbolSupport":true,"symbolKind":{"valueSet":(1..=26).collect::<Vec<_>>()}}},"experimental":{"serverStatusNotification":true}},
         "initializationOptions":options}))?;
     if initialized["capabilities"]["positionEncoding"]
         .as_str()
@@ -400,12 +425,6 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
         return Err("rust-analyzer did not negotiate UTF-16".into());
     }
     client.send(json!({"method":"initialized","params":{}}))?;
-    for (path, source) in &sources {
-        client.send(
-            json!({"method":"textDocument/didOpen","params":{"textDocument":{
-            "uri":uri(&root.join(path))?,"languageId":"rust","version":1,"text":source}}}),
-        )?;
-    }
     loop {
         let message = client.receive()?;
         if message["method"] == "experimental/serverStatus"
@@ -417,6 +436,14 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
             break;
         }
     }
+    // Opening files before project loading finishes can leave their source roots
+    // classified as external and silently suppress native diagnostics.
+    for (path, source) in &sources {
+        client.send(
+            json!({"method":"textDocument/didOpen","params":{"textDocument":{
+            "uri":uri(&root.join(path))?,"languageId":"rust","version":1,"text":source}}}),
+        )?;
+    }
     let mut parameters =
         json!({"textDocument":{"uri":uri(&root.join(query))?},"position":position});
     let (method, query_kind) = match kind {
@@ -427,16 +454,27 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
         Navigation::Definition => ("textDocument/definition", "definition"),
         Navigation::Implementation => ("textDocument/implementation", "implementation"),
         Navigation::Hover => ("textDocument/hover", "hover"),
-        Navigation::Symbols => {
+        Navigation::Symbols | Navigation::Diagnostics => {
             parameters
                 .as_object_mut()
                 .ok_or("invalid symbol request")?
                 .remove("position");
-            ("textDocument/documentSymbol", "symbols")
+            if matches!(kind, Navigation::Diagnostics) {
+                ("textDocument/diagnostic", "diagnostics")
+            } else {
+                ("textDocument/documentSymbol", "symbols")
+            }
         }
     };
+    if matches!(kind, Navigation::Diagnostics)
+        && !initialized["capabilities"]["diagnosticProvider"].is_object()
+    {
+        return Err("rust-analyzer does not advertise pull diagnostics".into());
+    }
     let result = client.request(method, parameters)?;
-    let mut response = if matches!(kind, Navigation::Symbols) {
+    let mut response = if matches!(kind, Navigation::Diagnostics) {
+        crate::lsp_diagnostics::diagnostics(query, query_source, result, limit)?
+    } else if matches!(kind, Navigation::Symbols) {
         crate::lsp_symbols::outline(query, query_source, result, limit)?
     } else if matches!(kind, Navigation::Hover) {
         crate::lsp_hover::hover(query, query_source, result, limit)?
@@ -460,6 +498,13 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
         "No Cargo dependencies, sysroot, build scripts, procedural macros or configured features are loaded.",
         "Results are read-only navigation data, not a semantic rename capability."
     ]);
+    if matches!(kind, Navigation::Diagnostics) {
+        response["compiler_checked"] = json!(false);
+        response["experimental_diagnostics"] = json!(true);
+        response["limitations"].as_array_mut().ok_or("invalid limitations")?.push(json!(
+            "Native primary diagnostics only. Missing dependencies or configuration can cause semantic errors; an empty result does not prove the project compiles."
+        ));
+    }
     Ok(response)
 }
 
