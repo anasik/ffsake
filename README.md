@@ -170,3 +170,9 @@ external/conditional/dev/build dependencies and procedural macros remain omitted
 results are incomplete and are not compiler validation. Patch/replace manifests
 require manual context. Re-import after manifest changes: returned arguments are
 frozen, and analysis tools do not automatically reread those manifests.
+
+File-operation previews (`ffsake_preview_files`, create, copy, move, and delete)
+limit each input/output file to 4 MiB and retained content/metadata to 16 MiB per
+batch and across cached file-operation plans. Apply or release unused handles to
+free capacity. These are payload budgets, not a bound on total process memory;
+transform previews and native Rust proposal caches have separate contracts.

@@ -351,6 +351,17 @@ impl Resident {
 
     fn preview_files(&mut self, operations: Vec<FileOperation>) -> Result<Value> {
         let plan = FilePlan::preview_batch(self.session.workspace(), operations)?;
+        let retained =
+            self.file_plans
+                .values()
+                .try_fold(plan.retained_bytes()?, |bytes, cached| {
+                    Ok::<usize, Box<dyn std::error::Error>>(
+                        bytes.saturating_add(cached.retained_bytes()?),
+                    )
+                })?;
+        if retained > crate::file_ops::MAX_FILE_PLAN_BYTES {
+            return Err("file preview cache exceeds 16 MiB retained payload budget; apply or release existing handles".into());
+        }
         let preview = plan.description();
         let handle = self.allocate()?;
         self.file_plans.insert(handle, plan);
@@ -880,6 +891,57 @@ impl Resident {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn file_preview_budget_releases_capacity_on_release_and_apply() {
+        let root = tempfile::tempdir().unwrap();
+        std::fs::create_dir(root.path().join("source")).unwrap();
+        std::fs::write(
+            root.path().join("source/data.bin"),
+            vec![0; 3 * 1024 * 1024],
+        )
+        .unwrap();
+        let mut resident = Resident::open(Workspace::new(root.path()).unwrap()).unwrap();
+        let mut handles = Vec::new();
+        for index in 0..5 {
+            let report = resident
+                .preview_files(vec![FileOperation::CopyDirectory {
+                    from: "source".into(),
+                    to: format!("copy-{index}"),
+                }])
+                .unwrap();
+            handles.push(report["handle"].as_u64().unwrap());
+        }
+        let error = resident
+            .preview_files(vec![FileOperation::CopyDirectory {
+                from: "source".into(),
+                to: "overflow".into(),
+            }])
+            .unwrap_err();
+        assert!(error.to_string().contains("16 MiB"));
+        assert_eq!(resident.file_plans.len(), 5);
+        assert!(!root.path().join("overflow").exists());
+        resident
+            .execute(Request::Release { handle: handles[0] })
+            .unwrap();
+        resident
+            .preview_files(vec![FileOperation::CopyDirectory {
+                from: "source".into(),
+                to: "after-release".into(),
+            }])
+            .unwrap();
+        resident
+            .execute(Request::Apply { handle: handles[1] })
+            .unwrap();
+        assert!(root.path().join("copy-1/data.bin").is_file());
+        resident
+            .preview_files(vec![FileOperation::CopyDirectory {
+                from: "source".into(),
+                to: "after-apply".into(),
+            }])
+            .unwrap();
+        assert_eq!(resident.file_plans.len(), 5);
+    }
 
     #[test]
     fn action_and_rename_caches_share_limits_and_release_capacity() {

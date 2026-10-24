@@ -408,7 +408,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_preview_files",
-            "Preview 1..=100 independent file operations together, then commit with one ffsake_apply and undo/redo as one transaction. Prefer this for multi-file creation or refactors. Edit replaces exact literal old_text/new_text in an existing UTF-8 file, including multiline blocks, with a positive expected_matches count; it rejects no-op edits. All operations refer to the same initial workspace state; create/copy/move destinations must be absent. Overlapping paths and dependencies between operations are rejected. No overwrites. A single-operation batch may create_directory or remove_directory for an empty directory with an existing parent; move_directory supports a single bounded tree rename (100 entries including directories, 4 MiB file bytes, depth 32), with an absent nonoverlapping destination and existing parent. Inventories include exact file hashes and ordinary modes; symlinks, special files and reserved paths reject. delete_directory uses the same bounded inventory to move a populated tree into protected journal storage for undo/redo; contents remain retained for history. copy_directory freezes bytes under the same limits, preserves empty directories and ordinary modes, and publishes only after source rechecks; redo uses retained copied contents independently of the original source. No recursive deletion or mixed directory/file batches. Preview/apply/history reject changed contents or permissions.",
+            "Preview 1..=100 independent file operations together; each file before/after is <=4 MiB, with a 16 MiB retained payload budget per batch and across cached file-operation previews (apply/release handles to free capacity). Then commit with one ffsake_apply and undo/redo as one transaction. Prefer this for multi-file creation or refactors. Edit replaces exact literal old_text/new_text in an existing UTF-8 file, including multiline blocks, with a positive expected_matches count; it rejects no-op edits. All operations refer to the same initial workspace state; create/copy/move destinations must be absent. Overlapping paths and dependencies between operations are rejected. No overwrites. A single-operation batch may create_directory or remove_directory for an empty directory with an existing parent; move_directory supports a single bounded tree rename (100 entries including directories, 4 MiB file bytes, depth 32), with an absent nonoverlapping destination and existing parent. Inventories include exact file hashes and ordinary modes; symlinks, special files and reserved paths reject. delete_directory uses the same bounded inventory to move a populated tree into protected journal storage for undo/redo; contents remain retained for history. copy_directory freezes bytes under the same limits, preserves empty directories and ordinary modes, and publishes only after source rechecks; redo uses retained copied contents independently of the original source. No recursive deletion or mixed directory/file batches. Preview/apply/history reject changed contents or permissions.",
             json!({
                 "type":"object","required":["operations"],"properties":{
                     "operations":{"type":"array","minItems":1,"maxItems":100,"items":{
@@ -428,7 +428,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_preview_create",
-            "Preview creating a new UTF-8 file. Destination must not exist. Parent directories are created on apply. Returns a preview handle; use ffsake_apply to commit, then undo/redo by transaction ID.",
+            "Preview creating a new UTF-8 file up to 4 MiB. Shares the 16 MiB file-operation preview cache; apply/release handles to free capacity. Destination must not exist. Parent directories are created on apply. Returns a preview handle; use ffsake_apply to commit, then undo/redo by transaction ID.",
             json!({
                 "type":"object","required":["path","content"],"properties":{
                     "path":{"type":"string"},"content":{"type":"string"}
@@ -437,7 +437,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_preview_copy",
-            "Preview copying one existing file, including binary files. Destination must not exist. No directory copies or overwrites. Source contents and ordinary Unix permissions are checked again on apply; Unix rwx bits are preserved. Use ffsake_apply to commit.",
+            "Preview copying one existing file up to 4 MiB, including binary files. Shares the 16 MiB file-operation preview cache. Destination must not exist. No directory copies or overwrites. Source contents and ordinary Unix permissions are checked again on apply; Unix rwx bits are preserved. Use ffsake_apply to commit.",
             json!({
                 "type":"object","required":["from","to"],"properties":{
                     "from":{"type":"string"},"to":{"type":"string"}
@@ -446,7 +446,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_preview_move",
-            "Preview moving or renaming one existing file in a single journal transaction. Destination must not exist. No directory moves or overwrites. Ordinary Unix rwx bits are preserved and rechecked on apply. Use ffsake_apply to commit; undo restores the original path.",
+            "Preview moving or renaming one existing file up to 4 MiB in a single journal transaction. Shares the 16 MiB file-operation preview cache. Destination must not exist. No directory moves or overwrites. Ordinary Unix rwx bits are preserved and rechecked on apply. Use ffsake_apply to commit; undo restores the original path.",
             json!({
                 "type":"object","required":["from","to"],"properties":{
                     "from":{"type":"string"},"to":{"type":"string"}
@@ -455,7 +455,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_preview_delete",
-            "Preview deleting one existing file. No recursive directory deletion. Contents are checked again on apply and retained in the journal for undo. Use ffsake_apply to commit.",
+            "Preview deleting one existing file up to 4 MiB. Shares the 16 MiB file-operation preview cache. No recursive directory deletion. Contents are checked again on apply and retained in the journal for undo. Use ffsake_apply to commit.",
             json!({
                 "type":"object","required":["path"],"properties":{"path":{"type":"string"}}
             }),

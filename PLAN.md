@@ -264,3 +264,5 @@ Still to add/evaluate:
 Build/test/runtime adapters, sandboxing, package-management support, and plugin architecture are tertiary.
 
 CI follow-up: one Python harness run failed during disposable `.git` cleanup with a concurrent nonempty-directory error. Fixture setup now disables ambient hooks, signing, fsmonitor and automatic/detached Git maintenance in repository-local configuration. A temporary global-hook regression verifies no hook execution, explicit settings and a clean fixture commit. This isolates a plausible asynchronous writer without weakening cleanup or result audits.
+
+File-operation resource bounds now reject inputs/outputs over 4 MiB, preflight literal-edit expansion before allocating its output, and cap retained file-plan content/metadata at 16 MiB per batch and across resident file-operation previews. Bounded reads recheck actual length after metadata. Tests verify oversized sparse files, expansion, batch overflow, unchanged sources, failed-preview cache integrity and capacity recovery after release/apply. This is a payload bound for file-operation plans, not a total-process-memory or transform-cache claim.

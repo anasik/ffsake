@@ -7,8 +7,11 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
 use std::fs;
-use std::io;
+use std::io::{self, Read};
 use std::path::{Path, PathBuf};
+
+const MAX_FILE_BYTES: usize = 4 * 1024 * 1024;
+pub(crate) const MAX_FILE_PLAN_BYTES: usize = 16 * 1024 * 1024;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -69,7 +72,19 @@ pub(crate) struct FilePlan {
 fn snapshot(journal: &Journal, path: &str) -> Result<Option<Vec<u8>>> {
     let resolved = journal.resolve(path)?;
     match fs::metadata(&resolved) {
-        Ok(metadata) if metadata.is_file() => Ok(Some(fs::read(resolved)?)),
+        Ok(metadata) if metadata.is_file() => {
+            if metadata.len() > MAX_FILE_BYTES as u64 {
+                return Err("file operation input exceeds 4 MiB".into());
+            }
+            let mut bytes = Vec::new();
+            fs::File::open(resolved)?
+                .take(MAX_FILE_BYTES as u64 + 1)
+                .read_to_end(&mut bytes)?;
+            if bytes.len() > MAX_FILE_BYTES {
+                return Err("file operation input exceeds 4 MiB".into());
+            }
+            Ok(Some(bytes))
+        }
         Ok(_) => Err("file operations require a file, not a directory".into()),
         Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
         Err(error) => Err(error.into()),
@@ -139,6 +154,9 @@ impl FilePlan {
                 });
             }
             FileOperation::Create { path, content } => {
+                if content.len() > MAX_FILE_BYTES {
+                    return Err("created file exceeds 4 MiB".into());
+                }
                 if snapshot(&journal, &path)?.is_some() {
                     return Err("destination already exists; use preview_edit to edit it".into());
                 }
@@ -187,6 +205,13 @@ impl FilePlan {
                     return Err(
                         format!("expected {expected_matches} matches, found {actual}").into(),
                     );
+                }
+                let after_bytes = new_text
+                    .len()
+                    .checked_mul(actual)
+                    .and_then(|added| (before.len() - old_text.len() * actual).checked_add(added));
+                if after_bytes.is_none_or(|bytes| bytes > MAX_FILE_BYTES) {
+                    return Err("edited file exceeds 4 MiB".into());
                 }
                 let after = text.replace(old_text.as_str(), &new_text).into_bytes();
                 if before == after {
@@ -276,12 +301,53 @@ impl FilePlan {
             }
             writes.extend(new_writes);
             reads.extend(new_reads);
+            if combined
+                .retained_bytes()?
+                .saturating_add(plan.retained_bytes()?)
+                > MAX_FILE_PLAN_BYTES
+            {
+                return Err("file-operation batch exceeds 16 MiB retained payload budget".into());
+            }
             combined.changes.extend(plan.changes);
             combined.checks.extend(plan.checks);
             combined.mode_checks.extend(plan.mode_checks);
             combined.destination_modes.extend(plan.destination_modes);
         }
         Ok(combined)
+    }
+
+    pub(crate) fn retained_bytes(&self) -> Result<usize> {
+        let mut bytes = 0usize;
+        for change in &self.changes {
+            bytes = bytes
+                .saturating_add(change.path.len())
+                .saturating_add(change.before.as_ref().map_or(0, Vec::len))
+                .saturating_add(change.after.as_ref().map_or(0, Vec::len));
+        }
+        for (path, content) in &self.checks {
+            bytes = bytes
+                .saturating_add(path.len())
+                .saturating_add(content.as_ref().map_or(0, Vec::len));
+        }
+        bytes = bytes.saturating_add(
+            serde_json::to_vec(&(
+                &self.directory,
+                &self.tree_move,
+                &self.tree_archive,
+                &self.mode_checks,
+                &self.destination_modes,
+            ))?
+            .len(),
+        );
+        if let Some(copy) = &self.tree_copy {
+            bytes = bytes.saturating_add(serde_json::to_vec(&copy.movement)?.len());
+            for (path, content) in &copy.files {
+                bytes = bytes
+                    .saturating_add(path.len())
+                    .saturating_add(content.len());
+            }
+        }
+        Ok(bytes)
     }
 
     pub(crate) fn description(&self) -> Value {
@@ -399,6 +465,75 @@ mod tests {
 
     fn operations(value: Value) -> Vec<FileOperation> {
         serde_json::from_value(value).unwrap()
+    }
+
+    #[test]
+    fn file_payload_limits_reject_oversized_inputs_outputs_and_batches() {
+        let root = tempfile::tempdir().unwrap();
+        let workspace = Workspace::new(root.path()).unwrap();
+        let large = fs::File::create(root.path().join("large")).unwrap();
+        large.set_len(MAX_FILE_BYTES as u64 + 1).unwrap();
+        assert!(
+            FilePlan::preview(
+                &workspace,
+                FileOperation::Delete {
+                    path: "large".into()
+                }
+            )
+            .is_err()
+        );
+        assert_eq!(large.metadata().unwrap().len(), MAX_FILE_BYTES as u64 + 1);
+        assert!(
+            FilePlan::preview(
+                &workspace,
+                FileOperation::Create {
+                    path: "new".into(),
+                    content: "x".repeat(MAX_FILE_BYTES + 1)
+                }
+            )
+            .is_err()
+        );
+        let boundary = FilePlan::preview(
+            &workspace,
+            FileOperation::Create {
+                path: "new".into(),
+                content: "x".repeat(MAX_FILE_BYTES),
+            },
+        )
+        .unwrap();
+        assert!(boundary.retained_bytes().unwrap() > MAX_FILE_BYTES);
+        assert!(!root.path().join("new").exists());
+        fs::write(root.path().join("input"), "x".repeat(1024 * 1024)).unwrap();
+        assert!(
+            FilePlan::preview(
+                &workspace,
+                FileOperation::Edit {
+                    path: "input".into(),
+                    old_text: "x".into(),
+                    new_text: "yyyyy".into(),
+                    expected_matches: 1024 * 1024
+                }
+            )
+            .is_err()
+        );
+        assert_eq!(
+            fs::metadata(root.path().join("input")).unwrap().len(),
+            1024 * 1024
+        );
+        let operations = (0..4)
+            .map(|index| FileOperation::Create {
+                path: format!("file-{index}"),
+                content: "x".repeat(MAX_FILE_BYTES),
+            })
+            .collect();
+        assert!(
+            FilePlan::preview_batch(&workspace, operations)
+                .err()
+                .unwrap()
+                .to_string()
+                .contains("16 MiB")
+        );
+        assert!(!root.path().join("file-0").exists());
     }
 
     #[test]
