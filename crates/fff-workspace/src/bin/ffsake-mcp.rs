@@ -190,6 +190,7 @@ fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments
         "ffsake_rust_implementation" => "rust_implementation",
         "ffsake_rust_hover" => "rust_hover",
         "ffsake_rust_inspect" => "rust_inspect",
+        "ffsake_rust_context_from_manifests" => "rust_context_from_manifests",
         "ffsake_rust_definition" => "rust_definition",
         "ffsake_rust_references" => "rust_references",
         "ffsake_select_rust_identifiers" => "select_rust_identifiers",
@@ -284,6 +285,14 @@ fn tools() -> Vec<Value> {
                     "details":{"type":"boolean","description":"Return individual ranges. Omit or use false for count-only verification."}
                 }
             }),
+        ),
+        tool(
+            "ffsake_rust_context_from_manifests",
+            "Import explicit Rust analysis arguments from 1..=16 supplied Cargo.toml files (64 KiB each) and 1..=32 supplied Rust files (256 KiB each). Supports library/binary targets, editions and unconditional non-optional supplied local path dependencies. No Cargo/analyzer execution, file discovery, builds or downloads. Returns frozen analysis_arguments, input hashes and omissions; complete=false, compiler_checked=false. Features, cfg, external/conditional/dev/build dependencies and procedural macros are omitted. Re-import after manifest changes; analysis endpoints do not automatically reread manifests.",
+            json!({"type":"object","additionalProperties":false,"required":["manifests","files","crate_root"],"properties":{
+                "manifests":{"type":"array","minItems":1,"maxItems":16,"items":{"type":"string","minLength":1,"maxLength":4096}},
+                "files":{"type":"array","minItems":1,"maxItems":32,"items":{"type":"string","minLength":1,"maxLength":4096}},
+                "crate_root":{"type":"string","minLength":1,"maxLength":4096}}}),
         ),
         tool(
             "ffsake_rust_references",

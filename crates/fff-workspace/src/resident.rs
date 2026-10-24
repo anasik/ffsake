@@ -50,6 +50,11 @@ pub enum Request {
         #[serde(default)]
         details: bool,
     },
+    RustContextFromManifests {
+        manifests: Vec<String>,
+        files: Vec<String>,
+        crate_root: String,
+    },
     RustReferences {
         files: Vec<String>,
         crate_root: String,
@@ -461,6 +466,16 @@ impl Resident {
                 );
                 Ok(response)
             }
+            Request::RustContextFromManifests {
+                manifests,
+                files,
+                crate_root,
+            } => crate::manifest_context::import(
+                self.session.workspace(),
+                &manifests,
+                &files,
+                &crate_root,
+            ),
             Request::RustReferences {
                 files,
                 crate_root,

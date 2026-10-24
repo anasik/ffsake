@@ -155,3 +155,18 @@ python3 scripts/ffsake_claude.py /absolute/path/to/worktree --dry-run
 The launcher's CLI flags follow the [Claude CLI reference](https://code.claude.com/docs/en/cli-reference). Its process/configuration behavior is regression-tested with a fake CLI; interactive tool availability must still be checked with the installed Claude version.
 
 Rust references, definitions, implementations, combined symbol inspection, document outlines, hover/type information, native diagnostics and code-action discovery are available through `ffsake_rust_references`, `ffsake_rust_definition`, `ffsake_rust_inspect`, `ffsake_rust_implementation`, `ffsake_rust_symbols`, `ffsake_rust_hover`, `ffsake_rust_diagnostics` and `ffsake_rust_code_actions` with an explicit source-file snapshot. Install the optional backend with `rustup component add rust-analyzer`. These analyses accept optional explicit local crate dependencies, features and custom cfg flags but omit Cargo discovery, unspecified dependencies, sysroot and implicit feature expansion. Supported code actions can be staged separately with `ffsake_preview_rust_action`, then applied through the journal; syntax checking does not establish semantic correctness. See [the CLI contracts](docs/CLI.md).
+
+### Importing explicit Rust project context
+
+`ffsake_rust_context_from_manifests` accepts `manifests` (1–16 explicit
+workspace-relative `Cargo.toml` paths), `files` (1–32 explicit Rust paths), and
+`crate_root` (a supplied library/binary root). Pass its `analysis_arguments` to
+Rust analysis tools, adding their query-specific fields. The importer reads at
+most 64 KiB per manifest and 256 KiB per source and returns hashes and omissions.
+It never runs Cargo, discovers more files, downloads dependencies, or runs build
+scripts. Only supported library/binary targets and unconditional non-optional
+supplied local path dependencies are imported. Features, custom cfg,
+external/conditional/dev/build dependencies and procedural macros remain omitted;
+results are incomplete and are not compiler validation. Patch/replace manifests
+require manual context. Re-import after manifest changes: returned arguments are
+frozen, and analysis tools do not automatically reread those manifests.

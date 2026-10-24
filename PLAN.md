@@ -229,6 +229,8 @@ Pass condition:
 - reliable undo/redo;
 - fewer tool round-trips than baseline.
 
+Workspace-only Cargo context import is implemented in `ffsake_rust_context_from_manifests`: bounded explicit manifests/sources derive supported library/binary roots, editions, own-library edges and unconditional non-optional supplied path dependencies. It executes no Cargo/analyzer/build commands and discovers no additional files. Input hashes, omissions and frozen analysis arguments retain complete=false; features, cfg, external/conditional/dev/build dependencies and procedural macros remain omitted. Patch/replace ambiguity rejects. Unit tests cover inheritance, discovery settings, unsafe inputs and graph errors; MCP integration compares renamed/custom-library names with external offline Cargo and resolves a cross-crate definition using the imported graph. Full catalog: 32 tools; core remains 18.
+
 ## Phase 2 — syntax and LSP
 
 Before full LSP, consider parser/tree-sitter-backed syntax-aware mutation for identifiers, comments, strings, imports, and AST node kinds.

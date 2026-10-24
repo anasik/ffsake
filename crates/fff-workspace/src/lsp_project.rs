@@ -35,7 +35,7 @@ impl<'a> From<&'a str> for RustContext<'a> {
     }
 }
 
-fn dependency_name(name: &str) -> bool {
+pub(crate) fn dependency_name(name: &str) -> bool {
     // Deliberately restrict the API to ordinary ASCII crate names, excluding
     // Rust keywords. Raw/Unicode dependency spellings are not accepted here.
     !name.is_empty()
