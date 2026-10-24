@@ -22,7 +22,7 @@ FFSAKE_MCP = (ROOT / "target" / "debug" / "ffsake-mcp").resolve()
 RESULT_DIR = ROOT / "docs" / "agent-benchmark-runs"
 FFSAKE_TOOLS = (
     "ffsake_read", "ffsake_read_files", "ffsake_list", "ffsake_target", "ffsake_search",
-    "ffsake_preview_matches", "ffsake_preview_edit", "ffsake_apply", "ffsake_undo", "ffsake_redo",
+    "ffsake_preview_matches", "ffsake_preview_edit", "ffsake_preview_rename", "ffsake_apply", "ffsake_undo", "ffsake_redo",
     "ffsake_release", "ffsake_refresh",
     "ffsake_preview_files", "ffsake_preview_create", "ffsake_preview_copy", "ffsake_preview_move", "ffsake_preview_delete",
 )
@@ -379,6 +379,7 @@ def ffsake_prompt(task_prompt: str):
         "and expected_matches (normally 1). Multiline blocks are supported; preserve whitespace exactly. "
         "Group related changes into one contiguous block instead of searching and previewing each line. "
         "Use indexed search and preview_matches for repository-wide replacements. "
+        "For a case-preserving whole-ASCII-identifier rename, use ffsake_preview_rename with an explicit target, exact expected_matches and max_files; it is textual, not language-aware. "
         "For several independent file operations, prefer ffsake_preview_files with an operations "
         "array, followed by one apply, so the whole batch is one undoable transaction. "
         "Batch entries may also edit distinct existing files using op=edit, path, old_text, "

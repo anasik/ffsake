@@ -63,6 +63,16 @@ The 1–100 operations are `create(path, content)`, `copy(from, to)`, `move(from
 
 MCP tools use the same names prefixed with `ffsake_`, omitting the `op` argument. Generic `preview` is available in resident JSONL; MCP exposes the focused preview tools. Tool errors leave the session usable.
 
+## Case-preserving textual rename
+
+```json
+{"op":"preview_rename","target":{"include":[{"Glob":"src/**/*.rs"}],"exclude":[]},"from":"user","to":"client","expected_matches":8,"max_files":20}
+```
+
+`ffsake_preview_rename` exposes the same arguments through MCP. Both names must be ASCII identifiers of 1–256 bytes containing a letter and differing beyond casing. Matches use ASCII identifier boundaries and ignore ASCII case: `user USER User` becomes `client CLIENT Client`. Lowercase, uppercase and initial-capital styles take precedence; an exact mixed-case source such as `LegacyConfig` maps to the supplied `RuntimeConfig`. Other mixed spellings such as `lEGacyConfig` reject the whole preview rather than guess. Underscores/digits retain the replacement's structure. Case-only renames use exact editing instead.
+
+The match count is positive and exact across the explicit target; `max_files` is required in 1–100 and checked before loading target contents. Apply uses the normal frozen membership and source hashes, and the result is one undoable transaction. The transform form is `ReplaceIdentifierCasePreserving { from, to, expected_matches }`. This is text editing, including comments/strings, with ASCII boundary semantics; it is not Unicode-identifier or language-aware rename.
+
 ## History and filesystem guarantees
 
 Existing-file replacements preserve current permissions. On Unix, new journal entries capture ordinary rwx bits for recreated files; copy/move preserves source rwx bits and rejects source permission changes after preview. Older manifests lack metadata they never captured. Ownership, ACLs, xattrs and special mode bits are not restored.

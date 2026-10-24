@@ -139,6 +139,7 @@ fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
         "ffsake_search" => "search",
         "ffsake_preview_matches" => "preview_matches",
         "ffsake_preview_edit" => "preview_edit",
+        "ffsake_preview_rename" => "preview_rename",
         "ffsake_preview_create" => "preview_create",
         "ffsake_preview_files" => "preview_files",
         "ffsake_preview_copy" => "preview_copy",
@@ -245,6 +246,17 @@ fn tools() -> Vec<Value> {
                     "expected_matches":{"type":"integer","minimum":1}
                 }
             }),
+        ),
+        tool(
+            "ffsake_preview_rename",
+            "Preview a case-preserving textual rename of whole ASCII identifiers in an explicit target, with an exact total match count and 1..=100 max_files. Names must be ASCII identifiers containing a letter and differ beyond casing. Matches ignore ASCII case: lowercase/UPPERCASE/Initialcase preserve that style; an exact mixed-case source spelling uses the supplied destination; other mixed casing rejects. Includes comments and strings, not semantic rename. No writes until apply; hashes and selected membership are frozen.",
+            json!({"type":"object","required":["target","from","to","expected_matches","max_files"],"properties":{
+                "target":selector_schema(),
+                "from":{"type":"string","minLength":1,"maxLength":256},
+                "to":{"type":"string","minLength":1,"maxLength":256},
+                "expected_matches":{"type":"integer","minimum":1},
+                "max_files":{"type":"integer","minimum":1,"maximum":100}
+            }}),
         ),
         tool(
             "ffsake_preview_files",

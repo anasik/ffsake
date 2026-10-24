@@ -59,6 +59,11 @@ pub enum Mutation {
         to: String,
         expected_matches: Option<usize>,
     },
+    ReplaceIdentifierCasePreserving {
+        from: String,
+        to: String,
+        expected_matches: Option<usize>,
+    },
     ApplyRanges {
         edits: Vec<TargetedRangeEdit>,
     },
@@ -97,6 +102,7 @@ pub enum TransformError {
     ExpectedMatchCount { expected: usize, actual: usize },
     TooManyFiles { max: usize, actual: usize },
     EmptyPattern,
+    InvalidRename(String),
 }
 
 impl std::fmt::Display for TransformError {
@@ -113,6 +119,7 @@ impl std::fmt::Display for TransformError {
                     "target resolved to {actual} files, exceeding maximum {max}"
                 )
             }
+            Self::InvalidRename(message) => write!(f, "invalid case-preserving rename: {message}"),
             Self::EmptyPattern => write!(f, "replacement pattern must not be empty"),
         }
     }
@@ -348,6 +355,11 @@ pub(crate) fn apply_mutation(
             to,
             expected_matches,
         } => apply_identifier_replace(buffers, from, to, *expected_matches),
+        Mutation::ReplaceIdentifierCasePreserving {
+            from,
+            to,
+            expected_matches,
+        } => apply_case_preserving_rename(buffers, from, to, *expected_matches),
         Mutation::Replace {
             mode,
             pattern,
@@ -599,6 +611,91 @@ fn identifier_ranges(text: &str, identifier: &str) -> Vec<(usize, usize)> {
     }
 
     out
+}
+
+fn rename_spelling(matched: &str, from: &str, to: &str) -> Result<String> {
+    let letters = matched
+        .bytes()
+        .filter(u8::is_ascii_alphabetic)
+        .collect::<Vec<_>>();
+    if letters.iter().all(u8::is_ascii_lowercase) {
+        return Ok(to.to_ascii_lowercase());
+    }
+    if letters.iter().all(u8::is_ascii_uppercase) {
+        return Ok(to.to_ascii_uppercase());
+    }
+    if letters[0].is_ascii_uppercase() && letters[1..].iter().all(u8::is_ascii_lowercase) {
+        let mut replacement = to.to_ascii_lowercase().into_bytes();
+        if let Some(first) = replacement.iter_mut().find(|b| b.is_ascii_alphabetic()) {
+            first.make_ascii_uppercase();
+        }
+        return Ok(String::from_utf8(replacement).expect("validated ASCII identifier"));
+    }
+    if matched == from {
+        return Ok(to.to_string());
+    }
+    Err(TransformError::InvalidRename(format!(
+        "ambiguous mixed-case occurrence: {matched}"
+    )))
+}
+
+fn apply_case_preserving_rename(
+    buffers: &mut BTreeMap<String, BufferState>,
+    from: &str,
+    to: &str,
+    expected_matches: Option<usize>,
+) -> Result<()> {
+    for identifier in [from, to] {
+        if identifier.is_empty()
+            || identifier.len() > 256
+            || !identifier.is_ascii()
+            || !is_ascii_identifier_start(identifier.as_bytes()[0])
+            || !identifier.bytes().all(is_ascii_identifier_continue)
+            || !identifier.bytes().any(|b| b.is_ascii_alphabetic())
+        {
+            return Err(TransformError::InvalidRename(
+                "names must be ASCII identifiers of 1..=256 bytes containing a letter".into(),
+            ));
+        }
+    }
+    if from.eq_ignore_ascii_case(to) {
+        return Err(TransformError::InvalidRename(
+            "names must differ beyond casing; use an exact edit for case-only changes".into(),
+        ));
+    }
+    let needle = from.to_ascii_lowercase();
+    let mut total = 0;
+    for state in buffers.values_mut() {
+        let Some(bytes) = &state.current else {
+            continue;
+        };
+        let text =
+            std::str::from_utf8(bytes).map_err(|_| WorkspaceError::NotUtf8(state.path.clone()))?;
+        // ASCII folding preserves UTF-8 byte offsets. Boundary semantics match
+        // ReplaceIdentifier; this is lexical text, including comments/strings.
+        let ranges = identifier_ranges(&text.to_ascii_lowercase(), &needle);
+        total += ranges.len();
+        let edits = ranges
+            .into_iter()
+            .map(|(start, end)| {
+                Ok(RangeEdit {
+                    start_byte: start,
+                    end_byte: end,
+                    replacement: rename_spelling(&text[start..end], from, to)?,
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+        state.current = Some(apply_range_edits(text, &edits)?.into_bytes());
+    }
+    if let Some(expected) = expected_matches
+        && total != expected
+    {
+        return Err(TransformError::ExpectedMatchCount {
+            expected,
+            actual: total,
+        });
+    }
+    Ok(())
 }
 
 fn apply_identifier_replace(
@@ -1000,5 +1097,108 @@ mod tests {
         );
 
         fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn case_preserving_rename_keeps_styles_boundaries_and_history() {
+        let root = fixture();
+        let original = "legacyconfig LEGACYCONFIG Legacyconfig LegacyConfig SuperLegacyConfig _legacyconfig legacyconfig2 λ 🚀";
+        fs::write(root.join("src/a.rs"), original).unwrap();
+        let workspace = Workspace::new(&root).unwrap();
+        let transform = Transform {
+            target: FileSelector::exact("src/a.rs"),
+            operations: vec![Mutation::ReplaceIdentifierCasePreserving {
+                from: "LegacyConfig".into(),
+                to: "RuntimeConfig".into(),
+                expected_matches: Some(4),
+            }],
+            max_files: Some(1),
+        };
+        let result = execute(&workspace, &transform, None).unwrap();
+        assert_eq!(
+            fs::read_to_string(root.join("src/a.rs")).unwrap(),
+            "runtimeconfig RUNTIMECONFIG Runtimeconfig RuntimeConfig SuperLegacyConfig _legacyconfig legacyconfig2 λ 🚀"
+        );
+        let journal = Journal::open(&root).unwrap();
+        let id = result.transaction.unwrap().id;
+        journal.undo(&id).unwrap();
+        assert_eq!(fs::read_to_string(root.join("src/a.rs")).unwrap(), original);
+        journal.redo(&id).unwrap();
+        assert!(
+            fs::read_to_string(root.join("src/a.rs"))
+                .unwrap()
+                .starts_with("runtimeconfig RUNTIMECONFIG")
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn case_preserving_rename_rejects_ambiguous_names_and_counts_without_writes() {
+        let root = fixture();
+        fs::write(root.join("src/a.rs"), "user").unwrap();
+        fs::write(root.join("src/b.rs"), "uSeR").unwrap();
+        let workspace = Workspace::new(&root).unwrap();
+        let mut transform = Transform {
+            target: FileSelector::exact("src"),
+            operations: vec![Mutation::ReplaceIdentifierCasePreserving {
+                from: "user".into(),
+                to: "client".into(),
+                expected_matches: Some(2),
+            }],
+            max_files: Some(2),
+        };
+        assert!(matches!(
+            execute(&workspace, &transform, None),
+            Err(TransformError::InvalidRename(_))
+        ));
+        assert_eq!(fs::read_to_string(root.join("src/a.rs")).unwrap(), "user");
+        assert_eq!(fs::read_to_string(root.join("src/b.rs")).unwrap(), "uSeR");
+        transform.target = FileSelector::exact("src/a.rs");
+        for (from, to) in [
+            ("", "client"),
+            ("user", ""),
+            ("user", "USER"),
+            ("user", "client-name"),
+            ("user", "λ"),
+            ("_", "client"),
+            ("1user", "client"),
+        ] {
+            transform.operations = vec![Mutation::ReplaceIdentifierCasePreserving {
+                from: from.into(),
+                to: to.into(),
+                expected_matches: Some(1),
+            }];
+            assert!(matches!(
+                execute(&workspace, &transform, None),
+                Err(TransformError::InvalidRename(_))
+            ));
+        }
+        transform.operations = vec![Mutation::ReplaceIdentifierCasePreserving {
+            from: "user".into(),
+            to: "client".into(),
+            expected_matches: Some(2),
+        }];
+        assert!(matches!(
+            execute(&workspace, &transform, None),
+            Err(TransformError::ExpectedMatchCount {
+                expected: 2,
+                actual: 1
+            })
+        ));
+        assert_eq!(fs::read_to_string(root.join("src/a.rs")).unwrap(), "user");
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn case_preserving_rename_handles_underscores_and_single_letters() {
+        assert_eq!(
+            rename_spelling("LEGACY_CONFIG", "legacy_config", "runtime_config").unwrap(),
+            "RUNTIME_CONFIG"
+        );
+        assert_eq!(
+            rename_spelling("_Legacy_config", "_legacy_config", "_runtime_config").unwrap(),
+            "_Runtime_config"
+        );
+        assert_eq!(rename_spelling("X", "x", "thing").unwrap(), "THING");
+        assert!(rename_spelling("lEgacy", "legacy", "runtime").is_err());
     }
 }

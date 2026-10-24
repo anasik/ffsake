@@ -234,3 +234,8 @@ Persisted snapshot integrity is now checked before undo/redo changes any workspa
 
 
 Atomic-write boundary follow-up: a planted temporary symlink redirected writes in the old helper. The shared replacement helper now uses exclusive creation, preserves collisions without writing through them, applies destination permissions before file content, and removes only owned temporary files after failure. Library and MCP regressions verify untouched sentinels and destination state, collision preservation, safe retry, and direct-write permission retention. Resident documentation now describes the shipped batch-read, mixed-edit and history contracts in `docs/CLI.md`.
+
+
+## Case-preserving rename primitive
+
+The roadmap's case-preserving textual rename now has one guarded transform (`ReplaceIdentifierCasePreserving`) and one bounded MCP/resident preview (`ffsake_preview_rename` / `preview_rename`). It matches whole ASCII identifiers case-insensitively and preserves lower/upper/initial-capital styles; exact mixed-case source spelling uses the supplied destination, while ambiguous mixed casing fails. An explicit target, positive exact match count and 1–100 file limit are mandatory through MCP. Frozen hashes, preview purity, stale rejection and journal history are unchanged. The actual MCP catalog is checked against the shared eighteen-tool allowlist in smoke coverage. Tests validate casing, boundaries, count mismatch, invalid/ambiguous names, stale previews and undo/redo. Real-agent adoption and performance of this new primitive have not been measured.

@@ -60,6 +60,13 @@ pub enum Request {
         new_text: String,
         expected_matches: usize,
     },
+    PreviewRename {
+        target: FileSelector,
+        from: String,
+        to: String,
+        expected_matches: usize,
+        max_files: usize,
+    },
     PreviewFiles {
         operations: Vec<FileOperation>,
     },
@@ -137,6 +144,15 @@ impl Resident {
         let workspace = self.session.workspace();
         // Freeze selector membership and hashes before preview, including generic transforms.
         let files = workspace.select_files(&plan.target)?;
+        if let Some(max) = plan.max_files
+            && files.len() > max
+        {
+            return Err(format!(
+                "target resolved to {} files, exceeding maximum {max}",
+                files.len()
+            )
+            .into());
+        }
         let mut hashes = BTreeMap::new();
         for path in files {
             let path = workspace.relative_display(&path);
@@ -305,6 +321,28 @@ impl Resident {
                         expected_matches: Some(expected_matches),
                     }],
                     max_files: Some(1),
+                })
+            }
+            Request::PreviewRename {
+                target,
+                from,
+                to,
+                expected_matches,
+                max_files,
+            } => {
+                if expected_matches == 0 || !(1..=100).contains(&max_files) {
+                    return Err(
+                        "expected_matches must be positive and max_files must be 1..=100".into(),
+                    );
+                }
+                self.preview(Transform {
+                    target,
+                    operations: vec![Mutation::ReplaceIdentifierCasePreserving {
+                        from,
+                        to,
+                        expected_matches: Some(expected_matches),
+                    }],
+                    max_files: Some(max_files),
                 })
             }
             Request::PreviewFiles { operations } => self.preview_files(operations),

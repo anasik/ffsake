@@ -54,7 +54,7 @@ Implemented:
 - dry-run transform previews and per-file unified diffs.
 
 Next primitives:
-- case-preserving textual rename after the search/mutation benchmark;
+- implemented: case-preserving ASCII identifier rename through a guarded transform and bounded MCP preview;
 - syntax-aware selection and identifier operations when Tree-sitter is introduced.
 
 Target principle:
@@ -118,7 +118,9 @@ Persisted history now preflights both snapshot sides and verifies each hash agai
 
 Atomic-write probing reproduced a pre-existing temporary symlink redirecting bytes outside the target. Direct workspace writes and journal replay now share exclusive temporary-file creation, reject existing collisions without touching them, apply private-file permissions before writing content, and clean up owned temporary files after failure. The resident interface documentation now includes batch reads, mixed file previews and history guarantees.
 
-Next: implement the planned case-preserving textual rename as a bounded transform primitive, with explicit matching/count semantics and compatibility with guarded preview/apply. Keep syntax-aware rename distinct until parser integration. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Case-preserving textual rename is now implemented in the transform engine and `ffsake_preview_rename`. It uses explicit target/count/file limits and frozen previews; supported lower/upper/initial-capital styles are preserved, exact mixed-case source spelling maps to the supplied destination, and ambiguous mixed casing rejects. This is whole-ASCII-identifier text editing, including comments and strings, not semantic rename. Shared prompts and the eighteen-tool allowlist are updated, with smoke checking the actual server catalog against the allowlist.
+
+Next: introduce parser-backed Rust identifier selection as the smallest syntax-aware primitive, keeping scope/byte ranges/hash guards explicit and excluding comments/strings. Assess parser dependencies and error behavior before expanding to other languages or LSP. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

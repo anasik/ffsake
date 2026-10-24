@@ -6,6 +6,8 @@ import subprocess
 import sys
 import tempfile
 
+from agent_benchmark_suite import FFSAKE_TOOLS
+
 binary = str(Path(sys.argv[1] if len(sys.argv) > 1 else "target/debug/ffsake-mcp").resolve())
 
 def send(proc, message):
@@ -47,6 +49,7 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
 
         listed = send(proc, {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
         names = {tool["name"] for tool in listed["result"]["tools"]}
+        assert names == set(FFSAKE_TOOLS), (names, FFSAKE_TOOLS)
         assert {"ffsake_search", "ffsake_preview_matches", "ffsake_preview_edit", "ffsake_apply", "ffsake_undo"} <= names
 
         found = send(proc, {
@@ -281,6 +284,34 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         call("ffsake_apply", {"handle": stale["handle"]}, expect_ok=False)
         assert (root / "code.py").read_text() == "external code edit\n"
         assert (root / "a.txt").read_text() == "external edit must survive\n"
+        assert "ffsake_preview_rename" in names
+        (root / "rename").mkdir()
+        (root / "rename/a.txt").write_text("user USER User")
+        (root / "rename/b.txt").write_text("user2 _user SuperUser // user")
+        rename_args = {"target": {"include": [{"Exact": "rename"}], "exclude": []},
+                       "from": "user", "to": "client", "expected_matches": 4, "max_files": 2}
+        renamed = call("ffsake_preview_rename", rename_args)
+        assert (root / "rename/a.txt").read_text() == "user USER User"
+        assert renamed["preview"]["changed_files"] == 2
+        (root / "rename/b.txt").write_text("external change")
+        call("ffsake_apply", {"handle": renamed["handle"]}, expect_ok=False)
+        assert (root / "rename/a.txt").read_text() == "user USER User"
+        (root / "rename/b.txt").write_text("user2 _user SuperUser // user")
+        rename_tx = call("ffsake_apply", {"handle": renamed["handle"]})["transaction"]
+        assert (root / "rename/a.txt").read_text() == "client CLIENT Client"
+        assert (root / "rename/b.txt").read_text() == "user2 _user SuperUser // client"
+        call("ffsake_undo", {"transaction": rename_tx})
+        assert (root / "rename/a.txt").read_text() == "user USER User"
+        call("ffsake_redo", {"transaction": rename_tx})
+        call("ffsake_undo", {"transaction": rename_tx})
+        for changes in [{"expected_matches": 3}, {"expected_matches": 0}, {"max_files": 1},
+                        {"max_files": 101}, {"from": ""}, {"to": "USER"}, {"to": "not-valid"},
+                        {"target": {"include": [{"Exact": ".ffsake"}], "exclude": []}}]:
+            call("ffsake_preview_rename", {**rename_args, **changes}, expect_ok=False)
+        (root / "rename/b.txt").write_text("uSeR")
+        call("ffsake_preview_rename", rename_args, expect_ok=False)
+        assert (root / "rename/a.txt").read_text() == "user USER User"
+
         # A pre-existing temporary symlink must never redirect a write.
         collision = root / f".collision.txt.ffsake-journal-tmp-{proc.pid}"
         collision.symlink_to(outside)
