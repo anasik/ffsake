@@ -14,6 +14,22 @@ spec.loader.exec_module(suite)
 
 
 class GitFixtureTests(unittest.TestCase):
+    def test_fixture_commit_retains_crlf_under_ambient_autocrlf(self):
+        import os
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            configuration = base / "global.gitconfig"
+            configuration.write_text("[core]\n autocrlf = true\n")
+            root = base / "fixture"
+            root.mkdir()
+            content = b"first\r\nsecond\r\n"
+            (root / "README.md").write_bytes(content)
+            with patch.dict(os.environ, {"GIT_CONFIG_GLOBAL": str(configuration), "GIT_CONFIG_NOSYSTEM": "1"}):
+                suite.git_init(root)
+                self.assertEqual(subprocess.check_output(["git", "show", "HEAD:README.md"], cwd=root), content)
+                self.assertEqual((root / "README.md").read_bytes(), content)
+
     def test_fixture_disables_ambient_hooks_and_background_git_work(self):
         import os
         from unittest.mock import patch

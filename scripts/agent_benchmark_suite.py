@@ -58,6 +58,7 @@ def git_init(root: Path):
     hooks.mkdir()
     for key, value in (("maintenance.auto", "false"), ("gc.auto", "0"),
                        ("gc.autoDetach", "false"), ("core.fsmonitor", "false"),
+                       ("core.autocrlf", "false"),
                        ("core.hooksPath", str(hooks)), ("commit.gpgsign", "false")):
         subprocess.run(["git", "config", "--local", key, value], cwd=root, check=True)
     subprocess.run(["git", "config", "user.name", "FFSAKE Benchmark"], cwd=root, check=True)

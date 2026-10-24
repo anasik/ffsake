@@ -283,3 +283,6 @@ The real-repository compiler integration now relocates the entire crate and edit
 
 
 Prepared an opt-in `layout` agent-acceptance task for the newly completed directory operations. A model-free core MCP run completes all five requested operations in one preview/apply and passes byte/directory/mode/runtime verification plus undo/redo. Failure-oriented verifier tests cover altered binary bytes, empty directories, executable mode, runtime, unrelated sentinels and runtime-created directory side effects. It does not change default benchmark tasks or launch a paid agent run. A later targeted Claude acceptance sample can assess tool discovery; implementation correctness continues to rely on integration/compiler checks.
+
+
+The new CRLF layout fixture exposed ambient Git autocrlf normalization: with a temporary global `core.autocrlf=true`, the initial commit contained LF bytes while the working fixture retained CRLF. A failing regression reproduces this difference. Disposable fixture setup now overrides autocrlf locally, preserving the exact initial committed bytes without changing user configuration; the regression checks both HEAD and the working file.
