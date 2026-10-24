@@ -239,3 +239,19 @@ Atomic-write boundary follow-up: a planted temporary symlink redirected writes i
 ## Case-preserving rename primitive
 
 The roadmap's case-preserving textual rename now has one guarded transform (`ReplaceIdentifierCasePreserving`) and one bounded MCP/resident preview (`ffsake_preview_rename` / `preview_rename`). It matches whole ASCII identifiers case-insensitively and preserves lower/upper/initial-capital styles; exact mixed-case source spelling uses the supplied destination, while ambiguous mixed casing fails. An explicit target, positive exact match count and 1–100 file limit are mandatory through MCP. Frozen hashes, preview purity, stale rejection and journal history are unchanged. The actual MCP catalog is checked against the shared eighteen-tool allowlist in smoke coverage. Tests validate casing, boundaries, count mismatch, invalid/ambiguous names, stale previews and undo/redo. Real-agent adoption and performance of this new primitive have not been measured.
+
+
+## Rust syntax selection and compiler-backed limits
+
+Tree-sitter selection is bounded to explicit Rust files and excludes comments, literals and opaque macro/attribute text. A syntax handle retains that origin: replacement previews validate Rust 2024 identifier spelling and reparse staged files. Ordinary indexed-search handles still accept literal replacement text. Real-source selection succeeded for lib.rs, syntax.rs and resident.rs; the repository snapshot workflow verified 20 selected Workspace occurrences across lib.rs/resident.rs with exact range edits and byte-exact undo/redo. This is integration evidence, not symbol resolution or a timing claim.
+
+`python3 scripts/rust_syntax_smoke.py target/debug/ffsake-mcp` uses temporary standalone Rust files and external `rustc --edition=2024` compilation/execution. The checks passed locally on 2026-10-24 with rustc 1.99.1:
+
+| Fixture | Selected occurrences | Applied result |
+| --- | ---: | --- |
+| Ordinary local binding | 2 | Compiles and passes runtime assertion |
+| Two unrelated bindings with the same spelling | 4 | Both renamed; compiles and passes |
+| Reference inside an opaque macro argument | 1 | Declaration renamed, macro reference remains; compiler reports E0425 |
+| Replacement collides with an existing binding | 2 | Compiles, but shadowing changes the value and the runtime assertion fails |
+
+All four baselines compile/run; preview leaves bytes unchanged; undo restores the exact source and passing baseline; redo reproduces both bytes and the expected compiler/runtime outcome. Compiler/runtime failures in the last two rows are required evidence of the documented limitations, not skipped checks. The script runs in CI without models or network. Runtime execution remains an external verification step. These results justify investigating symbol-aware references and collision handling before semantic rename, rather than treating parser success as behavioral correctness.

@@ -124,7 +124,9 @@ Parser-backed Rust identifier selection is implemented with Tree-sitter and the 
 
 Real-source syntax evaluation parsed lib.rs, syntax.rs and resident.rs successfully. Rust syntax-selection handles now retain their origin: preview_matches validates the replacement spelling and reparses staged buffers before returning the existing guarded transform preview. Indexed-search handles retain literal replacements. Tests cover contextual names that produce parse errors, raw/Unicode names, oversized staged results, stale files and release. The disposable repository smoke now verifies exact source-range edits and complete undo/redo on repository Rust files; it does not claim the probe rename compiles or resolves symbols.
 
-Next: evaluate syntax-selected rename on a concrete compilable Rust fixture, including same-spelling unrelated bindings and macro uses, to establish when syntax selection is sufficient and what semantic/LSP work is actually needed. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Compiler-backed evaluation now covers four disposable fixtures: ordinary binding rename compiles and passes; same-spelling unrelated bindings are both renamed; excluded macro arguments can leave unresolved references; and a new name can shadow another binding, compiling but changing runtime behavior. All preview/apply/undo/redo byte checks pass. scripts/rust_syntax_smoke.py records these intended limitations in CI, with no model calls.
+
+Next: evaluate a bounded, read-only rust-analyzer references query on the same fixtures, with project build scripts/procedural macros and check-on-save disabled. Establish position encoding, readiness and workspace result confinement before exposing an LSP capability. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
