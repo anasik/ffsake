@@ -5,6 +5,7 @@ Runs Claude Code, Codex, and OpenCode in baseline and FFSAKE modes across
 micro, medium, app-completion, project and maintenance tasks. Every run uses a disposable git repo.
 """
 import argparse
+import hashlib
 import importlib.util
 import json
 import os
@@ -686,6 +687,48 @@ def fixture_files(root):
             and (p.is_symlink() or p.is_file())}
 
 
+def file_sha256(path):
+    try:
+        digest = hashlib.sha256()
+        with Path(path).open("rb") as source:
+            for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
+    except OSError:
+        return None
+
+
+def benchmark_provenance():
+    """Identify local inputs without storing source bytes or user configuration."""
+    try:
+        revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
+                                  capture_output=True, text=True, timeout=10)
+        head = revision.stdout.strip() if revision.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired):
+        head = None
+    return {
+        "source_revision": head,
+        "harness_sha256": {name: file_sha256(ROOT / "scripts" / name)
+                           for name in ("agent_benchmark_suite.py", "agent_benchmark.py")},
+        "mcp_binary_sha256": file_sha256(FFSAKE_MCP),
+        "binary_matches_source_verified": False,
+    }
+
+
+def task_provenance(root, files, prompt):
+    entries = []
+    for name, contents in sorted(files.items()):
+        path = root / name
+        entries.append({"path": name, "kind": "symlink" if path.is_symlink() else "file",
+                        "mode": path.lstat().st_mode & 0o7777,
+                        "sha256": hashlib.sha256(contents).hexdigest()})
+    manifest = json.dumps(entries, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    return {"prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
+            "fixture_manifest_sha256": hashlib.sha256(manifest.encode()).hexdigest(),
+            "fixture_files": entries,
+            "fixture_scope": "task files before runner configuration; excludes harness control directories"}
+
+
 def claude_run(root: Path, prompt: str, use_ffsake: bool, timeout: int, tool_profile="all"):
     cmd = [
         "claude", "-p", ffsake_prompt(prompt, tool_profile) if use_ffsake else prompt,
@@ -830,6 +873,8 @@ def one(agent, task_name, mode, timeout, opencode_model, tool_profile="all"):
         root = Path(td)
         state = task["fixture"](root)
         original_files = fixture_files(root)
+        provenance = task_provenance(root, original_files,
+            ffsake_prompt(task["prompt"], tool_profile) if use_ffsake else task["prompt"])
 
         if agent == "claude":
             result = claude_run(root, task["prompt"], use_ffsake, timeout, tool_profile)
@@ -877,6 +922,7 @@ def one(agent, task_name, mode, timeout, opencode_model, tool_profile="all"):
         return {
             "agent": agent,
             "workspace": str(root.resolve()),
+            "provenance": provenance,
             "task": task_name,
             "mode": mode,
             "ffsake_tool_profile": tool_profile if use_ffsake else None,
@@ -1083,6 +1129,7 @@ def main():
     out = reserve_report_path()
     report = {
         "schema_version": 3,
+        "provenance": benchmark_provenance(),
         "preflight": checks,
         "agents": agents,
         "tasks": tasks,

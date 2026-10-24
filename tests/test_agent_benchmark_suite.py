@@ -963,5 +963,75 @@ class ToolProfileTests(unittest.TestCase):
             self.assertEqual(report["aggregate"][0]["ffsake_tool_profile"], "core")
 
 
+
+class ProvenanceTests(unittest.TestCase):
+    def test_fixture_identity_is_root_independent_but_tracks_bytes_paths_modes_and_prompt(self):
+        with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
+            roots = [Path(first), Path(second)]
+            for root in roots:
+                (root / "a").write_bytes(b"hello\r\n")
+                (root / "a").chmod(0o644)
+            def identity(root, prompt="task"):
+                return suite.task_provenance(root, suite.fixture_files(root), prompt)
+            original = identity(roots[0])
+            self.assertEqual(original, identity(roots[1]))
+            self.assertNotEqual(original["prompt_sha256"], identity(roots[0], "changed")["prompt_sha256"])
+            (roots[1] / "a").chmod(0o755)
+            self.assertNotEqual(original["fixture_manifest_sha256"], identity(roots[1])["fixture_manifest_sha256"])
+            (roots[1] / "a").chmod(0o644)
+            (roots[1] / "a").write_bytes(b"hello\n")
+            self.assertNotEqual(original["fixture_manifest_sha256"], identity(roots[1])["fixture_manifest_sha256"])
+            (roots[1] / "a").write_bytes(b"hello\r\n")
+            (roots[1] / "a").rename(roots[1] / "b")
+            self.assertNotEqual(original["fixture_manifest_sha256"], identity(roots[1])["fixture_manifest_sha256"])
+
+    def test_symlink_identity_does_not_follow_external_contents(self):
+        with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as outside:
+            root = Path(td)
+            target = Path(outside) / "secret"
+            target.write_text("private contents")
+            (root / "link").symlink_to(target)
+            original = suite.task_provenance(root, suite.fixture_files(root), "task")
+            target.write_text("different private contents")
+            self.assertEqual(original, suite.task_provenance(root, suite.fixture_files(root), "task"))
+            self.assertEqual(original["fixture_files"][0]["kind"], "symlink")
+            self.assertNotIn(str(target), json.dumps(original))
+
+    def test_binary_and_harness_hashes_distinguish_local_changes_without_claiming_build_identity(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "scripts").mkdir()
+            for name in ("agent_benchmark_suite.py", "agent_benchmark.py"):
+                (root / "scripts" / name).write_text(name)
+            binary = root / "binary"
+            binary.write_bytes(b"first binary")
+            with patch.object(suite, "ROOT", root), patch.object(suite, "FFSAKE_MCP", binary):
+                original = suite.benchmark_provenance()
+                self.assertIsNone(original["source_revision"])
+                self.assertFalse(original["binary_matches_source_verified"])
+                binary.write_bytes(b"second binary")
+                (root / "scripts/agent_benchmark.py").write_text("local edit")
+                changed = suite.benchmark_provenance()
+                self.assertNotEqual(original["mcp_binary_sha256"], changed["mcp_binary_sha256"])
+                self.assertNotEqual(original["harness_sha256"], changed["harness_sha256"])
+                binary.unlink()
+                self.assertIsNone(suite.benchmark_provenance()["mcp_binary_sha256"])
+
+    def test_result_identity_precedes_runner_mutation_and_uses_profile_prompt(self):
+        import hashlib
+        from unittest.mock import patch
+        def fixture(root):
+            (root / "a").write_text("before")
+        def runner(root, *args):
+            (root / "a").write_text("after")
+            return {"stdout": "", "stderr": "", "exit_code": 0, "elapsed_ms": 1, "timed_out": False}
+        task = {"fixture": fixture, "prompt": "do task", "verify": lambda *_: (True, {}), "allowed_changes": {"a"}}
+        with patch.dict(suite.TASKS, {"provenance": task}), patch.object(suite, "codex_run", side_effect=runner):
+            result = suite.one("codex", "provenance", "ffsake", 1, None, "core")
+        identity = result["provenance"]
+        self.assertEqual(identity["fixture_files"][0]["sha256"], hashlib.sha256(b"before").hexdigest())
+        self.assertEqual(identity["prompt_sha256"], hashlib.sha256(suite.ffsake_prompt("do task", "core").encode()).hexdigest())
+
 if __name__ == "__main__":
     unittest.main()

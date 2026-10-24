@@ -312,3 +312,8 @@ Schema version 3 reports record the requested profile, tag each FFSAKE result an
 
 
 The approved core-profile Codex maintenance diagnostic at `a807c4f` passed 26/26 checks in 32.869 s, with a valid trace and no unexpected file changes. Its four successful calls were read_files → preview_files → apply → read_files; no shell, out-of-workspace path, disabled-profile call, approval failure or provider error was observed. Local report: `suite-20261024-215852-6lo7_0vx.json`. This confirms adoption for one synthetic task. It is not a paired timing comparison, a cost measurement or proof of host-enforced isolation. No further model runs were performed.
+
+
+New reports also include provenance: the source revision, SHA-256 hashes of both benchmark scripts and the MCP executable, plus each run's exact submitted task/guidance prompt hash and initial task-file manifest. The manifest is sorted and independent of the disposable root; it records relative paths, file/symlink kind, permission bits and content hashes before runner configuration or edits. Symlinks are hashed by target spelling without reading their targets. Harness control directories remain outside the task-file manifest, as in the verifier.
+
+A source revision alone does not identify local modifications; the script hashes distinguish those inputs. Binary/source equivalence remains explicitly unverified. These identities do not include inherited agent configuration, provider-side prompts or model weights, and do not establish reproducible timing. Missing local files or Git metadata yield null identity fields. No older report is backfilled or rewritten.
