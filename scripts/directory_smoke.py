@@ -57,6 +57,26 @@ def main():
                 assert (root / "empty").stat().st_mode & 0o777 == 0o750
             call("ffsake_redo", {"transaction": removed})
             assert not (root / "empty").exists()
+            # Directory and file transactions retain independent history and
+            # require safe dependency ordering when building a nested package.
+            parent = preview("create_directory", "package")
+            parent_id = call("ffsake_apply", {"handle": parent["handle"]})["transaction"]
+            child = preview("create_directory", "package/src")
+            child_id = call("ffsake_apply", {"handle": child["handle"]})["transaction"]
+            file = call("ffsake_preview_files", {"operations": [
+                {"op": "create", "path": "package/src/main.rs", "content": "fn main() {}\n"}]})
+            file_id = call("ffsake_apply", {"handle": file["handle"]})["transaction"]
+            call("ffsake_undo", {"transaction": parent_id}, False)
+            call("ffsake_undo", {"transaction": child_id}, False)
+            call("ffsake_undo", {"transaction": file_id})
+            call("ffsake_undo", {"transaction": child_id})
+            call("ffsake_undo", {"transaction": parent_id})
+            assert not (root / "package").exists()
+            call("ffsake_redo", {"transaction": child_id}, False)
+            call("ffsake_redo", {"transaction": parent_id})
+            call("ffsake_redo", {"transaction": child_id})
+            call("ffsake_redo", {"transaction": file_id})
+            assert (root / "package/src/main.rs").read_text() == "fn main() {}\n"
             for path in (".", "../outside", ".ffsake/hidden", "missing/child"):
                 preview("create_directory", path, False)
             pending = preview("create_directory", "collision")
