@@ -178,6 +178,34 @@ def main():
                 "position": {"line": 1, "column": 4}}, name="ffsake_rust_definition")
             assert empty["ranges"] == [{"path": "empty.rs", "start_byte": 0, "end_byte": 0, "line": 1}]
             assert (root / "main.rs").read_text() == source and (root / "empty.rs").read_bytes() == b""
+            source = ("/* 🚀 */ mod nested {\r\n"
+                      "    pub struct Account { pub amount: i32 }\r\n"
+                      "    impl Account { pub fn value(&self) -> i32 { self.amount } }\r\n"
+                      "}\r\nfn main() {}\r\n")
+            (root / "main.rs").write_bytes(source.encode())
+            outline_args = {**args, "files": ["main.rs"]}
+            outline = call(outline_args, name="ffsake_rust_symbols")
+            assert outline["query"] == "symbols" and outline["complete"] is False and "handle" not in outline
+            assert outline["symbol_count"] == 6 and outline["path"] == "main.rs", outline
+            nested, main_symbol = outline["symbols"]
+            assert nested["name"] == "nested" and nested["kind_name"] == "module"
+            assert main_symbol["name"] == "main" and main_symbol["kind_name"] == "function"
+            account, implementation = nested["children"]
+            assert account["name"] == "Account" and account["kind_name"] == "struct"
+            field = account["children"][0]
+            method = implementation["children"][0]
+            assert field["name"] == "amount" and field["kind_name"] == "field"
+            assert method["name"] == "value" and method["kind_name"] == "method"
+            for symbol in [nested, main_symbol, account, field, method]:
+                span = symbol["selection"]
+                assert source.encode()[span["start_byte"]:span["end_byte"]].decode() == symbol["name"]
+            for changes in [{"limit": 5}, {"limit": 0}, {"limit": 1001},
+                            {"position": {"line": 1, "column": 0}}]:
+                call({**outline_args, **changes}, ok=False, name="ffsake_rust_symbols")
+            assert (root / "main.rs").read_bytes() == source.encode()
+            empty_outline = call({**outline_args, "files": ["empty.rs"], "crate_root": "empty.rs",
+                                  "path": "empty.rs"}, name="ffsake_rust_symbols")
+            assert empty_outline["symbol_count"] == 0 and empty_outline["symbols"] == []
         finally:
             proc.stdin.close()
             try:
@@ -189,7 +217,7 @@ def main():
             proc.stderr.close()
         assert proc.returncode == 0, proc.returncode
     failure_checks(binary)
-    print("MCP Rust navigation: binding identity, macro/cross-file references and definitions, UTF-16/CRLF, boundaries, stale rejection, malformed/timeout recovery and child cleanup PASS")
+    print("MCP Rust navigation: binding references/definitions, hierarchical symbols, UTF-16/CRLF, boundaries, stale rejection, malformed/timeout recovery and child cleanup PASS")
 
 
 if __name__ == "__main__":

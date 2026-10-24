@@ -137,6 +137,7 @@ fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
         "ffsake_list" => "list",
         "ffsake_target" => "target",
         "ffsake_search" => "search",
+        "ffsake_rust_symbols" => "rust_symbols",
         "ffsake_rust_definition" => "rust_definition",
         "ffsake_rust_references" => "rust_references",
         "ffsake_select_rust_identifiers" => "select_rust_identifiers",
@@ -230,12 +231,17 @@ fn tools() -> Vec<Value> {
         tool(
             "ffsake_rust_references",
             "Read-only rust-analyzer references (including declaration) in a temporary snapshot of 1..=32 explicit .rs files, each <=256 KiB. Requires rust-analyzer installed on PATH. crate_root and query path must be members of files; position uses one-based line and zero-based Unicode scalar column. Explicit edition required. No Cargo dependencies, sysroot, build scripts, procedural macros or configured features: results always report complete=false and are not a rename handle. Original source hashes are rechecked before returning canonical paths and byte ranges. 30-second budget; unsafe/missing/symlinked files, unhealthy server, invalid/out-of-snapshot ranges and match-limit overflow reject without partial results. No workspace writes.",
-            rust_navigation_schema(),
+            rust_navigation_schema(true),
         ),
         tool(
             "ffsake_rust_definition",
             "Read-only rust-analyzer definition locations in a temporary snapshot of 1..=32 explicit .rs files, each <=256 KiB. Requires rust-analyzer installed on PATH. crate_root and query path must be members of files; position uses one-based line and zero-based Unicode scalar column. Explicit edition required. No Cargo dependencies, sysroot, build scripts, procedural macros or configured features: results always report complete=false and are not a rename handle. Original source hashes are rechecked before returning canonical paths and byte ranges. 30-second budget; unsafe/missing/symlinked files, unhealthy server, invalid/out-of-snapshot ranges and result-limit overflow reject without partial results. No workspace writes.",
-            rust_navigation_schema(),
+            rust_navigation_schema(true),
+        ),
+        tool(
+            "ffsake_rust_symbols",
+            "Read-only hierarchical Rust document outline using rust-analyzer and an explicit source snapshot. Same files/crate_root/path/edition scope as Rust references, without position. Returns names, LSP kind numbers and labels, optional details, exact original byte/line ranges and nested children for the query file. Limit 1..=1000 total symbols, depth <=32, name/detail <=4096 bytes; overflow or invalid/nonhierarchical results reject without partial output. Requires rust-analyzer on PATH, 1..=32 explicit .rs files <=256 KiB each, and a 30-second budget. Original hashes are rechecked. No dependencies/sysroot/build scripts/procedural macros/configured features: complete=false and no edit handle.",
+            rust_navigation_schema(false),
         ),
         tool(
             "ffsake_select_rust_identifiers",
@@ -399,13 +405,24 @@ fn tool(name: &str, description: &str, input_schema: Value) -> Value {
     json!({"name":name,"description":description,"inputSchema":input_schema})
 }
 
-fn rust_navigation_schema() -> Value {
-    json!({"type":"object","required":["files","crate_root","path","position","edition","limit"],"properties":{
+fn rust_navigation_schema(position: bool) -> Value {
+    let mut schema = json!({"type":"object","required":["files","crate_root","path","position","edition","limit"],"properties":{
         "files":{"type":"array","minItems":1,"maxItems":32,"items":{"type":"string","maxLength":4096}},
         "crate_root":{"type":"string","maxLength":4096},"path":{"type":"string","maxLength":4096},
         "position":{"type":"object","required":["line","column"],"additionalProperties":false,
             "properties":{"line":{"type":"integer","minimum":1},"column":{"type":"integer","minimum":0}}},
         "edition":{"type":"string","enum":["2015","2018","2021","2024"]},
         "limit":{"type":"integer","minimum":1,"maximum":1000}
-    }})
+    }});
+    if !position {
+        schema["properties"]
+            .as_object_mut()
+            .unwrap()
+            .remove("position");
+        schema["required"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|name| name != "position");
+    }
+    schema
 }

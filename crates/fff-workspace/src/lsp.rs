@@ -237,10 +237,34 @@ pub fn rust_definition(
     )
 }
 
+/// Return a bounded hierarchical outline for one file in the explicit snapshot.
+pub fn rust_symbols(
+    workspace: &Workspace,
+    files: &[String],
+    crate_root: &str,
+    path: &str,
+    edition: &str,
+    limit: usize,
+) -> Result<Value> {
+    navigate(
+        workspace,
+        Query {
+            files,
+            crate_root,
+            path,
+            position: TextPosition { line: 1, column: 0 },
+            edition,
+            limit,
+        },
+        Navigation::Symbols,
+    )
+}
+
 #[derive(Clone, Copy)]
 enum Navigation {
     References,
     Definition,
+    Symbols,
 }
 
 struct Query<'a> {
@@ -311,7 +335,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     });
     let mut client = Client::start(&root, options.clone(), deadline)?;
     let initialized = client.request("initialize", json!({"processId":null,"rootUri":uri(&root)?,
-        "capabilities":{"general":{"positionEncodings":["utf-16"]},"textDocument":{"definition":{"linkSupport":false}},"experimental":{"serverStatusNotification":true}},
+        "capabilities":{"general":{"positionEncodings":["utf-16"]},"textDocument":{"definition":{"linkSupport":false},"documentSymbol":{"hierarchicalDocumentSymbolSupport":true,"symbolKind":{"valueSet":(1..=26).collect::<Vec<_>>()}}},"experimental":{"serverStatusNotification":true}},
         "initializationOptions":options}))?;
     if initialized["capabilities"]["positionEncoding"]
         .as_str()
@@ -346,9 +370,22 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
             ("textDocument/references", "references")
         }
         Navigation::Definition => ("textDocument/definition", "definition"),
+        Navigation::Symbols => {
+            parameters
+                .as_object_mut()
+                .ok_or("invalid symbol request")?
+                .remove("position");
+            ("textDocument/documentSymbol", "symbols")
+        }
     };
-    let locations = normalize_locations(client.request(method, parameters)?, kind)?;
-    let ranges = scoped_ranges(&root, &sources, locations, limit, kind)?;
+    let result = client.request(method, parameters)?;
+    let mut response = if matches!(kind, Navigation::Symbols) {
+        crate::lsp_symbols::outline(query, query_source, result, limit)?
+    } else {
+        let locations = normalize_locations(result, kind)?;
+        let ranges = scoped_ranges(&root, &sources, locations, limit, kind)?;
+        json!({"ranges":ranges,"matches":ranges.len()})
+    };
     for (path, expected) in &hashes {
         let (normalized, bytes) = workspace.read_source_bounded(Path::new(path), 256 * 1024)?;
         if &normalized != path || blake3::hash(&bytes).to_hex().as_str() != expected {
@@ -356,12 +393,15 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
         }
     }
     client.remaining()?;
-    Ok(
-        json!({"ranges":ranges,"matches":ranges.len(),"file_hashes":hashes,
-        "analysis_mode":"explicit_crate_snapshot","query":query_kind,"complete":false,
-        "limitations":["No Cargo dependencies, sysroot, build scripts, procedural macros or configured features are loaded.",
-                        "Ranges are read-only navigation results, not a semantic rename capability."]}),
-    )
+    response["file_hashes"] = json!(hashes);
+    response["analysis_mode"] = json!("explicit_crate_snapshot");
+    response["query"] = json!(query_kind);
+    response["complete"] = json!(false);
+    response["limitations"] = json!([
+        "No Cargo dependencies, sysroot, build scripts, procedural macros or configured features are loaded.",
+        "Results are read-only navigation data, not a semantic rename capability."
+    ]);
+    Ok(response)
 }
 
 fn normalize_locations(value: Value, kind: Navigation) -> Result<Value> {

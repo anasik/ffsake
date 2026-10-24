@@ -11,6 +11,7 @@ mod file_ops;
 pub use file_ops::FileOperation;
 pub mod journal;
 pub mod lsp;
+mod lsp_symbols;
 pub mod preview;
 pub mod resident;
 pub mod search;

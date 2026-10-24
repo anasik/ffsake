@@ -55,7 +55,7 @@ Implemented:
 
 Next primitives:
 - implemented: case-preserving ASCII identifier rename through a guarded transform and bounded MCP preview;
-- syntax-aware selection and identifier operations when Tree-sitter is introduced.
+- implemented: bounded Tree-sitter Rust identifier selection and parser-checked replacement previews.
 
 Target principle:
 
@@ -132,7 +132,9 @@ Implemented strict UTF-16 ↔ original byte coordinate conversion and a bounded 
 
 Definition navigation now shares the snapshot backend and all scope/hash/budget checks. It resolves local bindings (including macro arguments) and cross-file calls; empty-module definitions preserve legitimate zero-width file anchors while reference ranges remain nonempty. Single/array/null definition results are normalized without negotiating LocationLink, and the shared catalog contains twenty-one tools.
 
-Next: evaluate a bounded document-symbol outline on real Rust source as the next navigation primitive, preserving hierarchical names/kinds and exact ranges. Keep dependency-aware analysis and semantic rename separate; reference ranges must not become rename capabilities until collision and analysis-completeness behavior are established. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+A real-source document-symbol probe produced 15 top-level entries / 40 symbols from the then-current LSP module. The shipped outline endpoint preserves hierarchy, names, kinds, details and exact original ranges, with total-count/depth/text limits and parent/selection containment checks. MCP coverage includes nested structs, fields, methods, emoji/CRLF offsets, empty documents and overflow rejection. The shared catalog contains twenty-two tools.
+
+Next: add implementation navigation for locally declared traits/types through the existing bounded snapshot backend, and verify multiple implementations plus an empty result. Keep dependency-aware analysis and semantic rename separate; reference ranges must not become rename capabilities until collision and analysis-completeness behavior are established. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
@@ -153,12 +155,15 @@ Pass condition:
 
 Before full LSP, consider parser/tree-sitter-backed syntax-aware mutation for identifiers, comments, strings, imports, and AST node kinds.
 
-Then add LSP/compiler-backed:
+Implemented through an explicitly incomplete dependency-free rust-analyzer source snapshot:
 
 - definitions;
 - references;
+- hierarchical document symbols.
+
+Still to add/evaluate:
+
 - implementations;
-- symbols;
 - semantic rename;
 - hover/types;
 - diagnostics/code actions.

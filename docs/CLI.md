@@ -122,3 +122,13 @@ Each request copies 1–32 explicit distinct UTF-8 `.rs` files, at most 256 KiB 
 Results contain `ranges`, `matches`, `file_hashes`, `analysis_mode: "explicit_crate_snapshot"`, and `complete: false`. They are read-only navigation data, with no MatchSet or preview handle. Cargo dependencies, standard-library sources, configured features, build scripts and procedural macros are omitted; references can therefore be missing even when the server is healthy. Locally defined declarative macros are analyzed. Empty results do not prove there are no references. The snapshot prevents modifications to original files, and returned ranges are confined to explicit source files; this is not an OS sandbox for the external server.
 
 `ffsake_rust_definition` (resident `rust_definition`) accepts the same arguments and returns definition locations under the same snapshot, timeout, scope and hash contract. Results include `query: "definition"`; references include `query: "references"`. Definition navigation may return a zero-width file anchor, for example byte 0 of an empty module. Reference ranges remain nonempty. Definitions are still incomplete without dependency/sysroot/feature context and return no mutation handle.
+
+## Rust document outlines
+
+```json
+{"op":"rust_symbols","files":["src/lib.rs"],"crate_root":"src/lib.rs","path":"src/lib.rs","edition":"2024","limit":100}
+```
+
+`ffsake_rust_symbols` returns a hierarchical outline of the query file using the same source-snapshot backend. It accepts the navigation arguments except `position`. Results include `path`, `symbols`, `symbol_count`, hashes and the same incomplete-analysis metadata. Each symbol preserves `name`, numeric LSP `kind`, a readable `kind_name`, optional `detail`, declaration `range`, identifier `selection` and `children`. Ranges contain original `start_byte`/`end_byte` offsets and one-based `start_line`/`end_line`; byte ends are exclusive. Unknown future kind numbers retain their number and use the label `unknown`.
+
+The positive `limit` bounds all descendants, not just top-level entries. Maximum depth is 32; names/details are at most 4096 UTF-8 bytes each. Invalid UTF-16/ranges, selections outside declarations, children outside their parent range, nonhierarchical responses and exceeded limits reject the entire outline. Empty documents return zero symbols. No edit handle is returned, and source is rechecked before the response.
