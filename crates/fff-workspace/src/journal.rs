@@ -110,6 +110,13 @@ pub struct TransactionDirectory {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct TransactionTreeArchive {
+    pub path: String,
+    pub entries: BTreeMap<String, crate::tree_move::TreeEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TransactionManifest {
     pub id: String,
     pub state: TransactionState,
@@ -119,6 +126,8 @@ pub struct TransactionManifest {
     pub directory: Option<TransactionDirectory>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tree_move: Option<TransactionTreeMove>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tree_archive: Option<TransactionTreeArchive>,
 }
 
 impl Journal {
@@ -230,6 +239,7 @@ impl Journal {
             files: vec![],
             directory: Some(directory),
             tree_move: None,
+            tree_archive: None,
         };
         self.write_manifest(&manifest)?;
         self.transition_directory(manifest, SnapshotSide::After, TransactionState::Applied)
@@ -365,6 +375,7 @@ impl Journal {
             files: vec![],
             directory: None,
             tree_move: Some(movement),
+            tree_archive: None,
         };
         self.write_manifest(&manifest)?;
         self.transition_tree_move(manifest, SnapshotSide::After, TransactionState::Applied)
@@ -388,6 +399,112 @@ impl Journal {
         manifest.state = state;
         if let Err(error) = self.write_manifest(&manifest) {
             return match movement.apply(self, !after) {
+                Ok(()) => Err(error),
+                Err(rollback) => Err(JournalError::RollbackFailed {
+                    original: error.to_string(),
+                    failures: vec![rollback.to_string()],
+                }),
+            };
+        }
+        Ok(manifest)
+    }
+
+    pub(crate) fn preview_tree_archive(&self, path: &str) -> Result<TransactionTreeArchive> {
+        if path.len() > 4096 {
+            return Err(JournalError::InvalidPath(
+                "tree path exceeds 4096 bytes".into(),
+            ));
+        }
+        Ok(TransactionTreeArchive {
+            path: path.into(),
+            entries: crate::tree_move::inventory(self, path)?,
+        })
+    }
+
+    pub(crate) fn commit_tree_archive(
+        &self,
+        archive: TransactionTreeArchive,
+    ) -> Result<TransactionManifest> {
+        let manifest = TransactionManifest {
+            id: transaction_id(),
+            state: TransactionState::Prepared,
+            label: Some("directory archive".into()),
+            files: vec![],
+            directory: None,
+            tree_move: None,
+            tree_archive: Some(archive),
+        };
+        // The transaction parent is created only after the source preview was
+        // validated; the protected archive destination is never caller-supplied.
+        self.write_manifest(&manifest)?;
+        self.transition_tree_archive(manifest, SnapshotSide::After, TransactionState::Applied)
+    }
+
+    fn tree_archive_paths(&self, manifest: &TransactionManifest) -> Result<(PathBuf, PathBuf)> {
+        validate_transaction_id(&manifest.id)?;
+        if !manifest.files.is_empty()
+            || manifest.directory.is_some()
+            || manifest.tree_move.is_some()
+        {
+            return Err(JournalError::InvalidPath(
+                "mixed tree archive transaction".into(),
+            ));
+        }
+        let archive = manifest
+            .tree_archive
+            .as_ref()
+            .ok_or_else(|| JournalError::InvalidPath("missing tree archive".into()))?;
+        let source = self.resolve(&archive.path)?;
+        let stored = self.journal_root.join(&manifest.id).join("tree-data");
+        self.check_internal_path(&stored)?;
+        Ok((source, stored))
+    }
+
+    fn verify_tree_archive(&self, manifest: &TransactionManifest, after: bool) -> Result<()> {
+        let (source, stored) = self.tree_archive_paths(manifest)?;
+        let (present, absent) = if after {
+            (stored, source)
+        } else {
+            (source, stored)
+        };
+        if absent.try_exists()? || !absent.parent().is_some_and(Path::is_dir) {
+            return Err(JournalError::InvalidPath(
+                "archive destination must be absent with an existing parent".into(),
+            ));
+        }
+        let archive = manifest.tree_archive.as_ref().unwrap();
+        if crate::tree_move::inventory_path(&present)? != archive.entries {
+            return Err(JournalError::StateConflict {
+                path: archive.path.clone(),
+                expected: "original directory inventory".into(),
+                actual: "changed archive or source contents/permissions".into(),
+            });
+        }
+        Ok(())
+    }
+
+    fn apply_tree_archive(&self, manifest: &TransactionManifest, after: bool) -> Result<()> {
+        self.verify_tree_archive(manifest, !after)?;
+        let (source, stored) = self.tree_archive_paths(manifest)?;
+        if after {
+            fs::rename(source, stored)?;
+        } else {
+            fs::rename(stored, source)?;
+        }
+        Ok(())
+    }
+
+    fn transition_tree_archive(
+        &self,
+        mut manifest: TransactionManifest,
+        side: SnapshotSide,
+        state: TransactionState,
+    ) -> Result<TransactionManifest> {
+        let after = matches!(side, SnapshotSide::After);
+        self.apply_tree_archive(&manifest, after)?;
+        manifest.state = state;
+        if let Err(error) = self.write_manifest(&manifest) {
+            return match self.apply_tree_archive(&manifest, !after) {
                 Ok(()) => Err(error),
                 Err(rollback) => Err(JournalError::RollbackFailed {
                     original: error.to_string(),
@@ -444,6 +561,7 @@ impl Journal {
             files,
             directory: None,
             tree_move: None,
+            tree_archive: None,
         };
         self.write_manifest(&manifest)?;
         Ok(manifest)
@@ -496,6 +614,7 @@ impl Journal {
             files,
             directory: None,
             tree_move: None,
+            tree_archive: None,
         };
         self.write_manifest(&manifest)?;
         Ok(manifest)
@@ -552,6 +671,9 @@ impl Journal {
     }
 
     fn verify_side(&self, manifest: &TransactionManifest, side: SnapshotSide) -> Result<()> {
+        if manifest.tree_archive.is_some() {
+            return self.verify_tree_archive(manifest, matches!(side, SnapshotSide::After));
+        }
         if let Some(movement) = &manifest.tree_move {
             if !manifest.files.is_empty() || manifest.directory.is_some() {
                 return Err(JournalError::InvalidPath("mixed tree transaction".into()));
@@ -607,6 +729,9 @@ impl Journal {
         side: SnapshotSide,
         state: TransactionState,
     ) -> Result<TransactionManifest> {
+        if manifest.tree_archive.is_some() {
+            return self.transition_tree_archive(manifest, side, state);
+        }
         if manifest.tree_move.is_some() {
             return self.transition_tree_move(manifest, side, state);
         }
@@ -1568,6 +1693,89 @@ mod directory_tests {
         assert!(journal.commit_directory("file", true).is_err());
         assert!(journal.commit_directory("absent", false).is_err());
         assert_eq!(fs::read(root.path().join("file")).unwrap(), b"data");
+    }
+
+    #[test]
+    fn archived_tree_history_checks_stale_source_and_snapshot_corruption() {
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        fs::create_dir_all(root.path().join("source/empty")).unwrap();
+        fs::write(root.path().join("source/data"), b"original").unwrap();
+        let preview = journal.preview_tree_archive("source").unwrap();
+        fs::write(root.path().join("source/extra"), b"keep").unwrap();
+        assert!(journal.commit_tree_archive(preview).is_err());
+        assert_eq!(fs::read(root.path().join("source/extra")).unwrap(), b"keep");
+        fs::remove_file(root.path().join("source/extra")).unwrap();
+        let preview = journal.preview_tree_archive("source").unwrap();
+        let transaction = journal.commit_tree_archive(preview).unwrap();
+        assert!(!root.path().join("source").exists());
+        let stored = journal.journal_root.join(&transaction.id).join("tree-data");
+        fs::write(stored.join("data"), b"corrupt").unwrap();
+        assert!(journal.undo(&transaction.id).is_err());
+        assert!(!root.path().join("source").exists());
+        fs::write(stored.join("data"), b"original").unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        journal.undo(&transaction.id).unwrap();
+        assert!(root.path().join("source/empty").is_dir());
+        assert_eq!(
+            fs::read(root.path().join("source/data")).unwrap(),
+            b"original"
+        );
+        journal.redo(&transaction.id).unwrap();
+        assert!(!root.path().join("source").exists());
+        fs::create_dir(root.path().join("source")).unwrap();
+        fs::write(root.path().join("source/keep"), b"keep").unwrap();
+        assert!(journal.undo(&transaction.id).is_err());
+        assert_eq!(fs::read(root.path().join("source/keep")).unwrap(), b"keep");
+    }
+
+    #[test]
+    fn archive_manifest_failure_restores_archive() {
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        fs::create_dir(root.path().join("source")).unwrap();
+        fs::write(root.path().join("source/keep"), b"keep").unwrap();
+        let transaction = journal
+            .commit_tree_archive(journal.preview_tree_archive("source").unwrap())
+            .unwrap();
+        let path = journal
+            .journal_root
+            .join(&transaction.id)
+            .join("manifest.json");
+        fs::remove_file(&path).unwrap();
+        fs::create_dir(&path).unwrap();
+        let stored = journal.journal_root.join(&transaction.id).join("tree-data");
+        assert!(
+            journal
+                .transition_tree_archive(
+                    transaction,
+                    SnapshotSide::Before,
+                    TransactionState::Undone
+                )
+                .is_err()
+        );
+        assert!(!root.path().join("source").exists());
+        assert_eq!(fs::read(stored.join("keep")).unwrap(), b"keep");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn archive_symlinks_cannot_redirect_history() {
+        use std::os::unix::fs::symlink;
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        fs::write(outside.path().join("sentinel"), b"keep").unwrap();
+        fs::create_dir(root.path().join("source")).unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        let transaction = journal
+            .commit_tree_archive(journal.preview_tree_archive("source").unwrap())
+            .unwrap();
+        let stored = journal.journal_root.join(&transaction.id).join("tree-data");
+        fs::remove_dir(&stored).unwrap();
+        symlink(outside.path(), &stored).unwrap();
+        assert!(journal.undo(&transaction.id).is_err());
+        assert!(!root.path().join("source").exists());
+        assert_eq!(fs::read(outside.path().join("sentinel")).unwrap(), b"keep");
     }
 
     #[test]

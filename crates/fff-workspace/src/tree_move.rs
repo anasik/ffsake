@@ -29,7 +29,12 @@ fn invalid(message: &str) -> JournalError {
 
 pub(crate) fn inventory(journal: &Journal, root: &str) -> Result<BTreeMap<String, TreeEntry>> {
     let root_path = journal.resolve(root)?;
-    if !root_path.is_dir() {
+    inventory_path(&root_path)
+}
+
+// Caller validates the trusted root and its ancestors. Descendants are checked below.
+pub(crate) fn inventory_path(root_path: &Path) -> Result<BTreeMap<String, TreeEntry>> {
+    if !fs::symlink_metadata(root_path)?.is_dir() {
         return Err(invalid("directory move requires a directory source"));
     }
     let mut pending = vec![(String::new(), 0usize)];
@@ -41,12 +46,20 @@ pub(crate) fn inventory(journal: &Journal, root: &str) -> Result<BTreeMap<String
                 "directory inventory exceeds path/count/depth limits",
             ));
         }
-        let full = if relative.is_empty() {
-            root.to_string()
-        } else {
-            format!("{root}/{relative}")
-        };
-        let path = journal.resolve(&full)?;
+        let path = root_path.join(&relative);
+        let mut checked = root_path.to_path_buf();
+        for component in Path::new(&relative).components() {
+            let std::path::Component::Normal(name) = component else {
+                return Err(invalid("invalid inventory path"));
+            };
+            if name == ".ffsake" {
+                return Err(invalid("reserved inventory path"));
+            }
+            checked.push(name);
+            if fs::symlink_metadata(&checked)?.file_type().is_symlink() {
+                return Err(invalid("inventory symlink"));
+            }
+        }
         let metadata = fs::symlink_metadata(&path)?;
         let directory = metadata.is_dir();
         let (hash, bytes) = if directory {

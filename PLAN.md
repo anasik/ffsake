@@ -216,7 +216,7 @@ Next: commit the matrix-validation fix separately, publish both after 4191cbe CI
 
 Remaining gaps:
 - build/test/runtime execution remains external;
-- empty-directory create/remove is journaled through single-operation previews; bounded directory moves are journaled; recursive directory copy/remove and mixed directory/file transactions remain to evaluate;
+- empty-directory create/remove is journaled through single-operation previews; bounded directory moves are journaled; bounded populated-directory removal uses a reversible journal archive; directory copy and mixed directory/file transactions remain to evaluate;
 - metadata beyond ordinary Unix rwx bits remains unrecorded, and legacy manifests cannot recover metadata they never captured;
 - native Codex tools are not disabled; enforced isolation remains unverified.
 
@@ -234,6 +234,8 @@ Workspace-only Cargo context import is implemented in `ffsake_rust_context_from_
 Empty-directory create/remove now uses the existing preview_files/apply/undo/redo workflow, including the core profile. Each directory operation is a separate transaction; its parent must already exist. Previews and history reject files, symlinks, nonempty directories, changed ordinary Unix modes and protected/escaping paths. Removal and rollback use nonrecursive remove_dir. A backward-compatible optional directory manifest preserves modes and reopened history, with rollback on manifest-write failure. Rust and MCP integration tests verify stale-content preservation, collisions, boundary rejections, one-shot apply and exact empty-directory history. Recursive operations and mixed batches remain outside this first increment. File replay also rejects an unexpected non-file at write time instead of recursively deleting a directory that appeared after preflight; a deterministic regression preserves its nested sentinel.
 
 Bounded `move_directory` previews now capture a complete inventory of up to 100 files/directories, 4 MiB of file bytes and depth 32, including binary hashes, empty directories and ordinary modes. Apply, undo and redo reject changed inventory, overlapping paths, missing parents, occupied destinations, symlinks, special files and internal paths. Moves use filesystem rename rather than recursive deletion/copy; cross-device errors propagate. A backward-compatible tree-move manifest preserves reopened history and reverses the rename on manifest-write failure. Rust tests cover limits, modes, stale input, collisions, symlinks/sockets and persistence failure; MCP exercises a nested package move with binary content and exact undo/redo. Application-level preflight checks do not establish race-free OS isolation.
+
+Populated-directory `delete_directory` now previews the same bounded inventory and archives the tree under its protected transaction path with filesystem rename. Undo restores that exact tree and redo archives it again; no recursive workspace deletion occurs. Source changes, corrupted archived bytes/modes, symlinked journal paths, and occupied restore destinations reject before changes. Persistence failures reverse the move, and reopened journal tests cover recovery and retry. MCP integration verifies binary content, empty directories, stale previews and collision-safe history. Archived contents remain retained on disk for undo/redo; cross-device rename failures propagate.
 
 ## Phase 2 — syntax and LSP
 

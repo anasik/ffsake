@@ -1,6 +1,7 @@
 use crate::Workspace;
 use crate::journal::{
-    Journal, JournalChange, TransactionDirectory, TransactionTreeMove, unix_mode,
+    Journal, JournalChange, TransactionDirectory, TransactionTreeArchive, TransactionTreeMove,
+    unix_mode,
 };
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -14,6 +15,9 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 #[derive(Debug, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum FileOperation {
+    DeleteDirectory {
+        path: String,
+    },
     MoveDirectory {
         from: String,
         to: String,
@@ -50,6 +54,7 @@ pub enum FileOperation {
 pub(crate) struct FilePlan {
     directory: Option<TransactionDirectory>,
     tree_move: Option<TransactionTreeMove>,
+    tree_archive: Option<TransactionTreeArchive>,
     changes: Vec<JournalChange>,
     checks: Vec<(String, Option<Vec<u8>>)>,
     mode_checks: BTreeMap<String, u32>,
@@ -76,11 +81,24 @@ impl FilePlan {
         let creating_directory = matches!(&operation, FileOperation::CreateDirectory { .. });
         let moving = matches!(&operation, FileOperation::Move { .. });
         match operation {
+            FileOperation::DeleteDirectory { path } => {
+                let archive = journal.preview_tree_archive(&path)?;
+                return Ok(Self {
+                    directory: None,
+                    tree_move: None,
+                    tree_archive: Some(archive),
+                    changes,
+                    checks,
+                    mode_checks,
+                    destination_modes,
+                });
+            }
             FileOperation::MoveDirectory { from, to } => {
                 let movement = TransactionTreeMove::preview(&journal, &from, &to)?;
                 return Ok(Self {
                     directory: None,
                     tree_move: Some(movement),
+                    tree_archive: None,
                     changes,
                     checks,
                     mode_checks,
@@ -92,6 +110,7 @@ impl FilePlan {
                 return Ok(Self {
                     directory: Some(directory),
                     tree_move: None,
+                    tree_archive: None,
                     changes,
                     checks,
                     mode_checks,
@@ -170,6 +189,7 @@ impl FilePlan {
         Ok(Self {
             directory: None,
             tree_move: None,
+            tree_archive: None,
             changes,
             checks,
             mode_checks,
@@ -191,6 +211,7 @@ impl FilePlan {
         let mut combined = Self {
             directory: None,
             tree_move: None,
+            tree_archive: None,
             changes: Vec::new(),
             checks: Vec::new(),
             mode_checks: BTreeMap::new(),
@@ -200,7 +221,7 @@ impl FilePlan {
         let mut reads: Vec<PathBuf> = Vec::new();
         for operation in operations {
             let plan = Self::preview(workspace, operation)?;
-            if plan.directory.is_some() || plan.tree_move.is_some() {
+            if plan.directory.is_some() || plan.tree_move.is_some() || plan.tree_archive.is_some() {
                 return Err("directory operations require a single-operation batch".into());
             }
             let new_writes = plan
@@ -237,6 +258,11 @@ impl FilePlan {
     }
 
     pub(crate) fn description(&self) -> Value {
+        if let Some(archive) = &self.tree_archive {
+            return json!({"operation":"delete_directory","path":archive.path,"entries":archive.entries,
+                "changed_files":archive.entries.values().filter(|entry| !entry.directory).count(),
+                "changed_directories":archive.entries.values().filter(|entry| entry.directory).count(),"retained_in_journal":true});
+        }
         if let Some(movement) = &self.tree_move {
             return json!({"operation":"move_directory","from":movement.from,"to":movement.to,
                 "entries":movement.entries,"changed_files":movement.entries.values().filter(|entry| !entry.directory).count(),
@@ -275,6 +301,12 @@ impl FilePlan {
 
     pub(crate) fn apply(&self, workspace: &Workspace) -> Result<Value> {
         let journal = Journal::open(workspace.root())?;
+        if let Some(archive) = &self.tree_archive {
+            let transaction = journal.commit_tree_archive(archive.clone())?;
+            return Ok(
+                json!({"transaction":transaction.id,"archived_entries":archive.entries.len()}),
+            );
+        }
         if let Some(movement) = &self.tree_move {
             let transaction = journal.commit_tree_move(movement.clone())?;
             return Ok(
