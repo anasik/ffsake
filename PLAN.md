@@ -202,7 +202,11 @@ Active navigation guidance now describes explicit optional local crate context, 
 
 Initial-fixture validation exposed bytecode artifacts from the medium/app verifiers. They now execute current source bytes directly without reading/writing bytecode caches. All five starting fixtures fail their completion verifier unchanged, and a same-size/same-timestamp stale-cache regression reads the new source. All 78 Python tests pass; the user-modified legacy benchmark remains untouched.
 
-Next: publish queued commits after inspection CI passes and verify their exact head. Post-verification auditing now closes the reproduced gap where verifier-executed code could create/delete/change task files after the original file audit and still return success. These side effects are recorded separately as verification_file_changes and force incorrect results, including after verifier exceptions. All 79 Python tests pass. Keep subsequent work driven by observed workflow gaps; no additional model run is authorized by the earlier single-run approval. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Post-verification auditing now closes the reproduced gap where verifier-executed code could create/delete/change task files after the original file audit and still return success. These side effects are recorded separately as verification_file_changes and force incorrect results, including after verifier exceptions. All 79 Python tests pass.
+
+CI now has a thirty-minute job deadline after a previous run stalled beyond twenty minutes and needed cancellation/retry. The same complete checks remain required; a timeout is a failed checkpoint requiring diagnosis.
+
+Next: recover/finish the in-progress inspection CI run, publish the separately committed launcher/error/guidance/verifier/CI improvements, and verify the exact pushed head. Keep subsequent work driven by observed workflow gaps; no additional model run is authorized by the earlier single-run approval. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
