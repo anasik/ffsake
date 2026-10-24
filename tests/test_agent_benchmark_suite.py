@@ -820,6 +820,60 @@ raise SystemExit(7)
             self.assertFalse(Path(data["config_path"]).exists())
             self.assertEqual(list(root.iterdir()), [])
 
+    def test_core_dry_run_uses_only_core_config_approvals_and_guidance(self):
+        with tempfile.TemporaryDirectory() as td:
+            result = subprocess.run([sys.executable, str(self.LAUNCHER), td,
+                                     "--binary", sys.executable, "--claude", sys.executable,
+                                     "--tool-profile", "core", "--dry-run"], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            data = json.loads(result.stdout)
+            self.assertEqual(data["tool_profile"], "core")
+            self.assertEqual(data["mcp_config"]["mcpServers"]["ffsake"]["args"],
+                             [str(Path(td).resolve()), "--profile", "core"])
+            self.assertEqual(data["approved_tools"], ["mcp__ffsake__" + tool for tool in suite.FFSAKE_CORE_TOOLS])
+            command = data["command"]
+            self.assertEqual(command[command.index("--append-system-prompt") + 1], suite.ffsake_prompt("", "core").strip())
+            self.assertEqual(list(Path(td).iterdir()), [])
+
+    @unittest.skipIf(sys.platform == "win32", "Executable shebang fixture")
+    def test_core_preflight_checks_custom_binary_before_fake_cli_launch(self):
+        import os
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            root = folder / "workspace"
+            root.mkdir()
+            marker = folder / "launched.json"
+            cli = folder / "fake-claude"
+            cli.write_text("#!" + sys.executable + "\n" +
+                "import json,os,sys\nfrom pathlib import Path\n" +
+                "args=sys.argv[1:]\nconfig=Path(args[args.index('--mcp-config')+1])\n" +
+                f"Path({str(marker)!r}).write_text(json.dumps({{'cwd':os.getcwd(),'pwd':os.environ['PWD'],'config':json.loads(config.read_text()),'config_path':str(config),'args':args}}))\n" +
+                "raise SystemExit(7)\n")
+            cli.chmod(0o755)
+            binary = folder / "fake-mcp"
+            for valid in (False, True):
+                tools = [{"name": name} for name in suite.FFSAKE_CORE_TOOLS] if valid else []
+                response = {"jsonrpc": "2.0", "id": 1, "result": {"tools": tools}}
+                binary.write_text("#!" + sys.executable + "\nimport sys\n" +
+                    "assert sys.argv[2:] == ['--profile', 'core']\n" + f"print({json.dumps(response)!r})\n")
+                binary.chmod(0o755)
+                run = subprocess.run([sys.executable, str(self.LAUNCHER), str(root), "--binary", str(binary),
+                                      "--claude", str(cli), "--tool-profile", "core"], capture_output=True, text=True,
+                                     env={**os.environ, "PWD": "/wrong"})
+                self.assertEqual(run.returncode, 7 if valid else 2, run.stderr)
+                if not valid:
+                    self.assertIn("mcp_catalog_mismatch", run.stderr)
+                    self.assertFalse(marker.exists())
+            data = json.loads(marker.read_text())
+            self.assertEqual(data["cwd"], str(root.resolve()))
+            self.assertEqual(data["pwd"], str(root.resolve()))
+            self.assertEqual(data["config"]["mcpServers"]["ffsake"],
+                             {"command": str(binary.resolve()), "args": [str(root.resolve()), "--profile", "core"]})
+            self.assertEqual(data["args"][data["args"].index("--allowedTools") + 1],
+                             ",".join("mcp__ffsake__" + name for name in suite.FFSAKE_CORE_TOOLS))
+            self.assertFalse(Path(data["config_path"]).exists())
+            self.assertEqual(list(root.iterdir()), [])
+
     def test_invalid_workspace_or_missing_binary_fails_without_launch(self):
         with tempfile.TemporaryDirectory() as td:
             for workspace, binary in [(str(Path(td) / "missing"), sys.executable),

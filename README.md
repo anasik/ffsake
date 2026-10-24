@@ -134,7 +134,15 @@ cargo build --locked --bin ffsake-mcp
 python3 scripts/ffsake_claude.py /absolute/path/to/worktree
 ```
 
-The launcher supplies a temporary MCP configuration, disables Claude's built-in tools with `--tools ""`, loads only this MCP configuration with `--strict-mcp-config`, and approves only the twenty-seven named FFSAKE tools for this session. It does not use the broad skip-permissions flag or modify user/project configuration. Other host settings, including enterprise policy and startup hooks, are not isolated by this launcher. FFSAKE is an application-level workspace boundary, not an OS sandbox.
+The launcher supplies a temporary MCP configuration, disables Claude's built-in tools with `--tools ""`, loads only this MCP configuration with `--strict-mcp-config`, and approves only the named FFSAKE tools in the selected profile for this session. It does not use the broad skip-permissions flag or modify user/project configuration. Other host settings, including enterprise policy and startup hooks, are not isolated by this launcher. FFSAKE is an application-level workspace boundary, not an OS sandbox.
+
+The default `--tool-profile all` exposes the full catalog. Select `--tool-profile core` for the eighteen generic file tools, with matching approvals and guidance:
+
+```sh
+python3 scripts/ffsake_claude.py /absolute/path/to/worktree --tool-profile core
+```
+
+Before a core launch, the launcher checks the selected `--binary` catalog in a disposable workspace without contacting a model. A missing/incompatible core catalog stops before Claude starts. `--dry-run` only prints configuration and skips this executable check; combine it with either profile to inspect the intended launch.
 
 Use a separate git worktree for the first pilot. Start with one small repository editing task; run builds/tests and review the git diff in a separate terminal. FFSAKE currently supplies editing/navigation, not a build/test runner. Existing-file replacements preserve current permissions. New Unix journal entries also capture ordinary rwx permission bits when committing a deletion, so undo can recreate executable/private files correctly. Older entries and record-after-the-fact calls lack original modes. Copy/move destinations preserve ordinary Unix rwx bits and reject source permission changes after preview. New entries record created-file modes for redo. Ownership, ACLs, extended attributes and special mode bits are not restored.
 
@@ -146,4 +154,4 @@ python3 scripts/ffsake_claude.py /absolute/path/to/worktree --dry-run
 
 The launcher's CLI flags follow the [Claude CLI reference](https://code.claude.com/docs/en/cli-reference). Its process/configuration behavior is regression-tested with a fake CLI; interactive tool availability must still be checked with the installed Claude version.
 
-Rust references, definitions, implementations, document outlines, hover/type information, native diagnostics and code-action discovery are available through `ffsake_rust_references`, `ffsake_rust_definition`, `ffsake_rust_implementation`, `ffsake_rust_symbols`, `ffsake_rust_hover`, `ffsake_rust_diagnostics` and `ffsake_rust_code_actions` with an explicit source-file snapshot. Install the optional backend with `rustup component add rust-analyzer`. These analyses accept optional explicit local crate dependencies, features and custom cfg flags but omit Cargo discovery, unspecified dependencies, sysroot and implicit feature expansion. Supported code actions can be staged separately with `ffsake_preview_rust_action`, then applied through the journal; syntax checking does not establish semantic correctness. See [the CLI contracts](docs/CLI.md).
+Rust references, definitions, implementations, combined symbol inspection, document outlines, hover/type information, native diagnostics and code-action discovery are available through `ffsake_rust_references`, `ffsake_rust_definition`, `ffsake_rust_inspect`, `ffsake_rust_implementation`, `ffsake_rust_symbols`, `ffsake_rust_hover`, `ffsake_rust_diagnostics` and `ffsake_rust_code_actions` with an explicit source-file snapshot. Install the optional backend with `rustup component add rust-analyzer`. These analyses accept optional explicit local crate dependencies, features and custom cfg flags but omit Cargo discovery, unspecified dependencies, sysroot and implicit feature expansion. Supported code actions can be staged separately with `ffsake_preview_rust_action`, then applied through the journal; syntax checking does not establish semantic correctness. See [the CLI contracts](docs/CLI.md).

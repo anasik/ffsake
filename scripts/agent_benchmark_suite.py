@@ -984,16 +984,17 @@ def opencode_workspace_preflight(executable, tool_profile="all"):
     return {"checks": checks, "ok": all(c["ok"] for c in checks), "model_calls": 0}
 
 
-def mcp_profile_preflight(tool_profile):
+def mcp_profile_preflight(tool_profile, binary=None):
     """Inspect the local server catalog in a temporary workspace, without a model."""
+    binary = FFSAKE_MCP if binary is None else Path(binary)
     expected = set(profile_tools(tool_profile))
     check = {"profile": tool_profile, "ok": False, "model_calls": 0}
-    if not FFSAKE_MCP.is_file():
+    if not binary.is_file():
         return {**check, "error": "missing_mcp_binary"}
     with tempfile.TemporaryDirectory(prefix="ffsake-profile-preflight-") as td:
         request = {"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}
         try:
-            run = subprocess.run([str(FFSAKE_MCP), *mcp_arguments(Path(td), tool_profile)],
+            run = subprocess.run([str(binary), *mcp_arguments(Path(td), tool_profile)],
                 input=json.dumps(request) + "\n", capture_output=True, text=True, timeout=10)
             if run.returncode != 0:
                 return {**check, "error": "mcp_launch_failed", "exit_code": run.returncode}

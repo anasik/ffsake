@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import tempfile
 
-from agent_benchmark_suite import FFSAKE_MCP, FFSAKE_TOOLS, ffsake_prompt
+from agent_benchmark_suite import FFSAKE_MCP, ffsake_prompt, mcp_arguments, mcp_profile_preflight, profile_tools
 
 
 def main():
@@ -16,6 +16,8 @@ def main():
     parser.add_argument("workspace", type=Path)
     parser.add_argument("--binary", type=Path, default=FFSAKE_MCP)
     parser.add_argument("--claude", default="claude", help="Claude executable name or path")
+    parser.add_argument("--tool-profile", choices=("all", "core"), default="all",
+                        help="Full catalog (default) or generic file tools only")
     parser.add_argument("--dry-run", action="store_true", help="Print configuration without launching Claude")
     args = parser.parse_args()
     root = args.workspace.expanduser().resolve()
@@ -27,19 +29,23 @@ def main():
     executable = shutil.which(args.claude)
     if executable is None:
         parser.error("Claude executable not found")
-    config = {"mcpServers": {"ffsake": {"command": str(binary), "args": [str(root)]}}}
-    allowed = [f"mcp__ffsake__{tool}" for tool in FFSAKE_TOOLS]
+    if args.tool_profile == "core" and not args.dry_run:
+        readiness = mcp_profile_preflight("core", binary)
+        if not readiness["ok"]:
+            parser.error("core MCP preflight failed before launching Claude: " + readiness["error"])
+    config = {"mcpServers": {"ffsake": {"command": str(binary), "args": mcp_arguments(root, args.tool_profile)}}}
+    allowed = [f"mcp__ffsake__{tool}" for tool in profile_tools(args.tool_profile)]
     with tempfile.TemporaryDirectory(prefix="ffsake-claude-") as td:
         config_path = Path(td) / "mcp.json"
         config_path.write_text(json.dumps(config))
         command = [
             executable, "--strict-mcp-config", "--mcp-config", str(config_path),
             "--tools", "", "--allowedTools", ",".join(allowed),
-            "--append-system-prompt", ffsake_prompt("").strip(),
+            "--append-system-prompt", ffsake_prompt("", args.tool_profile).strip(),
         ]
         if args.dry_run:
             print(json.dumps({"workspace": str(root), "mcp_config": config,
-                              "approved_tools": allowed, "command": command}, indent=2))
+                              "tool_profile": args.tool_profile, "approved_tools": allowed, "command": command}, indent=2))
             return 0
         env = os.environ.copy()
         env["PWD"] = str(root)

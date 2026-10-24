@@ -190,7 +190,11 @@ Shorthand and import-alias regressions were pushed separately through 2656a9b an
 
 Combined symbol inspection now collects definition, references and hover at one position in one fresh analyzer session. Location entries share the caller's 1..1000 limit before deduplication, hover has an 8192-byte cap, and all input hashes/time/transport guards remain shared. Real-server equivalence, empty results and controlled late-malformed/overflow/stale-context failures pass. Full catalog has 31 tools; core remains 18. Five alternating model-free samples on the 2656a9b source archive returned identical 23 locations/296 hover bytes, with medians 0.506 s combined versus 1.516 s for three individual requests. This is not an agent-performance claim.
 
-Next: validate the committed inspection feature against the full repository/compiler regression, push and verify exact CI. Then audit the existing local Claude launcher for consistency with the now-supported profiles and tool catalog; keep any changes scoped to actual configuration gaps and validate without additional model calls. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+The committed inspection feature f5ec0b3 passed the full-repository equivalence, external Cargo baseline/expected-negative rename and byte-history regression, and was pushed for exact CI verification.
+
+The interactive Claude launcher now accepts --tool-profile all|core, sharing catalog arguments, approvals and guidance with the harness. Its core launch checks the selected custom binary's catalog before starting Claude; dry-run remains configuration-only. Fake-CLI tests cover catalog mismatch prevention, actual core configuration, working directory, temporary-config lifetime and exit status without model calls. The README's stale fixed tool count was replaced with the selected-profile contract.
+
+Next: complete launcher validation, commit it separately, and publish after inspection CI passes. Keep subsequent work driven by observed workflow gaps; no additional model run is authorized by the earlier single-run approval. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
