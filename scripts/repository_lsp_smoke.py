@@ -68,7 +68,7 @@ def main():
             value = json.loads(response["result"]["content"][0]["text"])
             assert value["ok"], value
             result = value["result"]
-            if name.startswith("ffsake_rust_"):
+            if name.startswith("ffsake_rust_") and name != "ffsake_rust_context_from_manifests":
                 assert result["complete"] is False and set(result["file_hashes"]) == set(files)
                 assert result["analysis_context"]["crate_root"] == library
             calls.append({"tool": name, "seconds": round(time.monotonic() - started, 3)})
@@ -79,6 +79,17 @@ def main():
                     if path.is_file() and not {".ffsake", "target"}.intersection(path.relative_to(root).parts)}
 
         try:
+            imported = call("ffsake_rust_context_from_manifests", {
+                "manifests": ["Cargo.toml", "crates/fff-workspace/Cargo.toml"],
+                "files": files, "crate_root": library})
+            context = imported["analysis_arguments"]
+            assert context["files"] == files and context["crate_root"] == library
+            assert context["edition"] == "2024" and imported["complete"] is False
+            actual_edges = {c["root"]: c["dependencies"] for c in context["crates"]}
+            assert actual_edges == {c["root"]: c.get("dependencies", {}) for c in crates}
+            assert set(imported["source_hashes"]) == set(files)
+            assert imported["omissions"], "external dependencies must be explicitly omitted"
+            common = context
             source = original[coordinates].decode()
             declaration = position(source, "pub struct Utf16Position")
             declaration["column"] += len("pub struct ")
@@ -272,6 +283,8 @@ def main():
         assert proc.returncode == 0, proc.returncode
     print(json.dumps({"snapshot_revision": revision, "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "rust_files": len(files), "rust_bytes": sum(len(original[path]) for path in files), "explicit_crates": len(crates),
+        "context_import": {"manifests": sorted(imported["manifest_hashes"]),
+                           "omissions": imported["omissions"], "matches_manual_graph": True},
         "references": references["matches"], "reference_files": len(paths), "outline_symbols": outline["symbol_count"],
         "byte_history_passed": True, "rename_evidence": rename_evidence, "diagnostic_evidence": diagnostic_evidence, "inspection_evidence": inspection_evidence, "calls": calls, "model_calls": 0,
         "timing_is_single_model_free_sample": diagnostic_iterations == 1 and inspection_iterations == 1, "complete_analysis": False}, indent=2))
