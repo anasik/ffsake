@@ -49,6 +49,11 @@ pub enum Request {
         #[serde(default)]
         details: bool,
     },
+    SelectRustIdentifiers {
+        paths: Vec<String>,
+        identifier: String,
+        limit: usize,
+    },
     PreviewMatches {
         handle: u64,
         replacement: String,
@@ -282,6 +287,22 @@ impl Resident {
                 if details {
                     response["ranges"] = serde_json::to_value(&set.ranges)?;
                 }
+                self.matches.insert(handle, set);
+                Ok(response)
+            }
+            Request::SelectRustIdentifiers {
+                paths,
+                identifier,
+                limit,
+            } => {
+                let set = crate::syntax::select_rust_identifiers(
+                    self.session.workspace(),
+                    &paths,
+                    &identifier,
+                    limit,
+                )?;
+                let handle = self.allocate()?;
+                let response = json!({"handle":handle,"matches":set.ranges.len(),"files":set.file_hashes.len(),"ranges":set.ranges,"language":"rust","semantic":false});
                 self.matches.insert(handle, set);
                 Ok(response)
             }

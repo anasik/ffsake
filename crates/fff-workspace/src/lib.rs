@@ -15,6 +15,7 @@ pub mod resident;
 pub mod search;
 pub mod selection;
 pub mod session;
+pub mod syntax;
 pub mod transform;
 
 #[derive(Debug)]
@@ -262,6 +263,14 @@ impl Workspace {
         end: Option<usize>,
         max_bytes: usize,
     ) -> Result<Option<ReadResult>> {
+        if self.resolve_explicit_file(relative)?.is_none() {
+            return Ok(None);
+        }
+        self.read_text_impl(relative, start, end, Some(max_bytes))
+            .map(Some)
+    }
+
+    fn resolve_explicit_file(&self, relative: &Path) -> Result<Option<PathBuf>> {
         let clean = self.validate_relative(relative)?;
         let mut candidate = self.root.clone();
         for component in clean.components() {
@@ -277,8 +286,25 @@ impl Workspace {
                 Err(error) => return Err(error.into()),
             }
         }
-        self.read_text_impl(relative, start, end, Some(max_bytes))
-            .map(Some)
+        let path = self.resolve_existing(relative)?;
+        if !path.is_file() {
+            return Err(WorkspaceError::InvalidPath(relative.display().to_string()));
+        }
+        Ok(Some(path))
+    }
+
+    pub(crate) fn read_source_bounded(
+        &self,
+        relative: &Path,
+        max_bytes: usize,
+    ) -> Result<(String, Vec<u8>)> {
+        let path = self
+            .resolve_explicit_file(relative)?
+            .ok_or_else(|| WorkspaceError::NotFound(relative.to_path_buf()))?;
+        Ok((
+            self.relative_display(&path),
+            read_bounded_bytes(&path, max_bytes)?,
+        ))
     }
 
     pub fn read_text(
@@ -303,17 +329,7 @@ impl Workspace {
         }
 
         let bytes = if let Some(limit) = max_bytes {
-            use std::io::Read;
-            let mut bytes = Vec::new();
-            fs::File::open(&path)?
-                .take(limit as u64 + 1)
-                .read_to_end(&mut bytes)?;
-            if bytes.len() > limit {
-                return Err(WorkspaceError::InvalidPath(
-                    "batch read source exceeds byte limit".into(),
-                ));
-            }
-            bytes
+            read_bounded_bytes(&path, limit)?
         } else {
             fs::read(&path)?
         };
@@ -880,6 +896,20 @@ impl Workspace {
             .to_string_lossy()
             .replace('\\', "/")
     }
+}
+
+fn read_bounded_bytes(path: &Path, limit: usize) -> Result<Vec<u8>> {
+    use std::io::Read;
+    let mut bytes = Vec::new();
+    fs::File::open(path)?
+        .take((limit as u64).saturating_add(1))
+        .read_to_end(&mut bytes)?;
+    if bytes.len() > limit {
+        return Err(WorkspaceError::InvalidPath(
+            "source exceeds byte limit".into(),
+        ));
+    }
+    Ok(bytes)
 }
 
 fn temp_sibling(path: &Path) -> PathBuf {

@@ -120,7 +120,9 @@ Atomic-write probing reproduced a pre-existing temporary symlink redirecting byt
 
 Case-preserving textual rename is now implemented in the transform engine and `ffsake_preview_rename`. It uses explicit target/count/file limits and frozen previews; supported lower/upper/initial-capital styles are preserved, exact mixed-case source spelling maps to the supplied destination, and ambiguous mixed casing rejects. This is whole-ASCII-identifier text editing, including comments and strings, not semantic rename. Shared prompts and the eighteen-tool allowlist are updated, with smoke checking the actual server catalog against the allowlist.
 
-Next: introduce parser-backed Rust identifier selection as the smallest syntax-aware primitive, keeping scope/byte ranges/hash guards explicit and excluding comments/strings. Assess parser dependencies and error behavior before expanding to other languages or LSP. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Parser-backed Rust identifier selection is implemented with Tree-sitter and the Rust grammar. Explicit bounded files produce complete MatchSets with exact original byte ranges and hashes; comments, strings, lifetimes and opaque macro/attribute text are excluded. Parse errors, invalid names, stale content and exceeded limits fail closed. Raw/Unicode spelling and CRLF history are covered; this is not semantic resolution or compiler validation. The MCP catalog and shared allowlist now contain nineteen tools.
+
+Next: evaluate syntax selection on real repository source and add a guarded Rust identifier replacement that validates the replacement spelling and reparses the staged result before returning a preview. Reuse the existing MatchSet and transaction model rather than adding another mutation layer. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

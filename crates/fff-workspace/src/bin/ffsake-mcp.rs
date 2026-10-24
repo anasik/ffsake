@@ -137,6 +137,7 @@ fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
         "ffsake_list" => "list",
         "ffsake_target" => "target",
         "ffsake_search" => "search",
+        "ffsake_select_rust_identifiers" => "select_rust_identifiers",
         "ffsake_preview_matches" => "preview_matches",
         "ffsake_preview_edit" => "preview_edit",
         "ffsake_preview_rename" => "preview_rename",
@@ -223,6 +224,15 @@ fn tools() -> Vec<Value> {
                     "details":{"type":"boolean","description":"Return individual ranges. Omit or use false for count-only verification."}
                 }
             }),
+        ),
+        tool(
+            "ffsake_select_rust_identifiers",
+            "Select exact Rust identifier spellings using Tree-sitter from 1..=32 explicit .rs files (256 KiB each), returning complete byte ranges and a guarded MatchSet handle for preview_matches. Excludes comments, strings, attributes, lifetimes, macro definitions and opaque macro bodies. Not symbol resolution or semantic rename; different bindings with the same spelling can match. Raw identifiers require exact r# spelling. Invalid syntax/UTF-8, missing/unsafe/symlinked paths, duplicate files, a 5-second budget, or match limit overflow reject the entire request without a partial handle. Replacement via preview_matches is literal; compiler verification remains external.",
+            json!({"type":"object","required":["paths","identifier","limit"],"properties":{
+                "paths":{"type":"array","minItems":1,"maxItems":32,"items":{"type":"string","maxLength":4096}},
+                "identifier":{"type":"string","minLength":1,"maxLength":256},
+                "limit":{"type":"integer","minimum":1,"maximum":1000}
+            }}),
         ),
         tool(
             "ffsake_preview_matches",

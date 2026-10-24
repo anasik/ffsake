@@ -312,6 +312,37 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         call("ffsake_preview_rename", rename_args, expect_ok=False)
         assert (root / "rename/a.txt").read_text() == "user USER User"
 
+        # Syntax selection reuses guarded MatchSets while excluding opaque text.
+        rust_before = '// account\r\nfn f() { let account = "account"; consume!(account); account; }\r\n'
+        rust_after = '// account\r\nfn f() { let customer = "account"; consume!(account); customer; }\r\n'
+        (root / "syntax.rs").write_bytes(rust_before.encode())
+        syntax_args = {"paths": ["syntax.rs"], "identifier": "account", "limit": 10}
+        selected = call("ffsake_select_rust_identifiers", syntax_args)
+        assert selected["matches"] == 2 and selected["files"] == 1
+        assert selected["semantic"] is False and len(selected["ranges"]) == 2
+        syntax_edit = {"handle": selected["handle"], "replacement": "customer", "expected_matches": 2}
+        call("ffsake_preview_matches", {**syntax_edit, "expected_matches": 3}, expect_ok=False)
+        (root / "syntax.rs").write_bytes((rust_before + "// external").encode())
+        call("ffsake_preview_matches", syntax_edit, expect_ok=False)
+        (root / "syntax.rs").write_bytes(rust_before.encode())
+        syntax_preview = call("ffsake_preview_matches", syntax_edit)
+        assert (root / "syntax.rs").read_bytes() == rust_before.encode()
+        syntax_tx = call("ffsake_apply", {"handle": syntax_preview["handle"]})["transaction"]
+        assert (root / "syntax.rs").read_bytes() == rust_after.encode()
+        call("ffsake_undo", {"transaction": syntax_tx})
+        assert (root / "syntax.rs").read_bytes() == rust_before.encode()
+        call("ffsake_redo", {"transaction": syntax_tx})
+        assert (root / "syntax.rs").read_bytes() == rust_after.encode()
+        for changes in [{"limit": 1}, {"limit": 0}, {"limit": 1001}, {"paths": []},
+                        {"paths": ["syntax.rs", "./syntax.rs"]}, {"identifier": "fn"},
+                        {"paths": ["missing.rs"]}, {"paths": ["../syntax.rs"]},
+                        {"paths": [".ffsake/private.rs"]}, {"paths": ["code.py"]}]:
+            call("ffsake_select_rust_identifiers", {**syntax_args, "identifier": "customer", **changes}, expect_ok=False)
+        (root / "syntax-alias.rs").symlink_to(root / "syntax.rs")
+        call("ffsake_select_rust_identifiers", {**syntax_args, "paths": ["syntax-alias.rs"]}, expect_ok=False)
+        (root / "syntax.rs").write_text("fn broken( {")
+        call("ffsake_select_rust_identifiers", syntax_args, expect_ok=False)
+
         # A pre-existing temporary symlink must never redirect a write.
         collision = root / f".collision.txt.ffsake-journal-tmp-{proc.pid}"
         collision.symlink_to(outside)

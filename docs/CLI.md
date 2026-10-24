@@ -95,3 +95,16 @@ python3 scripts/repository_smoke.py target/debug/ffsake-mcp
 ```
 
 The benchmark runs the actual JSONL executable, checks protocol recovery and safety failures, then runs ten search → preview → apply → undo cycles on 200 files, 20 changed files, and 400 UTF-8 byte-range matches. Every changed byte and restored file is checked. It compares against four shell requests using grep plus Python/difflib and explicit undo snapshots. Both retain a review boundary before apply. Startup is reported separately; filesystem validation overhead is included in both timings. The shell baseline is a concrete implementation, not a universal measure of shell performance or model token usage. One shell script could batch phases if no agent review is needed; one piped CLI stream could do the same. No general round-trip advantage is claimed from this fixture alone.
+
+## Rust syntax selection
+
+```json
+{"op":"select_rust_identifiers","paths":["src/lib.rs"],"identifier":"account","limit":100}
+{"op":"preview_matches","handle":1,"replacement":"customer","expected_matches":4}
+```
+
+`ffsake_select_rust_identifiers` provides the same selection through MCP. Tree-sitter selects exact identifier, type-name, field-name and shorthand-field spellings, returning a normal MatchSet handle plus canonical paths, byte ranges and one-based lines. Comments, string/character literals, lifetimes, attributes, macro definitions and opaque macro token trees are excluded. Macro invocation names outside their token trees remain eligible. Different bindings with the same spelling are all selected: this does not resolve symbols or expand macros. Raw and Unicode spellings are supported exactly; no Unicode normalization or raw/non-raw equivalence is applied. Input names follow Rust 2024 keyword restrictions, even in older-edition files.
+
+Limits: 1–32 explicit distinct `.rs` files, 256 KiB per file, 1–1000 matches and a shared five-second parse/walk budget. Symlinks, missing files, invalid UTF-8, parser errors and exceeded limits reject the whole request, without creating a partial selection. Tree-sitter parsing does not establish compiler validity.
+
+Selection preserves original bytes, including CRLF, and hashes every input file. `preview_matches` enforces the exact expected count and rejects stale files; apply uses the existing frozen preview and journal. Replacement text is literal and is not checked for valid Rust syntax. Compile/test externally after applying.
