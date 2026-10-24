@@ -260,3 +260,5 @@ Still to add/evaluate:
 ## Later
 
 Build/test/runtime adapters, sandboxing, package-management support, and plugin architecture are tertiary.
+
+CI follow-up: one Python harness run failed during disposable `.git` cleanup with a concurrent nonempty-directory error. Fixture setup now disables ambient hooks, signing, fsmonitor and automatic/detached Git maintenance in repository-local configuration. A temporary global-hook regression verifies no hook execution, explicit settings and a clean fixture commit. This isolates a plausible asynchronous writer without weakening cleanup or result audits.

@@ -52,6 +52,14 @@ def mcp_arguments(root, tool_profile):
 
 def git_init(root: Path):
     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    # Fixture setup must finish all Git work synchronously. Ambient hooks or
+    # detached maintenance can otherwise race TemporaryDirectory cleanup.
+    hooks = root / ".git" / "ffsake-empty-hooks"
+    hooks.mkdir()
+    for key, value in (("maintenance.auto", "false"), ("gc.auto", "0"),
+                       ("gc.autoDetach", "false"), ("core.fsmonitor", "false"),
+                       ("core.hooksPath", str(hooks)), ("commit.gpgsign", "false")):
+        subprocess.run(["git", "config", "--local", key, value], cwd=root, check=True)
     subprocess.run(["git", "config", "user.name", "FFSAKE Benchmark"], cwd=root, check=True)
     subprocess.run(
         ["git", "config", "user.email", "ffsake-benchmark@example.invalid"],

@@ -13,6 +13,33 @@ suite = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(suite)
 
 
+class GitFixtureTests(unittest.TestCase):
+    def test_fixture_disables_ambient_hooks_and_background_git_work(self):
+        import os
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            hooks = base / "hooks"
+            hooks.mkdir()
+            sentinel = base / "HOOK_RAN"
+            hook = hooks / "post-commit"
+            hook.write_text(f"#!/bin/sh\nprintf ran > '{sentinel}'\n")
+            hook.chmod(0o755)
+            configuration = base / "global.gitconfig"
+            configuration.write_text(f'[core]\n hooksPath = "{hooks}"\n[maintenance]\n auto = true\n[gc]\n auto = 1\n autoDetach = true\n')
+            root = base / "fixture"
+            root.mkdir()
+            (root / "file").write_text("fixture")
+            with patch.dict(os.environ, {"GIT_CONFIG_GLOBAL": str(configuration), "GIT_CONFIG_NOSYSTEM": "1"}):
+                suite.git_init(root)
+                self.assertFalse(sentinel.exists())
+                for key, expected in (("maintenance.auto", "false"), ("gc.auto", "0"),
+                                      ("gc.autoDetach", "false"), ("core.fsmonitor", "false")):
+                    actual = subprocess.check_output(["git", "config", "--local", key], cwd=root, text=True).strip()
+                    self.assertEqual(actual, expected)
+                self.assertEqual(subprocess.check_output(["git", "status", "--porcelain"], cwd=root, text=True), "")
+
+
 class PersistenceTests(unittest.TestCase):
     def test_bytes_decode(self):
         self.assertEqual(suite.decode_output(b"ok" + bytes([255])), "ok�")
