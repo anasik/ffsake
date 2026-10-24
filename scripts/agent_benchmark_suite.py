@@ -99,11 +99,19 @@ def medium_fixture(root: Path):
     return {}
 
 
+def load_verifier_module(name, path):
+    """Execute current source bytes without reading or writing a bytecode cache."""
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None:
+        raise ValueError("cannot create verifier module specification")
+    module = importlib.util.module_from_spec(spec)
+    exec(compile(path.read_bytes(), str(path), "exec"), module.__dict__)
+    return module
+
+
 def medium_verify(root: Path, state):
     try:
-        spec = importlib.util.spec_from_file_location("policy_bench", root / "policy.py")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        module = load_verifier_module("policy_bench", root / "policy.py")
         rules = [
             {"method": "GET", "prefix": "/public", "allow": True},
             {"method": "POST", "prefix": "/admin/invite", "allow": True},
@@ -141,9 +149,7 @@ def app_verify(root: Path, state):
     try:
         with tempfile.TemporaryDirectory(prefix="ffsake-app-verify-") as td:
             db = Path(td) / "issues.json"
-            spec = importlib.util.spec_from_file_location("issue_tracker_bench", root / "issue_tracker.py")
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+            module = load_verifier_module("issue_tracker_bench", root / "issue_tracker.py")
             tracker = module.IssueTracker(db)
 
             a = tracker.create("first", ["bug", "api"])
@@ -679,7 +685,7 @@ def permission_audit(agent, use_ffsake, metrics, tool_profile="all"):
 
 
 def fixture_files(root):
-    """Snapshot user files before verifier imports create any bytecode."""
+    """Snapshot task files, excluding harness configuration and journal state."""
     excluded = {".git", ".ffsake", ".codex", ".ffsake-claude-mcp.json", "opencode.json"}
     return {str(p.relative_to(root)): (b"SYMLINK:" + os.fsencode(os.readlink(p))
                                       if p.is_symlink() else p.read_bytes())

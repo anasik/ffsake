@@ -50,6 +50,36 @@ class PersistenceTests(unittest.TestCase):
             finally:
                 suite.RESULT_DIR = original_dir
 
+    def test_initial_fixtures_require_work_and_verification_does_not_mutate_them(self):
+        for name, task in suite.TASKS.items():
+            with self.subTest(task=name), tempfile.TemporaryDirectory() as td:
+                root = Path(td)
+                state = task["fixture"](root)
+                before = suite.fixture_files(root)
+                complete, details = task["verify"](root, state)
+                self.assertFalse(complete, f"initial {name} fixture already passes: {details}")
+                self.assertEqual(suite.fixture_files(root), before)
+
+    def test_verifier_reads_current_source_despite_same_size_and_timestamp_cache(self):
+        import os
+        import py_compile
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            path = root / "fixture.py"
+            path.write_text("value = 1\n")
+            stamp = path.stat()
+            cache = Path(py_compile.compile(str(path), doraise=True,
+                                           invalidation_mode=py_compile.PycInvalidationMode.TIMESTAMP))
+            cached_bytes = cache.read_bytes()
+            path.write_text("value = 2\n")
+            os.utime(path, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
+            before = suite.fixture_files(root)
+            module = suite.load_verifier_module("fixture_bench", path)
+            self.assertEqual(module.value, 2)
+            self.assertEqual(module.__file__, str(path))
+            self.assertEqual(cache.read_bytes(), cached_bytes)
+            self.assertEqual(suite.fixture_files(root), before)
+
     def test_medium_fixture_rule_precedence(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
