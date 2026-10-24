@@ -122,7 +122,9 @@ Case-preserving textual rename is now implemented in the transform engine and `f
 
 Parser-backed Rust identifier selection is implemented with Tree-sitter and the Rust grammar. Explicit bounded files produce complete MatchSets with exact original byte ranges and hashes; comments, strings, lifetimes and opaque macro/attribute text are excluded. Parse errors, invalid names, stale content and exceeded limits fail closed. Raw/Unicode spelling and CRLF history are covered; this is not semantic resolution or compiler validation. The MCP catalog and shared allowlist now contain nineteen tools.
 
-Next: evaluate syntax selection on real repository source and add a guarded Rust identifier replacement that validates the replacement spelling and reparses the staged result before returning a preview. Reuse the existing MatchSet and transaction model rather than adding another mutation layer. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Real-source syntax evaluation parsed lib.rs, syntax.rs and resident.rs successfully. Rust syntax-selection handles now retain their origin: preview_matches validates the replacement spelling and reparses staged buffers before returning the existing guarded transform preview. Indexed-search handles retain literal replacements. Tests cover contextual names that produce parse errors, raw/Unicode names, oversized staged results, stale files and release. The disposable repository smoke now verifies exact source-range edits and complete undo/redo on repository Rust files; it does not claim the probe rename compiles or resolves symbols.
+
+Next: evaluate syntax-selected rename on a concrete compilable Rust fixture, including same-spelling unrelated bindings and macro uses, to establish when syntax selection is sufficient and what semantic/LSP work is actually needed. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

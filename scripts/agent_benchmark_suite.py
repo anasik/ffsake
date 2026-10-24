@@ -380,7 +380,7 @@ def ffsake_prompt(task_prompt: str):
         "Group related changes into one contiguous block instead of searching and previewing each line. "
         "Use indexed search and preview_matches for repository-wide replacements. "
         "For a case-preserving whole-ASCII-identifier rename, use ffsake_preview_rename with an explicit target, exact expected_matches and max_files; it is textual, not language-aware. "
-        "For exact Rust identifier spellings excluding comments, strings and opaque macro/attribute text, use ffsake_select_rust_identifiers with explicit .rs paths and a match limit, then preview_matches; this is syntax selection, not symbol resolution. "
+        "For exact Rust identifier spellings excluding comments, strings and opaque macro/attribute text, use ffsake_select_rust_identifiers with explicit .rs paths and a match limit, then preview_matches with a valid replacement identifier; staged Rust is reparsed, but this does not resolve symbols or establish compiler validity. "
         "For several independent file operations, prefer ffsake_preview_files with an operations "
         "array, followed by one apply, so the whole batch is one undoable transaction. "
         "Batch entries may also edit distinct existing files using op=edit, path, old_text, "

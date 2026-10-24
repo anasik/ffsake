@@ -322,6 +322,9 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         assert selected["semantic"] is False and len(selected["ranges"]) == 2
         syntax_edit = {"handle": selected["handle"], "replacement": "customer", "expected_matches": 2}
         call("ffsake_preview_matches", {**syntax_edit, "expected_matches": 3}, expect_ok=False)
+        for replacement in ["", "fn", "r#self", "one two", "customer; injected()"]:
+            call("ffsake_preview_matches", {**syntax_edit, "replacement": replacement}, expect_ok=False)
+            assert (root / "syntax.rs").read_bytes() == rust_before.encode()
         (root / "syntax.rs").write_bytes((rust_before + "// external").encode())
         call("ffsake_preview_matches", syntax_edit, expect_ok=False)
         (root / "syntax.rs").write_bytes(rust_before.encode())
@@ -342,6 +345,15 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         call("ffsake_select_rust_identifiers", {**syntax_args, "paths": ["syntax-alias.rs"]}, expect_ok=False)
         (root / "syntax.rs").write_text("fn broken( {")
         call("ffsake_select_rust_identifiers", syntax_args, expect_ok=False)
+
+        (root / "syntax.rs").write_text("invoke! {}")
+        macro_set = call("ffsake_select_rust_identifiers", {**syntax_args, "identifier": "invoke"})
+        call("ffsake_preview_matches", {"handle": macro_set["handle"], "replacement": "macro_rules",
+             "expected_matches": 1}, expect_ok=False)
+        assert (root / "syntax.rs").read_text() == "invoke! {}"
+        call("ffsake_release", {"handle": macro_set["handle"]})
+        call("ffsake_preview_matches", {"handle": macro_set["handle"], "replacement": "safe_name",
+             "expected_matches": 1}, expect_ok=False)
 
         # A pre-existing temporary symlink must never redirect a write.
         collision = root / f".collision.txt.ffsake-journal-tmp-{proc.pid}"

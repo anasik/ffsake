@@ -227,7 +227,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_select_rust_identifiers",
-            "Select exact Rust identifier spellings using Tree-sitter from 1..=32 explicit .rs files (256 KiB each), returning complete byte ranges and a guarded MatchSet handle for preview_matches. Excludes comments, strings, attributes, lifetimes, macro definitions and opaque macro bodies. Not symbol resolution or semantic rename; different bindings with the same spelling can match. Raw identifiers require exact r# spelling. Invalid syntax/UTF-8, missing/unsafe/symlinked paths, duplicate files, a 5-second budget, or match limit overflow reject the entire request without a partial handle. Replacement via preview_matches is literal; compiler verification remains external.",
+            "Select exact Rust identifier spellings using Tree-sitter from 1..=32 explicit .rs files (256 KiB each), returning complete byte ranges and a guarded MatchSet handle for preview_matches. Excludes comments, strings, attributes, lifetimes, macro definitions and opaque macro bodies. Not symbol resolution or semantic rename; different bindings with the same spelling can match. Raw identifiers require exact r# spelling. Invalid syntax/UTF-8, missing/unsafe/symlinked paths, duplicate files, a 5-second budget, or match limit overflow reject the entire request without a partial handle. Preview_matches on this handle requires a valid Rust 2024 identifier and reparses staged source; compiler verification remains external.",
             json!({"type":"object","required":["paths","identifier","limit"],"properties":{
                 "paths":{"type":"array","minItems":1,"maxItems":32,"items":{"type":"string","maxLength":4096}},
                 "identifier":{"type":"string","minLength":1,"maxLength":256},
@@ -236,7 +236,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_preview_matches",
-            "Preview replacing a cached MatchSet without writing. Apply before preparing another edit to the same file: changing that file invalidates its older MatchSets and previews.",
+            "Preview replacing a cached MatchSet without writing. Rust syntax-selection handles require a valid Rust 2024 identifier and reject staged parse errors or files over 256 KiB; ordinary search handles use literal replacement text. This is not semantic rename. Apply before preparing another edit to the same file: changing that file invalidates its older MatchSets and previews.",
             json!({
                 "type":"object","required":["handle","replacement","expected_matches"],"properties":{
                     "handle":{"type":"integer","minimum":1},

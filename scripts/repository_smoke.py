@@ -64,6 +64,29 @@ def main():
                 for result in reads:
                     assert result["status"] == "ok"
                     assert result["read"]["text"] == "\n".join(original[result["path"]].decode().splitlines())
+            syntax_paths = ["crates/fff-workspace/src/lib.rs", "crates/fff-workspace/src/resident.rs"]
+            selected = call("ffsake_select_rust_identifiers", {
+                "paths": syntax_paths, "identifier": "Workspace", "limit": 1000})
+            assert selected["matches"] > 0 and selected["files"] == len(syntax_paths)
+            expected_syntax = dict(original)
+            for path in syntax_paths:
+                ranges = [r for r in selected["ranges"] if r["path"] == path]
+                data = original[path]
+                for r in sorted(ranges, key=lambda r: r["start_byte"], reverse=True):
+                    assert data[r["start_byte"]:r["end_byte"]] == b"Workspace"
+                    data = data[:r["start_byte"]] + b"WorkspaceProbe" + data[r["end_byte"]:]
+                expected_syntax[path] = data
+            syntax_plan = call("ffsake_preview_matches", {"handle": selected["handle"],
+                "replacement": "WorkspaceProbe", "expected_matches": selected["matches"]})
+            assert contents() == original
+            syntax_tx = call("ffsake_apply", {"handle": syntax_plan["handle"]})["transaction"]
+            assert contents() == expected_syntax
+            call("ffsake_undo", {"transaction": syntax_tx})
+            assert contents() == original
+            call("ffsake_redo", {"transaction": syntax_tx})
+            assert contents() == expected_syntax
+            call("ffsake_undo", {"transaction": syntax_tx})
+            assert contents() == original
             marker = "\n<!-- repository workflow probe -->\n"
             operations = [{"op": "edit", "path": p, "old_text": original[p].decode(),
                            "new_text": original[p].decode() + marker, "expected_matches": 1}
@@ -104,6 +127,7 @@ def main():
                 assert restored_mode == "0o755", restored_mode
             print(json.dumps({"snapshot_revision": revision, "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
                               "files": len(original), "bytes": sum(map(len, original.values())),
+                              "syntax_matches": selected["matches"], "syntax_byte_history_passed": True,
                               "mixed_operations": len(operations), "byte_history_passed": True,
                               "restored_executable_mode": restored_mode, "calls": calls, "model_calls": 0}, indent=2))
         finally:

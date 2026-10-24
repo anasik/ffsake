@@ -112,10 +112,15 @@ fn default_limit() -> usize {
     100
 }
 
+struct CachedMatches {
+    set: MatchSet,
+    rust_identifiers: bool,
+}
+
 pub struct Resident {
     session: EditorSession,
     index: FffSearchIndex,
-    matches: BTreeMap<u64, MatchSet>,
+    matches: BTreeMap<u64, CachedMatches>,
     plans: BTreeMap<u64, Transform>,
     file_plans: BTreeMap<u64, FilePlan>,
     next: u64,
@@ -287,7 +292,13 @@ impl Resident {
                 if details {
                     response["ranges"] = serde_json::to_value(&set.ranges)?;
                 }
-                self.matches.insert(handle, set);
+                self.matches.insert(
+                    handle,
+                    CachedMatches {
+                        set,
+                        rust_identifiers: false,
+                    },
+                );
                 Ok(response)
             }
             Request::SelectRustIdentifiers {
@@ -303,7 +314,13 @@ impl Resident {
                 )?;
                 let handle = self.allocate()?;
                 let response = json!({"handle":handle,"matches":set.ranges.len(),"files":set.file_hashes.len(),"ranges":set.ranges,"language":"rust","semantic":false});
-                self.matches.insert(handle, set);
+                self.matches.insert(
+                    handle,
+                    CachedMatches {
+                        set,
+                        rust_identifiers: true,
+                    },
+                );
                 Ok(response)
             }
             Request::PreviewMatches {
@@ -311,14 +328,23 @@ impl Resident {
                 replacement,
                 expected_matches,
             } => {
-                let set = self.matches.get(&handle).ok_or("unknown MatchSet handle")?;
+                let cached = self.matches.get(&handle).ok_or("unknown MatchSet handle")?;
+                let set = &cached.set;
                 if set.ranges.len() != expected_matches {
                     return Err("unexpected match count".into());
                 }
                 if set.ranges.is_empty() {
                     return Err("empty MatchSet".into());
                 }
-                let plan = set.replace_transform(self.session.workspace(), replacement)?;
+                let plan = if cached.rust_identifiers {
+                    crate::syntax::rename_transform(
+                        self.session.workspace(),
+                        set,
+                        replacement.as_str(),
+                    )?
+                } else {
+                    set.replace_transform(self.session.workspace(), replacement)?
+                };
                 self.preview(plan)
             }
             Request::PreviewEdit {

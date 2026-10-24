@@ -51,17 +51,7 @@ fn excluded(kind: &str) -> bool {
     )
 }
 
-/// Select exact identifier spellings from explicit Rust files. Output is complete
-/// or an error, never a truncated mutation capability.
-pub fn select_rust_identifiers(
-    workspace: &Workspace,
-    paths: &[String],
-    identifier: &str,
-    limit: usize,
-) -> Result<MatchSet> {
-    if paths.is_empty() || paths.len() > 32 || !(1..=1000).contains(&limit) {
-        return Err("syntax selection requires 1..=32 files and limit 1..=1000".into());
-    }
+fn validate_identifier(parser: &mut Parser, identifier: &str, deadline: Instant) -> Result<()> {
     if identifier.is_empty() || identifier.len() > 256 {
         return Err("identifier must be 1..=256 UTF-8 bytes".into());
     }
@@ -83,11 +73,8 @@ pub fn select_rust_identifiers(
     {
         return Err("identifier is a reserved Rust 2024 spelling".into());
     }
-    let deadline = Instant::now() + Duration::from_secs(5);
-    let mut parser = Parser::new();
-    parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
     let probe = format!("fn {identifier}() {{}}");
-    let probe_tree = parse(&mut parser, probe.as_bytes(), deadline)?;
+    let probe_tree = parse(parser, probe.as_bytes(), deadline)?;
     let function = probe_tree
         .root_node()
         .named_child(0)
@@ -101,6 +88,80 @@ pub fn select_rust_identifiers(
     {
         return Err("identifier must be one exact Rust identifier (raw spelling allowed)".into());
     }
+    Ok(())
+}
+
+/// Build an ordinary guarded transform from a server-owned syntax selection,
+/// validating the replacement and the complete staged source without writes.
+pub(crate) fn rename_transform(
+    workspace: &Workspace,
+    set: &MatchSet,
+    replacement: &str,
+) -> Result<crate::transform::Transform> {
+    use crate::transform::{BufferState, Mutation, Transform, apply_mutation};
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let mut parser = Parser::new();
+    parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
+    validate_identifier(&mut parser, replacement, deadline)?;
+    let plan = Transform {
+        target: set.target_selector(),
+        operations: vec![
+            Mutation::AssertHashes {
+                expected: set.file_hashes.clone(),
+            },
+            Mutation::ApplyRanges {
+                edits: set.replace_edits(replacement),
+            },
+        ],
+        max_files: Some(set.file_hashes.len()),
+    };
+    let mut buffers = BTreeMap::new();
+    for path in set.file_hashes.keys() {
+        let (normalized, source) = workspace.read_source_bounded(Path::new(path), 256 * 1024)?;
+        if &normalized != path {
+            return Err("syntax selection path changed".into());
+        }
+        buffers.insert(
+            path.clone(),
+            BufferState {
+                path: workspace.root().join(path),
+                before: source.clone(),
+                current: Some(source),
+            },
+        );
+    }
+    for operation in &plan.operations {
+        apply_mutation(&mut buffers, operation)?;
+    }
+    for (path, buffer) in &buffers {
+        let source = buffer
+            .current
+            .as_deref()
+            .ok_or("missing staged Rust source")?;
+        if source.len() > 256 * 1024 {
+            return Err(format!("{path}: staged Rust source exceeds 256 KiB").into());
+        }
+        std::str::from_utf8(source)?;
+        parse(&mut parser, source, deadline).map_err(|e| format!("{path}: {e}"))?;
+    }
+    Ok(plan)
+}
+
+/// Select exact identifier spellings from explicit Rust files. Output is complete
+/// or an error, never a truncated mutation capability.
+pub fn select_rust_identifiers(
+    workspace: &Workspace,
+    paths: &[String],
+    identifier: &str,
+    limit: usize,
+) -> Result<MatchSet> {
+    if paths.is_empty() || paths.len() > 32 || !(1..=1000).contains(&limit) {
+        return Err("syntax selection requires 1..=32 files and limit 1..=1000".into());
+    }
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let mut parser = Parser::new();
+    parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
+    validate_identifier(&mut parser, identifier, deadline)?;
     let mut ranges = Vec::new();
     let mut file_hashes = BTreeMap::new();
     for path in paths {
@@ -276,6 +337,81 @@ macro_rules! User { () => { User } }
             fs::write(root.join("code.rs"), bytes).unwrap();
             assert!(select_rust_identifiers(&ws, &["code.rs".into()], "user", 10).is_err());
         }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn syntax_rename_validates_names_staged_source_and_stale_files() {
+        let root = fixture();
+        let ws = Workspace::new(&root).unwrap();
+        let source = "// account\r\nfn f() { let account = 1; account; }\r\n";
+        fs::write(root.join("code.rs"), source).unwrap();
+        fs::write(root.join("other.rs"), "fn other() {}\n").unwrap();
+        let set =
+            select_rust_identifiers(&ws, &["code.rs".into(), "other.rs".into()], "account", 10)
+                .unwrap();
+        for replacement in [
+            "",
+            "fn",
+            "gen",
+            "r#self",
+            "a b",
+            "x; injected()",
+            &"x".repeat(257),
+        ] {
+            assert!(
+                rename_transform(&ws, &set, replacement).is_err(),
+                "{replacement}"
+            );
+        }
+        for replacement in ["customer", "café", "r#type"] {
+            let plan = rename_transform(&ws, &set, replacement).unwrap();
+            assert_eq!(fs::read_to_string(root.join("code.rs")).unwrap(), source);
+            let applied = transform::execute(&ws, &plan, None).unwrap();
+            assert_eq!(
+                fs::read_to_string(root.join("code.rs")).unwrap(),
+                format!("// account\r\nfn f() {{ let {replacement} = 1; {replacement}; }}\r\n")
+            );
+            Journal::open(&root)
+                .unwrap()
+                .undo(&applied.transaction.unwrap().id)
+                .unwrap();
+        }
+        fs::write(root.join("other.rs"), "// external change").unwrap();
+        assert!(rename_transform(&ws, &set, "customer").is_err());
+        assert_eq!(fs::read_to_string(root.join("code.rs")).unwrap(), source);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn syntax_rename_rejects_oversized_staged_source() {
+        let root = fixture();
+        let ws = Workspace::new(&root).unwrap();
+        let mut source = "fn account() {} //".to_string();
+        source.push_str(&" ".repeat(256 * 1024 - source.len()));
+        fs::write(root.join("code.rs"), &source).unwrap();
+        let set = select_rust_identifiers(&ws, &["code.rs".into()], "account", 10).unwrap();
+        assert!(
+            rename_transform(&ws, &set, "longer_account")
+                .unwrap_err()
+                .to_string()
+                .contains("staged Rust source exceeds")
+        );
+        assert_eq!(fs::read_to_string(root.join("code.rs")).unwrap(), source);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn contextual_identifier_cannot_make_staged_source_unparseable() {
+        let root = fixture();
+        let ws = Workspace::new(&root).unwrap();
+        let source = "invoke! {}\n";
+        fs::write(root.join("code.rs"), source).unwrap();
+        let set = select_rust_identifiers(&ws, &["code.rs".into()], "invoke", 10).unwrap();
+        assert_eq!(set.ranges.len(), 1);
+        let error = rename_transform(&ws, &set, "macro_rules").unwrap_err();
+        assert!(error.to_string().contains("parse errors"), "{error}");
+        assert_eq!(fs::read_to_string(root.join("code.rs")).unwrap(), source);
         fs::remove_dir_all(root).unwrap();
     }
 
