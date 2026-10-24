@@ -164,7 +164,9 @@ Guarded native rename previews now cache frozen reports alongside actions under 
 
 Full-repository rename evaluation now runs independent offline Cargo tests in a disposable archive. At 835c6f1 the baseline passed 98 Rust tests, while the native type rename changed 22 occurrences in seven files but left five macro-contained references, producing expected E0422/E0425 errors. The regression rejects unrelated failures and checks byte-exact history. No actual checkout changes or compiler-validation claim are made by analysis endpoints.
 
-Next: evaluate explicitly declared external macro dependencies, distinguishing unresolved macro references from references made available by supplied macro source. Keep bounded graph/source provenance and incomplete-analysis metadata; do not substitute fabricated standard-library semantics or automatically load ambient Cargo/sysroot context. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Explicit external-macro regression now compiles a real helper rlib and compares omitted versus declared graph edges. Identity, repeated-expression and hygienic-local macros all produce one incomplete edit/E0425 without the edge, versus two source edits and compiler/runtime success with it. Repeated expansions deduplicate original argument edits; unrelated macro-local bindings stay unchanged. UTF-16/CRLF positions and byte-exact history pass. No fabricated standard-library context is shipped.
+
+Next: add bounded workspace diagnostics over all explicitly supplied files in one fresh analyzer session, retaining per-file ranges and aggregate count/text/time budgets. This lets callers inspect missing context across the graph without repeated analyzer startup; it must remain native, incomplete and non-compiler validation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
