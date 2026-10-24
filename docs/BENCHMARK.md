@@ -327,3 +327,6 @@ These are local analyzer/session overhead observations in an incomplete explicit
 
 
 Medium and application verifiers execute current source bytes directly instead of using Python's bytecode-loading path. This prevents verifier-created `__pycache__` artifacts and stale-cache reuse after edits that retain file size and timestamp. Regression coverage preserves an existing stale cache unchanged while verifying the new source, and confirms every initial shared-suite fixture fails its completion verifier without changing task files. No local legacy-script edits or historical benchmark reports are rewritten.
+
+
+New suite results also audit task files after verification. `verification.verification_file_changes` lists any creation, deletion or byte change caused while executing checks, including changes to implementation files that the agent was originally allowed to edit. Any such change makes the result incorrect, even if behavioral checks returned success. `changed_files` and `unexpected_file_changes` retain their pre-verification meaning, so verifier-time side effects are not misattributed to agent edits. The initial fixtures and reference implementations remain unchanged by their normal checks; historical reports without this field have not been retroactively audited.

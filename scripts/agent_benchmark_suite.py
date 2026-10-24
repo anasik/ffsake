@@ -908,7 +908,11 @@ def one(agent, task_name, mode, timeout, opencode_model, tool_profile="all"):
             correct, verification = task["verify"](root, state)
         except Exception as exc:
             correct, verification = False, {"exception": repr(exc)}
+        verified_files = fixture_files(root)
+        verification_changes = sorted(name for name in final_files.keys() | verified_files.keys()
+                                      if final_files.get(name) != verified_files.get(name))
         verification["unexpected_file_changes"] = unexpected
+        verification["verification_file_changes"] = verification_changes
         policy = permission_audit(agent, use_ffsake, metrics, tool_profile)
         path_violations = workspace_scope_violations(agent, events, root)
         policy["observed_outside_workspace_paths"] = path_violations
@@ -933,7 +937,7 @@ def one(agent, task_name, mode, timeout, opencode_model, tool_profile="all"):
             "task": task_name,
             "mode": mode,
             "ffsake_tool_profile": tool_profile if use_ffsake else None,
-            "correct": correct and not unexpected and result["exit_code"] == 0 and not result["timed_out"],
+            "correct": correct and not unexpected and not verification_changes and result["exit_code"] == 0 and not result["timed_out"],
             "comparison_valid": not invalid_reasons,
             "comparison_invalid_reasons": invalid_reasons,
             "provider_errors": api_errors,

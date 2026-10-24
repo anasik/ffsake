@@ -201,6 +201,28 @@ class RunValidationTests(unittest.TestCase):
         self.assertFalse(result["correct"])
         self.assertEqual(result["verification"]["unexpected_file_changes"], ["README.md", "extra.txt"])
 
+    def test_verification_time_changes_fail_without_being_attributed_to_agent_edits(self):
+        from unittest.mock import patch
+        mutations = {
+            "extra.txt": lambda root: (root / "extra.txt").write_text("created at runtime"),
+            "README.md": lambda root: (root / "README.md").unlink(),
+            "policy.py": lambda root: (root / "policy.py").write_text("changed at runtime"),
+        }
+        for path, mutate in mutations.items():
+            for raises in (False, True):
+                with self.subTest(path=path, raises=raises):
+                    def verify(root, state):
+                        mutate(root)
+                        if raises:
+                            raise ValueError("verification failed after mutation")
+                        return True, {}
+                    with patch.dict(suite.TASKS["medium"], {"verify": verify}):
+                        result = self.run_mock_agent(lambda _: None)
+                    self.assertFalse(result["correct"])
+                    self.assertEqual(result["changed_files"], [])
+                    self.assertEqual(result["verification"]["unexpected_file_changes"], [])
+                    self.assertEqual(result["verification"]["verification_file_changes"], [path])
+
     def test_missing_required_file_is_recorded_without_losing_run(self):
         result = self.run_mock_agent(lambda root: (root / "policy.py").unlink())
         self.assertFalse(result["correct"])
