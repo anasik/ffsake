@@ -65,6 +65,37 @@ pub(crate) fn proposal(
     )
 }
 
+pub(crate) struct Expectation<'a> {
+    pub path: &'a str,
+    pub start_byte: usize,
+    pub old_text: &'a str,
+    pub new_name: &'a str,
+    pub edits: usize,
+}
+
+/// Only a resident-owned report reaches this function; callers cannot supply edits.
+pub(crate) fn preview_transform(
+    workspace: &crate::Workspace,
+    report: &Value,
+    expected: Expectation<'_>,
+) -> Result<crate::transform::Transform> {
+    if report["prepared"].is_null()
+        || report["path"] != expected.path
+        || report["prepared"]["start_byte"].as_u64() != Some(expected.start_byte as u64)
+        || report["prepared"]["old_text"] != expected.old_text
+        || report["new_name"] != expected.new_name
+    {
+        return Err("rename selection or name differs from expected identity".into());
+    }
+    if report["proposal"].is_null() {
+        return Err("rename has no proposal".into());
+    }
+    let mut action = report["proposal"].clone();
+    action["title"] = json!("Rename proposal");
+    let adapted = json!({"file_hashes":report["file_hashes"],"actions":[action]});
+    crate::lsp_actions::preview_transform(workspace, &adapted, 0, "Rename proposal", expected.edits)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

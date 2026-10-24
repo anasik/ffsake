@@ -14,6 +14,7 @@ def main():
     binary = Path(sys.argv[1] if len(sys.argv) > 1 else "target/debug/ffsake-mcp").resolve()
     results = []
     for name, query, count, outcome, sources in rename_cases():
+        sources = {**sources, "context.rs": "pub const CONTEXT: u32 = 1;\r\n"}
         with tempfile.TemporaryDirectory(prefix="ffsake-rename-mcp-") as temporary:
             base = Path(temporary)
             root = base / "analysis"
@@ -24,11 +25,11 @@ def main():
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             request_id = 0
 
-            def call(arguments, ok=True):
+            def call(arguments, ok=True, tool="ffsake_rust_rename_proposal"):
                 nonlocal request_id
                 request_id += 1
                 proc.stdin.write(json.dumps({"jsonrpc": "2.0", "id": request_id, "method": "tools/call",
-                    "params": {"name": "ffsake_rust_rename_proposal", "arguments": arguments}}) + "\n")
+                    "params": {"name": tool, "arguments": arguments}}) + "\n")
                 proc.stdin.flush()
                 assert select.select([proc.stdout], [], [], 35)[0], "MCP rename timeout"
                 response = json.loads(proc.stdout.readline())
@@ -44,6 +45,8 @@ def main():
                     "edition": "2024", "new_name": "customer", "limit": 100,
                     "position": {"line": source[:start].count("\n") + 1,
                                  "column": len(source[:start].rsplit("\n", 1)[-1])}}
+                if name == "distinct_bindings":
+                    arguments["crates"] = [{"root": "main.rs", "features": ["original_context"]}]
                 report = call(arguments)
                 assert report["complete"] is False and report["semantic_validated"] is False
                 assert report["compiler_checked"] is False and report["new_name"] == "customer"
@@ -54,10 +57,18 @@ def main():
                 assert selected["old_text"] == "account"
                 assert source.encode()[selected["start_byte"]:selected["end_byte"]] == b"account"
                 proposal = report["proposal"]
+                assert report["rename_set"] > 0
+                assert not (root / ".ffsake").exists(), "discovery created journal state"
+                preview_args = {"rename_set": report["rename_set"], "expected_path": query,
+                    "expected_start_byte": selected["start_byte"], "expected_old_text": "account",
+                    "expected_new_name": "customer", "expected_edits": count or 1}
+                call({"handle": report["rename_set"]}, ok=False, tool="ffsake_apply")
                 check_program(base / "before", sources, "passes")
                 if outcome == "not_applied":
                     assert proposal["edits"] is None and "resource_operation" in proposal["unsupported_reasons"]
                     assert not (root / "customer.rs").exists()
+                    call(preview_args, ok=False, tool="ffsake_preview_rust_rename")
+                    call({"handle": report["rename_set"]}, tool="ffsake_release")
                 else:
                     assert proposal["unsupported_reasons"] == [] and proposal["text_edit_count"] == count
                     assert len(proposal["edits"]) == count
@@ -79,12 +90,42 @@ def main():
                             call({**arguments, "new_name": invalid}, ok=False)
                         for invalid in (0, 1001):
                             call({**arguments, "limit": invalid}, ok=False)
-                        raw = call({**arguments, "new_name": "r#type"})
+                        raw = call({**arguments, "new_name": "r#type", "crates": [{"root": "main.rs", "features": ["later_context"]}]})
+                        assert raw["analysis_context"] != report["analysis_context"]
                         assert all(e["replacement"] == "r#type" for e in raw["proposal"]["edits"]), raw
+                        call({"handle": raw["rename_set"]}, tool="ffsake_release")
+                        for changes in ({"expected_path": "context.rs"}, {"expected_start_byte": selected["start_byte"] + 1},
+                                        {"expected_old_text": "other"}, {"expected_new_name": "other"},
+                                        {"expected_edits": count + 1}, {"expected_edits": 0}):
+                            call({**preview_args, **changes}, ok=False, tool="ffsake_preview_rust_rename")
+                        call({"action_set": report["rename_set"], "action_index": 0, "expected_title": "Rename proposal",
+                              "expected_edits": count}, ok=False, tool="ffsake_preview_rust_action")
+                        (root / "context.rs").write_text("pub const CONTEXT: u32 = 2;")
+                        call(preview_args, ok=False, tool="ffsake_preview_rust_rename")
+                        (root / "context.rs").write_bytes(sources["context.rs"].encode())
+                    preview = call(preview_args, tool="ffsake_preview_rust_rename")
+                    assert preview["analysis_context"] == report["analysis_context"]
+                    assert preview["prepared"] == report["prepared"] and preview["new_name"] == "customer"
+                    assert preview["semantic_validated"] is False and preview["compiler_checked"] is False
+                    assert all((root / path).read_bytes() == text.encode() for path, text in sources.items())
+                    call({"handle": report["rename_set"]}, tool="ffsake_release")
+                    call(preview_args, ok=False, tool="ffsake_preview_rust_rename")
+                    if name == "distinct_bindings":
+                        (root / "context.rs").write_text("pub const CONTEXT: u32 = 2;")
+                        call({"handle": preview["handle"]}, ok=False, tool="ffsake_apply")
+                        assert (root / "main.rs").read_bytes() == sources["main.rs"].encode()
+                        (root / "context.rs").write_bytes(sources["context.rs"].encode())
+                    transaction = call({"handle": preview["handle"]}, tool="ffsake_apply")["transaction"]
+                    assert all((root / path).read_bytes() == text.encode() for path, text in staged.items())
+                    call({"handle": preview["handle"]}, ok=False, tool="ffsake_apply")
                     check_program(base / "after", staged, outcome)
+                    call({"transaction": transaction}, tool="ffsake_undo")
+                    assert all((root / path).read_bytes() == text.encode() for path, text in sources.items())
+                    call({"transaction": transaction}, tool="ffsake_redo")
+                    assert all((root / path).read_bytes() == text.encode() for path, text in staged.items())
+                    call({"transaction": transaction}, tool="ffsake_undo")
                 assert {p.name: p.read_bytes() for p in root.iterdir() if p.is_file()} == {p: s.encode() for p, s in sources.items()}
-                assert not (root / ".ffsake").exists(), "discovery created journal state"
-                results.append({"case": name, "external_compiler_outcome": outcome, "source_unchanged": True})
+                results.append({"case": name, "external_compiler_outcome": outcome, "source_restored": True, "guarded_history": outcome != "not_applied"})
             finally:
                 proc.stdin.close()
                 try:
@@ -95,7 +136,7 @@ def main():
                 proc.stdout.close()
                 proc.stderr.close()
             assert proc.returncode == 0
-    print(json.dumps({"cases": results, "mutation_capability": False, "model_calls": 0}, indent=2))
+    print(json.dumps({"cases": results, "discovery_directly_applyable": False, "model_calls": 0}, indent=2))
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ use std::collections::BTreeMap;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 const MAX_HANDLES: usize = 128;
-const MAX_ACTION_CACHE_BYTES: usize = 4 * 1024 * 1024;
+const MAX_PROPOSAL_CACHE_BYTES: usize = 4 * 1024 * 1024;
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -134,6 +134,14 @@ pub enum Request {
         identifier: String,
         limit: usize,
     },
+    PreviewRustRename {
+        rename_set: u64,
+        expected_path: String,
+        expected_start_byte: usize,
+        expected_old_text: String,
+        expected_new_name: String,
+        expected_edits: usize,
+    },
     PreviewRustAction {
         action_set: u64,
         action_index: usize,
@@ -203,7 +211,12 @@ struct CachedMatches {
     rust_identifiers: bool,
 }
 
-struct CachedActions {
+enum ProposalKind {
+    Action,
+    Rename,
+}
+
+struct CachedProposal {
     report: Value,
     bytes: usize,
 }
@@ -212,7 +225,8 @@ pub struct Resident {
     session: EditorSession,
     index: FffSearchIndex,
     matches: BTreeMap<u64, CachedMatches>,
-    actions: BTreeMap<u64, CachedActions>,
+    actions: BTreeMap<u64, CachedProposal>,
+    renames: BTreeMap<u64, CachedProposal>,
     plans: BTreeMap<u64, Transform>,
     file_plans: BTreeMap<u64, FilePlan>,
     next: u64,
@@ -227,6 +241,7 @@ impl Resident {
             index,
             matches: BTreeMap::new(),
             actions: BTreeMap::new(),
+            renames: BTreeMap::new(),
             plans: BTreeMap::new(),
             file_plans: BTreeMap::new(),
             next: 1,
@@ -235,7 +250,11 @@ impl Resident {
     }
 
     fn allocate(&mut self) -> Result<u64> {
-        if self.matches.len() + self.actions.len() + self.plans.len() + self.file_plans.len()
+        if self.matches.len()
+            + self.actions.len()
+            + self.renames.len()
+            + self.plans.len()
+            + self.file_plans.len()
             >= MAX_HANDLES
         {
             return Err("release unused handles (limit 128)".into());
@@ -243,6 +262,33 @@ impl Resident {
         let handle = self.next;
         self.next = self.next.checked_add(1).ok_or("handle space exhausted")?;
         Ok(handle)
+    }
+
+    fn cache_proposal(&mut self, mut report: Value, kind: ProposalKind) -> Result<Value> {
+        let bytes = serde_json::to_vec(&report)?.len();
+        let cached_bytes: usize = self
+            .actions
+            .values()
+            .chain(self.renames.values())
+            .map(|cached| cached.bytes)
+            .sum();
+        if cached_bytes + bytes > MAX_PROPOSAL_CACHE_BYTES {
+            return Err("release unused action/rename sets (shared 4 MiB cache limit)".into());
+        }
+        let handle = self.allocate()?;
+        let (cache, field) = match kind {
+            ProposalKind::Action => (&mut self.actions, "action_set"),
+            ProposalKind::Rename => (&mut self.renames, "rename_set"),
+        };
+        cache.insert(
+            handle,
+            CachedProposal {
+                report: report.clone(),
+                bytes,
+            },
+        );
+        report[field] = json!(handle);
+        Ok(report)
     }
 
     fn preview(&mut self, mut plan: Transform) -> Result<Value> {
@@ -445,21 +491,24 @@ impl Resident {
                 edition,
                 crates,
                 limit,
-            } => crate::lsp::rust_rename_proposal(
-                self.session.workspace(),
-                &files,
-                &crate_root,
-                &path,
-                crate::lsp::RenameTarget {
-                    position,
-                    new_name: &new_name,
-                },
-                crate::lsp::RustContext {
-                    edition: &edition,
-                    crates: &crates,
-                },
-                limit,
-            ),
+            } => {
+                let report = crate::lsp::rust_rename_proposal(
+                    self.session.workspace(),
+                    &files,
+                    &crate_root,
+                    &path,
+                    crate::lsp::RenameTarget {
+                        position,
+                        new_name: &new_name,
+                    },
+                    crate::lsp::RustContext {
+                        edition: &edition,
+                        crates: &crates,
+                    },
+                    limit,
+                )?;
+                self.cache_proposal(report, ProposalKind::Rename)
+            }
             Request::RustCodeActions {
                 files,
                 crate_root,
@@ -469,7 +518,7 @@ impl Resident {
                 crates,
                 limit,
             } => {
-                let mut report = crate::lsp::rust_code_actions(
+                let report = crate::lsp::rust_code_actions(
                     self.session.workspace(),
                     &files,
                     &crate_root,
@@ -481,21 +530,39 @@ impl Resident {
                     },
                     limit,
                 )?;
-                let bytes = serde_json::to_vec(&report)?.len();
-                let cached_bytes: usize = self.actions.values().map(|cached| cached.bytes).sum();
-                if cached_bytes + bytes > MAX_ACTION_CACHE_BYTES {
-                    return Err("release unused code-action sets (4 MiB cache limit)".into());
-                }
-                let handle = self.allocate()?;
-                self.actions.insert(
-                    handle,
-                    CachedActions {
-                        report: report.clone(),
-                        bytes,
+                self.cache_proposal(report, ProposalKind::Action)
+            }
+            Request::PreviewRustRename {
+                rename_set,
+                expected_path,
+                expected_start_byte,
+                expected_old_text,
+                expected_new_name,
+                expected_edits,
+            } => {
+                let cached = self.renames.get(&rename_set).ok_or("unknown rename set")?;
+                let plan = crate::lsp_rename::preview_transform(
+                    self.session.workspace(),
+                    &cached.report,
+                    crate::lsp_rename::Expectation {
+                        path: &expected_path,
+                        start_byte: expected_start_byte,
+                        old_text: &expected_old_text,
+                        new_name: &expected_new_name,
+                        edits: expected_edits,
                     },
-                );
-                report["action_set"] = json!(handle);
-                Ok(report)
+                )?;
+                let context = cached.report["analysis_context"].clone();
+                let selection = cached.report["prepared"].clone();
+                let mut result = self.preview(plan)?;
+                result["analysis_context"] = context;
+                result["prepared"] = selection;
+                result["path"] = json!(expected_path);
+                result["new_name"] = json!(expected_new_name);
+                result["complete"] = json!(false);
+                result["semantic_validated"] = json!(false);
+                result["compiler_checked"] = json!(false);
+                Ok(result)
             }
             Request::PreviewRustAction {
                 action_set,
@@ -724,6 +791,7 @@ impl Resident {
             Request::Release { handle } => {
                 let removed = self.matches.remove(&handle).is_some()
                     | self.actions.remove(&handle).is_some()
+                    | self.renames.remove(&handle).is_some()
                     | self.plans.remove(&handle).is_some()
                     | self.file_plans.remove(&handle).is_some();
                 Ok(json!({"released": removed}))
@@ -734,5 +802,82 @@ impl Resident {
                 Ok(json!({"refreshed": true}))
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn action_and_rename_caches_share_limits_and_release_capacity() {
+        let directory = tempfile::tempdir().unwrap();
+        let mut resident = Resident::open(Workspace::new(directory.path()).unwrap()).unwrap();
+        let large = resident
+            .cache_proposal(
+                json!({"text":"x".repeat(3 * 1024 * 1024)}),
+                ProposalKind::Action,
+            )
+            .unwrap();
+        assert!(
+            resident
+                .cache_proposal(
+                    json!({"text":"y".repeat(2 * 1024 * 1024)}),
+                    ProposalKind::Rename
+                )
+                .is_err()
+        );
+        resident
+            .execute(Request::Release {
+                handle: large["action_set"].as_u64().unwrap(),
+            })
+            .unwrap();
+        let renamed = resident
+            .cache_proposal(
+                json!({"text":"y".repeat(2 * 1024 * 1024)}),
+                ProposalKind::Rename,
+            )
+            .unwrap();
+        assert!(
+            resident
+                .execute(Request::Apply {
+                    handle: renamed["rename_set"].as_u64().unwrap()
+                })
+                .is_err()
+        );
+        resident
+            .execute(Request::Release {
+                handle: renamed["rename_set"].as_u64().unwrap(),
+            })
+            .unwrap();
+        let mut last = 0;
+        for index in 0..MAX_HANDLES {
+            let kind = if index % 2 == 0 {
+                ProposalKind::Action
+            } else {
+                ProposalKind::Rename
+            };
+            let value = resident.cache_proposal(json!({}), kind).unwrap();
+            last = value["action_set"]
+                .as_u64()
+                .or_else(|| value["rename_set"].as_u64())
+                .unwrap();
+        }
+        assert!(
+            resident
+                .cache_proposal(json!({}), ProposalKind::Action)
+                .is_err()
+        );
+        assert!(
+            resident
+                .cache_proposal(json!({}), ProposalKind::Rename)
+                .is_err()
+        );
+        resident.execute(Request::Release { handle: last }).unwrap();
+        assert!(
+            resident
+                .cache_proposal(json!({}), ProposalKind::Rename)
+                .is_ok()
+        );
     }
 }
