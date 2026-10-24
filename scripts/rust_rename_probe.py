@@ -82,6 +82,14 @@ def rename_cases():
         ("cross_file_unicode_crlf", "other.rs", 2, "passes", {
             "main.rs": 'mod other;\r\nfn main() { let _ = "🚀"; if other::account() != 7 { panic!("CHANGED"); } }\r\n',
             "other.rs": 'pub fn account() -> u32 { 7 }\r\n'}),
+        ("imported_definition_preserves_alias", "other.rs", 2, "passes", {
+            "main.rs": 'mod other; use other::account as local;\r\n'
+                       'fn main() { if local() != 7 { panic!("CHANGED"); } }\r\n',
+            "other.rs": 'pub fn account() -> u32 { 7 }\r\n'}),
+        ("import_alias_unsupported", "main.rs", None, "unsupported_alias", {
+            "main.rs": 'mod other; use other::value as account;\r\n'
+                       'fn main() { let _ = "🚀"; if account() != 7 { panic!("CHANGED"); } }\r\n',
+            "other.rs": 'pub fn value() -> u32 { 7 }\r\n'}),
         ("module_resource_rename", "main.rs", None, "not_applied", {
             "main.rs": 'mod account; fn main() { account::value(); }\n', "account.rs": 'pub fn value() {}\n'}),
     ]
@@ -127,16 +135,28 @@ def main():
                 column = len(source[:start].rsplit("\n", 1)[-1].encode("utf-16-le")) // 2
                 params = {"textDocument": {"uri": (root / query).as_uri()},
                           "position": {"line": line, "character": column}}
-                prepared = client.request("textDocument/prepareRename", params)
-                selected_range = prepared.get("range", prepared)
-                begin = byte_offset(source, selected_range["start"])
-                end = byte_offset(source, selected_range["end"])
-                assert source.encode()[begin:end] == b"account"
-                proposal = client.request("textDocument/rename", {**params, "newName": "customer"})
+                if outcome == "unsupported_alias":
+                    try:
+                        client.request("textDocument/prepareRename", params)
+                    except AssertionError as exc:
+                        error = exc.args[0]["error"]
+                        assert error == {"code": -32602, "message": "Renaming aliases is currently unsupported"}, error
+                    else:
+                        raise AssertionError("alias preparation unexpectedly succeeded; reassess native support")
+                    proposal = None
+                else:
+                    prepared = client.request("textDocument/prepareRename", params)
+                    selected_range = prepared.get("range", prepared)
+                    begin = byte_offset(source, selected_range["start"])
+                    end = byte_offset(source, selected_range["end"])
+                    assert source.encode()[begin:end] == b"account"
+                    proposal = client.request("textDocument/rename", {**params, "newName": "customer"})
             finally:
                 client.close()
             assert {p.name: p.read_bytes() for p in root.iterdir()} == {p: s.encode() for p, s in sources.items()}
-            if outcome == "not_applied":
+            if outcome == "unsupported_alias":
+                assert proposal is None
+            elif outcome == "not_applied":
                 resources = [change for change in proposal["documentChanges"] if "kind" in change]
                 assert len(resources) == 1 and resources[0]["kind"] == "rename", proposal
                 assert relative_uri(root, resources[0]["oldUri"]) == "account.rs"

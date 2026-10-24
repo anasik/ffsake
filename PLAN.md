@@ -178,13 +178,15 @@ The shared benchmark harness now accepts --tool-profile all|core, with matching 
 
 The explicitly approved core-profile Codex maintenance diagnostic at a807c4f passed 26/26 checks with a valid trace: read_files, preview_files, apply, read_files; all four succeeded with no observed policy/profile violations. Its 32.869 s single sample establishes adoption, not speed/cost or host-isolation benefits. No further model run is authorized by this one-run approval.
 
-The stalled CI run on 0d77ab9 succeeded on retry. Core profile, fixture isolation, harness integration, adoption evidence and provenance were pushed as separate commits through 4a7df55; its exact CI run is in progress.
+The stalled CI run on 0d77ab9 succeeded on retry. Core profile, fixture isolation, harness integration, adoption evidence and provenance were pushed as separate commits through 4a7df55; its exact CI run passed.
 
 Benchmark provenance now records source revision, harness/MCP hashes, exact submitted prompt hash and initial task-file identities (paths, kinds, permissions and byte hashes) before runner edits. Identities distinguish local fixtures without following symlinks or claiming that the binary matches source. Seventy-four model-free Python tests cover changed bytes/names/modes, root independence, external symlink privacy, local script/binary changes and capture-before-mutation.
 
 Native shorthand-rename regression now verifies exact field/local/pattern binding preservation, including zero-width insertions and expanded replacement text. All three fixtures pass external rustc/runtime and byte-exact Unicode/CRLF undo/redo. CI includes the regression without weakening the existing identifier-only checks.
 
-Next: finish exact-commit CI publication, then inspect remaining native rename boundaries against concrete Rust constructs. The profile-adoption question is answered; do not repeat paid runs without a new question and authorization. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Imported-definition rename now has raw-LSP and MCP coverage showing that local aliases remain unchanged and external compilation/runtime/history pass. Alias renaming itself is rejected by the tested native analyzer; regression checks require unchanged source, no handle and no journal state. No textual fallback was added.
+
+Next: publish the shorthand and import-alias regressions and verify their exact CI result before extending native-analysis context or behavior. The profile-adoption question is answered; do not repeat paid runs without a new question and authorization. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

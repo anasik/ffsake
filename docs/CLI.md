@@ -267,3 +267,6 @@ The profile regression compares the full/default catalogs, checks every disabled
 
 
 Native rename proposals may contain zero-width insertions and replacement text larger than an identifier. For Rust field shorthand, renaming the field can expand `account` to `customer: account`, while renaming the local can expand it to `account: customer`. Preview the complete diff; treating every proposed edit as a plain spelling replacement loses binding information. The dedicated real-server regression covers field, local and pattern-binding renames with exact expected output, Unicode/CRLF, external compiler/runtime checks and byte-exact history. These successful fixtures do not remove the existing incomplete-analysis or semantic-validation limitations.
+
+
+Import aliases have a distinct native boundary: renaming an imported definition updates its declaration/import while preserving the local `as` alias and call sites. Renaming the alias itself is rejected by the tested rust-analyzer during preparation; MCP returns an error with no proposal handle or journal state. Raw LSP and real MCP regressions cover both outcomes, with external compiler/runtime checks for the supported definition rename. Native support may change with analyzer versions; this is not a textual fallback.

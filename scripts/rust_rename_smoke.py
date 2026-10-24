@@ -47,6 +47,15 @@ def main():
                                  "column": len(source[:start].rsplit("\n", 1)[-1])}}
                 if name == "distinct_bindings":
                     arguments["crates"] = [{"root": "main.rs", "features": ["original_context"]}]
+                if outcome == "unsupported_alias":
+                    rejected = call(arguments, ok=False)
+                    assert rejected["error"] == "rust-analyzer rejected the request", rejected
+                    assert "rename_set" not in rejected and "handle" not in rejected
+                    assert not (root / ".ffsake").exists()
+                    assert {p.name: p.read_bytes() for p in root.iterdir()} == {p: s.encode() for p, s in sources.items()}
+                    check_program(base / "before", sources, "passes")
+                    results.append({"case": name, "native_rejected": True, "source_restored": True, "guarded_history": False})
+                    continue
                 report = call(arguments)
                 assert report["complete"] is False and report["semantic_validated"] is False
                 assert report["compiler_checked"] is False and report["new_name"] == "customer"
@@ -135,7 +144,7 @@ def main():
                     proc.wait()
                 proc.stdout.close()
                 proc.stderr.close()
-            assert proc.returncode == 0
+                assert proc.returncode == 0
     print(json.dumps({"cases": results, "discovery_directly_applyable": False, "model_calls": 0}, indent=2))
 
 
