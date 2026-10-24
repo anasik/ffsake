@@ -1,5 +1,5 @@
 use crate::Workspace;
-use crate::journal::{Journal, JournalChange, unix_mode};
+use crate::journal::{Journal, JournalChange, TransactionDirectory, unix_mode};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
@@ -12,6 +12,12 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 #[derive(Debug, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum FileOperation {
+    CreateDirectory {
+        path: String,
+    },
+    RemoveDirectory {
+        path: String,
+    },
     Create {
         path: String,
         content: String,
@@ -36,6 +42,7 @@ pub enum FileOperation {
 }
 
 pub(crate) struct FilePlan {
+    directory: Option<TransactionDirectory>,
     changes: Vec<JournalChange>,
     checks: Vec<(String, Option<Vec<u8>>)>,
     mode_checks: BTreeMap<String, u32>,
@@ -59,8 +66,19 @@ impl FilePlan {
         let mut checks = Vec::new();
         let mut mode_checks = BTreeMap::new();
         let mut destination_modes = BTreeMap::new();
+        let creating_directory = matches!(&operation, FileOperation::CreateDirectory { .. });
         let moving = matches!(&operation, FileOperation::Move { .. });
         match operation {
+            FileOperation::CreateDirectory { path } | FileOperation::RemoveDirectory { path } => {
+                let directory = journal.preview_directory(&path, creating_directory)?;
+                return Ok(Self {
+                    directory: Some(directory),
+                    changes,
+                    checks,
+                    mode_checks,
+                    destination_modes,
+                });
+            }
             FileOperation::Create { path, content } => {
                 if snapshot(&journal, &path)?.is_some() {
                     return Err("destination already exists; use preview_edit to edit it".into());
@@ -131,6 +149,7 @@ impl FilePlan {
             }
         }
         Ok(Self {
+            directory: None,
             changes,
             checks,
             mode_checks,
@@ -145,8 +164,12 @@ impl FilePlan {
         if operations.is_empty() || operations.len() > 100 {
             return Err("batch must contain 1..=100 operations".into());
         }
+        if operations.len() == 1 {
+            return Self::preview(workspace, operations.into_iter().next().unwrap());
+        }
         let journal = Journal::open(workspace.root())?;
         let mut combined = Self {
+            directory: None,
             changes: Vec::new(),
             checks: Vec::new(),
             mode_checks: BTreeMap::new(),
@@ -156,6 +179,9 @@ impl FilePlan {
         let mut reads: Vec<PathBuf> = Vec::new();
         for operation in operations {
             let plan = Self::preview(workspace, operation)?;
+            if plan.directory.is_some() {
+                return Err("directory operations require a single-operation batch".into());
+            }
             let new_writes = plan
                 .changes
                 .iter()
@@ -190,6 +216,10 @@ impl FilePlan {
     }
 
     pub(crate) fn description(&self) -> Value {
+        if let Some(directory) = &self.directory {
+            return json!({"changed_files": 0, "changed_directories": 1, "directory": directory,
+                "operation": if directory.after_exists { "create_directory" } else { "remove_directory" }});
+        }
         let files = self
             .changes
             .iter()
@@ -219,6 +249,12 @@ impl FilePlan {
 
     pub(crate) fn apply(&self, workspace: &Workspace) -> Result<Value> {
         let journal = Journal::open(workspace.root())?;
+        if let Some(directory) = &self.directory {
+            let transaction = journal.commit_directory_preview(directory.clone())?;
+            return Ok(
+                json!({"transaction":transaction.id,"changed_files":0,"changed_directories":1}),
+            );
+        }
         for (path, expected) in &self.checks {
             if &snapshot(&journal, path)? != expected {
                 return Err("source changed since preview".into());

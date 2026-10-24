@@ -408,7 +408,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_preview_files",
-            "Preview 1..=100 independent file operations together, then commit with one ffsake_apply and undo/redo as one transaction. Prefer this for multi-file creation or refactors. Edit replaces exact literal old_text/new_text in an existing UTF-8 file, including multiline blocks, with a positive expected_matches count; it rejects no-op edits. All operations refer to the same initial workspace state; create/copy/move destinations must be absent. Overlapping paths and dependencies between operations are rejected. No directory operations or overwrites.",
+            "Preview 1..=100 independent file operations together, then commit with one ffsake_apply and undo/redo as one transaction. Prefer this for multi-file creation or refactors. Edit replaces exact literal old_text/new_text in an existing UTF-8 file, including multiline blocks, with a positive expected_matches count; it rejects no-op edits. All operations refer to the same initial workspace state; create/copy/move destinations must be absent. Overlapping paths and dependencies between operations are rejected. No overwrites. A single-operation batch may create_directory or remove_directory for an empty directory with an existing parent; no recursive removal or mixed directory/file batches. Preview/apply/history reject changed contents or permissions.",
             json!({
                 "type":"object","required":["operations"],"properties":{
                     "operations":{"type":"array","minItems":1,"maxItems":100,"items":{
@@ -420,7 +420,7 @@ fn tools() -> Vec<Value> {
                             {"type":"object","required":["op","path","old_text","new_text","expected_matches"],"additionalProperties":false,
                              "properties":{"op":{"type":"string","enum":["edit"]},"path":{"type":"string"},"old_text":{"type":"string","minLength":1},"new_text":{"type":"string"},"expected_matches":{"type":"integer","minimum":1}}},
                             {"type":"object","required":["op","path"],"additionalProperties":false,
-                             "properties":{"op":{"type":"string","enum":["delete"]},"path":{"type":"string"}}}
+                             "properties":{"op":{"type":"string","enum":["delete","create_directory","remove_directory"]},"path":{"type":"string"}}}
                         ]
                     }}
                 }

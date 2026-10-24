@@ -216,7 +216,7 @@ Next: commit the matrix-validation fix separately, publish both after 4191cbe CI
 
 Remaining gaps:
 - build/test/runtime execution remains external;
-- directory operations are not exposed by the MCP journal;
+- empty-directory create/remove is journaled through single-operation previews; recursive directory copy/move/remove and mixed directory/file transactions remain to evaluate;
 - metadata beyond ordinary Unix rwx bits remains unrecorded, and legacy manifests cannot recover metadata they never captured;
 - native Codex tools are not disabled; enforced isolation remains unverified.
 
@@ -230,6 +230,8 @@ Pass condition:
 - fewer tool round-trips than baseline.
 
 Workspace-only Cargo context import is implemented in `ffsake_rust_context_from_manifests`: bounded explicit manifests/sources derive supported library/binary roots, editions, own-library edges and unconditional non-optional supplied path dependencies. It executes no Cargo/analyzer/build commands and discovers no additional files. Input hashes, omissions and frozen analysis arguments retain complete=false; features, cfg, external/conditional/dev/build dependencies and procedural macros remain omitted. Patch/replace ambiguity rejects. Unit tests cover inheritance, discovery settings, unsafe inputs and graph errors; MCP integration compares renamed/custom-library names with external offline Cargo and resolves a cross-crate definition using the imported graph. Full catalog: 32 tools; core remains 18. The real-repository integration now derives its three-crate graph from two explicit manifests, compares it with the previous manual graph, then uses imported arguments for navigation, diagnostics, actions and byte-exact history across 25 source files.
+
+Empty-directory create/remove now uses the existing preview_files/apply/undo/redo workflow, including the core profile. Each directory operation is a separate transaction; its parent must already exist. Previews and history reject files, symlinks, nonempty directories, changed ordinary Unix modes and protected/escaping paths. Removal and rollback use nonrecursive remove_dir. A backward-compatible optional directory manifest preserves modes and reopened history, with rollback on manifest-write failure. Rust and MCP integration tests verify stale-content preservation, collisions, boundary rejections, one-shot apply and exact empty-directory history. Recursive operations and mixed batches remain outside this first increment.
 
 ## Phase 2 — syntax and LSP
 

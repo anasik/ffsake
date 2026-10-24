@@ -100,11 +100,22 @@ pub struct TransactionFile {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct TransactionDirectory {
+    pub path: String,
+    pub before_exists: bool,
+    pub after_exists: bool,
+    pub unix_mode: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TransactionManifest {
     pub id: String,
     pub state: TransactionState,
     pub label: Option<String>,
     pub files: Vec<TransactionFile>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub directory: Option<TransactionDirectory>,
 }
 
 impl Journal {
@@ -183,6 +194,161 @@ impl Journal {
         Ok(manifest)
     }
 
+    /// Journal one empty directory. Parents must already exist; no recursive removal.
+    pub fn commit_directory(&self, path: &str, create: bool) -> Result<TransactionManifest> {
+        self.commit_directory_preview(self.preview_directory(path, create)?)
+    }
+
+    pub(crate) fn preview_directory(
+        &self,
+        path: &str,
+        create: bool,
+    ) -> Result<TransactionDirectory> {
+        let resolved = self.resolve(path)?;
+        let directory = TransactionDirectory {
+            path: path.into(),
+            before_exists: !create,
+            after_exists: create,
+            unix_mode: if create { None } else { unix_mode(&resolved)? },
+        };
+        self.verify_directory(&directory, SnapshotSide::Before)?;
+        Ok(directory)
+    }
+
+    pub(crate) fn commit_directory_preview(
+        &self,
+        directory: TransactionDirectory,
+    ) -> Result<TransactionManifest> {
+        self.verify_directory(&directory, SnapshotSide::Before)?;
+        let manifest = TransactionManifest {
+            id: transaction_id(),
+            state: TransactionState::Prepared,
+            label: Some("empty directory operation".into()),
+            files: vec![],
+            directory: Some(directory),
+        };
+        self.write_manifest(&manifest)?;
+        self.transition_directory(manifest, SnapshotSide::After, TransactionState::Applied)
+    }
+
+    fn verify_directory(&self, directory: &TransactionDirectory, side: SnapshotSide) -> Result<()> {
+        if directory.before_exists == directory.after_exists
+            || directory.unix_mode.is_some_and(|mode| mode > 0o777)
+        {
+            return Err(JournalError::InvalidPath(
+                "invalid directory transaction".into(),
+            ));
+        }
+        let path = self.resolve(&directory.path)?;
+        let exists = match side {
+            SnapshotSide::Before => directory.before_exists,
+            SnapshotSide::After => directory.after_exists,
+        };
+        match fs::symlink_metadata(&path) {
+            Ok(metadata) if exists && metadata.is_dir() => {
+                if fs::read_dir(&path)?.next().transpose()?.is_some() {
+                    return Err(JournalError::StateConflict {
+                        path: directory.path.clone(),
+                        expected: "empty directory".into(),
+                        actual: "nonempty directory".into(),
+                    });
+                }
+                if directory.unix_mode.is_some() && unix_mode(&path)? != directory.unix_mode {
+                    return Err(JournalError::StateConflict {
+                        path: directory.path.clone(),
+                        expected: "original directory permissions".into(),
+                        actual: "changed permissions".into(),
+                    });
+                }
+            }
+            Err(error) if !exists && error.kind() == io::ErrorKind::NotFound => {
+                if !path.parent().is_some_and(Path::is_dir) {
+                    return Err(JournalError::InvalidPath(
+                        "directory parent must already exist".into(),
+                    ));
+                }
+            }
+            Err(error) if error.kind() != io::ErrorKind::NotFound => return Err(error.into()),
+            _ => {
+                return Err(JournalError::StateConflict {
+                    path: directory.path.clone(),
+                    expected: if exists {
+                        "empty directory"
+                    } else {
+                        "absent directory"
+                    }
+                    .into(),
+                    actual: "unexpected filesystem state".into(),
+                });
+            }
+        }
+        Ok(())
+    }
+
+    fn apply_directory(
+        &self,
+        directory: &TransactionDirectory,
+        side: SnapshotSide,
+    ) -> Result<Option<u32>> {
+        self.verify_directory(directory, side.opposite())?;
+        let path = self.resolve(&directory.path)?;
+        let exists = match side {
+            SnapshotSide::Before => directory.before_exists,
+            SnapshotSide::After => directory.after_exists,
+        };
+        if exists {
+            fs::create_dir(&path)?;
+            #[cfg(unix)]
+            if let Some(mode) = directory.unix_mode {
+                use std::os::unix::fs::PermissionsExt;
+                if let Err(error) = fs::set_permissions(&path, fs::Permissions::from_mode(mode)) {
+                    return match fs::remove_dir(&path) {
+                        Ok(()) => Err(error.into()),
+                        Err(rollback) => Err(JournalError::RollbackFailed {
+                            original: error.to_string(),
+                            failures: vec![format!("{}: {rollback}", directory.path)],
+                        }),
+                    };
+                }
+            }
+            unix_mode(&path)
+        } else {
+            // remove_dir is deliberately nonrecursive, including during rollback.
+            fs::remove_dir(path)?;
+            Ok(directory.unix_mode)
+        }
+    }
+
+    fn transition_directory(
+        &self,
+        mut manifest: TransactionManifest,
+        side: SnapshotSide,
+        state: TransactionState,
+    ) -> Result<TransactionManifest> {
+        if !manifest.files.is_empty() {
+            return Err(JournalError::InvalidPath(
+                "mixed directory/file transaction".into(),
+            ));
+        }
+        let mut directory = manifest
+            .directory
+            .clone()
+            .ok_or_else(|| JournalError::InvalidPath("missing directory transaction".into()))?;
+        directory.unix_mode = self.apply_directory(&directory, side)?;
+        manifest.directory = Some(directory.clone());
+        manifest.state = state;
+        if let Err(error) = self.write_manifest(&manifest) {
+            return match self.apply_directory(&directory, side.opposite()) {
+                Ok(_) => Err(error),
+                Err(rollback) => Err(JournalError::RollbackFailed {
+                    original: error.to_string(),
+                    failures: vec![format!("{}: {rollback}", directory.path)],
+                }),
+            };
+        }
+        Ok(manifest)
+    }
+
     pub fn record(
         &self,
         label: Option<String>,
@@ -227,6 +393,7 @@ impl Journal {
             state: TransactionState::Applied,
             label,
             files,
+            directory: None,
         };
         self.write_manifest(&manifest)?;
         Ok(manifest)
@@ -277,6 +444,7 @@ impl Journal {
             state: TransactionState::Prepared,
             label,
             files,
+            directory: None,
         };
         self.write_manifest(&manifest)?;
         Ok(manifest)
@@ -333,6 +501,14 @@ impl Journal {
     }
 
     fn verify_side(&self, manifest: &TransactionManifest, side: SnapshotSide) -> Result<()> {
+        if let Some(directory) = &manifest.directory {
+            if !manifest.files.is_empty() || directory.before_exists == directory.after_exists {
+                return Err(JournalError::InvalidPath(
+                    "invalid directory transaction".into(),
+                ));
+            }
+            return self.verify_directory(directory, side);
+        }
         for file in &manifest.files {
             let path = self.resolve(&file.path)?;
             let expected = side.hash(file);
@@ -374,6 +550,9 @@ impl Journal {
         side: SnapshotSide,
         state: TransactionState,
     ) -> Result<TransactionManifest> {
+        if manifest.directory.is_some() {
+            return self.transition_directory(manifest, side, state);
+        }
         // Both sides must be intact before writes: the opposite side is needed
         // for recovery if a later member fails. apply_one rechecks before use.
         self.verify_snapshots(&manifest)?;
@@ -1257,5 +1436,93 @@ mod tests {
         );
         fs::remove_dir_all(root).unwrap();
         fs::remove_dir_all(other).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod directory_tests {
+    use super::*;
+
+    #[test]
+    fn empty_directory_history_survives_reopening_and_rejects_added_contents() {
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        let created = journal.commit_directory("empty", true).unwrap();
+        assert!(root.path().join("empty").is_dir());
+        let journal = Journal::open(root.path()).unwrap();
+        fs::write(root.path().join("empty/keep"), b"keep").unwrap();
+        assert!(journal.undo(&created.id).is_err());
+        assert_eq!(fs::read(root.path().join("empty/keep")).unwrap(), b"keep");
+        fs::remove_file(root.path().join("empty/keep")).unwrap();
+        journal.undo(&created.id).unwrap();
+        assert!(!root.path().join("empty").exists());
+        journal.redo(&created.id).unwrap();
+        let removed = journal.commit_directory("empty", false).unwrap();
+        assert!(!root.path().join("empty").exists());
+        journal.undo(&removed.id).unwrap();
+        journal.redo(&removed.id).unwrap();
+        assert!(!root.path().join("empty").exists());
+    }
+
+    #[test]
+    fn directory_boundaries_and_parent_preconditions() {
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        for path in [
+            "",
+            ".",
+            "..",
+            "../outside",
+            ".ffsake/hidden",
+            "missing/child",
+        ] {
+            assert!(journal.commit_directory(path, true).is_err(), "{path}");
+        }
+        fs::write(root.path().join("file"), b"data").unwrap();
+        assert!(journal.commit_directory("file", false).is_err());
+        assert!(journal.commit_directory("file", true).is_err());
+        assert!(journal.commit_directory("absent", false).is_err());
+        assert_eq!(fs::read(root.path().join("file")).unwrap(), b"data");
+    }
+
+    #[test]
+    fn directory_manifest_failure_restores_previous_state() {
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        let created = journal.commit_directory("empty", true).unwrap();
+        let manifest_path = journal.journal_root.join(&created.id).join("manifest.json");
+        fs::remove_file(&manifest_path).unwrap();
+        fs::create_dir(&manifest_path).unwrap();
+        assert!(
+            journal
+                .transition_directory(created, SnapshotSide::Before, TransactionState::Undone)
+                .is_err()
+        );
+        assert!(root.path().join("empty").is_dir());
+        assert!(
+            fs::read_dir(root.path().join("empty"))
+                .unwrap()
+                .next()
+                .is_none()
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn directory_modes_and_symlink_guards() {
+        use std::os::unix::fs::{PermissionsExt, symlink};
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        fs::create_dir(root.path().join("empty")).unwrap();
+        fs::set_permissions(root.path().join("empty"), fs::Permissions::from_mode(0o750)).unwrap();
+        symlink(root.path().join("empty"), root.path().join("alias")).unwrap();
+        assert!(journal.commit_directory("alias", false).is_err());
+        assert!(journal.commit_directory("alias/child", true).is_err());
+        let removed = journal.commit_directory("empty", false).unwrap();
+        journal.undo(&removed.id).unwrap();
+        assert_eq!(unix_mode(&root.path().join("empty")).unwrap(), Some(0o750));
+        fs::set_permissions(root.path().join("empty"), fs::Permissions::from_mode(0o700)).unwrap();
+        assert!(journal.redo(&removed.id).is_err());
+        assert!(root.path().join("empty").is_dir());
     }
 }

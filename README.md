@@ -122,7 +122,7 @@ To test only the installed agents you care about, pass a smaller `--agents` list
 
 Every run gets a fresh committed temporary Git repository. The harness performs correctness verification outside the agent session, retains raw JSON traces, and writes one aggregate report under `docs/agent-benchmark-runs/`.
 
-MCP now exposes guarded multiline editing and file create/copy/move/rename/delete through preview/apply and undo/redo. File-operation destinations must be absent; directory operations are not exposed. Build/test execution remains external. The scaffold task is retained for historical comparisons; use `--tasks project` to measure creation from scratch.
+MCP now exposes guarded multiline editing and file create/copy/move/rename/delete through preview/apply and undo/redo. File-operation destinations must be absent; single-operation `create_directory`/`remove_directory` batches support empty directories with existing parents. Directory undo/redo rejects added contents or changed permissions; recursive removal and mixed directory/file batches are unsupported. Build/test execution remains external. The scaffold task is retained for historical comparisons; use `--tasks project` to measure creation from scratch.
 
 
 ## Use on a real repository with Claude
