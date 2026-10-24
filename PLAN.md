@@ -162,7 +162,9 @@ Bounded native rename discovery is now exposed as read-only proposals. It requir
 
 Guarded native rename previews now cache frozen reports alongside actions under shared count/byte budgets. Exact selected path/start/text, requested name and edit count identify the proposal; all input hashes are checked at preview and apply. Parser validation and the existing one-shot journal preserve byte-exact undo/redo without claiming semantics. Real MCP coverage includes stale unedited context, release/replay/type-confusion rejection and the same compiler/runtime negative cases. The shared catalog contains twenty-nine tools.
 
-Next: evaluate native rename on a full repository archive with independently executed Cargo tests, comparing the explicit snapshot proposal against compiler-checked project behavior. Keep original sources untouched and record any missing cfg/test/dependency references as observed context limits rather than relaxing scope or verifiers. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Full-repository rename evaluation now runs independent offline Cargo tests in a disposable archive. At 835c6f1 the baseline passed 98 Rust tests, while the native type rename changed 22 occurrences in seven files but left five macro-contained references, producing expected E0422/E0425 errors. The regression rejects unrelated failures and checks byte-exact history. No actual checkout changes or compiler-validation claim are made by analysis endpoints.
+
+Next: evaluate explicitly declared external macro dependencies, distinguishing unresolved macro references from references made available by supplied macro source. Keep bounded graph/source provenance and incomplete-analysis metadata; do not substitute fabricated standard-library semantics or automatically load ambient Cargo/sysroot context. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

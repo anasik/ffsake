@@ -2,6 +2,7 @@
 """Full committed-source LSP evaluation in a disposable archive; no model calls."""
 import hashlib
 import io
+import os
 import json
 from pathlib import Path
 import select
@@ -21,6 +22,8 @@ def position(source, needle):
 def main():
     repo = Path(__file__).resolve().parents[1]
     binary = Path(sys.argv[1] if len(sys.argv) > 1 else repo / "target/debug/ffsake-mcp").resolve()
+    verify_rename = "--verify-rename" in sys.argv[2:]
+    rename_evidence = None
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
     archive = subprocess.check_output(["git", "archive", revision], cwd=repo)
     with tempfile.TemporaryDirectory(prefix="ffsake-repository-lsp-") as temporary:
@@ -70,7 +73,7 @@ def main():
 
         def contents():
             return {str(path.relative_to(root)): path.read_bytes() for path in root.rglob("*")
-                    if path.is_file() and ".ffsake" not in path.relative_to(root).parts}
+                    if path.is_file() and not {".ffsake", "target"}.intersection(path.relative_to(root).parts)}
 
         try:
             source = original[coordinates].decode()
@@ -116,6 +119,72 @@ def main():
             call("ffsake_undo", {"transaction": transaction})
             assert contents() == original
             call("ffsake_release", {"handle": report["action_set"]})
+            if verify_rename:
+                def cargo_test():
+                    # Compiler execution is an external test harness operation,
+                    # never an analysis-server capability or proposed action.
+                    checked = subprocess.run(["cargo", "test", "--locked", "--offline", "--workspace",
+                        "--message-format=json"], cwd=root, capture_output=True, text=True, timeout=240,
+                        env={**os.environ, "CARGO_TARGET_DIR": str(root / "target")})
+                    errors = []
+                    for line in checked.stdout.splitlines():
+                        try:
+                            event = json.loads(line)
+                        except json.JSONDecodeError:
+                            continue
+                        if isinstance(event, dict) and event.get("reason") == "compiler-message":
+                            message = event["message"]
+                            if message["level"] == "error":
+                                errors.append(message)
+                    return checked, errors
+
+                baseline, errors = cargo_test()
+                assert baseline.returncode == 0 and not errors, (errors, baseline.stderr[-8192:])
+                assert contents() == original
+                rename = call("ffsake_rust_rename_proposal", {**common, "path": coordinates,
+                    "position": declaration, "new_name": "Utf16Coordinate", "limit": 1000})
+                proposal = rename["proposal"]
+                assert proposal["unsupported_reasons"] == [] and proposal["text_edit_count"] >= 10, rename
+                expected = dict(original)
+                changed_paths = {edit["path"] for edit in proposal["edits"]}
+                assert len(changed_paths) >= 3
+                for path in changed_paths:
+                    edits = sorted((edit for edit in proposal["edits"] if edit["path"] == path), key=lambda e: e["start_byte"])
+                    assert all(a["end_byte"] <= b["start_byte"] for a, b in zip(edits, edits[1:]))
+                    data = original[path]
+                    for edit in reversed(edits):
+                        assert data[edit["start_byte"]:edit["end_byte"]] == b"Utf16Position"
+                        assert edit["replacement"] == "Utf16Coordinate"
+                        data = data[:edit["start_byte"]] + b"Utf16Coordinate" + data[edit["end_byte"]:]
+                    expected[path] = data
+                preview = call("ffsake_preview_rust_rename", {"rename_set": rename["rename_set"],
+                    "expected_path": coordinates, "expected_start_byte": rename["prepared"]["start_byte"],
+                    "expected_old_text": "Utf16Position", "expected_new_name": "Utf16Coordinate",
+                    "expected_edits": proposal["text_edit_count"]})
+                assert preview["semantic_validated"] is False and preview["compiler_checked"] is False
+                assert preview["analysis_context"] == rename["analysis_context"] and contents() == original
+                transaction = call("ffsake_apply", {"handle": preview["handle"]})["transaction"]
+                assert contents() == expected
+                renamed, errors = cargo_test()
+                assert renamed.returncode != 0 and errors, (renamed.returncode, renamed.stderr[-8192:])
+                # Accept only the measured omitted-macro reference failure. A new
+                # unrelated compiler error or runtime failure must fail this check.
+                assert all(message["code"] and message["code"]["code"] in ("E0422", "E0425")
+                           and "Utf16Position" in message["message"]
+                           and any(span["is_primary"] and span["file_name"] == coordinates
+                                   for span in message["spans"]) for message in errors), errors
+                call("ffsake_undo", {"transaction": transaction})
+                assert contents() == original
+                call("ffsake_redo", {"transaction": transaction})
+                assert contents() == expected
+                call("ffsake_undo", {"transaction": transaction})
+                assert contents() == original
+                call("ffsake_release", {"handle": rename["rename_set"]})
+                rename_evidence = {"baseline_cargo_tests": "passed", "renamed_cargo_tests": "expected_missing_macro_references",
+                    "compiler_codes": sorted({message["code"]["code"] for message in errors}),
+                    "compiler_errors": len(errors), "text_edits": proposal["text_edit_count"],
+                    "changed_files": len(changed_paths), "byte_history_passed": True}
+
         finally:
             proc.stdin.close()
             try:
@@ -129,7 +198,7 @@ def main():
     print(json.dumps({"snapshot_revision": revision, "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "rust_files": len(files), "rust_bytes": sum(len(original[path]) for path in files), "explicit_crates": len(crates),
         "references": references["matches"], "reference_files": len(paths), "outline_symbols": outline["symbol_count"],
-        "byte_history_passed": True, "calls": calls, "model_calls": 0,
+        "byte_history_passed": True, "rename_evidence": rename_evidence, "calls": calls, "model_calls": 0,
         "timing_is_single_model_free_sample": True, "complete_analysis": False}, indent=2))
 
 
