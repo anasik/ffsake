@@ -1876,6 +1876,15 @@ mod directory_tests {
             fs::Permissions::from_mode(0o755),
         )
         .unwrap();
+        // Failed preparation intentionally retains its private payload. Make
+        // this test-owned readonly root removable and verify fixture cleanup.
+        for entry in fs::read_dir(&journal.journal_root).unwrap() {
+            let stored = entry.unwrap().path().join("tree-data");
+            if stored.is_dir() {
+                fs::set_permissions(stored, fs::Permissions::from_mode(0o755)).unwrap();
+            }
+        }
+        root.close().unwrap();
     }
 
     #[test]
