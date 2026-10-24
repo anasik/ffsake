@@ -730,7 +730,7 @@ impl Workspace {
             let entry = entry?;
             let path = entry.path();
             let ty = entry.file_type()?;
-            if path == self.root.join(".ffsake") || ty.is_symlink() {
+            if entry.file_name() == ".ffsake" || ty.is_symlink() {
                 continue;
             }
             if ty.is_dir() {
@@ -854,11 +854,18 @@ impl Workspace {
     }
 
     fn ensure_inside(&self, path: PathBuf) -> Result<PathBuf> {
-        if path == self.root || path.starts_with(&self.root) {
-            Ok(path)
-        } else {
-            Err(WorkspaceError::OutsideWorkspace(path))
+        let relative = path
+            .strip_prefix(&self.root)
+            .map_err(|_| WorkspaceError::OutsideWorkspace(path.clone()))?;
+        // Validate the resolved path as well as the caller's spelling: an
+        // otherwise innocuous symlink name can point into the reserved journal.
+        if relative
+            .components()
+            .any(|component| matches!(component, Component::Normal(part) if part == ".ffsake"))
+        {
+            return Err(WorkspaceError::InternalPath(relative.display().to_string()));
         }
+        Ok(path)
     }
 
     fn relative_path(&self, path: &Path) -> Result<PathBuf> {
@@ -1177,6 +1184,56 @@ mod tests {
             Err(WorkspaceError::InternalPath(_))
         ));
 
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn internal_aliases_are_rejected_but_safe_read_aliases_work() {
+        use std::os::unix::fs::symlink;
+        let root = fixture();
+        fs::create_dir_all(root.join(".ffsake")).unwrap();
+        fs::write(root.join(".ffsake/secret"), "internal").unwrap();
+        symlink(root.join(".ffsake"), root.join("alias")).unwrap();
+        symlink(root.join(".ffsake/secret"), root.join("secret-alias")).unwrap();
+        symlink(root.join("src"), root.join("safe-alias")).unwrap();
+        let ws = Workspace::new(&root).unwrap();
+        for path in ["alias/secret", "secret-alias"] {
+            assert!(matches!(
+                ws.read_text(path, None, None),
+                Err(WorkspaceError::InternalPath(_))
+            ));
+            assert!(ws.content_hash(path).is_err());
+            assert!(ws.select_files(&FileSelector::exact(path)).is_err());
+        }
+        assert!(ws.list_dir("alias").is_err());
+        assert!(ws.select_files(&FileSelector::exact("alias")).is_err());
+        assert!(ws.write_text("alias/new/child", "bad").is_err());
+        assert!(ws.write_text("alias/secret", "bad").is_err());
+        assert!(ws.delete_path("alias/secret").is_err());
+        assert!(ws.move_path("alias/secret", "leaked").is_err());
+        assert_eq!(
+            fs::read_to_string(root.join(".ffsake/secret")).unwrap(),
+            "internal"
+        );
+        assert!(!root.join(".ffsake/new").exists());
+        assert_eq!(
+            ws.read_text("safe-alias/lib.rs", None, None).unwrap(),
+            ws.read_text("src/lib.rs", None, None).unwrap()
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn recursive_selection_skips_nested_reserved_directories() {
+        let root = fixture();
+        fs::create_dir_all(root.join("src/.ffsake")).unwrap();
+        fs::write(root.join("src/.ffsake/secret"), "internal").unwrap();
+        let ws = Workspace::new(&root).unwrap();
+        assert_eq!(
+            ws.select_files(&FileSelector::all()).unwrap(),
+            vec![ws.root().join("src/lib.rs")]
+        );
         fs::remove_dir_all(root).unwrap();
     }
 

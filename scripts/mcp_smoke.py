@@ -178,6 +178,21 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
                 call(name, {"path": path}, expect_ok=False)
         assert (root / "a.txt").read_text() == "needle needle\n"
 
+        # Canonical paths must retain the internal namespace guard through aliases.
+        (root / ".ffsake" / "private.txt").write_text("internal-sentinel")
+        (root / "journal-alias").symlink_to(root / ".ffsake", target_is_directory=True)
+        for name, args in [
+            ("ffsake_read", {"path": "journal-alias/private.txt"}),
+            ("ffsake_list", {"path": "journal-alias"}),
+            ("ffsake_target", {"target": {"include": [{"Exact": "journal-alias"}], "exclude": []}}),
+            ("ffsake_search", {"pattern": "internal-sentinel", "target": {"include": [{"Exact": "journal-alias"}], "exclude": []}}),
+            ("ffsake_preview_edit", {"path": "journal-alias/private.txt", "old_text": "internal", "new_text": "bad", "expected_matches": 1}),
+        ]:
+            call(name, args, expect_ok=False)
+        assert (root / ".ffsake" / "private.txt").read_text() == "internal-sentinel"
+        (root / "journal-alias").unlink()
+        (root / ".ffsake" / "private.txt").unlink()
+
         (root / "escape.txt").symlink_to(outside)
         call("ffsake_read", {"path": "escape.txt"}, expect_ok=False)
         call("ffsake_refresh", {})

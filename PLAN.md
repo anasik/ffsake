@@ -104,6 +104,8 @@ The completed post-fix maintenance report has 12/12 correct, valid runs. Median 
 
 Targeted Codex diagnostic confirmed adoption: 26/26 checks, four calls (batch read → seven-operation preview → apply → batch verification), 28.637 s. This is one timing sample, not a repeated speed claim. All required local checks passed: 48 Rust and 57 Python tests, Clippy, formatting, executable benchmark and MCP smoke (130 rejected operations).
 
+Boundary follow-up: an executable probe showed that single-file read, directory list and exact selection could follow an alias into `.ffsake`. Resolved paths now enforce the reserved namespace too, and recursive selection skips nested reserved directories. Ordinary in-workspace read aliases retain compatibility. Regression coverage includes read/hash/selection/write/delete/move and MCP endpoints.
+
 Next: evaluate larger real-repository workflows before adding more interface primitives; keep runtime execution and metadata recreation gaps explicit.
 
 Remaining gaps:
