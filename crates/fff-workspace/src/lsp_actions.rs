@@ -194,9 +194,153 @@ pub(crate) fn actions(
     Ok(json!({"actions":output,"action_count":output.len(),"text_bytes":bytes}))
 }
 
+/// Only resident-owned discovery reports reach this function. The request chooses
+/// an exact frozen action; it cannot supply replacements or alter analysis hashes.
+pub(crate) fn preview_transform(
+    workspace: &crate::Workspace,
+    report: &Value,
+    index: usize,
+    expected_title: &str,
+    expected_edits: usize,
+) -> Result<crate::transform::Transform> {
+    use crate::transform::{Mutation, TargetedRangeEdit, Transform};
+    use crate::{FileSelector, PathSelector};
+    let action = report["actions"]
+        .as_array()
+        .and_then(|actions| actions.get(index))
+        .ok_or("unknown code-action index")?;
+    if action["title"] != expected_title {
+        return Err("code-action title differs from expected identity".into());
+    }
+    if action["unsupported_reasons"]
+        .as_array()
+        .is_none_or(|reasons| !reasons.is_empty())
+    {
+        return Err("unsupported code action cannot become a preview".into());
+    }
+    let edits = action["edits"]
+        .as_array()
+        .ok_or("code action has no text edits")?;
+    if expected_edits == 0 || edits.len() != expected_edits || edits.len() > 1000 {
+        return Err("unexpected code-action edit count".into());
+    }
+    let hashes: BTreeMap<String, String> = serde_json::from_value(report["file_hashes"].clone())?;
+    if hashes.is_empty() || hashes.len() > 32 {
+        return Err("invalid action source hashes".into());
+    }
+    let edits = edits
+        .iter()
+        .map(|edit| -> Result<TargetedRangeEdit> {
+            let path = edit["path"].as_str().ok_or("missing edit path")?;
+            if !hashes.contains_key(path) {
+                return Err("action path lacks source provenance".into());
+            }
+            Ok(TargetedRangeEdit {
+                path: path.into(),
+                edit: RangeEdit {
+                    start_byte: serde_json::from_value(edit["start_byte"].clone())?,
+                    end_byte: serde_json::from_value(edit["end_byte"].clone())?,
+                    replacement: edit["replacement"]
+                        .as_str()
+                        .ok_or("missing action replacement")?
+                        .into(),
+                },
+            })
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let plan = Transform {
+        target: FileSelector {
+            include: hashes.keys().cloned().map(PathSelector::Exact).collect(),
+            exclude: vec![],
+        },
+        operations: vec![
+            Mutation::AssertHashes {
+                expected: hashes.clone(),
+            },
+            Mutation::ApplyRanges { edits },
+        ],
+        max_files: Some(hashes.len()),
+    };
+    crate::syntax::validate_transform(workspace, &plan, &hashes)?;
+    Ok(plan)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn action_preview_guards_all_inputs_and_reuses_atomic_history() {
+        let directory = tempfile::tempdir().unwrap();
+        let root = directory.path();
+        let main = "mod other; fn main() { let count = 1; let _ = count; }\r\n";
+        let other = "pub const VALUE: u32 = 1;\r\n";
+        let context = "pub fn context() {}\n";
+        for (path, source) in [
+            ("main.rs", main),
+            ("other.rs", other),
+            ("context.rs", context),
+        ] {
+            std::fs::write(root.join(path), source).unwrap();
+        }
+        let workspace = crate::Workspace::new(root).unwrap();
+        let hashes: BTreeMap<_, _> = ["main.rs", "other.rs", "context.rs"]
+            .into_iter()
+            .map(|path| (path.to_string(), workspace.content_hash(path).unwrap()))
+            .collect();
+        let report = json!({"file_hashes":hashes,"actions":[{"title":"Two-file proposal","unsupported_reasons":[],"edits":[
+            {"path":"main.rs","start_byte":main.find("count").unwrap()+5,"end_byte":main.find("count").unwrap()+5,"replacement":": u32"},
+            {"path":"other.rs","start_byte":other.find('1').unwrap(),"end_byte":other.find('1').unwrap()+1,"replacement":"2"}]}]});
+        assert!(preview_transform(&workspace, &report, 1, "Two-file proposal", 2).is_err());
+        assert!(preview_transform(&workspace, &report, 0, "Wrong title", 2).is_err());
+        assert!(preview_transform(&workspace, &report, 0, "Two-file proposal", 1).is_err());
+        let plan = preview_transform(&workspace, &report, 0, "Two-file proposal", 2).unwrap();
+        assert_eq!(
+            std::fs::read(root.join("main.rs")).unwrap(),
+            main.as_bytes()
+        );
+        // Even a file with no edits is part of the analysis provenance at both stages.
+        std::fs::write(root.join("context.rs"), "pub fn changed() {}\n").unwrap();
+        assert!(preview_transform(&workspace, &report, 0, "Two-file proposal", 2).is_err());
+        assert!(crate::transform::execute(&workspace, &plan, None).is_err());
+        assert_eq!(
+            std::fs::read(root.join("main.rs")).unwrap(),
+            main.as_bytes()
+        );
+        assert_eq!(
+            std::fs::read(root.join("other.rs")).unwrap(),
+            other.as_bytes()
+        );
+        std::fs::write(root.join("context.rs"), context).unwrap();
+        let mut invalid = report.clone();
+        invalid["actions"][0]["edits"][0]["replacement"] = json!("}");
+        assert!(preview_transform(&workspace, &invalid, 0, "Two-file proposal", 2).is_err());
+        let mut unsupported = report.clone();
+        unsupported["actions"][0]["unsupported_reasons"] = json!(["command"]);
+        assert!(preview_transform(&workspace, &unsupported, 0, "Two-file proposal", 2).is_err());
+        let result = crate::transform::execute(&workspace, &plan, None).unwrap();
+        assert_eq!(result.changed_files, 2);
+        let transaction = result.transaction.unwrap().id;
+        let after_main = std::fs::read(root.join("main.rs")).unwrap();
+        let after_other = std::fs::read(root.join("other.rs")).unwrap();
+        let journal = crate::journal::Journal::open(root).unwrap();
+        journal.undo(&transaction).unwrap();
+        assert_eq!(
+            std::fs::read(root.join("main.rs")).unwrap(),
+            main.as_bytes()
+        );
+        assert_eq!(
+            std::fs::read(root.join("other.rs")).unwrap(),
+            other.as_bytes()
+        );
+        journal.redo(&transaction).unwrap();
+        assert_eq!(std::fs::read(root.join("main.rs")).unwrap(), after_main);
+        assert_eq!(std::fs::read(root.join("other.rs")).unwrap(), after_other);
+        assert_eq!(
+            std::fs::read(root.join("context.rs")).unwrap(),
+            context.as_bytes()
+        );
+    }
 
     fn fixture() -> (std::path::PathBuf, BTreeMap<String, String>, Value) {
         let root = std::env::temp_dir().join("ffsake-action-normalizer");

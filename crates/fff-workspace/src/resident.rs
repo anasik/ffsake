@@ -11,6 +11,7 @@ use std::collections::BTreeMap;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 const MAX_HANDLES: usize = 128;
+const MAX_ACTION_CACHE_BYTES: usize = 4 * 1024 * 1024;
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -108,6 +109,12 @@ pub enum Request {
         identifier: String,
         limit: usize,
     },
+    PreviewRustAction {
+        action_set: u64,
+        action_index: usize,
+        expected_title: String,
+        expected_edits: usize,
+    },
     PreviewMatches {
         handle: u64,
         replacement: String,
@@ -171,10 +178,16 @@ struct CachedMatches {
     rust_identifiers: bool,
 }
 
+struct CachedActions {
+    report: Value,
+    bytes: usize,
+}
+
 pub struct Resident {
     session: EditorSession,
     index: FffSearchIndex,
     matches: BTreeMap<u64, CachedMatches>,
+    actions: BTreeMap<u64, CachedActions>,
     plans: BTreeMap<u64, Transform>,
     file_plans: BTreeMap<u64, FilePlan>,
     next: u64,
@@ -188,6 +201,7 @@ impl Resident {
             session: EditorSession::new(workspace),
             index,
             matches: BTreeMap::new(),
+            actions: BTreeMap::new(),
             plans: BTreeMap::new(),
             file_plans: BTreeMap::new(),
             next: 1,
@@ -196,7 +210,9 @@ impl Resident {
     }
 
     fn allocate(&mut self) -> Result<u64> {
-        if self.matches.len() + self.plans.len() + self.file_plans.len() >= MAX_HANDLES {
+        if self.matches.len() + self.actions.len() + self.plans.len() + self.file_plans.len()
+            >= MAX_HANDLES
+        {
             return Err("release unused handles (limit 128)".into());
         }
         let handle = self.next;
@@ -394,15 +410,54 @@ impl Resident {
                 range,
                 edition,
                 limit,
-            } => crate::lsp::rust_code_actions(
-                self.session.workspace(),
-                &files,
-                &crate_root,
-                &path,
-                range,
-                &edition,
-                limit,
-            ),
+            } => {
+                let mut report = crate::lsp::rust_code_actions(
+                    self.session.workspace(),
+                    &files,
+                    &crate_root,
+                    &path,
+                    range,
+                    &edition,
+                    limit,
+                )?;
+                let bytes = serde_json::to_vec(&report)?.len();
+                let cached_bytes: usize = self.actions.values().map(|cached| cached.bytes).sum();
+                if cached_bytes + bytes > MAX_ACTION_CACHE_BYTES {
+                    return Err("release unused code-action sets (4 MiB cache limit)".into());
+                }
+                let handle = self.allocate()?;
+                self.actions.insert(
+                    handle,
+                    CachedActions {
+                        report: report.clone(),
+                        bytes,
+                    },
+                );
+                report["action_set"] = json!(handle);
+                Ok(report)
+            }
+            Request::PreviewRustAction {
+                action_set,
+                action_index,
+                expected_title,
+                expected_edits,
+            } => {
+                let cached = self
+                    .actions
+                    .get(&action_set)
+                    .ok_or("unknown code-action set")?;
+                let plan = crate::lsp_actions::preview_transform(
+                    self.session.workspace(),
+                    &cached.report,
+                    action_index,
+                    &expected_title,
+                    expected_edits,
+                )?;
+                let mut result = self.preview(plan)?;
+                result["action_title"] = json!(expected_title);
+                result["semantic_validated"] = json!(false);
+                Ok(result)
+            }
             Request::RustHover {
                 files,
                 crate_root,
@@ -589,6 +644,7 @@ impl Resident {
             Request::Redo { transaction } => self.history(&transaction, true),
             Request::Release { handle } => {
                 let removed = self.matches.remove(&handle).is_some()
+                    | self.actions.remove(&handle).is_some()
                     | self.plans.remove(&handle).is_some()
                     | self.file_plans.remove(&handle).is_some();
                 Ok(json!({"released": removed}))

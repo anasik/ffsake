@@ -146,6 +146,7 @@ fn call_tool(runtime: &mut Resident, name: &str, arguments: Value) -> Value {
         "ffsake_rust_references" => "rust_references",
         "ffsake_select_rust_identifiers" => "select_rust_identifiers",
         "ffsake_preview_matches" => "preview_matches",
+        "ffsake_preview_rust_action" => "preview_rust_action",
         "ffsake_preview_edit" => "preview_edit",
         "ffsake_preview_rename" => "preview_rename",
         "ffsake_preview_create" => "preview_create",
@@ -253,8 +254,15 @@ fn tools() -> Vec<Value> {
             rust_hover_schema(),
         ),
         tool(
+            "ffsake_preview_rust_action",
+            "Preview one exact server-owned Rust code action: action_set from discovery, zero-based action_index, exact expected_title and positive expected_edits. Rechecks ALL original analysis hashes, including unedited files; unsupported actions reject. Stages frozen text edits and reparses all files within five seconds without writes. Returns a standard preview handle for ffsake_apply and journal undo/redo. Syntax validation is not semantic/behavioral/compiler validation. Cannot supply arbitrary edits or promote commands/resources/snippets. Release action_set using ffsake_release when finished.",
+            json!({"type":"object","required":["action_set","action_index","expected_title","expected_edits"],"additionalProperties":false,
+                "properties":{"action_set":{"type":"integer","minimum":1},"action_index":{"type":"integer","minimum":0,"maximum":99},
+                "expected_title":{"type":"string","minLength":1,"maxLength":4096},"expected_edits":{"type":"integer","minimum":1,"maximum":1000}}}),
+        ),
+        tool(
             "ffsake_rust_code_actions",
-            "Discover bounded Rust code actions for a source range in the explicit incomplete snapshot. Returns primary action metadata and original-byte text edits only for actions without unsupported requirements. Commands, resource operations, annotations, snippets, disabled or unresolved actions return reasons and no edits. Never applies, executes, resolves or creates a mutation handle. Limit 1..=100 actions, 1000 edits and 65536 total text bytes; all original hashes are rechecked. Requires rust-analyzer; no dependency/sysroot/build-script context or semantic correctness guarantee.",
+            "Discover bounded Rust code actions for a source range in the explicit incomplete snapshot. Returns primary action metadata and original-byte text edits only for actions without unsupported requirements. Commands, resource operations, annotations, snippets, disabled or unresolved actions return reasons and no edits. Returns a resident action_set for a separate guarded preview; it cannot be applied directly. Never applies, executes or resolves actions. Limit 1..=100 actions, 1000 edits and 65536 total text bytes; all original hashes are rechecked. Requires rust-analyzer; no dependency/sysroot/build-script context or semantic correctness guarantee.",
             rust_code_actions_schema(),
         ),
         tool(

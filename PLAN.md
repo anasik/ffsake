@@ -142,7 +142,9 @@ Native diagnostic evaluation isolated a startup-order issue: opening documents b
 
 Code-action evaluation found plain text edits for local type annotations/extraction and resource operations for module extraction. Read-only discovery now returns bounded action metadata and exact original-byte edits for text-only actions. Commands, resources, annotations, snippets, disabled/unresolved actions return explicit reasons and no partial edits. A real-server fixture verifies a Unicode/CRLF type annotation, independently compiles/runs its proposed bytes, and verifies module extraction never creates a file. All discovery remains explicitly incomplete and creates no mutation capability. The shared catalog contains twenty-six tools.
 
-Next: evaluate guarded previewing of the discovered plain-text actions through the existing transform/journal, including source-hash provenance, exact action identity, parser validation, collision/behavioral limits and atomic undo/redo. Unsupported action classes remain unavailable. Compiler execution and semantic rename remain separate; reference ranges must not become rename capabilities until collision and analysis-completeness behavior are established. Semantic rename must not be inferred from syntax or successful compilation. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Guarded action previews now select a frozen server-owned discovery by action-set/index, exact title and edit count. The resident cache shares the handle limit and has a 4 MiB report budget. Preview rechecks every analysis source, stages text edits and reparses all results; apply retains all original hashes, including unedited files. Unsupported actions cannot yield previews. Tests cover multi-file history, invalid staged syntax, identity/count guards, stale unedited files at preview/apply, released discovery sets, one-shot apply and exact Unicode/CRLF undo/redo. The shared catalog contains twenty-seven tools.
+
+Next: evaluate collision and behavioral limits of parser-checked native code actions with compiler/runtime fixtures, especially generated placeholders and actions that compile but change behavior. Use that evidence to define the next supported action/semantic-rename boundary, without treating syntax or compilation as proof of equivalence. Unsupported action classes remain unavailable. Compiler execution and semantic rename remain separate; reference ranges must not become rename capabilities until collision and analysis-completeness behavior are established. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
@@ -171,12 +173,13 @@ Implemented through an explicitly incomplete dependency-free rust-analyzer sourc
 - implementations;
 - hover/types;
 - native primary diagnostics (explicitly incomplete, not compiler validation);
-- read-only code-action discovery with bounded text proposals and unsupported-action classification.
+- read-only code-action discovery with bounded text proposals and unsupported-action classification;
+- guarded plain-text action previews/apply through the existing journal.
 
 Still to add/evaluate:
 
 - semantic rename;
-- guarded code-action previews/apply.
+- broader action/rename correctness boundaries and project context.
 
 ## Later
 

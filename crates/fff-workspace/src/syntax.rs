@@ -1,6 +1,7 @@
 //! Bounded, parser-backed Rust identifier selection. No symbol resolution.
 use crate::Workspace;
 use crate::search::{MatchSet, SearchMode, SearchRange};
+use crate::transform::{BufferState, Transform, apply_mutation};
 use std::collections::BTreeMap;
 use std::ops::ControlFlow;
 use std::path::Path;
@@ -98,7 +99,7 @@ pub(crate) fn rename_transform(
     set: &MatchSet,
     replacement: &str,
 ) -> Result<crate::transform::Transform> {
-    use crate::transform::{BufferState, Mutation, Transform, apply_mutation};
+    use crate::transform::Mutation;
     let deadline = Instant::now() + Duration::from_secs(5);
     let mut parser = Parser::new();
     parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
@@ -115,8 +116,32 @@ pub(crate) fn rename_transform(
         ],
         max_files: Some(set.file_hashes.len()),
     };
+    validate_staged(workspace, &plan, &set.file_hashes, &mut parser, deadline)?;
+    Ok(plan)
+}
+
+/// Validate a server-owned text plan against every analysis input and reparse all
+/// resulting buffers. This establishes syntax only, not semantic correctness.
+pub(crate) fn validate_transform(
+    workspace: &Workspace,
+    plan: &Transform,
+    hashes: &BTreeMap<String, String>,
+) -> Result<()> {
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let mut parser = Parser::new();
+    parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
+    validate_staged(workspace, plan, hashes, &mut parser, deadline)
+}
+
+fn validate_staged(
+    workspace: &Workspace,
+    plan: &Transform,
+    hashes: &BTreeMap<String, String>,
+    parser: &mut Parser,
+    deadline: Instant,
+) -> Result<()> {
     let mut buffers = BTreeMap::new();
-    for path in set.file_hashes.keys() {
+    for path in hashes.keys() {
         let (normalized, source) = workspace.read_source_bounded(Path::new(path), 256 * 1024)?;
         if &normalized != path {
             return Err("syntax selection path changed".into());
@@ -142,9 +167,9 @@ pub(crate) fn rename_transform(
             return Err(format!("{path}: staged Rust source exceeds 256 KiB").into());
         }
         std::str::from_utf8(source)?;
-        parse(&mut parser, source, deadline).map_err(|e| format!("{path}: {e}"))?;
+        parse(parser, source, deadline).map_err(|e| format!("{path}: {e}"))?;
     }
-    Ok(plan)
+    Ok(())
 }
 
 /// Select exact identifier spellings from explicit Rust files. Output is complete

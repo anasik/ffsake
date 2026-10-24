@@ -300,7 +300,7 @@ def main():
             column = source.index("count")
             selection = {"start": {"line": 1, "column": column},
                          "end": {"line": 1, "column": column + len("count")}}
-            action_args = {**diagnostic_args, "range": selection}
+            action_args = {**diagnostic_args, "files": ["main.rs", "other.rs"], "range": selection}
             discovered = call(action_args, name="ffsake_rust_code_actions")
             assert discovered["query"] == "code_actions" and discovered["complete"] is False
             assert "handle" not in discovered and discovered["action_count"] >= 2
@@ -321,6 +321,35 @@ def main():
                 checked = subprocess.run([str(executable)], capture_output=True, timeout=5)
                 assert checked.returncode == 0, checked.stderr.decode()
             assert (root / "main.rs").read_bytes() == source.encode()
+            action_index = discovered["actions"].index(annotation[0])
+            preview_args = {"action_set": discovered["action_set"], "action_index": action_index,
+                            "expected_title": annotation[0]["title"], "expected_edits": len(edits)}
+            call({"handle": discovered["action_set"]}, ok=False, name="ffsake_apply")
+            for changes in [{"expected_title": "different action"}, {"expected_edits": len(edits) + 1},
+                            {"action_index": 99}, {"replacement": "untrusted caller edit"}]:
+                call({**preview_args, **changes}, ok=False, name="ffsake_preview_rust_action")
+            previewed = call(preview_args, name="ffsake_preview_rust_action")
+            assert previewed["semantic_validated"] is False and previewed["preview"]["changed_files"] == 1
+            assert ": u32" in previewed["preview"]["files"][0]["unified_diff"]
+            assert (root / "main.rs").read_bytes() == source.encode()
+            # A change to an unedited input invalidates both discovery and its frozen preview.
+            before_other = (root / "other.rs").read_bytes()
+            (root / "other.rs").write_bytes(before_other + b"\n")
+            call(preview_args, ok=False, name="ffsake_preview_rust_action")
+            call({"handle": previewed["handle"]}, ok=False, name="ffsake_apply")
+            assert (root / "main.rs").read_bytes() == source.encode()
+            (root / "other.rs").write_bytes(before_other)
+            assert call({"handle": discovered["action_set"]}, name="ffsake_release")["released"]
+            call(preview_args, ok=False, name="ffsake_preview_rust_action")
+            applied = call({"handle": previewed["handle"]}, name="ffsake_apply")
+            assert applied["changed_files"] == 1 and (root / "main.rs").read_bytes() == updated
+            call({"handle": previewed["handle"]}, ok=False, name="ffsake_apply")
+            call({"transaction": applied["transaction"]}, name="ffsake_undo")
+            assert (root / "main.rs").read_bytes() == source.encode()
+            call({"transaction": applied["transaction"]}, name="ffsake_redo")
+            assert (root / "main.rs").read_bytes() == updated
+            call({"transaction": applied["transaction"]}, name="ffsake_undo")
+            assert (root / "main.rs").read_bytes() == source.encode()
             for changes in [{"limit": 1}, {"limit": 0}, {"limit": 101},
                             {"range": {"start": selection["end"], "end": selection["start"]}},
                             {"range": {"start": {"line": 1, "column": 9999}, "end": selection["end"]}},
@@ -333,6 +362,10 @@ def main():
             module_actions = [item for item in resource["actions"] if item["title"] == "Extract module to file"]
             assert len(module_actions) == 1 and module_actions[0]["edits"] is None, resource
             assert "resource_operation" in module_actions[0]["unsupported_reasons"]
+            call({"action_set": resource["action_set"], "action_index": resource["actions"].index(module_actions[0]),
+                  "expected_title": module_actions[0]["title"], "expected_edits": module_actions[0]["text_edit_count"]},
+                 ok=False, name="ffsake_preview_rust_action")
+            assert call({"handle": resource["action_set"]}, name="ffsake_release")["released"]
             assert (root / "main.rs").read_text() == source and not (root / "inline.rs").exists()
             assert not (root / "BUILD_SCRIPT_RAN").exists()
         finally:
@@ -346,7 +379,7 @@ def main():
             proc.stderr.close()
         assert proc.returncode == 0, proc.returncode
     failure_checks(binary)
-    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, native diagnostics, read-only code actions, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
+    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, native diagnostics, code-action discovery/guarded previews/history, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
 
 
 if __name__ == "__main__":
