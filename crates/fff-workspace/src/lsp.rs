@@ -462,8 +462,9 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation) -> Result
     let options = json!({
         "linkedProjects":[{"crates":graph}],
         "cargo":{"buildScripts":{"enable":false},"noDeps":true,"sysroot":null},
+        "files":{"exclude":[]},"workspace":{"discoverConfig":null},
         "procMacro":{"enable":false},"checkOnSave":false,
-        "diagnostics":{"enable":true,"experimental":{"enable":true}},"cachePriming":{"enable":false},"numThreads":2
+        "diagnostics":{"enable":true,"disabled":[],"experimental":{"enable":true}},"cachePriming":{"enable":false},"numThreads":2
     });
     let mut client = Client::start(&root, options.clone(), deadline)?;
     let initialized = client.request("initialize", json!({"processId":null,"rootUri":uri(&root)?,
