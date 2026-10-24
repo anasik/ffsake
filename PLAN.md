@@ -98,7 +98,9 @@ Real-repository pilot completed: Claude used only FFSAKE tools to implement the 
 
 Verification on 2026-10-24: the user's macOS run passed all 47 Rust tests and the MCP smoke suite, including mixed batch history, stale-content rejection, rollback, and 109 rejected boundary operations. CI also passed 51 Python tests, Clippy, and formatting at `a4c947ca50a766a0fd64e37ff0cfcf7967df9083`.
 
-Next: run one diagnostic repetition of `--tasks maintenance` for Claude and Codex in both modes, inspect correctness and mixed-batch adoption, then decide whether repeated measurements are useful. The maintenance verifier has 26 checks and regression coverage for valid and deliberately broken migrations; no real-agent results have been collected for it. Do not keep rerunning the same synthetic fixture without a new question.
+Maintenance diagnostic on 2026-10-24: both FFSAKE agents used one seven-operation batch and one apply and passed 26/26 checks. Codex baseline also passed; Claude baseline passed all behavior/content checks but generated Python bytecode during its own CLI verification, failing the exact-file-set audit. The harness now suppresses bytecode through a shared child-process environment rather than excluding unexpected files. See docs/BENCHMARK.md for timings and limitations.
+
+Next: repeat `--tasks maintenance` after the bytecode environment fix to measure correctness and performance without that artifact. Codex's 23 FFSAKE calls comprise one preview/apply pair and 21 reads/searches, identifying multi-file reading and verification as the next interface area to investigate. Do not treat one diagnostic repetition as a general performance result.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

@@ -171,3 +171,20 @@ python3 scripts/agent_benchmark_suite.py --agents claude,codex --tasks maintenan
 ```
 
 Inspect correctness, invalid-comparison reasons and tool names in the saved trace before increasing repetitions. `ffsake_preview_files` calls show batch-tool adoption; their presence alone does not prove that every mutation used one batch. Compare time, total calls and reported cost against the baseline. No agent results for this task have been collected yet. Existing default tasks and historical results remain unchanged.
+
+## Maintenance diagnostic, 2026-10-24
+
+The supplied `suite-20261024-153809-w2at71po.json` contains one repetition per agent/mode:
+
+| Agent | Mode | Correct | Elapsed | Calls | Reported cost |
+| --- | --- | --- | ---: | ---: | ---: |
+| Claude | baseline | 25/26; extra bytecode files | 18.24 s | 8 | $0.0935825 |
+| Claude | FFSAKE | 26/26 | 16.59 s | 6 | $0.0775811 |
+| Codex | baseline | 26/26 | 44.64 s | 4 | unavailable |
+| Codex | FFSAKE | 26/26 | 34.71 s | 23 | unavailable |
+
+Both FFSAKE agents submitted all seven requested operations in one `ffsake_preview_files` call and committed with one apply. Claude's other four calls were three reads and one search. Codex's other 21 calls were 19 reads and two searches, including exploratory instruction-file lookups and post-apply verification. Three Codex calls returned errors while probing missing paths; the mutation batch succeeded without recovery. The paired Codex result was 22.2% faster in this single run despite more calls; repetition is needed before treating this as a performance result.
+
+Claude's baseline implementation passed every behavior/content check. Its own Python CLI verification created three `dispatch/__pycache__/*.pyc` files, causing the exact-file-set check and unexpected-file audit to fail. This is not evidence of a faulty implementation or a correctness advantage for FFSAKE. The original report remains unchanged.
+
+The harness now sets `PYTHONDONTWRITEBYTECODE=1` for every spawned agent and verifier process, inherited by ordinary Python child commands in either mode. A regression test launches a nested Python import without `-B` and checks that no cache appears and the host environment is unchanged. Unexpected files, including deliberately created bytecode files, still fail verification; caches are not excluded from the audit. Agents that explicitly clear the environment or force bytecode generation can still create artifacts. Repeat the comparison with this environment fix before making broader claims.

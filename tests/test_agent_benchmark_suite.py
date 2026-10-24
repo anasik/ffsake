@@ -80,6 +80,22 @@ class PersistenceTests(unittest.TestCase):
             self.assertNotIn("--ask-for-approval", args)
             self.assertEqual(args[:3], ["codex", "exec", "--json"])
 
+    def test_agent_children_disable_bytecode_without_changing_parent_environment(self):
+        import os
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as td, patch.dict(os.environ, {"PYTHONDONTWRITEBYTECODE": "0"}):
+            root = Path(td)
+            (root / "sample.py").write_text("VALUE = 7\n")
+            # Model an agent launching its own Python verification command without -B.
+            code = ("import os, subprocess, sys; "
+                    "assert os.environ['PYTHONDONTWRITEBYTECODE'] == '1'; "
+                    "subprocess.run([sys.executable, '-c', 'import sample; print(sample.VALUE)'], check=True)")
+            result = suite.run_process([sys.executable, "-c", code], root, 5)
+            self.assertEqual(result["exit_code"], 0, result["stderr"])
+            self.assertEqual(result["stdout"].strip(), "7")
+            self.assertEqual(set(suite.fixture_files(root)), {"sample.py"})
+            self.assertEqual(os.environ["PYTHONDONTWRITEBYTECODE"], "0")
+
     def test_timeout_returns_json_safe_text(self):
         with tempfile.TemporaryDirectory() as td:
             command = [sys.executable, "-c", "import sys,time;sys.stdout.buffer.write(bytes([255]));sys.stdout.flush();time.sleep(5)"]
@@ -715,12 +731,14 @@ def load_config(path):
 
     def test_verifier_rejects_missing_moves_copies_deletions_and_unrelated_changes(self):
         variants = ["docs/config-v1.md", "scripts/legacy_config.py", "examples/request.snapshot.json",
-                    "assets/keep.txt", "dispatch/__main__.py", "extra.txt", "README.md", "docs/MIGRATION.md"]
+                    "assets/keep.txt", "dispatch/__main__.py", "extra.txt", "README.md", "docs/MIGRATION.md",
+                    "dispatch/__pycache__/unexpected.pyc"]
         for name in variants:
             with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
                 root = Path(td)
                 state = suite.maintenance_fixture(root)
                 self.implementation(root)
+                (root / name).parent.mkdir(parents=True, exist_ok=True)
                 (root / name).write_text("incorrect")
                 self.assertFalse(suite.maintenance_verify(root, state)[0])
 

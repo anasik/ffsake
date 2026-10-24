@@ -398,6 +398,9 @@ def run_process(cmd, cwd: Path, timeout: int):
     # process.cwd(). Both must refer to the disposable fixture.
     env = os.environ.copy()
     env["PWD"] = str(cwd.resolve())
+    # Agent CLI checks must not fail the exact file-set verifier merely by
+    # importing Python modules. Apply equally to all agents and both modes.
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
     proc = subprocess.Popen(
         cmd, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         text=True, encoding="utf-8", errors="replace", start_new_session=os.name == "posix",
