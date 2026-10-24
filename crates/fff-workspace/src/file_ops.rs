@@ -1,5 +1,7 @@
 use crate::Workspace;
-use crate::journal::{Journal, JournalChange, TransactionDirectory, unix_mode};
+use crate::journal::{
+    Journal, JournalChange, TransactionDirectory, TransactionTreeMove, unix_mode,
+};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
@@ -12,6 +14,10 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 #[derive(Debug, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum FileOperation {
+    MoveDirectory {
+        from: String,
+        to: String,
+    },
     CreateDirectory {
         path: String,
     },
@@ -43,6 +49,7 @@ pub enum FileOperation {
 
 pub(crate) struct FilePlan {
     directory: Option<TransactionDirectory>,
+    tree_move: Option<TransactionTreeMove>,
     changes: Vec<JournalChange>,
     checks: Vec<(String, Option<Vec<u8>>)>,
     mode_checks: BTreeMap<String, u32>,
@@ -69,10 +76,22 @@ impl FilePlan {
         let creating_directory = matches!(&operation, FileOperation::CreateDirectory { .. });
         let moving = matches!(&operation, FileOperation::Move { .. });
         match operation {
+            FileOperation::MoveDirectory { from, to } => {
+                let movement = TransactionTreeMove::preview(&journal, &from, &to)?;
+                return Ok(Self {
+                    directory: None,
+                    tree_move: Some(movement),
+                    changes,
+                    checks,
+                    mode_checks,
+                    destination_modes,
+                });
+            }
             FileOperation::CreateDirectory { path } | FileOperation::RemoveDirectory { path } => {
                 let directory = journal.preview_directory(&path, creating_directory)?;
                 return Ok(Self {
                     directory: Some(directory),
+                    tree_move: None,
                     changes,
                     checks,
                     mode_checks,
@@ -150,6 +169,7 @@ impl FilePlan {
         }
         Ok(Self {
             directory: None,
+            tree_move: None,
             changes,
             checks,
             mode_checks,
@@ -170,6 +190,7 @@ impl FilePlan {
         let journal = Journal::open(workspace.root())?;
         let mut combined = Self {
             directory: None,
+            tree_move: None,
             changes: Vec::new(),
             checks: Vec::new(),
             mode_checks: BTreeMap::new(),
@@ -179,7 +200,7 @@ impl FilePlan {
         let mut reads: Vec<PathBuf> = Vec::new();
         for operation in operations {
             let plan = Self::preview(workspace, operation)?;
-            if plan.directory.is_some() {
+            if plan.directory.is_some() || plan.tree_move.is_some() {
                 return Err("directory operations require a single-operation batch".into());
             }
             let new_writes = plan
@@ -216,6 +237,11 @@ impl FilePlan {
     }
 
     pub(crate) fn description(&self) -> Value {
+        if let Some(movement) = &self.tree_move {
+            return json!({"operation":"move_directory","from":movement.from,"to":movement.to,
+                "entries":movement.entries,"changed_files":movement.entries.values().filter(|entry| !entry.directory).count(),
+                "changed_directories":movement.entries.values().filter(|entry| entry.directory).count()});
+        }
         if let Some(directory) = &self.directory {
             return json!({"changed_files": 0, "changed_directories": 1, "directory": directory,
                 "operation": if directory.after_exists { "create_directory" } else { "remove_directory" }});
@@ -249,6 +275,12 @@ impl FilePlan {
 
     pub(crate) fn apply(&self, workspace: &Workspace) -> Result<Value> {
         let journal = Journal::open(workspace.root())?;
+        if let Some(movement) = &self.tree_move {
+            let transaction = journal.commit_tree_move(movement.clone())?;
+            return Ok(
+                json!({"transaction":transaction.id,"moved_entries":movement.entries.len()}),
+            );
+        }
         if let Some(directory) = &self.directory {
             let transaction = journal.commit_directory_preview(directory.clone())?;
             return Ok(

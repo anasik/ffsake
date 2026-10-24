@@ -77,6 +77,31 @@ def main():
             call("ffsake_redo", {"transaction": child_id})
             call("ffsake_redo", {"transaction": file_id})
             assert (root / "package/src/main.rs").read_text() == "fn main() {}\n"
+            def move_preview():
+                return call("ffsake_preview_files", {"operations": [
+                    {"op": "move_directory", "from": "package", "to": "renamed"}]})
+
+            (root / "package/empty").mkdir()
+            (root / "package/blob").write_bytes(b"\x00\xff\r\n")
+            movement = move_preview()
+            assert movement["preview"]["changed_files"] == 2
+            assert not (root / "renamed").exists()
+            (root / "package/extra").write_text("keep")
+            call("ffsake_apply", {"handle": movement["handle"]}, False)
+            assert (root / "package/extra").read_text() == "keep"
+            (root / "package/extra").unlink()
+            movement = move_preview()
+            moved = call("ffsake_apply", {"handle": movement["handle"]})["transaction"]
+            assert not (root / "package").exists() and (root / "renamed/empty").is_dir()
+            assert (root / "renamed/blob").read_bytes() == b"\x00\xff\r\n"
+            (root / "renamed/blob").write_bytes(b"changed")
+            call("ffsake_undo", {"transaction": moved}, False)
+            assert (root / "renamed/blob").read_bytes() == b"changed"
+            (root / "renamed/blob").write_bytes(b"\x00\xff\r\n")
+            call("ffsake_undo", {"transaction": moved})
+            assert (root / "package/empty").is_dir() and not (root / "renamed").exists()
+            call("ffsake_redo", {"transaction": moved})
+            assert (root / "renamed/src/main.rs").read_text() == "fn main() {}\n"
             for path in (".", "../outside", ".ffsake/hidden", "missing/child"):
                 preview("create_directory", path, False)
             pending = preview("create_directory", "collision")
@@ -91,7 +116,7 @@ def main():
             proc.stdin.close()
             proc.wait(timeout=10)
             assert proc.returncode == 0, proc.stderr.read()
-        print(json.dumps({"ok": True, "directory_history": True, "stale_content_preserved": True,
+        print(json.dumps({"ok": True, "directory_history": True, "tree_move_history": True, "stale_content_preserved": True,
                           "recursive_removal": False, "core_profile": True}))
 
 

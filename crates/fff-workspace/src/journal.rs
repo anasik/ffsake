@@ -1,3 +1,4 @@
+pub use crate::tree_move::TreeMove as TransactionTreeMove;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs;
@@ -116,6 +117,8 @@ pub struct TransactionManifest {
     pub files: Vec<TransactionFile>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub directory: Option<TransactionDirectory>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tree_move: Option<TransactionTreeMove>,
 }
 
 impl Journal {
@@ -226,6 +229,7 @@ impl Journal {
             label: Some("empty directory operation".into()),
             files: vec![],
             directory: Some(directory),
+            tree_move: None,
         };
         self.write_manifest(&manifest)?;
         self.transition_directory(manifest, SnapshotSide::After, TransactionState::Applied)
@@ -349,6 +353,51 @@ impl Journal {
         Ok(manifest)
     }
 
+    pub(crate) fn commit_tree_move(
+        &self,
+        movement: TransactionTreeMove,
+    ) -> Result<TransactionManifest> {
+        movement.verify(self, false)?;
+        let manifest = TransactionManifest {
+            id: transaction_id(),
+            state: TransactionState::Prepared,
+            label: Some("directory move".into()),
+            files: vec![],
+            directory: None,
+            tree_move: Some(movement),
+        };
+        self.write_manifest(&manifest)?;
+        self.transition_tree_move(manifest, SnapshotSide::After, TransactionState::Applied)
+    }
+
+    fn transition_tree_move(
+        &self,
+        mut manifest: TransactionManifest,
+        side: SnapshotSide,
+        state: TransactionState,
+    ) -> Result<TransactionManifest> {
+        if !manifest.files.is_empty() || manifest.directory.is_some() {
+            return Err(JournalError::InvalidPath("mixed tree transaction".into()));
+        }
+        let movement = manifest
+            .tree_move
+            .as_ref()
+            .ok_or_else(|| JournalError::InvalidPath("missing tree move".into()))?;
+        let after = matches!(side, SnapshotSide::After);
+        movement.apply(self, after)?;
+        manifest.state = state;
+        if let Err(error) = self.write_manifest(&manifest) {
+            return match movement.apply(self, !after) {
+                Ok(()) => Err(error),
+                Err(rollback) => Err(JournalError::RollbackFailed {
+                    original: error.to_string(),
+                    failures: vec![rollback.to_string()],
+                }),
+            };
+        }
+        Ok(manifest)
+    }
+
     pub fn record(
         &self,
         label: Option<String>,
@@ -394,6 +443,7 @@ impl Journal {
             label,
             files,
             directory: None,
+            tree_move: None,
         };
         self.write_manifest(&manifest)?;
         Ok(manifest)
@@ -445,6 +495,7 @@ impl Journal {
             label,
             files,
             directory: None,
+            tree_move: None,
         };
         self.write_manifest(&manifest)?;
         Ok(manifest)
@@ -501,6 +552,12 @@ impl Journal {
     }
 
     fn verify_side(&self, manifest: &TransactionManifest, side: SnapshotSide) -> Result<()> {
+        if let Some(movement) = &manifest.tree_move {
+            if !manifest.files.is_empty() || manifest.directory.is_some() {
+                return Err(JournalError::InvalidPath("mixed tree transaction".into()));
+            }
+            return movement.verify(self, matches!(side, SnapshotSide::After));
+        }
         if let Some(directory) = &manifest.directory {
             if !manifest.files.is_empty() || directory.before_exists == directory.after_exists {
                 return Err(JournalError::InvalidPath(
@@ -550,6 +607,9 @@ impl Journal {
         side: SnapshotSide,
         state: TransactionState,
     ) -> Result<TransactionManifest> {
+        if manifest.tree_move.is_some() {
+            return self.transition_tree_move(manifest, side, state);
+        }
         if manifest.directory.is_some() {
             return self.transition_directory(manifest, side, state);
         }
@@ -1508,6 +1568,32 @@ mod directory_tests {
         assert!(journal.commit_directory("file", true).is_err());
         assert!(journal.commit_directory("absent", false).is_err());
         assert_eq!(fs::read(root.path().join("file")).unwrap(), b"data");
+    }
+
+    #[test]
+    fn tree_move_manifest_failure_restores_tree() {
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        fs::create_dir(root.path().join("source")).unwrap();
+        fs::write(root.path().join("source/keep"), b"preserve").unwrap();
+        let movement = TransactionTreeMove::preview(&journal, "source", "destination").unwrap();
+        let transaction = journal.commit_tree_move(movement).unwrap();
+        let path = journal
+            .journal_root
+            .join(&transaction.id)
+            .join("manifest.json");
+        fs::remove_file(&path).unwrap();
+        fs::create_dir(&path).unwrap();
+        assert!(
+            journal
+                .transition_tree_move(transaction, SnapshotSide::Before, TransactionState::Undone)
+                .is_err()
+        );
+        assert!(!root.path().join("source").exists());
+        assert_eq!(
+            fs::read(root.path().join("destination/keep")).unwrap(),
+            b"preserve"
+        );
     }
 
     #[test]

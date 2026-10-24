@@ -25,6 +25,7 @@ pub mod selection;
 pub mod session;
 pub mod syntax;
 pub mod transform;
+mod tree_move;
 
 #[derive(Debug)]
 pub enum WorkspaceError {
