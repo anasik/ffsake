@@ -49,7 +49,7 @@ def main():
                     arguments["crates"] = [{"root": "main.rs", "features": ["original_context"]}]
                 if outcome == "unsupported_alias":
                     rejected = call(arguments, ok=False)
-                    assert rejected["error"] == "rust-analyzer rejected the request", rejected
+                    assert rejected["error"] == 'rust-analyzer rejected textDocument/prepareRename (-32602): "Renaming aliases is currently unsupported"', rejected
                     assert "rename_set" not in rejected and "handle" not in rejected
                     assert not (root / ".ffsake").exists()
                     assert {p.name: p.read_bytes() for p in root.iterdir()} == {p: s.encode() for p, s in sources.items()}

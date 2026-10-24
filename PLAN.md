@@ -194,7 +194,11 @@ The committed inspection feature f5ec0b3 passed the full-repository equivalence,
 
 The interactive Claude launcher now accepts --tool-profile all|core, sharing catalog arguments, approvals and guidance with the harness. Its core launch checks the selected custom binary's catalog before starting Claude; dry-run remains configuration-only. Fake-CLI tests cover catalog mismatch prevention, actual core configuration, working directory, temporary-config lifetime and exit status without model calls. The README's stale fixed tool count was replaced with the selected-profile contract.
 
-Next: complete launcher validation, commit it separately, and publish after inspection CI passes. Keep subsequent work driven by observed workflow gaps; no additional model run is authorized by the earlier single-run approval. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Launcher validation passed all 76 model-free Python tests and the change is committed separately as 44d1d4d, pending inspection CI.
+
+Native rejection messages now retain the method, signed error code and bounded quoted reason, addressing the observed opaque alias-rename failure. Invalid/oversized messages use fixed fallbacks; arbitrary backend data is withheld. All 104 Rust tests, Clippy, the real rename matrix and controlled failure/recovery/process-cleanup checks pass.
+
+Next: publish queued commits after inspection CI passes. Audit active guidance for stale descriptions of explicit crate context and catalog profiles, preserving historical measurement statements. Keep subsequent work driven by observed workflow gaps; no additional model run is authorized by the earlier single-run approval. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

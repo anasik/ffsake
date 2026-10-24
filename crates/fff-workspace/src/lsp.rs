@@ -54,6 +54,22 @@ fn read_frame(reader: &mut impl BufRead, total: &mut usize) -> io::Result<Value>
     serde_json::from_slice(&bytes).map_err(|_| invalid())
 }
 
+fn backend_error(method: &str, error: &Value) -> String {
+    let code = error["code"]
+        .as_i64()
+        .and_then(|code| i32::try_from(code).ok());
+    match (code, error["message"].as_str()) {
+        (Some(code), Some(message)) if message.len() <= 1024 => {
+            // Debug quoting escapes control characters; arbitrary error.data is never forwarded.
+            format!("rust-analyzer rejected {method} ({code}): {message:?}")
+        }
+        (Some(code), Some(_)) => {
+            format!("rust-analyzer rejected {method} ({code}): backend message exceeds 1024 bytes")
+        }
+        _ => format!("rust-analyzer rejected {method}: invalid backend error response"),
+    }
+}
+
 struct Client {
     child: Child,
     outgoing: SyncSender<WriteRequest>,
@@ -172,7 +188,7 @@ impl Client {
             let message = self.receive()?;
             if message.get("method").is_none() && message["id"].as_u64() == Some(id) {
                 if message.get("error").is_some() {
-                    return Err("rust-analyzer rejected the request".into());
+                    return Err(backend_error(method, &message["error"]).into());
                 }
                 return message
                     .get("result")
@@ -884,6 +900,51 @@ fn scoped_ranges(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn backend_rejections_expose_bounded_reason_without_error_data() {
+        let report = backend_error(
+            "textDocument/prepareRename",
+            &json!({
+            "code":-32602,"message":"Renaming aliases is currently unsupported",
+            "data":{"private":"must not escape"}}),
+        );
+        assert_eq!(
+            report,
+            "rust-analyzer rejected textDocument/prepareRename (-32602): \"Renaming aliases is currently unsupported\""
+        );
+        assert!(!report.contains("must not escape"));
+        let controls = backend_error(
+            "textDocument/hover",
+            &json!({"code":-1,"message":"a\nb\u{1b}[31m"}),
+        );
+        assert!(!controls.contains('\n') && !controls.contains('\u{1b}'));
+        assert!(controls.contains("\\n") && controls.contains("\\u{1b}"));
+    }
+
+    #[test]
+    fn backend_message_budget_counts_utf8_without_truncating() {
+        let exact = "é".repeat(512);
+        assert!(backend_error("hover", &json!({"code":-1,"message":exact})).contains(&exact));
+        let oversized = backend_error("hover", &json!({"code":-1,"message":"é".repeat(513)}));
+        assert!(oversized.contains("exceeds 1024 bytes") && !oversized.contains('é'));
+    }
+
+    #[test]
+    fn malformed_backend_error_never_forwards_payload() {
+        for value in [
+            Value::Null,
+            json!([]),
+            json!({"code":"bad","message":"private"}),
+            json!({"code":1.5,"message":"private"}),
+            json!({"code":i64::MAX,"message":"private"}),
+            json!({"code":-1,"message":{"private":"data"}}),
+        ] {
+            let report = backend_error("hover", &value);
+            assert!(report.contains("invalid backend error response"));
+            assert!(!report.contains("private"));
+        }
+    }
     use std::io::Cursor;
 
     #[test]

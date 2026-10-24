@@ -71,11 +71,13 @@ while True:
     elif message.get("method") == "textDocument/rename":
         pathlib.Path(os.environ["FFSAKE_LSP_TEST_SOURCE"]).write_text("fn external_change() {}")
         send({"id":message["id"],"result":None})
+    elif mode == "backend_error" and message.get("method") == "textDocument/references":
+        send({"id":message["id"],"error":{"code":-32602,"message":"unsupported fixture query","data":{"private":"hidden backend detail"}}})
     elif message.get("method") == "textDocument/references":
         pathlib.Path(os.environ["FFSAKE_LSP_TEST_SOURCE"]).write_text("fn external_change() {}")
         send({"id":message["id"],"result":None})
 '''
-    for mode in ["malformed", "stale", "timeout", "rename_stale", "rename_null", "rename_bad_range", "rename_unsupported", "batch_stale", "batch_bad_second", "inspect_stale", "inspect_bad_hover", "inspect_hover_overflow", "inspect_limit", "inspect_duplicate_limit"]:
+    for mode in ["malformed", "stale", "timeout", "rename_stale", "rename_null", "rename_bad_range", "rename_unsupported", "batch_stale", "batch_bad_second", "inspect_stale", "inspect_bad_hover", "inspect_hover_overflow", "inspect_limit", "inspect_duplicate_limit", "backend_error"]:
         with tempfile.TemporaryDirectory(prefix="ffsake-lsp-failure-") as temp:
             directory = Path(temp)
             root = directory / "workspace"
@@ -123,6 +125,10 @@ while True:
             failed = json.loads(responses[0]["result"]["content"][0]["text"])
             recovered = json.loads(responses[1]["result"]["content"][0]["text"])
             assert failed["ok"] == (mode == "rename_null") and recovered["ok"] is True, (mode, failed, recovered)
+            if mode == "backend_error":
+                assert failed["error"] == 'rust-analyzer rejected textDocument/references (-32602): "unsupported fixture query"'
+                assert "hidden backend detail" not in json.dumps(failed)
+                assert not (root / ".ffsake").exists()
             if mode == "rename_null":
                 assert failed["result"]["prepared"] is None and failed["result"]["proposal"] is None, failed
             if mode.startswith("batch_"):
