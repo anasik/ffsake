@@ -6,6 +6,7 @@ import os
 import json
 from pathlib import Path
 import select
+import statistics
 import subprocess
 import sys
 import tarfile
@@ -23,6 +24,7 @@ def main():
     repo = Path(__file__).resolve().parents[1]
     binary = Path(sys.argv[1] if len(sys.argv) > 1 else repo / "target/debug/ffsake-mcp").resolve()
     verify_rename = "--verify-rename" in sys.argv[2:]
+    diagnostic_iterations = 5 if "--measure-diagnostics" in sys.argv[2:] else 1
     rename_evidence = None
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
     archive = subprocess.check_output(["git", "archive", revision], cwd=repo)
@@ -95,6 +97,41 @@ def main():
                 "position": position(original[resident].decode(), "MAX_HANDLES"), "max_bytes": 4096})
             hover_text = "\n".join(part["text"] for part in hover["hover"]["contents"])
             assert "usize" in hover_text and "128" in hover_text, hover
+            diagnostic_paths = [coordinates, prefix + "edits.rs"]
+            diagnostic_samples = []
+            for iteration in range(diagnostic_iterations):
+                def batch_reports():
+                    report = call("ffsake_rust_workspace_diagnostics", {**common,
+                        "paths": diagnostic_paths, "limit": 1000})
+                    return report, calls[-1]["seconds"]
+
+                def individual_reports():
+                    reports = []
+                    seconds = 0
+                    for path in diagnostic_paths:
+                        report = call("ffsake_rust_diagnostics", {**common, "path": path, "limit": 1000})
+                        assert report["compiler_checked"] is False
+                        reports.append({key: report[key] for key in ("path", "diagnostics", "diagnostic_count", "text_bytes")})
+                        seconds += calls[-1]["seconds"]
+                    return reports, round(seconds, 3)
+
+                # Alternate request order in the optional repeated measurement.
+                if iteration % 2 == 0:
+                    batch, batch_seconds = batch_reports()
+                    singles, single_seconds = individual_reports()
+                else:
+                    singles, single_seconds = individual_reports()
+                    batch, batch_seconds = batch_reports()
+                assert batch["reports"] == singles, "batch differs from individual native reports"
+                assert batch["compiler_checked"] is False and batch["file_count"] == len(diagnostic_paths)
+                assert batch["diagnostic_count"] == sum(report["diagnostic_count"] for report in singles)
+                assert batch["text_bytes"] == sum(report["text_bytes"] for report in singles)
+                diagnostic_samples.append({"batch_seconds": batch_seconds, "individual_seconds": single_seconds})
+            diagnostic_evidence = {"selected_files": diagnostic_paths, "context_files": len(files),
+                "reports_identical": True, "diagnostics": batch["diagnostic_count"], "text_bytes": batch["text_bytes"],
+                "batch_requests": 1, "individual_requests": len(diagnostic_paths), "samples": diagnostic_samples,
+                "batch_median_seconds": statistics.median(item["batch_seconds"] for item in diagnostic_samples),
+                "individual_median_seconds": statistics.median(item["individual_seconds"] for item in diagnostic_samples)}
             at = position(source, "let mut units = 0u32;")
             at["column"] += len("let mut ")
             report = call("ffsake_rust_code_actions", {**common, "path": coordinates,
@@ -198,8 +235,8 @@ def main():
     print(json.dumps({"snapshot_revision": revision, "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "rust_files": len(files), "rust_bytes": sum(len(original[path]) for path in files), "explicit_crates": len(crates),
         "references": references["matches"], "reference_files": len(paths), "outline_symbols": outline["symbol_count"],
-        "byte_history_passed": True, "rename_evidence": rename_evidence, "calls": calls, "model_calls": 0,
-        "timing_is_single_model_free_sample": True, "complete_analysis": False}, indent=2))
+        "byte_history_passed": True, "rename_evidence": rename_evidence, "diagnostic_evidence": diagnostic_evidence, "calls": calls, "model_calls": 0,
+        "timing_is_single_model_free_sample": diagnostic_iterations == 1, "complete_analysis": False}, indent=2))
 
 
 if __name__ == "__main__":

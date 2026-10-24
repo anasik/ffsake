@@ -168,7 +168,9 @@ Explicit external-macro regression now compiles a real helper rlib and compares 
 
 Workspace diagnostics now collect selected primary file reports in one fresh analyzer session with shared count/text/time budgets. Optional paths selects reports while all supplied files remain hash-checked context; clean files are included. Real-server reports match individual queries, and controlled-server checks reject malformed later reports and changed unqueried sources. The full dependency-incomplete repository exceeds the 1000-diagnostic batch cap, so report selection is supported without loosening limits. The shared catalog contains thirty tools.
 
-Next: evaluate selected-file diagnostic batches against individual queries on the full repository archive, recording report equivalence, request count and separate model-free timings. Preserve incomplete-analysis and compiler-validation distinctions, and retain all aggregate limits. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Selected diagnostic evaluation at 59c0db9 retained all 24 source files and produced identical reports for coordinates.rs/edits.rs (65 diagnostics, 3579 text bytes). Five alternating local samples measured 0.480 s median for one batch versus 0.954 s for two individual requests. CI checks report equivalence with no timing threshold; these are model-free, dependency-incomplete observations, not agent speed or compiler accuracy claims.
+
+Next: audit the expanded MCP catalog cost for non-Rust maintenance tasks and, if materially smaller, add an explicit core tool profile while preserving the default full catalog and rejecting disabled calls. Keep benchmark/profile evidence separate from token-cost or agent-speed claims; do not modify the user’s local benchmark changes or restart paused OpenCode work. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;
