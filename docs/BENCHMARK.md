@@ -281,3 +281,9 @@ Implementation navigation is verified against a locally declared trait with impl
 
 
 Hover/type integration covers a locally inferred `u32` binding and a documented `u32` → `u64` function signature. Returned hover ranges preserve original bytes after emoji and CRLF; text budgets count UTF-8 bytes across normalized content parts. The empty-file case returns a null hover, while oversized content and invalid limits/schema reject. Unit checks cover markdown/plaintext/code formats, optional ranges and malformed content. Documentation remains untrusted source data, and omitted dependencies/features still prevent completeness or compiler-validity claims.
+
+## Full repository Rust analysis — model-free check
+
+`scripts/repository_lsp_smoke.py` archives the committed revision into a disposable workspace and supplies all tracked Rust sources as three explicit local crates (library and two binaries). At `e2fe458`, this covered 23 Rust files / 372,466 bytes. References to `Utf16Position` produced 19 ranges across six files; definition, outline (53 symbols) and local constant hover checks passed. A native explicit-type action was previewed, applied and undone/redone with byte-exact whole-snapshot checks and frozen analysis-context metadata.
+
+The local sample took 0.469–0.826 seconds for each of its five analysis requests, 0.196 seconds for the parser-checked preview and 0.017 seconds for apply. These are single model-free observations, not a repeated agent comparison or a general performance claim. Dependencies outside the declared local graph and sysroot remain omitted, `complete=false` is asserted, and the actual repository checkout is never edited by this probe. CI now repeats the correctness/history checks; timings and source counts may vary with the committed revision.
