@@ -1,4 +1,8 @@
-# FFSAKE: execution handoff to Claude Code
+# FFSAKE: execution handoff to a local coding agent
+
+> Continuation rule: follow the root AGENTS.md. Successful CI completes a milestone, not this ongoing assignment. Continue with the next actionable PLAN.md item in the same session. This file applies to Codex as well as Claude Code.
+>
+> State update: multi-file reads and their diagnostic are complete at 5e14596. The numbered steps below are historical context; do not reimplement them or duplicate completed benchmark runs. Read the current PLAN.md, source and local reports for the next action. The current next area is larger real-repository workflows, with further interface work driven by concrete findings.
 
 You are taking over active development of `anasik/ffsake` on Anas's Mac. This is an instruction to continue the work, not a request for a plan. Read the repository's applicable instructions and current source, then execute the next task below.
 
@@ -8,8 +12,8 @@ You are taking over active development of `anasik/ffsake` on Anas's Mac. This is
 - Preserve unrelated local changes. Inspect git status, branch and worktrees before touching anything. Never reset, clean, force-push or discard work to make the tree convenient. The old `../ffsake-pilot` worktree may still contain the original permission-fix edits; do not overwrite or reapply them blindly.
 - Resolve ordinary implementation choices yourself. Ask only for a genuinely missing decision or destructive action beyond the authorized scope. Tool-enforced permission prompts may still apply.
 - Use FFSAKE MCP for repository reading/search/editing when available. Shell is explicitly authorized for builds, tests, benchmark orchestration, report analysis and Git. If FFSAKE is unavailable in this session, native repository tools are also authorized to finish this handoff; do not stop merely because a tool is missing.
-- Use a normal Claude Code session for this work. `scripts/ffsake_claude.py` deliberately disables native tools for constrained editor pilots and is unsuitable for independently running Cargo and Git.
-- Send short updates while work runs. Poll started CI and benchmark processes through completion. End with the result, validation, commit and any actual blocker or action Anas must take. Do not end by announcing an actionable next step you could perform yourself.
+- Use a normal local Codex or Claude Code development session for this work. `scripts/ffsake_claude.py` deliberately disables native tools for constrained editor pilots and is unsuitable for independently running Cargo and Git.
+- Send short updates while work runs. Poll started CI and benchmark processes through completion. After a green commit, report the checkpoint briefly and continue the next actionable roadmap item. End only for a real stopping condition described in AGENTS.md; include validation, commit and the exact blocker or user action then.
 - Do not add Codex coauthor attribution. Avoid unrelated new features. JEV and a new coding harness are parked. OpenCode benchmarking is paused; use Claude and Codex.
 
 ## Verified state at handoff, 2026-10-24
@@ -63,7 +67,7 @@ Claude baseline implemented the task correctly. Its own Python CLI tests created
 
 The `maintenance` task begins with a runnable Python CLI, then requires code/config/README edits, a byte-preserving move and copy, a deletion and a new file. The host verifier has 26 checks covering file set, preserved bytes, defaults, retired/new config keys and strict integer/range validation in separate CLI processes. Only its two requested deletions are allowlisted. Existing default tasks remain `micro,medium,app`; opt into maintenance explicitly.
 
-## Execute next
+## Initial assignment (completed; consult current PLAN.md)
 
 1. Inspect git state and any reports newer than the diagnostic above. A three-repetition maintenance comparison was requested but no resulting report has been seen in this handoff. If it exists, analyze it; do not duplicate it. Check for an already running suite before launching another.
 2. If no completed post-fix report exists and no suite is running, build and run the already-authorized comparison locally:
