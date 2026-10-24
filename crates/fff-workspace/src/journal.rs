@@ -677,24 +677,12 @@ fn atomic_write_with_mode(
         .and_then(|name| name.to_str())
         .unwrap_or("snapshot");
     let temp = parent.join(format!(".{name}.ffsake-journal-tmp-{}", std::process::id()));
-    fs::write(&temp, bytes)?;
-    match fs::metadata(path) {
-        Ok(metadata) => fs::set_permissions(&temp, metadata.permissions())?,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            #[cfg(unix)]
-            if let Some(mode) = recreate_mode {
-                use std::os::unix::fs::PermissionsExt;
-                // Never restore setuid/setgid/sticky flags from a manifest.
-                fs::set_permissions(&temp, fs::Permissions::from_mode(mode & 0o777))?;
-            }
-            #[cfg(not(unix))]
-            let _ = recreate_mode;
-        }
-        Err(error) => return Err(error.into()),
-    }
-    let mode = unix_mode(&temp)?;
-    fs::rename(temp, path)?;
-    Ok(mode)
+    Ok(crate::atomic::replace_file(
+        path,
+        &temp,
+        bytes,
+        recreate_mode,
+    )?)
 }
 
 #[cfg(test)]
@@ -1244,5 +1232,30 @@ mod tests {
         assert!(journal.undo(&manifest.id).is_err());
         assert_eq!(fs::read(root.join("src/lib.rs")).unwrap(), b"after");
         fs::remove_dir_all(root).unwrap();
+    }
+    #[cfg(unix)]
+    #[test]
+    fn preexisting_temporary_symlink_cannot_redirect_atomic_write() {
+        use std::os::unix::fs::symlink;
+        let root = fixture();
+        let other = fixture();
+        let path = root.join("src/lib.rs");
+        let temp = root
+            .join("src")
+            .join(format!(".lib.rs.ffsake-journal-tmp-{}", std::process::id()));
+        let sentinel = other.join("sentinel");
+        fs::write(&sentinel, b"external sentinel").unwrap();
+        symlink(&sentinel, &temp).unwrap();
+        assert!(atomic_write(&path, b"must not escape").is_err());
+        assert_eq!(fs::read(&sentinel).unwrap(), b"external sentinel");
+        assert_eq!(fs::read(&path).unwrap(), b"before");
+        assert!(
+            fs::symlink_metadata(&temp)
+                .unwrap()
+                .file_type()
+                .is_symlink()
+        );
+        fs::remove_dir_all(root).unwrap();
+        fs::remove_dir_all(other).unwrap();
     }
 }

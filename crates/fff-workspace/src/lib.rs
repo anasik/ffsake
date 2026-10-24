@@ -4,6 +4,7 @@ use std::fs;
 use std::io;
 use std::path::{Component, Path, PathBuf};
 
+mod atomic;
 pub mod coordinates;
 pub mod edits;
 mod file_ops;
@@ -378,8 +379,7 @@ impl Workspace {
         }
 
         let tmp = temp_sibling(&path);
-        fs::write(&tmp, text.as_bytes())?;
-        fs::rename(&tmp, &path)?;
+        atomic::replace_file(&path, &tmp, text.as_bytes(), None)?;
         Ok(())
     }
 
@@ -1267,6 +1267,45 @@ mod tests {
         ));
 
         assert!(root.exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[cfg(unix)]
+    #[test]
+    fn direct_writes_reject_temporary_aliases_and_preserve_permissions() {
+        use std::os::unix::fs::{PermissionsExt, symlink};
+        let root = fixture();
+        let ws = Workspace::new(&root).unwrap();
+        let path = root.join("src/lib.rs");
+        let sentinel = root.join("sentinel");
+        fs::write(&sentinel, b"untouched").unwrap();
+        let temp = temp_sibling(&path);
+        symlink(&sentinel, &temp).unwrap();
+        assert!(ws.write_text("src/lib.rs", "bad").is_err());
+        assert_eq!(fs::read(&sentinel).unwrap(), b"untouched");
+        fs::remove_file(&temp).unwrap();
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).unwrap();
+        ws.write_text("src/lib.rs", "safe").unwrap();
+        assert_eq!(fs::read(&path).unwrap(), b"safe");
+        assert_eq!(
+            fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+            0o700
+        );
+        assert!(!temp.exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn direct_writes_preserve_temporary_collisions_and_reject_root() {
+        let root = fixture();
+        let ws = Workspace::new(&root).unwrap();
+        let path = root.join("src/lib.rs");
+        let temp = temp_sibling(&path);
+        fs::write(&temp, b"unrelated temporary file").unwrap();
+        assert!(ws.write_text("src/lib.rs", "bad").is_err());
+        assert_eq!(fs::read(&temp).unwrap(), b"unrelated temporary file");
+        assert_eq!(fs::read(&path).unwrap(), b"one\ntwo\nthree\n");
+        assert!(ws.write_text(".", "bad").is_err());
+        assert!(root.is_dir());
         fs::remove_dir_all(root).unwrap();
     }
 }

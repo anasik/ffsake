@@ -116,7 +116,9 @@ History failure evaluation reproduced partial undo when a later atomic write fai
 
 Persisted history now preflights both snapshot sides and verifies each hash again at use; missing/corrupt data rejects before workspace writes. Journal loads validate transaction identity, snapshot keys are bound to their original paths, and manifest/snapshot symlink components are rejected. Tests cover both directions, recovery data, repair-and-retry, malformed identity/keys and symlinked journal paths. Local validation passed 63 Rust tests, 57 Python tests and the full executable/MCP/repository checks.
 
-Next: check atomic-write temporary-file creation for pre-existing aliases or collisions, then reconcile the resident interface documentation with the completed capabilities. These changes provide ordinary error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Atomic-write probing reproduced a pre-existing temporary symlink redirecting bytes outside the target. Direct workspace writes and journal replay now share exclusive temporary-file creation, reject existing collisions without touching them, apply private-file permissions before writing content, and clean up owned temporary files after failure. The resident interface documentation now includes batch reads, mixed file previews and history guarantees.
+
+Next: implement the planned case-preserving textual rename as a bounded transform primitive, with explicit matching/count semantics and compatibility with guarded preview/apply. Keep syntax-aware rename distinct until parser integration. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

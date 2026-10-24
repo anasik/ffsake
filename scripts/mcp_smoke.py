@@ -281,6 +281,18 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         call("ffsake_apply", {"handle": stale["handle"]}, expect_ok=False)
         assert (root / "code.py").read_text() == "external code edit\n"
         assert (root / "a.txt").read_text() == "external edit must survive\n"
+        # A pre-existing temporary symlink must never redirect a write.
+        collision = root / f".collision.txt.ffsake-journal-tmp-{proc.pid}"
+        collision.symlink_to(outside)
+        collision_plan = call("ffsake_preview_create", {"path": "collision.txt", "content": "must not escape"})
+        call("ffsake_apply", {"handle": collision_plan["handle"]}, expect_ok=False)
+        assert outside.read_text() == "outside-only-secret\n"
+        assert not (root / "collision.txt").exists()
+        assert collision.is_symlink()
+        collision.unlink()
+        call("ffsake_apply", {"handle": collision_plan["handle"]})
+        assert (root / "collision.txt").read_text() == "must not escape"
+
         # A failed later undo/redo write must restore earlier members.
         (root / "history-first.txt").write_text("before first")
         (root / "history-second.txt").write_text("before second")
