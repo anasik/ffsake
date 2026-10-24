@@ -25,6 +25,7 @@ def main():
     binary = Path(sys.argv[1] if len(sys.argv) > 1 else repo / "target/debug/ffsake-mcp").resolve()
     verify_rename = "--verify-rename" in sys.argv[2:]
     diagnostic_iterations = 5 if "--measure-diagnostics" in sys.argv[2:] else 1
+    inspection_iterations = 5 if "--measure-inspection" in sys.argv[2:] else 1
     rename_evidence = None
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
     archive = subprocess.check_output(["git", "archive", revision], cwd=repo)
@@ -97,6 +98,43 @@ def main():
                 "position": position(original[resident].decode(), "MAX_HANDLES"), "max_bytes": 4096})
             hover_text = "\n".join(part["text"] for part in hover["hover"]["contents"])
             assert "usize" in hover_text and "128" in hover_text, hover
+            inspection_samples = []
+            inspection_arguments = {**common, "path": coordinates, "position": declaration}
+            for iteration in range(inspection_iterations):
+                def combined_inspection():
+                    report = call("ffsake_rust_inspect", {**inspection_arguments, "limit": 1000})
+                    assert report["compiler_checked"] is False
+                    return report, calls[-1]["seconds"]
+
+                def individual_inspection():
+                    reports = {}
+                    seconds = 0
+                    for name in ("definition", "references", "hover"):
+                        bounds = {"max_bytes": 8192} if name == "hover" else {"limit": 1000}
+                        report = call("ffsake_rust_" + name, {**inspection_arguments, **bounds})
+                        assert report["file_hashes"] == references["file_hashes"]
+                        assert report["analysis_context"] == references["analysis_context"]
+                        fields = ("path", "hover", "text_bytes") if name == "hover" else ("ranges", "matches")
+                        reports[name] = {key: report[key] for key in fields}
+                        seconds += calls[-1]["seconds"]
+                    return reports, round(seconds, 3)
+
+                if iteration % 2 == 0:
+                    inspection, combined_seconds = combined_inspection()
+                    separate, separate_seconds = individual_inspection()
+                else:
+                    separate, separate_seconds = individual_inspection()
+                    inspection, combined_seconds = combined_inspection()
+                assert {key: inspection[key] for key in separate} == separate
+                assert inspection["file_hashes"] == references["file_hashes"]
+                assert inspection["analysis_context"] == references["analysis_context"]
+                assert inspection["location_count"] == separate["definition"]["matches"] + separate["references"]["matches"]
+                inspection_samples.append({"combined_seconds": combined_seconds, "individual_seconds": separate_seconds})
+            inspection_evidence = {"context_files": len(files), "reports_identical": True,
+                "locations": inspection["location_count"], "hover_text_bytes": inspection["hover"]["text_bytes"],
+                "combined_requests": 1, "individual_requests": 3, "samples": inspection_samples,
+                "combined_median_seconds": statistics.median(item["combined_seconds"] for item in inspection_samples),
+                "individual_median_seconds": statistics.median(item["individual_seconds"] for item in inspection_samples)}
             diagnostic_paths = [coordinates, prefix + "edits.rs"]
             diagnostic_samples = []
             for iteration in range(diagnostic_iterations):
@@ -235,8 +273,8 @@ def main():
     print(json.dumps({"snapshot_revision": revision, "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "rust_files": len(files), "rust_bytes": sum(len(original[path]) for path in files), "explicit_crates": len(crates),
         "references": references["matches"], "reference_files": len(paths), "outline_symbols": outline["symbol_count"],
-        "byte_history_passed": True, "rename_evidence": rename_evidence, "diagnostic_evidence": diagnostic_evidence, "calls": calls, "model_calls": 0,
-        "timing_is_single_model_free_sample": diagnostic_iterations == 1, "complete_analysis": False}, indent=2))
+        "byte_history_passed": True, "rename_evidence": rename_evidence, "diagnostic_evidence": diagnostic_evidence, "inspection_evidence": inspection_evidence, "calls": calls, "model_calls": 0,
+        "timing_is_single_model_free_sample": diagnostic_iterations == 1 and inspection_iterations == 1, "complete_analysis": False}, indent=2))
 
 
 if __name__ == "__main__":

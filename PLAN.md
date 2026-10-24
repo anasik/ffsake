@@ -186,7 +186,11 @@ Native shorthand-rename regression now verifies exact field/local/pattern bindin
 
 Imported-definition rename now has raw-LSP and MCP coverage showing that local aliases remain unchanged and external compilation/runtime/history pass. Alias renaming itself is rejected by the tested native analyzer; regression checks require unchanged source, no handle and no journal state. No textual fallback was added.
 
-Next: publish the shorthand and import-alias regressions and verify their exact CI result before extending native-analysis context or behavior. The profile-adoption question is answered; do not repeat paid runs without a new question and authorization. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
+Shorthand and import-alias regressions were pushed separately through 2656a9b and their exact CI run passed.
+
+Combined symbol inspection now collects definition, references and hover at one position in one fresh analyzer session. Location entries share the caller's 1..1000 limit before deduplication, hover has an 8192-byte cap, and all input hashes/time/transport guards remain shared. Real-server equivalence, empty results and controlled late-malformed/overflow/stale-context failures pass. Full catalog has 31 tools; core remains 18. Five alternating model-free samples on the 2656a9b source archive returned identical 23 locations/296 hover bytes, with medians 0.506 s combined versus 1.516 s for three individual requests. This is not an agent-performance claim.
+
+Next: validate the committed inspection feature against the full repository/compiler regression, push and verify exact CI. Then audit the existing local Claude launcher for consistency with the now-supported profiles and tool catalog; keep any changes scoped to actual configuration gaps and validate without additional model calls. Reliability checks remain application-level error recovery, not crash-proof transactions or an adversarial filesystem sandbox.
 
 Remaining gaps:
 - build/test/runtime execution remains external;

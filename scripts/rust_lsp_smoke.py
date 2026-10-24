@@ -43,6 +43,19 @@ while True:
         send({"id":message["id"],"result":{"capabilities":capabilities}})
     elif message.get("method") == "initialized":
         send({"method":"experimental/serverStatus","params":{"health":"ok","quiescent":True}})
+    elif mode.startswith("inspect_") and message.get("method") in ("textDocument/definition", "textDocument/references", "textDocument/hover"):
+        diagnostic_requests += 1
+        pathlib.Path(os.environ["FFSAKE_LSP_TEST_REQUESTS"]).write_text(str(diagnostic_requests))
+        location = {"uri":message["params"]["textDocument"]["uri"], "range":{"start":{"line":0,"character":3},"end":{"line":0,"character":7}}}
+        if message["method"] == "textDocument/definition":
+            result = [location, location] if mode == "inspect_duplicate_limit" else location
+        elif message["method"] == "textDocument/references":
+            result = [location]
+        else:
+            if mode == "inspect_stale":
+                pathlib.Path(os.environ["FFSAKE_LSP_TEST_SOURCE"]).write_text("fn external_change() {}")
+            result = {"contents":{"kind":"html","value":"bad"}} if mode == "inspect_bad_hover" else {"contents":"x" * 8193} if mode == "inspect_hover_overflow" else None
+        send({"id":message["id"],"result":result})
     elif message.get("method") == "textDocument/diagnostic":
         diagnostic_requests += 1
         pathlib.Path(os.environ["FFSAKE_LSP_TEST_REQUESTS"]).write_text(str(diagnostic_requests))
@@ -62,7 +75,7 @@ while True:
         pathlib.Path(os.environ["FFSAKE_LSP_TEST_SOURCE"]).write_text("fn external_change() {}")
         send({"id":message["id"],"result":None})
 '''
-    for mode in ["malformed", "stale", "timeout", "rename_stale", "rename_null", "rename_bad_range", "rename_unsupported", "batch_stale", "batch_bad_second"]:
+    for mode in ["malformed", "stale", "timeout", "rename_stale", "rename_null", "rename_bad_range", "rename_unsupported", "batch_stale", "batch_bad_second", "inspect_stale", "inspect_bad_hover", "inspect_hover_overflow", "inspect_limit", "inspect_duplicate_limit"]:
         with tempfile.TemporaryDirectory(prefix="ffsake-lsp-failure-") as temp:
             directory = Path(temp)
             root = directory / "workspace"
@@ -91,6 +104,14 @@ while True:
                 del request["params"]["arguments"]["position"]
                 if mode == "batch_stale":
                     request["params"]["arguments"]["paths"] = ["empty.rs"]
+            if mode.startswith("inspect_"):
+                (root / "context.rs").write_text("fn context() {}")
+                request["params"]["name"] = "ffsake_rust_inspect"
+                request["params"]["arguments"].update(files=["main.rs", "context.rs"])
+                if mode in ("inspect_limit", "inspect_duplicate_limit"):
+                    request["params"]["arguments"]["limit"] = 1 if mode == "inspect_limit" else 2
+                if mode == "inspect_stale":
+                    env["FFSAKE_LSP_TEST_SOURCE"] = str(root / "context.rs")
             # A second ordinary request verifies resident recovery after the failure.
             read = {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {
                 "name": "ffsake_read", "arguments": {"path": "main.rs"}}}
@@ -107,6 +128,14 @@ while True:
             if mode.startswith("batch_"):
                 assert (directory / "requests").read_text() == ("1" if mode == "batch_stale" else "2")
                 assert "result" not in failed
+            if mode.startswith("inspect_"):
+                assert (directory / "requests").read_text() == ("2" if mode in ("inspect_limit", "inspect_duplicate_limit") else "3")
+                assert "result" not in failed and not (root / ".ffsake").exists()
+                if mode == "inspect_stale":
+                    assert "source changed" in failed["error"]
+                    assert (root / "context.rs").read_text() == "fn external_change() {}"
+                else:
+                    assert (root / "context.rs").read_text() == "fn context() {}"
             if mode in ("stale", "rename_stale", "batch_stale"):
                 assert "source changed" in failed["error"], failed
                 assert path.read_text() == "fn external_change() {}"
@@ -184,6 +213,20 @@ def main():
             assert (root / "other.rs").read_text() == other
             assert {p.name for p in root.iterdir()} <= {"main.rs", "other.rs", ".ffsake"}
             base = {**args, "position": first_position}
+            inspection = call({**base, "limit": 4}, name="ffsake_rust_inspect")
+            assert inspection["query"] == "inspect" and inspection["complete"] is False
+            assert inspection["compiler_checked"] is False and "handle" not in inspection
+            assert inspection["location_count"] == 4
+            assert inspection["definition"] == {key: definition[key] for key in ("ranges", "matches")}
+            assert inspection["references"] == {key: result[key] for key in ("ranges", "matches")}
+            hover_args = {key: value for key, value in base.items() if key != "limit"}
+            hover = call({**hover_args, "max_bytes": 8192}, name="ffsake_rust_hover")
+            assert inspection["hover"] == {key: hover[key] for key in ("path", "hover", "text_bytes")}
+            assert inspection["file_hashes"] == result["file_hashes"] == hover["file_hashes"]
+            assert inspection["analysis_context"] == result["analysis_context"]
+            for changes in ({"limit": 3}, {"limit": 0}, {"limit": 1001}, {"files": []},
+                            {"files": ["main.rs", "./main.rs"]}, {"path": "../outside.rs"}):
+                call({**base, **changes}, ok=False, name="ffsake_rust_inspect")
             for changes in [{"limit": 1}, {"limit": 0}, {"limit": 1001}, {"files": []},
                             {"files": ["main.rs", "./main.rs"]}, {"edition": "2030"},
                             {"path": "missing.rs"}, {"crate_root": "missing.rs"},
@@ -212,6 +255,11 @@ def main():
                 "position": {"line": 1, "column": 4}}, name="ffsake_rust_definition")
             assert empty["ranges"] == [{"path": "empty.rs", "start_byte": 0, "end_byte": 0, "line": 1}]
             assert (root / "main.rs").read_text() == source and (root / "empty.rs").read_bytes() == b""
+            empty_inspection = call({**base, "files": ["empty.rs"], "crate_root": "empty.rs",
+                "path": "empty.rs", "position": {"line": 1, "column": 0}}, name="ffsake_rust_inspect")
+            assert empty_inspection["location_count"] == 0
+            assert empty_inspection["definition"]["ranges"] == empty_inspection["references"]["ranges"] == []
+            assert empty_inspection["hover"]["hover"] is None
             source = ("/* 🚀 */ mod nested {\r\n"
                       "    pub struct Account { pub amount: i32 }\r\n"
                       "    impl Account { pub fn value(&self) -> i32 { self.amount } }\r\n"
@@ -533,7 +581,7 @@ def main():
             proc.stderr.close()
         assert proc.returncode == 0, proc.returncode
     failure_checks(binary)
-    print("MCP Rust navigation: references/definitions/implementations, symbols, hover/types, single/workspace native diagnostics, code-action discovery/guarded previews/history, explicit crate graph/features/cfg, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
+    print("MCP Rust navigation: references/definitions/implementations, combined inspection, symbols, hover/types, single/workspace native diagnostics, code-action discovery/guarded previews/history, explicit crate graph/features/cfg, UTF-16/CRLF, bounds, stale rejection, malformed/timeout recovery and child cleanup PASS")
 
 
 if __name__ == "__main__":

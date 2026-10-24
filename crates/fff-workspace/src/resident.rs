@@ -60,6 +60,16 @@ pub enum Request {
         crates: Vec<crate::lsp::CrateSpec>,
         limit: usize,
     },
+    RustInspect {
+        files: Vec<String>,
+        crate_root: String,
+        path: String,
+        position: crate::coordinates::TextPosition,
+        edition: String,
+        #[serde(default)]
+        crates: Vec<crate::lsp::CrateSpec>,
+        limit: usize,
+    },
     RustDefinition {
         files: Vec<String>,
         crate_root: String,
@@ -460,6 +470,26 @@ impl Resident {
                 crates,
                 limit,
             } => crate::lsp::rust_references(
+                self.session.workspace(),
+                &files,
+                &crate_root,
+                &path,
+                position,
+                crate::lsp::RustContext {
+                    edition: &edition,
+                    crates: &crates,
+                },
+                limit,
+            ),
+            Request::RustInspect {
+                files,
+                crate_root,
+                path,
+                position,
+                edition,
+                crates,
+                limit,
+            } => crate::lsp::rust_inspect(
                 self.session.workspace(),
                 &files,
                 &crate_root,

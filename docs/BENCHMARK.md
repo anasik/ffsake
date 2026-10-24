@@ -317,3 +317,10 @@ The approved core-profile Codex maintenance diagnostic at `a807c4f` passed 26/26
 New reports also include provenance: the source revision, SHA-256 hashes of both benchmark scripts and the MCP executable, plus each run's exact submitted task/guidance prompt hash and initial task-file manifest. The manifest is sorted and independent of the disposable root; it records relative paths, file/symlink kind, permission bits and content hashes before runner configuration or edits. Symlinks are hashed by target spelling without reading their targets. Harness control directories remain outside the task-file manifest, as in the verifier.
 
 A source revision alone does not identify local modifications; the script hashes distinguish those inputs. Binary/source equivalence remains explicitly unverified. These identities do not include inherited agent configuration, provider-side prompts or model weights, and do not establish reproducible timing. Missing local files or Git metadata yield null identity fields. No older report is backfilled or rewritten.
+
+
+## Combined symbol inspection — model-free comparison
+
+The inspection-capable binary (`36c18e5de9b6326d0be625a633fc0596d1666a0bec162546c9b3ff48bf0f8b0c`) analyzed the committed `2656a9b` source archive with all 24 Rust files as explicit context. Combined definition/references/hover matched all three standalone reports, with 23 returned locations and 296 hover-text bytes. Five alternating samples measured a median 0.506 s for one combined request versus 1.516 s for three separate requests. `scripts/repository_lsp_smoke.py --measure-inspection` (after the binary argument) repeats this comparison; CI checks one iteration for equivalence without a timing threshold.
+
+These are local analyzer/session overhead observations in an incomplete explicit snapshot, not agent-speed, model-cost or compiler-validity claims. The report records source revision and binary SHA independently. All thirty-one tools serialize to 37,100 UTF-8 bytes in this version, while the eighteen-tool core catalog remains 11,691 bytes. Catalog size is not a measured token bill.

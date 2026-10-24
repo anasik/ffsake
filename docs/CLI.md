@@ -263,10 +263,23 @@ The batch retains `analysis_context`, all source hashes, `complete: false`, `com
 
 The core profile exposes the eighteen read/search/target, generic edit/file-preview, apply/history and release/refresh tools. Rust syntax selection, native analysis and Rust-specific previews are omitted from `tools/list` and rejected at dispatch before parsing their arguments or starting an analyzer. Core tools can still edit Rust files as ordinary text. Existing workspace, hash, preview and journal protections are unchanged; this is tool availability within this MCP server, not host-level isolation or a restriction on other agent tools.
 
-The profile regression compares the full/default catalogs, checks every disabled tool, proves a valid blocked Rust request never starts an analyzer, rejects invalid launch arguments, and verifies core edit/apply/undo/redo with Unicode/CRLF and executable permissions. At the current thirty-tool catalog, serialized tool definitions occupy 34,866 UTF-8 bytes for `all` versus 11,691 bytes for `core`; these are catalog sizes, not token costs or agent-speed measurements. Existing agent configurations continue using `all` unless their launch arguments explicitly select `core`.
+The profile regression compares the full/default catalogs, checks every disabled tool, proves a valid blocked Rust request never starts an analyzer, rejects invalid launch arguments, and verifies core edit/apply/undo/redo with Unicode/CRLF and executable permissions. At the initial thirty-tool profile catalog, serialized tool definitions occupy 34,866 UTF-8 bytes for `all` versus 11,691 bytes for `core`; these are catalog sizes, not token costs or agent-speed measurements. Existing agent configurations continue using `all` unless their launch arguments explicitly select `core`.
 
 
 Native rename proposals may contain zero-width insertions and replacement text larger than an identifier. For Rust field shorthand, renaming the field can expand `account` to `customer: account`, while renaming the local can expand it to `account: customer`. Preview the complete diff; treating every proposed edit as a plain spelling replacement loses binding information. The dedicated real-server regression covers field, local and pattern-binding renames with exact expected output, Unicode/CRLF, external compiler/runtime checks and byte-exact history. These successful fixtures do not remove the existing incomplete-analysis or semantic-validation limitations.
 
 
 Import aliases have a distinct native boundary: renaming an imported definition updates its declaration/import while preserving the local `as` alias and call sites. Renaming the alias itself is rejected by the tested rust-analyzer during preparation; MCP returns an error with no proposal handle or journal state. Raw LSP and real MCP regressions cover both outcomes, with external compiler/runtime checks for the supported definition rename. Native support may change with analyzer versions; this is not a textual fallback.
+
+
+## Combined Rust inspection
+
+```json
+{"op":"rust_inspect","files":["src/lib.rs","src/model.rs"],"crate_root":"src/lib.rs","path":"src/model.rs","position":{"line":10,"column":4},"edition":"2024","limit":100}
+```
+
+`ffsake_rust_inspect` returns definition, references (including the declaration), and hover for one source position using one fresh analyzer session. It accepts the same explicit source/context fields as navigation, including optional `crates`, and is available in the full profile. The generic core profile stays at eighteen tools; the full catalog now has thirty-one.
+
+`definition` and `references` each contain normalized `ranges` and `matches`; `hover` contains the existing `path`, `hover` and `text_bytes` report. `location_count` totals returned locations. `limit` (1–1000) is shared across both native location responses before deduplication, and hover has a fixed 8192-byte UTF-8 content cap. For just one result type, use its standalone endpoint.
+
+The whole request shares the existing thirty-second, source-size, frame and path limits. All input hashes are rechecked after all three responses, including unqueried context files. Malformed data, excess locations/text, timeout or changed source returns an error without partial results. Inspection creates no mutation handle or journal state. It returns exact context, `complete: false` and `compiler_checked: false`; hover documentation remains untrusted source text.

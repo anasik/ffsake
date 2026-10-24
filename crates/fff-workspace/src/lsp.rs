@@ -216,6 +216,32 @@ pub fn rust_references<'a>(
     )
 }
 
+/// Inspect definition, references and hover in one fresh bounded snapshot.
+pub fn rust_inspect<'a>(
+    workspace: &Workspace,
+    files: &[String],
+    crate_root: &str,
+    path: &str,
+    position: TextPosition,
+    context: impl Into<RustContext<'a>>,
+    limit: usize,
+) -> Result<Value> {
+    let context = context.into();
+    navigate(
+        workspace,
+        Query {
+            files,
+            crate_root,
+            path,
+            position,
+            edition: context.edition,
+            crates: context.crates,
+            limit,
+        },
+        Navigation::Inspect,
+    )
+}
+
 /// Find definition locations under the same explicit snapshot contract.
 pub fn rust_definition<'a>(
     workspace: &Workspace,
@@ -433,6 +459,7 @@ pub fn rust_symbols<'a>(
 #[derive(Clone, Copy)]
 enum Navigation<'a> {
     References,
+    Inspect,
     Definition,
     Implementation,
     Symbols,
@@ -601,6 +628,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
             parameters["context"] = json!({"includeDeclaration":true});
             ("textDocument/references", "references")
         }
+        Navigation::Inspect => ("textDocument/definition", "inspect"),
         Navigation::Definition => ("textDocument/definition", "definition"),
         Navigation::Implementation => ("textDocument/implementation", "implementation"),
         Navigation::Hover => ("textDocument/hover", "hover"),
@@ -631,7 +659,9 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
     {
         return Err("rust-analyzer does not advertise code actions".into());
     }
-    let result = if matches!(kind, Navigation::WorkspaceDiagnostics { .. }) {
+    let result = if matches!(kind, Navigation::Inspect) {
+        inspect(&mut client, &root, &sources, query, parameters, limit)?
+    } else if matches!(kind, Navigation::WorkspaceDiagnostics { .. }) {
         let mut batch = crate::lsp_diagnostics::Batch::new(limit);
         for (path, source) in &sources {
             if let Navigation::WorkspaceDiagnostics { paths: Some(paths) } = kind
@@ -659,7 +689,10 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
             "semantic_validated":false,"compiler_checked":false})
     } else if matches!(kind, Navigation::CodeActions { .. }) {
         crate::lsp_actions::actions(&root, &sources, result, limit)?
-    } else if matches!(kind, Navigation::WorkspaceDiagnostics { .. }) {
+    } else if matches!(
+        kind,
+        Navigation::WorkspaceDiagnostics { .. } | Navigation::Inspect
+    ) {
         result
     } else if matches!(kind, Navigation::Diagnostics) {
         crate::lsp_diagnostics::diagnostics(query, query_source, result, limit)?
@@ -716,6 +749,47 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
         ));
     }
     Ok(response)
+}
+
+fn inspect(
+    client: &mut Client,
+    root: &Path,
+    sources: &BTreeMap<String, String>,
+    path: &str,
+    parameters: Value,
+    limit: usize,
+) -> Result<Value> {
+    let locations = normalize_locations(
+        client.request("textDocument/definition", parameters.clone())?,
+        Navigation::Definition,
+    )?;
+    // Charge raw entries so duplicates cannot expand the shared server-result budget.
+    let consumed = locations.as_array().map_or(0, Vec::len);
+    let definitions = scoped_ranges(root, sources, locations, limit, Navigation::Definition)?;
+    let mut reference_parameters = parameters.clone();
+    reference_parameters["context"] = json!({"includeDeclaration":true});
+    let locations = normalize_locations(
+        client.request("textDocument/references", reference_parameters)?,
+        Navigation::References,
+    )?;
+    let references = scoped_ranges(
+        root,
+        sources,
+        locations,
+        limit - consumed,
+        Navigation::References,
+    )?;
+    let hover = crate::lsp_hover::hover(
+        path,
+        &sources[path],
+        client.request("textDocument/hover", parameters)?,
+        8192,
+    )?;
+    Ok(json!({
+        "definition":{"ranges":definitions,"matches":definitions.len()},
+        "references":{"ranges":references,"matches":references.len()},
+        "hover":hover,"location_count":definitions.len()+references.len(),"compiler_checked":false
+    }))
 }
 
 fn normalize_locations(value: Value, kind: Navigation<'_>) -> Result<Value> {
