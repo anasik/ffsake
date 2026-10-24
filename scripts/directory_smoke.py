@@ -121,6 +121,30 @@ def main():
             (root / "renamed/keep").write_text("keep")
             call("ffsake_undo", {"transaction": archived}, False)
             assert (root / "renamed/keep").read_text() == "keep"
+            (root / "copy-source/empty").mkdir(parents=True)
+            (root / "copy-source/blob").write_bytes(b"original\x00\xff")
+            if os.name == "posix":
+                (root / "copy-source/blob").chmod(0o751)
+            def copy_preview():
+                return call("ffsake_preview_files", {"operations": [
+                    {"op": "copy_directory", "from": "copy-source", "to": "copy-result"}]})
+
+            copying = copy_preview()
+            (root / "copy-source/blob").write_bytes(b"changed")
+            call("ffsake_apply", {"handle": copying["handle"]}, False)
+            assert not (root / "copy-result").exists()
+            (root / "copy-source/blob").write_bytes(b"original\x00\xff")
+            copying = copy_preview()
+            copied = call("ffsake_apply", {"handle": copying["handle"]})["transaction"]
+            assert (root / "copy-result/empty").is_dir()
+            assert (root / "copy-result/blob").read_bytes() == b"original\x00\xff"
+            call("ffsake_undo", {"transaction": copied})
+            (root / "copy-source/blob").write_bytes(b"independent source")
+            call("ffsake_redo", {"transaction": copied})
+            assert (root / "copy-result/blob").read_bytes() == b"original\x00\xff"
+            assert (root / "copy-source/blob").read_bytes() == b"independent source"
+            if os.name == "posix":
+                assert (root / "copy-result/blob").stat().st_mode & 0o777 == 0o751
             for path in (".", "../outside", ".ffsake/hidden", "missing/child"):
                 preview("create_directory", path, False)
             pending = preview("create_directory", "collision")
@@ -135,7 +159,7 @@ def main():
             proc.stdin.close()
             proc.wait(timeout=10)
             assert proc.returncode == 0, proc.stderr.read()
-        print(json.dumps({"ok": True, "directory_history": True, "tree_move_history": True, "tree_archive_history": True, "stale_content_preserved": True,
+        print(json.dumps({"ok": True, "directory_history": True, "tree_move_history": True, "tree_archive_history": True, "independent_copy_history": True, "stale_content_preserved": True,
                           "recursive_removal": False, "core_profile": True}))
 
 

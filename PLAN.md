@@ -216,7 +216,7 @@ Next: commit the matrix-validation fix separately, publish both after 4191cbe CI
 
 Remaining gaps:
 - build/test/runtime execution remains external;
-- empty-directory create/remove is journaled through single-operation previews; bounded directory moves are journaled; bounded populated-directory removal uses a reversible journal archive; directory copy and mixed directory/file transactions remain to evaluate;
+- empty-directory create/remove is journaled through single-operation previews; bounded directory moves are journaled; bounded populated-directory removal uses a reversible journal archive; bounded directory copy has independent retained history; mixed directory/file transactions remain to evaluate;
 - metadata beyond ordinary Unix rwx bits remains unrecorded, and legacy manifests cannot recover metadata they never captured;
 - native Codex tools are not disabled; enforced isolation remains unverified.
 
@@ -236,6 +236,8 @@ Empty-directory create/remove now uses the existing preview_files/apply/undo/red
 Bounded `move_directory` previews now capture a complete inventory of up to 100 files/directories, 4 MiB of file bytes and depth 32, including binary hashes, empty directories and ordinary modes. Apply, undo and redo reject changed inventory, overlapping paths, missing parents, occupied destinations, symlinks, special files and internal paths. Moves use filesystem rename rather than recursive deletion/copy; cross-device errors propagate. A backward-compatible tree-move manifest preserves reopened history and reverses the rename on manifest-write failure. Rust tests cover limits, modes, stale input, collisions, symlinks/sockets and persistence failure; MCP exercises a nested package move with binary content and exact undo/redo. Application-level preflight checks do not establish race-free OS isolation.
 
 Populated-directory `delete_directory` now previews the same bounded inventory and archives the tree under its protected transaction path with filesystem rename. Undo restores that exact tree and redo archives it again; no recursive workspace deletion occurs. Source changes, corrupted archived bytes/modes, symlinked journal paths, and occupied restore destinations reject before changes. Persistence failures reverse the move, and reopened journal tests cover recovery and retry. MCP integration verifies binary content, empty directories, stale previews and collision-safe history. Archived contents remain retained on disk for undo/redo; cross-device rename failures propagate.
+
+Bounded `copy_directory` now freezes source bytes and inventory, creates a private complete copy with ordinary file/directory modes, rechecks the source and publishes through the journal archive mechanism. Undo parks the copy privately and redo restores it without rereading the original source. Tests cover source changes before apply, source independence after undo, binary content, empty directories, read-only child/file modes, reopened history and persistence failure. macOS rejects cross-parent renames of read-only tree roots; that OS refusal is preserved without chmod of source or publication, with a platform-specific regression. Failed preparation may retain a private prepared payload. Directory copies use the same 100-entry/4-MiB/depth-32 bounds and single-operation restriction.
 
 ## Phase 2 — syntax and LSP
 

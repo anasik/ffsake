@@ -15,6 +15,10 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 #[derive(Debug, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum FileOperation {
+    CopyDirectory {
+        from: String,
+        to: String,
+    },
     DeleteDirectory {
         path: String,
     },
@@ -55,6 +59,7 @@ pub(crate) struct FilePlan {
     directory: Option<TransactionDirectory>,
     tree_move: Option<TransactionTreeMove>,
     tree_archive: Option<TransactionTreeArchive>,
+    tree_copy: Option<crate::tree_move::TreeCopy>,
     changes: Vec<JournalChange>,
     checks: Vec<(String, Option<Vec<u8>>)>,
     mode_checks: BTreeMap<String, u32>,
@@ -81,12 +86,26 @@ impl FilePlan {
         let creating_directory = matches!(&operation, FileOperation::CreateDirectory { .. });
         let moving = matches!(&operation, FileOperation::Move { .. });
         match operation {
+            FileOperation::CopyDirectory { from, to } => {
+                let copy = crate::tree_move::TreeCopy::preview(&journal, &from, &to)?;
+                return Ok(Self {
+                    directory: None,
+                    tree_move: None,
+                    tree_archive: None,
+                    tree_copy: Some(copy),
+                    changes,
+                    checks,
+                    mode_checks,
+                    destination_modes,
+                });
+            }
             FileOperation::DeleteDirectory { path } => {
                 let archive = journal.preview_tree_archive(&path)?;
                 return Ok(Self {
                     directory: None,
                     tree_move: None,
                     tree_archive: Some(archive),
+                    tree_copy: None,
                     changes,
                     checks,
                     mode_checks,
@@ -99,6 +118,7 @@ impl FilePlan {
                     directory: None,
                     tree_move: Some(movement),
                     tree_archive: None,
+                    tree_copy: None,
                     changes,
                     checks,
                     mode_checks,
@@ -111,6 +131,7 @@ impl FilePlan {
                     directory: Some(directory),
                     tree_move: None,
                     tree_archive: None,
+                    tree_copy: None,
                     changes,
                     checks,
                     mode_checks,
@@ -190,6 +211,7 @@ impl FilePlan {
             directory: None,
             tree_move: None,
             tree_archive: None,
+            tree_copy: None,
             changes,
             checks,
             mode_checks,
@@ -212,6 +234,7 @@ impl FilePlan {
             directory: None,
             tree_move: None,
             tree_archive: None,
+            tree_copy: None,
             changes: Vec::new(),
             checks: Vec::new(),
             mode_checks: BTreeMap::new(),
@@ -221,7 +244,11 @@ impl FilePlan {
         let mut reads: Vec<PathBuf> = Vec::new();
         for operation in operations {
             let plan = Self::preview(workspace, operation)?;
-            if plan.directory.is_some() || plan.tree_move.is_some() || plan.tree_archive.is_some() {
+            if plan.directory.is_some()
+                || plan.tree_move.is_some()
+                || plan.tree_archive.is_some()
+                || plan.tree_copy.is_some()
+            {
                 return Err("directory operations require a single-operation batch".into());
             }
             let new_writes = plan
@@ -258,6 +285,11 @@ impl FilePlan {
     }
 
     pub(crate) fn description(&self) -> Value {
+        if let Some(copy) = &self.tree_copy {
+            return json!({"operation":"copy_directory","from":copy.movement.from,"to":copy.movement.to,
+                "entries":copy.movement.entries,"changed_files":copy.files.len(),
+                "changed_directories":copy.movement.entries.len() - copy.files.len()});
+        }
         if let Some(archive) = &self.tree_archive {
             return json!({"operation":"delete_directory","path":archive.path,"entries":archive.entries,
                 "changed_files":archive.entries.values().filter(|entry| !entry.directory).count(),
@@ -301,6 +333,12 @@ impl FilePlan {
 
     pub(crate) fn apply(&self, workspace: &Workspace) -> Result<Value> {
         let journal = Journal::open(workspace.root())?;
+        if let Some(copy) = &self.tree_copy {
+            let transaction = journal.commit_tree_copy(copy)?;
+            return Ok(
+                json!({"transaction":transaction.id,"copied_entries":copy.movement.entries.len()}),
+            );
+        }
         if let Some(archive) = &self.tree_archive {
             let transaction = journal.commit_tree_archive(archive.clone())?;
             return Ok(

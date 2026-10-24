@@ -167,6 +167,86 @@ impl TreeMove {
     }
 }
 
+pub(crate) struct TreeCopy {
+    pub movement: TreeMove,
+    pub files: BTreeMap<String, Vec<u8>>,
+}
+
+impl TreeCopy {
+    pub(crate) fn preview(journal: &Journal, from: &str, to: &str) -> Result<Self> {
+        let movement = TreeMove::preview(journal, from, to)?;
+        let mut files = BTreeMap::new();
+        for (relative, entry) in &movement.entries {
+            if entry.directory {
+                continue;
+            }
+            let path = journal.resolve(&format!("{from}/{relative}"))?;
+            let mut bytes = Vec::new();
+            fs::File::open(path)?
+                .take(entry.bytes + 1)
+                .read_to_end(&mut bytes)?;
+            if bytes.len() as u64 != entry.bytes
+                || Some(blake3::hash(&bytes).to_hex().to_string()) != entry.hash
+            {
+                return Err(invalid("directory copy source changed during preview"));
+            }
+            files.insert(relative.clone(), bytes);
+        }
+        movement.verify(journal, false)?;
+        Ok(Self { movement, files })
+    }
+
+    /// Materialize only under a caller-validated, absent private journal path.
+    pub(crate) fn materialize(&self, root: &Path) -> Result<()> {
+        let mut directories = self
+            .movement
+            .entries
+            .iter()
+            .filter(|(_, entry)| entry.directory)
+            .collect::<Vec<_>>();
+        directories.sort_by_key(|(path, _)| Path::new(path).components().count());
+        for (relative, _) in &directories {
+            let mut builder = fs::DirBuilder::new();
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::DirBuilderExt;
+                builder.mode(0o700);
+            }
+            builder.create(root.join(relative))?;
+        }
+        for (relative, bytes) in &self.files {
+            let mut options = fs::OpenOptions::new();
+            options.write(true).create_new(true);
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::OpenOptionsExt;
+                options.mode(0o600);
+            }
+            use std::io::Write;
+            options.open(root.join(relative))?.write_all(bytes)?;
+        }
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            for (relative, entry) in self
+                .movement
+                .entries
+                .iter()
+                .filter(|(_, entry)| !entry.directory)
+                .chain(directories.into_iter().rev())
+            {
+                if let Some(mode) = entry.unix_mode {
+                    fs::set_permissions(root.join(relative), fs::Permissions::from_mode(mode))?;
+                }
+            }
+        }
+        if inventory_path(root)? != self.movement.entries {
+            return Err(invalid("copied directory inventory mismatch"));
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

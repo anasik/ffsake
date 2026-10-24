@@ -113,6 +113,8 @@ pub struct TransactionDirectory {
 #[serde(deny_unknown_fields)]
 pub struct TransactionTreeArchive {
     pub path: String,
+    #[serde(default)]
+    pub restore_when_applied: bool,
     pub entries: BTreeMap<String, crate::tree_move::TreeEntry>,
 }
 
@@ -417,6 +419,7 @@ impl Journal {
         }
         Ok(TransactionTreeArchive {
             path: path.into(),
+            restore_when_applied: false,
             entries: crate::tree_move::inventory(self, path)?,
         })
     }
@@ -437,6 +440,33 @@ impl Journal {
         // The transaction parent is created only after the source preview was
         // validated; the protected archive destination is never caller-supplied.
         self.write_manifest(&manifest)?;
+        self.transition_tree_archive(manifest, SnapshotSide::After, TransactionState::Applied)
+    }
+
+    pub(crate) fn commit_tree_copy(
+        &self,
+        copy: &crate::tree_move::TreeCopy,
+    ) -> Result<TransactionManifest> {
+        copy.movement.verify(self, false)?;
+        let manifest = TransactionManifest {
+            id: transaction_id(),
+            state: TransactionState::Prepared,
+            label: Some("directory copy".into()),
+            files: vec![],
+            directory: None,
+            tree_move: None,
+            tree_archive: Some(TransactionTreeArchive {
+                path: copy.movement.to.clone(),
+                restore_when_applied: true,
+                entries: copy.movement.entries.clone(),
+            }),
+        };
+        self.write_manifest(&manifest)?;
+        let (_, stored) = self.tree_archive_paths(&manifest)?;
+        // Failures leave only a private prepared transaction; no destination is
+        // published until the complete copied inventory and source recheck pass.
+        copy.materialize(&stored)?;
+        copy.movement.verify(self, false)?;
         self.transition_tree_archive(manifest, SnapshotSide::After, TransactionState::Applied)
     }
 
@@ -462,7 +492,8 @@ impl Journal {
 
     fn verify_tree_archive(&self, manifest: &TransactionManifest, after: bool) -> Result<()> {
         let (source, stored) = self.tree_archive_paths(manifest)?;
-        let (present, absent) = if after {
+        let archived = after != manifest.tree_archive.as_ref().unwrap().restore_when_applied;
+        let (present, absent) = if archived {
             (stored, source)
         } else {
             (source, stored)
@@ -486,7 +517,8 @@ impl Journal {
     fn apply_tree_archive(&self, manifest: &TransactionManifest, after: bool) -> Result<()> {
         self.verify_tree_archive(manifest, !after)?;
         let (source, stored) = self.tree_archive_paths(manifest)?;
-        if after {
+        let archived = after != manifest.tree_archive.as_ref().unwrap().restore_when_applied;
+        if archived {
             fs::rename(source, stored)?;
         } else {
             fs::rename(stored, source)?;
@@ -1693,6 +1725,157 @@ mod directory_tests {
         assert!(journal.commit_directory("file", true).is_err());
         assert!(journal.commit_directory("absent", false).is_err());
         assert_eq!(fs::read(root.path().join("file")).unwrap(), b"data");
+    }
+
+    #[test]
+    fn copied_tree_redo_is_independent_of_original_source() {
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        fs::create_dir_all(root.path().join("source/empty")).unwrap();
+        fs::write(root.path().join("source/data"), b"original\0\xff").unwrap();
+        let copy = crate::tree_move::TreeCopy::preview(&journal, "source", "copied").unwrap();
+        let transaction = journal.commit_tree_copy(&copy).unwrap();
+        assert!(root.path().join("source/empty").is_dir());
+        assert!(root.path().join("copied/empty").is_dir());
+        assert_eq!(
+            fs::read(root.path().join("copied/data")).unwrap(),
+            b"original\0\xff"
+        );
+        let journal = Journal::open(root.path()).unwrap();
+        journal.undo(&transaction.id).unwrap();
+        assert!(!root.path().join("copied").exists());
+        fs::write(root.path().join("source/data"), b"later source").unwrap();
+        journal.redo(&transaction.id).unwrap();
+        assert_eq!(
+            fs::read(root.path().join("source/data")).unwrap(),
+            b"later source"
+        );
+        assert_eq!(
+            fs::read(root.path().join("copied/data")).unwrap(),
+            b"original\0\xff"
+        );
+        fs::write(root.path().join("copied/data"), b"later copy").unwrap();
+        assert!(journal.undo(&transaction.id).is_err());
+        assert_eq!(
+            fs::read(root.path().join("copied/data")).unwrap(),
+            b"later copy"
+        );
+    }
+
+    #[test]
+    fn copied_tree_stale_source_and_persistence_failure_preserve_both_sides() {
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        fs::create_dir(root.path().join("source")).unwrap();
+        fs::write(root.path().join("source/data"), b"original").unwrap();
+        let copy = crate::tree_move::TreeCopy::preview(&journal, "source", "copied").unwrap();
+        fs::write(root.path().join("source/data"), b"changed").unwrap();
+        assert!(journal.commit_tree_copy(&copy).is_err());
+        assert!(!root.path().join("copied").exists());
+        let copy = crate::tree_move::TreeCopy::preview(&journal, "source", "copied").unwrap();
+        let transaction = journal.commit_tree_copy(&copy).unwrap();
+        let path = journal
+            .journal_root
+            .join(&transaction.id)
+            .join("manifest.json");
+        fs::remove_file(&path).unwrap();
+        fs::create_dir(&path).unwrap();
+        assert!(
+            journal
+                .transition_tree_archive(
+                    transaction,
+                    SnapshotSide::Before,
+                    TransactionState::Undone
+                )
+                .is_err()
+        );
+        assert_eq!(
+            fs::read(root.path().join("source/data")).unwrap(),
+            b"changed"
+        );
+        assert_eq!(
+            fs::read(root.path().join("copied/data")).unwrap(),
+            b"changed"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn tree_copy_preserves_directory_and_file_modes() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        fs::create_dir_all(root.path().join("source/empty")).unwrap();
+        fs::write(root.path().join("source/run"), b"script").unwrap();
+        fs::set_permissions(
+            root.path().join("source/run"),
+            fs::Permissions::from_mode(0o551),
+        )
+        .unwrap();
+        fs::set_permissions(
+            root.path().join("source/empty"),
+            fs::Permissions::from_mode(0o550),
+        )
+        .unwrap();
+        fs::set_permissions(
+            root.path().join("source"),
+            fs::Permissions::from_mode(0o750),
+        )
+        .unwrap();
+        let copy = crate::tree_move::TreeCopy::preview(&journal, "source", "copied").unwrap();
+        let transaction = journal.commit_tree_copy(&copy).unwrap();
+        journal.undo(&transaction.id).unwrap();
+        journal.redo(&transaction.id).unwrap();
+        for (path, mode) in [
+            ("copied", 0o750),
+            ("copied/empty", 0o550),
+            ("copied/run", 0o551),
+        ] {
+            assert_eq!(unix_mode(&root.path().join(path)).unwrap(), Some(mode));
+        }
+        // Restore fixture parent write access for temporary-directory cleanup.
+        fs::set_permissions(
+            root.path().join("source"),
+            fs::Permissions::from_mode(0o755),
+        )
+        .unwrap();
+        fs::set_permissions(
+            root.path().join("copied"),
+            fs::Permissions::from_mode(0o755),
+        )
+        .unwrap();
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn readonly_copy_root_publish_failure_preserves_source() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = tempfile::tempdir().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        fs::create_dir(root.path().join("source")).unwrap();
+        fs::write(root.path().join("source/data"), b"original").unwrap();
+        fs::set_permissions(
+            root.path().join("source"),
+            fs::Permissions::from_mode(0o555),
+        )
+        .unwrap();
+        let copy = crate::tree_move::TreeCopy::preview(&journal, "source", "copied").unwrap();
+        // macOS requires directory write permission for a cross-parent rename.
+        // Preserve the source's permissions and propagate the OS refusal.
+        assert!(
+            matches!(journal.commit_tree_copy(&copy), Err(JournalError::Io(error)) if error.kind() == io::ErrorKind::PermissionDenied)
+        );
+        assert!(!root.path().join("copied").exists());
+        assert_eq!(
+            fs::read(root.path().join("source/data")).unwrap(),
+            b"original"
+        );
+        assert_eq!(unix_mode(&root.path().join("source")).unwrap(), Some(0o555));
+        fs::set_permissions(
+            root.path().join("source"),
+            fs::Permissions::from_mode(0o755),
+        )
+        .unwrap();
     }
 
     #[test]
