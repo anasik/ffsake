@@ -30,6 +30,7 @@ jobs:
       - run: python3 scripts/rust_lsp_probe.py
       - run: python3 scripts/rust_lsp_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/rust_lsp_config_smoke.py target/debug/ffsake-mcp
+      - run: python3 scripts/rust_lsp_scope_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/rust_action_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/rust_rename_probe.py
       - run: python3 -m py_compile scripts/agent_benchmark.py scripts/agent_benchmark_suite.py
