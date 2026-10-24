@@ -216,7 +216,7 @@ Next: commit the matrix-validation fix separately, publish both after 4191cbe CI
 
 Remaining gaps:
 - build/test/runtime execution remains external;
-- empty-directory create/remove is journaled through single-operation previews; bounded directory moves are journaled; bounded populated-directory removal uses a reversible journal archive; bounded directory copy has independent retained history; mixed directory/file transactions remain to evaluate;
+- empty-directory create/remove, bounded tree move/copy/archive, and independent mixed directory/file transactions are journaled; dependent operation sequences remain unsupported;
 - metadata beyond ordinary Unix rwx bits remains unrecorded, and legacy manifests cannot recover metadata they never captured;
 - native Codex tools are not disabled; enforced isolation remains unverified.
 
@@ -272,3 +272,8 @@ An MCP probe confirmed that undoing a nested file creation previously left impli
 Directory integration now verifies indexed-search refresh and scope after move, copy, archive, undo and redo. Exact expected workspace paths are returned after each transition; retained `.ffsake` archive/copy payloads never appear in search results. No production search change was needed.
 
 Journal transaction IDs now include an atomic process-local sequence, and all preparation paths exclusively reserve their transaction directory before writing snapshots. Existing collisions retry without overwrite. Deterministic fixed-timestamp tests, a preserved collision sentinel, and 24 concurrent disjoint commits with independent undo/redo verify isolation of snapshot storage; this does not promise concurrent overlapping-edit isolation.
+
+
+Independent mixed directory/file batches now share one parent transaction with private child journals. All operations refer to the initial workspace state; root/descendant overlaps and read/write dependencies reject. Ordinary file members merge so shared implicit parents have one owner. Apply and history preflight all members, then roll back completed members on later failures; child transaction IDs cannot be replayed through the root journal. Existing single-kind manifests remain readable. This is application-level recovery, not crash-proof atomicity.
+
+Validation: 144 Rust tests pass locally, including mixed tree moves, retained copies/removals, shared parents, reopened history, stale member rejection, corrupt snapshots, duplicate members, symlinked storage, late undo failure, and parent-manifest persistence failures in both history directions. Clippy and formatting pass. Actual core-profile MCP integration verifies mixed apply/undo/redo and search refresh; MCP boundary/profile and repository byte-history smokes pass. Benchmark guidance and public catalog describe independent mixed batches without adding tools.

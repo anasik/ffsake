@@ -174,6 +174,24 @@ def main():
             assert not (root / "automatic").exists()
             call("ffsake_redo", {"transaction": automatic_id})
             assert (root / "automatic/src/main.rs").read_text() == "fn main() {}\n"
+            (root / "batch-config").write_text("before")
+            (root / "batch-source").mkdir()
+            (root / "batch-source/item").write_text("mixed_search_sentinel")
+            pending = call("ffsake_preview_files", {"operations": [
+                {"op": "edit", "path": "batch-config", "old_text": "before", "new_text": "after", "expected_matches": 1},
+                {"op": "move_directory", "from": "batch-source", "to": "batch-moved"},
+                {"op": "create_directory", "path": "batch-empty"}]})
+            mixed_id = call("ffsake_apply", {"handle": pending["handle"]})["transaction"]
+            assert (root / "batch-config").read_text() == "after"
+            assert (root / "batch-empty").is_dir()
+            search("mixed_search_sentinel", ["batch-moved/item"])
+            call("ffsake_undo", {"transaction": mixed_id})
+            assert (root / "batch-config").read_text() == "before"
+            assert not (root / "batch-empty").exists()
+            search("mixed_search_sentinel", ["batch-source/item"])
+            call("ffsake_redo", {"transaction": mixed_id})
+            assert (root / "batch-config").read_text() == "after"
+            search("mixed_search_sentinel", ["batch-moved/item"])
             for path in (".", "../outside", ".ffsake/hidden", "missing/child"):
                 preview("create_directory", path, False)
             pending = preview("create_directory", "collision")
@@ -182,13 +200,13 @@ def main():
             assert (root / "collision").read_text() == "preserve"
             call("ffsake_preview_files", {"operations": [
                 {"op": "create_directory", "path": "mixed"},
-                {"op": "create", "path": "other", "content": "no"}]}, False)
+                {"op": "create", "path": "mixed/other", "content": "no"}]}, False)
             assert not (root / "mixed").exists() and not (root / "other").exists()
         finally:
             proc.stdin.close()
             proc.wait(timeout=10)
             assert proc.returncode == 0, proc.stderr.read()
-        print(json.dumps({"ok": True, "directory_history": True, "tree_move_history": True, "tree_archive_history": True, "independent_copy_history": True, "implicit_parent_history": True, "search_scope_and_refresh": True, "stale_content_preserved": True,
+        print(json.dumps({"ok": True, "directory_history": True, "mixed_batch_history": True, "tree_move_history": True, "tree_archive_history": True, "independent_copy_history": True, "implicit_parent_history": True, "search_scope_and_refresh": True, "stale_content_preserved": True,
                           "recursive_removal": False, "core_profile": True}))
 
 

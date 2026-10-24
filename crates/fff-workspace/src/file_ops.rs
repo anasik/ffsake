@@ -59,6 +59,7 @@ pub enum FileOperation {
 }
 
 pub(crate) struct FilePlan {
+    members: Vec<FilePlan>,
     directory: Option<TransactionDirectory>,
     tree_move: Option<TransactionTreeMove>,
     tree_archive: Option<TransactionTreeArchive>,
@@ -108,6 +109,7 @@ impl FilePlan {
                     tree_move: None,
                     tree_archive: None,
                     tree_copy: Some(copy),
+                    members: vec![],
                     changes,
                     checks,
                     mode_checks,
@@ -121,6 +123,7 @@ impl FilePlan {
                     tree_move: None,
                     tree_archive: Some(archive),
                     tree_copy: None,
+                    members: vec![],
                     changes,
                     checks,
                     mode_checks,
@@ -134,6 +137,7 @@ impl FilePlan {
                     tree_move: Some(movement),
                     tree_archive: None,
                     tree_copy: None,
+                    members: vec![],
                     changes,
                     checks,
                     mode_checks,
@@ -147,6 +151,7 @@ impl FilePlan {
                     tree_move: None,
                     tree_archive: None,
                     tree_copy: None,
+                    members: vec![],
                     changes,
                     checks,
                     mode_checks,
@@ -237,11 +242,61 @@ impl FilePlan {
             tree_move: None,
             tree_archive: None,
             tree_copy: None,
+            members: vec![],
             changes,
             checks,
             mode_checks,
             destination_modes,
         })
+    }
+
+    fn empty() -> Self {
+        Self {
+            members: vec![],
+            directory: None,
+            tree_move: None,
+            tree_archive: None,
+            tree_copy: None,
+            changes: vec![],
+            checks: vec![],
+            mode_checks: BTreeMap::new(),
+            destination_modes: BTreeMap::new(),
+        }
+    }
+
+    fn directory_operation(&self) -> bool {
+        self.directory.is_some()
+            || self.tree_move.is_some()
+            || self.tree_archive.is_some()
+            || self.tree_copy.is_some()
+    }
+
+    fn affected_paths(&self, journal: &Journal) -> Result<(Vec<PathBuf>, Vec<PathBuf>)> {
+        let mut writes = self
+            .changes
+            .iter()
+            .map(|change| journal.resolve(&change.path))
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+        let mut reads = self
+            .checks
+            .iter()
+            .map(|(path, _)| journal.resolve(path))
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+        if let Some(directory) = &self.directory {
+            writes.push(journal.resolve(&directory.path)?);
+        }
+        if let Some(archive) = &self.tree_archive {
+            writes.push(journal.resolve(&archive.path)?);
+        }
+        if let Some(movement) = &self.tree_move {
+            writes.push(journal.resolve(&movement.from)?);
+            writes.push(journal.resolve(&movement.to)?);
+        }
+        if let Some(copy) = &self.tree_copy {
+            reads.push(journal.resolve(&copy.movement.from)?);
+            writes.push(journal.resolve(&copy.movement.to)?);
+        }
+        Ok((writes, reads))
     }
 
     pub(crate) fn preview_batch(
@@ -255,40 +310,14 @@ impl FilePlan {
             return Self::preview(workspace, operations.into_iter().next().unwrap());
         }
         let journal = Journal::open(workspace.root())?;
-        let mut combined = Self {
-            directory: None,
-            tree_move: None,
-            tree_archive: None,
-            tree_copy: None,
-            changes: Vec::new(),
-            checks: Vec::new(),
-            mode_checks: BTreeMap::new(),
-            destination_modes: BTreeMap::new(),
-        };
+        let mut combined = Self::empty();
+        let mut directories = Vec::new();
         let mut writes: Vec<PathBuf> = Vec::new();
         let mut reads: Vec<PathBuf> = Vec::new();
+        let mut retained = 0usize;
         for operation in operations {
             let plan = Self::preview(workspace, operation)?;
-            if plan.directory.is_some()
-                || plan.tree_move.is_some()
-                || plan.tree_archive.is_some()
-                || plan.tree_copy.is_some()
-            {
-                return Err("directory operations require a single-operation batch".into());
-            }
-            let new_writes = plan
-                .changes
-                .iter()
-                .map(|change| journal.resolve(&change.path))
-                .collect::<std::result::Result<Vec<_>, _>>()?;
-            let new_reads = plan
-                .checks
-                .iter()
-                .map(|(path, _)| journal.resolve(path))
-                .collect::<std::result::Result<Vec<_>, _>>()?;
-            // Operations describe independent changes against the same state.
-            // Reject aliases, parent/child targets and read/write dependencies
-            // rather than silently giving the array sequential script semantics.
+            let (new_writes, new_reads) = plan.affected_paths(&journal)?;
             let overlaps = |a: &Path, b: &Path| a.starts_with(b) || b.starts_with(a);
             if new_writes
                 .iter()
@@ -301,23 +330,39 @@ impl FilePlan {
             }
             writes.extend(new_writes);
             reads.extend(new_reads);
-            if combined
-                .retained_bytes()?
-                .saturating_add(plan.retained_bytes()?)
-                > MAX_FILE_PLAN_BYTES
-            {
+            retained = retained.saturating_add(plan.retained_bytes()?);
+            if retained > MAX_FILE_PLAN_BYTES {
                 return Err("file-operation batch exceeds 16 MiB retained payload budget".into());
             }
-            combined.changes.extend(plan.changes);
-            combined.checks.extend(plan.checks);
-            combined.mode_checks.extend(plan.mode_checks);
-            combined.destination_modes.extend(plan.destination_modes);
+            if plan.directory_operation() {
+                directories.push(plan);
+            } else {
+                combined.changes.extend(plan.changes);
+                combined.checks.extend(plan.checks);
+                combined.mode_checks.extend(plan.mode_checks);
+                combined.destination_modes.extend(plan.destination_modes);
+            }
         }
-        Ok(combined)
+        if directories.is_empty() {
+            return Ok(combined);
+        }
+        let mut group = Self::empty();
+        // Keep ordinary file changes together so shared implicit parents belong
+        // to one child transaction. Members are independent, not a script.
+        if !combined.changes.is_empty() {
+            group.members.push(combined);
+        }
+        group.members.extend(directories);
+        if group.retained_bytes()? > MAX_FILE_PLAN_BYTES {
+            return Err("file-operation batch exceeds 16 MiB retained payload budget".into());
+        }
+        Ok(group)
     }
 
     pub(crate) fn retained_bytes(&self) -> Result<usize> {
-        let mut bytes = 0usize;
+        let mut bytes = self.members.iter().try_fold(0usize, |sum, member| {
+            Ok::<usize, Box<dyn std::error::Error>>(sum.saturating_add(member.retained_bytes()?))
+        })?;
         for change in &self.changes {
             bytes = bytes
                 .saturating_add(change.path.len())
@@ -351,6 +396,22 @@ impl FilePlan {
     }
 
     pub(crate) fn description(&self) -> Value {
+        if !self.members.is_empty() {
+            let members = self
+                .members
+                .iter()
+                .map(Self::description)
+                .collect::<Vec<_>>();
+            let files = members
+                .iter()
+                .map(|member| member["changed_files"].as_u64().unwrap_or(0))
+                .sum::<u64>();
+            let directories = members
+                .iter()
+                .map(|member| member["changed_directories"].as_u64().unwrap_or(0))
+                .sum::<u64>();
+            return json!({"changed_files":files,"changed_directories":directories,"members":members});
+        }
         if let Some(copy) = &self.tree_copy {
             return json!({"operation":"copy_directory","from":copy.movement.from,"to":copy.movement.to,
                 "entries":copy.movement.entries,"changed_files":copy.files.len(),
@@ -397,34 +458,33 @@ impl FilePlan {
         json!({"changed_files": self.changes.len(), "files": files})
     }
 
-    pub(crate) fn apply(&self, workspace: &Workspace) -> Result<Value> {
-        let journal = Journal::open(workspace.root())?;
-        if let Some(copy) = &self.tree_copy {
-            let transaction = journal.commit_tree_copy(copy)?;
-            return Ok(
-                json!({"transaction":transaction.id,"copied_entries":copy.movement.entries.len()}),
-            );
+    fn verify(&self, journal: &Journal) -> Result<()> {
+        for member in &self.members {
+            member.verify(journal)?;
         }
-        if let Some(archive) = &self.tree_archive {
-            let transaction = journal.commit_tree_archive(archive.clone())?;
-            return Ok(
-                json!({"transaction":transaction.id,"archived_entries":archive.entries.len()}),
-            );
+        if let Some(copy) = &self.tree_copy {
+            copy.movement.verify(journal, false)?;
         }
         if let Some(movement) = &self.tree_move {
-            let transaction = journal.commit_tree_move(movement.clone())?;
-            return Ok(
-                json!({"transaction":transaction.id,"moved_entries":movement.entries.len()}),
-            );
+            movement.verify(journal, false)?;
         }
-        if let Some(directory) = &self.directory {
-            let transaction = journal.commit_directory_preview(directory.clone())?;
-            return Ok(
-                json!({"transaction":transaction.id,"changed_files":0,"changed_directories":1}),
-            );
+        if let Some(archive) = &self.tree_archive
+            && journal.preview_tree_archive(&archive.path)? != *archive
+        {
+            return Err("directory changed since preview".into());
+        }
+        if let Some(directory) = &self.directory
+            && journal.preview_directory(&directory.path, directory.after_exists)? != *directory
+        {
+            return Err("directory changed since preview".into());
+        }
+        for change in &self.changes {
+            if snapshot(journal, &change.path)? != change.before {
+                return Err("file changed since preview".into());
+            }
         }
         for (path, expected) in &self.checks {
-            if &snapshot(&journal, path)? != expected {
+            if &snapshot(journal, path)? != expected {
                 return Err("source changed since preview".into());
             }
         }
@@ -433,12 +493,71 @@ impl FilePlan {
                 return Err("source permissions changed since preview".into());
             }
         }
-        let transaction = journal.commit_changes_with_modes(
+        Ok(())
+    }
+
+    fn commit_leaf(
+        &self,
+        journal: &Journal,
+    ) -> crate::journal::Result<crate::journal::TransactionManifest> {
+        if !self.members.is_empty() {
+            return Err(crate::journal::JournalError::Operation(
+                "nested file batches are unsupported".into(),
+            ));
+        }
+        if let Some(copy) = &self.tree_copy {
+            return journal.commit_tree_copy(copy);
+        }
+        if let Some(archive) = &self.tree_archive {
+            return journal.commit_tree_archive(archive.clone());
+        }
+        if let Some(movement) = &self.tree_move {
+            return journal.commit_tree_move(movement.clone());
+        }
+        if let Some(directory) = &self.directory {
+            return journal.commit_directory_preview(directory.clone());
+        }
+        journal.commit_changes_with_modes(
             Some("resident file operation".into()),
             &self.changes,
             &self.destination_modes,
-        )?;
-        Ok(json!({"transaction": transaction.id, "changed_files": self.changes.len()}))
+        )
+    }
+
+    pub(crate) fn apply(&self, workspace: &Workspace) -> Result<Value> {
+        let journal = Journal::open(workspace.root())?;
+        self.verify(&journal)?;
+        if !self.members.is_empty() {
+            let transaction = journal.commit_group(self.members.len(), |nested, index| {
+                self.members[index]
+                    .verify(nested)
+                    .map_err(|error| crate::journal::JournalError::Operation(error.to_string()))?;
+                self.members[index].commit_leaf(nested)
+            })?;
+            return Ok(json!({"transaction":transaction.id,"mixed_batch":true}));
+        }
+        let transaction = self.commit_leaf(&journal)?;
+        if let Some(copy) = &self.tree_copy {
+            return Ok(
+                json!({"transaction":transaction.id,"copied_entries":copy.movement.entries.len()}),
+            );
+        }
+        if let Some(archive) = &self.tree_archive {
+            return Ok(
+                json!({"transaction":transaction.id,"archived_entries":archive.entries.len()}),
+            );
+        }
+        if let Some(movement) = &self.tree_move {
+            return Ok(
+                json!({"transaction":transaction.id,"moved_entries":movement.entries.len()}),
+            );
+        }
+        if self.directory.is_some() {
+            return Ok(
+                json!({"transaction":transaction.id,"changed_files":0,"changed_directories":1}),
+            );
+        }
+        Ok(json!({"transaction":transaction.id,"changed_files":self.changes.len()}))
     }
 }
 
@@ -465,6 +584,119 @@ mod tests {
 
     fn operations(value: Value) -> Vec<FileOperation> {
         serde_json::from_value(value).unwrap()
+    }
+
+    #[test]
+    fn mixed_history_preserves_shared_parents_and_rejects_stale_members() {
+        let root = tempfile::tempdir().unwrap();
+        let workspace = Workspace::new(root.path()).unwrap();
+        fs::create_dir(root.path().join("source")).unwrap();
+        fs::write(root.path().join("source/blob"), b"binary\0\xff").unwrap();
+        let make = || {
+            FilePlan::preview_batch(
+                &workspace,
+                operations(json!([
+                    {"op":"create","path":"shared/a","content":"a"},
+                    {"op":"create","path":"shared/b","content":"b"},
+                    {"op":"move_directory","from":"source","to":"moved"},
+                    {"op":"create_directory","path":"empty"}
+                ])),
+            )
+            .unwrap()
+        };
+        let stale = make();
+        fs::write(root.path().join("source/blob"), b"changed").unwrap();
+        assert!(stale.apply(&workspace).is_err());
+        assert!(!root.path().join("shared").exists());
+        assert!(!root.path().join("empty").exists());
+        let result = make().apply(&workspace).unwrap();
+        let id = result["transaction"].as_str().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        let manifest = journal.load(id).unwrap();
+        assert_eq!(manifest.members.as_ref().unwrap().len(), 3);
+        for child in manifest.members.as_ref().unwrap() {
+            assert!(journal.load(child).is_err());
+        }
+        fs::write(root.path().join("moved/blob"), b"external").unwrap();
+        assert!(journal.undo(id).is_err());
+        assert!(root.path().join("empty").is_dir());
+        assert!(root.path().join("shared/b").is_file());
+        fs::write(root.path().join("moved/blob"), b"changed").unwrap();
+        journal.undo(id).unwrap();
+        assert!(!root.path().join("shared").exists());
+        assert!(!root.path().join("empty").exists());
+        assert_eq!(
+            fs::read(root.path().join("source/blob")).unwrap(),
+            b"changed"
+        );
+        Journal::open(root.path()).unwrap().redo(id).unwrap();
+        assert_eq!(fs::read(root.path().join("shared/b")).unwrap(), b"b");
+        assert!(root.path().join("moved").is_dir());
+    }
+
+    #[test]
+    fn mixed_archives_and_copies_keep_independent_history() {
+        let root = tempfile::tempdir().unwrap();
+        let workspace = Workspace::new(root.path()).unwrap();
+        for path in ["source", "removed"] {
+            fs::create_dir(root.path().join(path)).unwrap();
+            fs::write(root.path().join(path).join("blob"), path).unwrap();
+        }
+        let result = FilePlan::preview_batch(
+            &workspace,
+            operations(json!([
+                {"op":"copy_directory","from":"source","to":"copy"},
+                {"op":"delete_directory","path":"removed"}
+            ])),
+        )
+        .unwrap()
+        .apply(&workspace)
+        .unwrap();
+        let id = result["transaction"].as_str().unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        assert!(!root.path().join("removed").exists());
+        journal.undo(id).unwrap();
+        assert_eq!(
+            fs::read(root.path().join("removed/blob")).unwrap(),
+            b"removed"
+        );
+        fs::write(root.path().join("source/blob"), "external").unwrap();
+        journal.redo(id).unwrap();
+        assert_eq!(fs::read(root.path().join("copy/blob")).unwrap(), b"source");
+        for value in [
+            json!([{"op":"copy_directory","from":"source","to":"copy2"},{"op":"delete","path":"source/blob"}]),
+            json!([{"op":"move_directory","from":"copy","to":"moved"},{"op":"create","path":"copy/new","content":"x"}]),
+            json!([{"op":"create_directory","path":"new"},{"op":"create","path":"new/file","content":"x"}]),
+        ] {
+            assert!(FilePlan::preview_batch(&workspace, operations(value)).is_err());
+        }
+    }
+
+    #[test]
+    fn mixed_undo_failure_restores_completed_directory_member() {
+        let root = tempfile::tempdir().unwrap();
+        let workspace = Workspace::new(root.path()).unwrap();
+        fs::write(root.path().join("config"), "before").unwrap();
+        let plan = FilePlan::preview_batch(&workspace, operations(json!([
+            {"op":"edit","path":"config","old_text":"before","new_text":"after","expected_matches":1},
+            {"op":"create_directory","path":"empty"}
+        ]))).unwrap();
+        let result = plan.apply(&workspace).unwrap();
+        let id = result["transaction"].as_str().unwrap();
+        let collision = root
+            .path()
+            .join(format!(".config.ffsake-journal-tmp-{}", std::process::id()));
+        fs::write(&collision, "preserve").unwrap();
+        let journal = Journal::open(root.path()).unwrap();
+        assert!(journal.undo(id).is_err());
+        assert!(root.path().join("empty").is_dir());
+        assert_eq!(fs::read(root.path().join("config")).unwrap(), b"after");
+        assert_eq!(fs::read(&collision).unwrap(), b"preserve");
+        fs::remove_file(collision).unwrap();
+        journal.undo(id).unwrap();
+        assert!(!root.path().join("empty").exists());
+        assert_eq!(fs::read(root.path().join("config")).unwrap(), b"before");
+        journal.redo(id).unwrap();
     }
 
     #[test]

@@ -1,3 +1,4 @@
+mod group;
 pub use crate::journal_parents::CreatedDirectory;
 pub use crate::tree_move::TreeMove as TransactionTreeMove;
 use serde::{Deserialize, Serialize};
@@ -12,6 +13,7 @@ const JOURNAL_DIR: &str = "journal";
 
 #[derive(Debug)]
 pub enum JournalError {
+    Operation(String),
     Io(io::Error),
     Json(serde_json::Error),
     InvalidPath(String),
@@ -30,6 +32,7 @@ pub enum JournalError {
 impl std::fmt::Display for JournalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Operation(message) => write!(f, "{message}"),
             Self::Io(error) => write!(f, "{error}"),
             Self::Json(error) => write!(f, "{error}"),
             Self::InvalidPath(path) => write!(f, "invalid journal path: {path}"),
@@ -133,6 +136,8 @@ pub struct TransactionManifest {
     pub tree_move: Option<TransactionTreeMove>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tree_archive: Option<TransactionTreeArchive>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub members: Option<Vec<String>>,
 }
 
 impl Journal {
@@ -247,6 +252,7 @@ impl Journal {
             directory: Some(directory),
             tree_move: None,
             tree_archive: None,
+            members: None,
         };
         self.write_manifest(&manifest)?;
         self.transition_directory(manifest, SnapshotSide::After, TransactionState::Applied)
@@ -384,6 +390,7 @@ impl Journal {
             directory: None,
             tree_move: Some(movement),
             tree_archive: None,
+            members: None,
         };
         self.write_manifest(&manifest)?;
         self.transition_tree_move(manifest, SnapshotSide::After, TransactionState::Applied)
@@ -443,6 +450,7 @@ impl Journal {
             directory: None,
             tree_move: None,
             tree_archive: Some(archive),
+            members: None,
         };
         // The transaction parent is created only after the source preview was
         // validated; the protected archive destination is never caller-supplied.
@@ -468,6 +476,7 @@ impl Journal {
                 restore_when_applied: true,
                 entries: copy.movement.entries.clone(),
             }),
+            members: None,
         };
         self.write_manifest(&manifest)?;
         let (_, stored) = self.tree_archive_paths(&manifest)?;
@@ -603,6 +612,7 @@ impl Journal {
             directory: None,
             tree_move: None,
             tree_archive: None,
+            members: None,
         };
         self.write_manifest(&manifest)?;
         Ok(manifest)
@@ -659,6 +669,7 @@ impl Journal {
             directory: None,
             tree_move: None,
             tree_archive: None,
+            members: None,
         };
         self.write_manifest(&manifest)?;
         Ok(manifest)
@@ -715,6 +726,9 @@ impl Journal {
     }
 
     fn verify_side(&self, manifest: &TransactionManifest, side: SnapshotSide) -> Result<()> {
+        if manifest.members.is_some() {
+            return self.verify_group(manifest, side);
+        }
         if !manifest.created_directories.is_empty()
             && (manifest.directory.is_some()
                 || manifest.tree_move.is_some()
@@ -788,6 +802,9 @@ impl Journal {
         side: SnapshotSide,
         state: TransactionState,
     ) -> Result<TransactionManifest> {
+        if manifest.members.is_some() {
+            return self.transition_group(manifest, side, state);
+        }
         if manifest.tree_archive.is_some() {
             return self.transition_tree_archive(manifest, side, state);
         }
