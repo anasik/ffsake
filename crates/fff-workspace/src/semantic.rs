@@ -29,6 +29,8 @@ pub enum Context {
     },
     Cpp {
         standard: String,
+        #[serde(default)]
+        defines: std::collections::BTreeMap<String, String>,
     },
 }
 #[derive(Debug, Deserialize)]
@@ -50,7 +52,9 @@ pub fn query(workspace: &Workspace, request: &Request) -> Result<Value> {
         return Err("new_name is only valid for rename".into());
     }
     match &request.context {
-        Context::Cpp { standard } => crate::lsp_cpp::query(workspace, request, standard),
+        Context::Cpp { standard, defines } => {
+            crate::lsp_cpp::query(workspace, request, standard, defines)
+        }
         Context::Rust {
             crate_root,
             edition,

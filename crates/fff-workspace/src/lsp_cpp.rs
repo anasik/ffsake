@@ -19,7 +19,12 @@ fn uri(path: &Path) -> Result<String> {
         .map_err(|_| "invalid source URI")?
         .into())
 }
-pub(crate) fn query(workspace: &Workspace, request: &Request, standard: &str) -> Result<Value> {
+pub(crate) fn query(
+    workspace: &Workspace,
+    request: &Request,
+    standard: &str,
+    defines: &BTreeMap<String, String>,
+) -> Result<Value> {
     if !["c++17", "c++20", "c++23"].contains(&standard)
         || request.files.is_empty()
         || request.files.len() > 32
@@ -28,6 +33,23 @@ pub(crate) fn query(workspace: &Workspace, request: &Request, standard: &str) ->
         return Err(
             "C++ context requires c++17/20/23, 1..=32 explicit files and a member query path"
                 .into(),
+        );
+    }
+    if defines.len() > 32
+        || defines.iter().any(|(key, value)| {
+            key.is_empty()
+                || key.len() > 128
+                || !key.bytes().enumerate().all(|(i, b)| {
+                    b == b'_' || b.is_ascii_alphabetic() || (i > 0 && b.is_ascii_digit())
+                })
+                || value.len() > 128
+                || !value
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'_')
+        })
+    {
+        return Err(
+            "defines require at most 32 bounded identifier names and ASCII token values".into(),
         );
     }
     if matches!(request.query, Query::Rename) {
@@ -78,7 +100,26 @@ pub(crate) fn query(workspace: &Workspace, request: &Request, standard: &str) ->
         sources.insert(path, source);
     }
     // Never execute a compiler from repository metadata. No query-driver or user .clangd configuration.
-    let commands:Vec<_>=sources.keys().map(|p|json!({"directory":root,"file":root.join(p),"arguments":["clang++",format!("-std={standard}"),"-x","c++","-I",root,"-c",root.join(p)]})).collect();
+    let commands: Vec<_> = sources
+        .keys()
+        .map(|p| {
+            let mut args = vec![
+                "clang++".to_string(),
+                format!("-std={standard}"),
+                "-x".into(),
+                "c++".into(),
+                "-I".into(),
+                root.to_string_lossy().into_owned(),
+            ];
+            args.extend(
+                defines
+                    .iter()
+                    .map(|(key, value)| format!("-D{key}={value}")),
+            );
+            args.extend(["-c".into(), root.join(p).to_string_lossy().into_owned()]);
+            json!({"directory":root,"file":root.join(p),"arguments":args})
+        })
+        .collect();
     std::fs::write(
         root.join("compile_commands.json"),
         serde_json::to_vec(&commands)?,
@@ -232,9 +273,9 @@ pub(crate) fn query(workspace: &Workspace, request: &Request, standard: &str) ->
     response["complete"] = json!(false);
     response["compiler_checked"] = json!(false);
     response["semantic_validated"] = json!(false);
-    response["analysis_context"] = json!({"language":"cpp","standard":standard,"files":request.files,"mode":"on_demand_snapshot","all_sources_opened":true});
+    response["analysis_context"] = json!({"language":"cpp","standard":standard,"defines":defines,"files":request.files,"mode":"on_demand_snapshot","all_sources_opened":true});
     response["limitations"] = json!([
-        "Only explicit source/header snapshots, the selected standard and snapshot-root includes are configured. No project build flags, generated files, dependency discovery or background index. System headers may come from the installed clangd toolchain.",
+        "Only explicit source/header snapshots, the selected standard, explicit token defines and snapshot-root includes are configured. No other project build flags, generated files, dependency discovery or background index. System headers may come from the installed clangd toolchain.",
         "Server proposals and diagnostics are not proof of compilation, complete references or preserved behavior. Review and externally build/test changes."
     ]);
     Ok(response)

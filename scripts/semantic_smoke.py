@@ -91,6 +91,13 @@ def main():
             m.call('ffsake_undo',{'transaction':transaction});assert all((root/p).read_bytes()==s.encode() for p,s in original.items())
             m.call('ffsake_redo',{'transaction':transaction});assert all((root/p).read_bytes()==s for p,s in after.items())
             m.call('ffsake_undo',{'transaction':transaction})
+            (root/'conditional.cpp').write_text('#if ENABLED\nint featureValue;\n#else\n#error missing feature context\n#endif\n')
+            configured={'files':['conditional.cpp'],'path':'conditional.cpp','position':{'line':1,'column':0},'query':'diagnostics','context':{'language':'cpp','standard':'c++17','defines':{'ENABLED':'1'}},'limit':100}
+            assert m.call('ffsake_semantic',{'request':configured})['diagnostic_count']==0
+            configured['context']['defines']={}
+            assert m.call('ffsake_semantic',{'request':configured})['diagnostic_count']>0
+            configured['context']['defines']={'@response':'-load'}
+            m.call('ffsake_semantic',{'request':configured},False)
             (root/'sample.rs').write_text('fn value() -> i32 { 7 }\nfn main() { let _ = value(); }\n')
             rust={'files':['sample.rs'],'path':'sample.rs','position':{'line':1,'column':4},'context':{'language':'rust','crate_root':'sample.rs','edition':'2021'},'limit':100,'query':'inspect'}
             r=m.call('ffsake_semantic',{'request':rust}); assert r['references']['matches']==2,r
