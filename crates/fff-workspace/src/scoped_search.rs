@@ -34,10 +34,18 @@ pub(crate) fn search(
         return Err("explicit search requires offset=0, 1..=100 exact roots and a nonempty pattern <=8192 bytes".into());
     }
     let journal = Journal::open(workspace.root())?;
+    // Root is a valid read-only scope, though never a mutation target.
+    let resolve = |path: &str| {
+        if path == "." || path == "./" {
+            Ok(workspace.root().to_path_buf())
+        } else {
+            journal.resolve(path)
+        }
+    };
     let mut pending = Vec::new();
     for rule in &target.include {
         if let PathSelector::Exact(path) = rule {
-            pending.push((journal.resolve(path)?, 0));
+            pending.push((resolve(path)?, 0));
         }
     }
     let mut seen = BTreeSet::new();
@@ -89,7 +97,7 @@ pub(crate) fn search(
                 excluded.extend(files.iter().cloned());
             }
             PathSelector::Exact(path) => {
-                let path = journal.resolve(path)?;
+                let path = resolve(path)?;
                 excluded.extend(files.iter().filter(|p| p.starts_with(&path)).cloned());
             }
             PathSelector::Glob(pattern) => {
