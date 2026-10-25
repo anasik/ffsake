@@ -509,6 +509,7 @@ def ffsake_prompt(task_prompt: str, tool_profile="all"):
         + "\n\nUse FFSAKE MCP for repository reading, search, preview, mutation, and verification. "
         "Do not use normal shell/filesystem read/edit/search tools for repository manipulation. "
         "Content search discovers matching files directly; listing directories first is not required for search. "
+        "If indexed search misses a readable hidden or ignored file, inspect coverage and search an explicit target with include=[{Exact: directory_or_file}], exclude=[]; this bounded direct mode bypasses hidden/ignore discovery filters and still honors exclusions and stale hashes. "
         "After apply, undo, or redo, the next search refreshes the index automatically; "
         "reserve explicit refresh for external filesystem changes. "
         "For count-only verification, omit details or set it to false. "

@@ -21,6 +21,7 @@ mod lsp_symbols;
 mod manifest_context;
 pub mod preview;
 pub mod resident;
+mod scoped_search;
 pub mod search;
 pub mod selection;
 pub mod session;

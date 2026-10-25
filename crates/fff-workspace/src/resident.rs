@@ -465,6 +465,7 @@ impl Resident {
                 )?;
                 let handle = self.allocate()?;
                 let mut response = json!({"handle": handle, "matches": set.ranges.len(), "files": set.file_hashes.len(), "next_file_offset": set.next_file_offset});
+                response["coverage"] = serde_json::to_value(&set.coverage)?;
                 if details {
                     response["ranges"] = serde_json::to_value(&set.ranges)?;
                 }

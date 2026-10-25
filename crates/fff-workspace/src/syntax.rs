@@ -255,6 +255,7 @@ pub fn select_rust_identifiers(
         ranges,
         file_hashes,
         next_file_offset: 0,
+        coverage: None,
     })
 }
 

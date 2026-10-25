@@ -78,6 +78,8 @@ pub struct MatchSet {
     pub ranges: Vec<SearchRange>,
     pub file_hashes: BTreeMap<String, String>,
     pub next_file_offset: usize,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub coverage: Option<serde_json::Value>,
 }
 
 impl MatchSet {
@@ -256,6 +258,17 @@ impl FffSearchIndex {
         page_limit: usize,
         file_offset: usize,
     ) -> Result<MatchSet, SearchError> {
+        if let Some(target) = target.filter(|target| crate::scoped_search::applies(target)) {
+            return crate::scoped_search::search(
+                workspace,
+                pattern,
+                mode,
+                target,
+                page_limit,
+                file_offset,
+            )
+            .map_err(|error| SearchError::Fff(error.to_string()));
+        }
         let selector = target.cloned().unwrap_or_else(FileSelector::all);
         let allowed = workspace
             .select_files(&selector)?
@@ -311,6 +324,9 @@ impl FffSearchIndex {
             ranges: ranges.into_iter().collect(),
             file_hashes,
             next_file_offset: result.next_file_offset,
+            coverage: Some(
+                serde_json::json!({"backend":"fff_index","hidden_directories":"index policy: hidden filtering in non-Git workspaces","ignore_rules":"index ignore rules apply","explicit_override":"Use target.include Exact paths to search hidden or ignored directories directly","protected_paths_excluded":[".ffsake"],"complete_workspace_search":false}),
+            ),
         })
     }
 }
@@ -363,6 +379,7 @@ mod tests {
             ],
             file_hashes: BTreeMap::from([("a.txt".into(), hash)]),
             next_file_offset: 0,
+            coverage: None,
         };
 
         let transform = set.replace_transform(&workspace, "world").unwrap();

@@ -274,7 +274,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_search",
-            "Search indexed workspace content line by line and retain a server-owned MatchSet. For multiline code replacements, use ffsake_preview_edit after reading the file. Omit target for all workspace files (or the active target). For an explicit whole-workspace target, use include: [\"All\"], exclude: []. Empty include selects no files.",
+            "Search content line by line and retain a hash-guarded MatchSet. Exact path targets (including directories) use bounded direct search: hidden directories included, index ignore rules bypassed, explicit exclusions honored. Use target: {include: [{Exact: \".scratch_calcite\"}], exclude: []}. This mode requires offset=0 and rejects over-limit results rather than truncating: 2000 entries, depth 32, 4 MiB/file, 16 MiB total; binary/non-UTF8 files and .git/.ffsake/symlinks/special files are skipped and reported. Other targets use the FFF index, whose hidden/ignore filters can exclude readable files. Inspect coverage; a zero indexed result does not prove absence. For multiline code replacements, use ffsake_preview_edit after reading the file. Omit target for all workspace files (or the active target). For an explicit whole-workspace target, use include: [\"All\"], exclude: []. Empty include selects no files.",
             json!({
                 "type":"object","required":["pattern"],"properties":{
                     "pattern":{"type":"string"},
