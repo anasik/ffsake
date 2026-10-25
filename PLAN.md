@@ -5,7 +5,7 @@
 This instruction supersedes the earlier scoped pause. LSP supplies IDE language intelligence through existing servers; rename is the first acceptance case, not its entire purpose.
 
 1. Ordinary editing without LSP: already implemented and covered by the core-profile no-analyzer regression; preserve and rerun it.
-2. Separate generic protocol handling from language configuration; prove reuse with a second server. Implemented shared bounded transport and a language-neutral semantic request with Rust/clangd adapters; real-server reuse and guarded three-file C++ rename pass locally. Exact pushed CI remains the checkpoint.
+2. Separate generic protocol handling from language configuration; prove reuse with a second server. Implemented shared bounded transport and a language-neutral semantic request with Rust/clangd adapters; real-server reuse and guarded three-file C++ rename pass locally. Corrected implementation `4061c03` passed exact CI run `40213152679`.
 3. Real cross-file rename with sufficient project context, reviewed proposal, external build/tests, and measured agent workflow impact. Existing Rust boundary/compiler tests are useful but do not satisfy the complete acceptance requirement.
 4. Choose persistent or on-demand analysis from workload evidence; existing combined-query timings alone do not settle the decision.
 5. Continue to Git and build/test integration, with workspace boundaries, explicit execution policy and existing change preservation.
@@ -332,3 +332,10 @@ Real-project preparation found TinyXML2 11.0.0 declares `_FILE_OFFSET_BITS=64` i
 
 
 CI on `0bbca8f` caught the existing whole-repository regression crossing the 32-source limit after transport separation (33 Rust files). Analysis/import/proposal context now allows 64 small files with the former 8 MiB maximum source volume explicitly enforced, retaining 256 KiB/file and protocol/time bounds. The regression still includes every source, all three crates, external compiler checks and history. No context files or assertions were dropped.
+
+
+LSP milestones 1–4 complete for the defined acceptance scope. TinyXML2 11.0.0 (`9148bdf`) provides real cross-file rename evidence with explicit C++17/root-includes/`_FILE_OFFSET_BITS=64`, reviewed native changes plus the omitted inactive example, exact source audits, and 517 upstream tests. Independent Claude core-versus-semantic runs both passed: 13/12 calls, 1/0 tool errors, 50.417/43.510 seconds, reported cost $0.3360204/$0.4383350. This one pair shows workflow differences, not general performance or semantic correctness. Report/traces: `docs/demo-runs/20261025-lsp-acceptance/REPORT.md`.
+
+Lifecycle decision: on-demand snapshots remain default. The actual semantic agent made one semantic request; retained analysis would not amortize startup. Five unchanged-source samples measured 0.134842 s median cold versus 0.000877 s warm; retained startup 0.132311 s. Revisit persistence for demonstrated repeated-query/index-heavy workloads, with invalidation/resource tests, rather than building a platform now. `scripts/lsp_lifecycle_probe.py` reproduces the bounded backend measurement; no timing threshold is a correctness check.
+
+Next ordered milestone: Git review integration and explicitly host-configured build/test jobs. Keep ordinary editing and semantic analysis independent of execution; no implicit repository-command execution, no unrelated staged/working-file changes, and no claim that analysis replaces build/tests.

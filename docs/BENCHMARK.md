@@ -348,3 +348,12 @@ The verifier checks the exact file/byte mapping, exact directories (including em
 
 
 Directory-aware fixture provenance now records a sorted path/mode list for task directories, including empty ones, alongside existing file identities. `fixture_manifest_version: 2` identifies the combined file/directory fingerprint; old reports are unchanged and lack this new directory evidence. Directory checks share the same harness-control exclusions as file checks, so Codex's generated `.codex` configuration is not mistaken for task output. An unexpected ordinary project directory still fails the layout verifier. Regressions reproduce and fix both the previous empty-directory fingerprint collision and false rejection of generated runner configuration.
+
+
+## Real C++ LSP acceptance (2026-10-25)
+
+On pinned TinyXML2 11.0.0 (`9148bdf719e997d1f474be6bcc7943881046dba1`), independent Claude Code runs renamed the public `XMLDocument::NewElement` API across three source files, preserving comments/literals/CRLF and correcting a disabled example omitted by clangd. Both exact-byte audits and all 517 upstream tests passed. Core text tools: 13 calls, one unsupported-regex error, 50.417 s, $0.3360204 reported cost. Full-profile semantic assistance: 12 calls, zero errors, 43.510 s, $0.4383350 reported cost; 28 native edits plus one independently identified inactive-source correction, two transactions versus three. No native repository tools or host coaching were used.
+
+One pair, fixed order, different catalog sizes and an explicit semantic treatment prompt do not establish general performance. Correctness was equal; observed speed/call improvements came with higher reported cost. Native proposals missed inactive code, so source review remained necessary. Full report/raw traces/reproduction: `docs/demo-runs/20261025-lsp-acceptance/REPORT.md` (local evidence retained).
+
+Lifecycle probe on the same 249,761 source bytes: five equal-result samples measured median 0.134842 s cold versus 0.000877 s warm, retained startup 0.132311 s. Only unchanged documents were measured. The actual agent used one semantic request, so on-demand remains the default; persistent invalidation/resource correctness is not established by this probe. Reproduce with `python3 scripts/lsp_lifecycle_probe.py PINNED_TINYXML2_CHECKOUT`.
