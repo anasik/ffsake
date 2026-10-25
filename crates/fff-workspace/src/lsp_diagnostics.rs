@@ -23,8 +23,8 @@ impl Batch {
     }
 
     pub(crate) fn push(&mut self, path: &str, source: &str, value: Value) -> Result<()> {
-        if self.reports.len() >= 32 {
-            return Err("workspace diagnostics exceeds 32 files".into());
+        if self.reports.len() >= crate::semantic::MAX_SOURCE_FILES {
+            return Err("workspace diagnostics exceeds 64 files".into());
         }
         let report = diagnostics(path, source, value, self.limit - self.count)?;
         let count = self.count

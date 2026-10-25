@@ -90,7 +90,7 @@ pub(crate) fn actions(
             }
             if let Some(changes) = changes {
                 let changes = changes.as_object().ok_or("invalid workspace changes")?;
-                if changes.len() > 32 {
+                if changes.len() > crate::semantic::MAX_SOURCE_FILES {
                     return Err("too many action documents".into());
                 }
                 for (uri, edits) in changes {
@@ -225,7 +225,7 @@ pub(crate) fn preview_transform(
         return Err("unexpected code-action edit count".into());
     }
     let hashes: BTreeMap<String, String> = serde_json::from_value(report["file_hashes"].clone())?;
-    if hashes.is_empty() || hashes.len() > 32 {
+    if hashes.is_empty() || hashes.len() > crate::semantic::MAX_SOURCE_FILES {
         return Err("invalid action source hashes".into());
     }
     let edits = edits

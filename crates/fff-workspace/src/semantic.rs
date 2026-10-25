@@ -7,6 +7,17 @@ use crate::{
 use serde::Deserialize;
 use serde_json::Value;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub(crate) const MAX_SOURCE_FILES: usize = 64;
+pub(crate) const MAX_SOURCE_BYTES: usize = 8 * 1024 * 1024;
+pub(crate) fn account_source(total: &mut usize, bytes: usize) -> Result<()> {
+    *total = total
+        .checked_add(bytes)
+        .ok_or("analysis source byte overflow")?;
+    if *total > MAX_SOURCE_BYTES {
+        return Err("analysis sources exceed 8 MiB aggregate limit".into());
+    }
+    Ok(())
+}
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Query {
@@ -89,5 +100,21 @@ pub fn query(workspace: &Workspace, request: &Request) -> Result<Value> {
                 ),
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn aggregate_preserves_former_source_ceiling() {
+        let mut total = 0;
+        for _ in 0..64 {
+            account_source(&mut total, 128 * 1024).unwrap();
+        }
+        assert_eq!(total, MAX_SOURCE_BYTES);
+        assert!(account_source(&mut total, 1).is_err());
+        let mut overflow = usize::MAX;
+        assert!(account_source(&mut overflow, 1).is_err());
     }
 }

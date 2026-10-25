@@ -46,7 +46,8 @@ def main():
                 path.chmod(member.mode & 0o777)
         prefix = "crates/fff-workspace/src/"
         files = sorted(path for path in original if path.startswith(prefix) and path.endswith(".rs"))
-        assert 1 <= len(files) <= 32 and all(len(original[path]) <= 256 * 1024 for path in files)
+        assert 1 <= len(files) <= 64 and all(len(original[path]) <= 256 * 1024 for path in files)
+        assert sum(len(original[path]) for path in files) <= 8 * 1024 * 1024
         library = prefix + "lib.rs"
         coordinates = prefix + "coordinates.rs"
         lsp = prefix + "lsp.rs"

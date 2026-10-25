@@ -329,3 +329,6 @@ Resumed LSP milestone validation: 149 Rust and 86 harness tests pass, plus exist
 
 
 Real-project preparation found TinyXML2 11.0.0 declares `_FILE_OFFSET_BITS=64` in its build. C++ context now accepts bounded explicit token defines and records them with the frozen proposal. A conditional-compilation integration verifies configured diagnostics differ from omitted context and unsafe definition names/values reject. This closes a concrete context gap before acceptance; it does not claim arbitrary compile-command import.
+
+
+CI on `0bbca8f` caught the existing whole-repository regression crossing the 32-source limit after transport separation (33 Rust files). Analysis/import/proposal context now allows 64 small files with the former 8 MiB maximum source volume explicitly enforced, retaining 256 KiB/file and protocol/time bounds. The regression still includes every source, all three crates, external compiler checks and history. No context files or assertions were dropped.

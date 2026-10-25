@@ -27,11 +27,11 @@ pub(crate) fn query(
 ) -> Result<Value> {
     if !["c++17", "c++20", "c++23"].contains(&standard)
         || request.files.is_empty()
-        || request.files.len() > 32
+        || request.files.len() > crate::semantic::MAX_SOURCE_FILES
         || !request.files.contains(&request.path)
     {
         return Err(
-            "C++ context requires c++17/20/23, 1..=32 explicit files and a member query path"
+            "C++ context requires c++17/20/23, 1..=64 explicit files and a member query path"
                 .into(),
         );
     }
@@ -73,6 +73,7 @@ pub(crate) fn query(
     let mut sources = BTreeMap::new();
     let mut hashes = BTreeMap::new();
     let mut names = BTreeMap::new();
+    let mut source_bytes = 0;
     for file in &request.files {
         if file.len() > 4096
             || !["cpp", "cc", "cxx", "h", "hpp", "hh"].contains(
@@ -88,6 +89,7 @@ pub(crate) fn query(
         if sources.contains_key(&path) {
             return Err("duplicate semantic source".into());
         }
+        crate::semantic::account_source(&mut source_bytes, bytes.len())?;
         let source = String::from_utf8(bytes)?;
         let destination = root.join(&path);
         std::fs::create_dir_all(destination.parent().ok_or("missing parent")?)?;

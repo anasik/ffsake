@@ -330,12 +330,12 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
         1000
     };
     if files.is_empty()
-        || files.len() > 32
+        || files.len() > crate::semantic::MAX_SOURCE_FILES
         || !(1..=maximum).contains(&limit)
         || !matches!(edition, "2015" | "2018" | "2021" | "2024")
     {
         return Err(
-            format!("Rust navigation requires 1..=32 files, a result bound in 1..={maximum} and a supported edition").into(),
+            format!("Rust navigation requires 1..=64 files, a result bound in 1..={maximum} and a supported edition").into(),
         );
     }
     if !files.iter().any(|p| p == crate_root) || !files.iter().any(|p| p == path) {
@@ -343,7 +343,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
     }
     if let Navigation::WorkspaceDiagnostics { paths: Some(paths) } = kind
         && (paths.is_empty()
-            || paths.len() > 32
+            || paths.len() > crate::semantic::MAX_SOURCE_FILES
             || paths
                 .iter()
                 .collect::<std::collections::BTreeSet<_>>()
@@ -351,7 +351,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
                 != paths.len()
             || paths.iter().any(|path| !files.contains(path)))
     {
-        return Err("diagnostic paths must be 1..=32 distinct explicit members of files".into());
+        return Err("diagnostic paths must be 1..=64 distinct explicit members of files".into());
     }
     let deadline = Instant::now() + Duration::from_secs(30);
     let snapshot = tempfile::tempdir()?;
@@ -359,11 +359,13 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
     let mut sources = BTreeMap::new();
     let mut hashes = BTreeMap::new();
     let mut names = BTreeMap::new();
+    let mut source_bytes = 0;
     for file in files {
         if file.len() > 4096 || Path::new(file).extension().is_none_or(|ext| ext != "rs") {
             return Err("Rust navigation requires .rs paths of at most 4096 bytes".into());
         }
         let (normalized, bytes) = workspace.read_source_bounded(Path::new(file), 256 * 1024)?;
+        crate::semantic::account_source(&mut source_bytes, bytes.len())?;
         let source = String::from_utf8(bytes)?;
         if sources.contains_key(&normalized) {
             return Err("duplicate Rust navigation file".into());

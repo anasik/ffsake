@@ -103,6 +103,18 @@ def main():
             r=m.call('ffsake_semantic',{'request':rust}); assert r['references']['matches']==2,r
             for invalid in [dict(args,files=['../outside.cpp']),dict(args,context={'language':'cpp','standard':'bad'}),dict(args,files=['budget.cpp','budget.cpp']),dict(args,limit=0)]:
                 m.call('ffsake_semantic',{'request':dict(invalid,query='references')},False)
+            small=['main.cpp']
+            for i in range(63):
+                name=f'context{i}.hpp';(root/name).write_text('#pragma once\n');small.append(name)
+            large_context=dict(args,files=list(original)+small[1:61],query='references')
+            assert len(large_context['files'])==64
+            assert m.call('ffsake_semantic',{'request':large_context})['matches']==3
+            m.call('ffsake_semantic',{'request':dict(large_context,files=large_context['files']+['context62.hpp'])},False)
+            oversized=[]
+            for i in range(33):
+                name=f'large{i}.hpp';(root/name).write_bytes(b' '*(256*1024));oversized.append(name)
+            rejected=m.call('ffsake_semantic',{'request':dict(args,files=oversized,path=oversized[0],position={'line':1,'column':0},query='references')},False)
+            assert '8 MiB aggregate' in str(rejected),rejected
             print(json.dumps({'servers':['rust-analyzer','clangd'],'cpp_references':reports['references']['matches'],'rename_edits':3,'external_compile_runtime':True,'stale_preview_and_apply':True,'history_exact':True,'model_calls':0},indent=2))
         finally:m.close()
 if __name__=='__main__':main()

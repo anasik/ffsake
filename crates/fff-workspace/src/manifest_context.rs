@@ -301,8 +301,12 @@ pub(crate) fn import(
     files: &[String],
     crate_root: &str,
 ) -> Result<Value> {
-    if manifests.is_empty() || manifests.len() > 16 || files.is_empty() || files.len() > 32 {
-        return Err("manifest context requires 1..=16 manifests and 1..=32 Rust files".into());
+    if manifests.is_empty()
+        || manifests.len() > 16
+        || files.is_empty()
+        || files.len() > crate::semantic::MAX_SOURCE_FILES
+    {
+        return Err("manifest context requires 1..=16 manifests and 1..=64 Rust files".into());
     }
     let mut documents = BTreeMap::new();
     let mut manifest_hashes = BTreeMap::new();
@@ -327,11 +331,13 @@ pub(crate) fn import(
         }
         manifest_hashes.insert(name, blake3::hash(source.as_bytes()).to_hex().to_string());
     }
+    let mut source_bytes = 0;
     for path in files {
         if path.len() > 4096 || Path::new(path).extension().is_none_or(|ext| ext != "rs") {
             return Err("explicit Rust source paths required".into());
         }
         let (name, bytes) = workspace.read_source_bounded(Path::new(path), 256 * 1024)?;
+        crate::semantic::account_source(&mut source_bytes, bytes.len())?;
         std::str::from_utf8(&bytes)?;
         if source_hashes
             .insert(name.clone(), blake3::hash(&bytes).to_hex().to_string())
