@@ -856,7 +856,7 @@ mod tests {
         std::fs::write(temp.path().join("main.rs"), source).unwrap();
         for files in [
             vec![],
-            vec!["main.rs".into(); 33],
+            vec!["main.rs".into(); crate::semantic::MAX_SOURCE_FILES + 1],
             vec!["missing.rs".into()],
             vec!["../main.rs".into()],
             vec![".ffsake/private.rs".into()],

@@ -177,7 +177,7 @@ mod tests {
                 .is_err()
         );
         let mut batch = Batch::new(1);
-        for _ in 0..32 {
+        for _ in 0..crate::semantic::MAX_SOURCE_FILES {
             batch.push("empty.rs", "", report(vec![])).unwrap();
         }
         assert!(batch.push("extra.rs", "", report(vec![])).is_err());

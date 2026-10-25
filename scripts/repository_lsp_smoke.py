@@ -227,7 +227,7 @@ def main():
                     return checked, errors
 
                 baseline, errors = cargo_test()
-                assert baseline.returncode == 0 and not errors, (errors, baseline.stderr[-8192:])
+                assert baseline.returncode == 0 and not errors, (errors, baseline.stdout[-16000:], baseline.stderr[-8192:])
                 assert contents() == original
                 rename = call("ffsake_rust_rename_proposal", {**common, "path": coordinates,
                     "position": declaration, "new_name": "Utf16Coordinate", "limit": 1000})
