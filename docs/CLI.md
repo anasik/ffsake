@@ -261,7 +261,7 @@ The batch retains `analysis_context`, all source hashes, `complete: false`, `com
 
 `ffsake-mcp WORKSPACE` keeps the full catalog. `ffsake-mcp WORKSPACE --profile all` is equivalent. For language-independent file maintenance, launch `ffsake-mcp WORKSPACE --profile core` (MCP arguments: `["WORKSPACE", "--profile", "core"]`). The profile is fixed for that server process.
 
-The core profile exposes the eighteen read/search/target, generic edit/file-preview, apply/history and release/refresh tools. Rust syntax selection, native analysis and Rust-specific previews are omitted from `tools/list` and rejected at dispatch before parsing their arguments or starting an analyzer. Core tools can still edit Rust files as ordinary text. Existing workspace, hash, preview and journal protections are unchanged; this is tool availability within this MCP server, not host-level isolation or a restriction on other agent tools.
+The core profile exposes nineteen tools: read/search/target, read-only archive browsing, generic edit/file-preview, apply/history and release/refresh. Rust syntax selection, native analysis and Rust-specific previews are omitted from `tools/list` and rejected at dispatch before parsing their arguments or starting an analyzer. Core tools can still edit Rust files as ordinary text. Existing workspace, hash, preview and journal protections are unchanged; this is tool availability within this MCP server, not host-level isolation or a restriction on other agent tools.
 
 The profile regression compares the full/default catalogs, checks every disabled tool, proves a valid blocked Rust request never starts an analyzer, rejects invalid launch arguments, and verifies core edit/apply/undo/redo with Unicode/CRLF and executable permissions. At the initial thirty-tool profile catalog, serialized tool definitions occupy 34,866 UTF-8 bytes for `all` versus 11,691 bytes for `core`; these are catalog sizes, not token costs or agent-speed measurements. Existing agent configurations continue using `all` unless their launch arguments explicitly select `core`.
 
@@ -278,7 +278,7 @@ Import aliases have a distinct native boundary: renaming an imported definition 
 {"op":"rust_inspect","files":["src/lib.rs","src/model.rs"],"crate_root":"src/lib.rs","path":"src/model.rs","position":{"line":10,"column":4},"edition":"2024","limit":100}
 ```
 
-`ffsake_rust_inspect` returns definition, references (including the declaration), and hover for one source position using one fresh analyzer session. It accepts the same explicit source/context fields as navigation, including optional `crates`, and is available in the full profile. The generic core profile stays at eighteen tools; the full catalog now has thirty-one.
+`ffsake_rust_inspect` returns definition, references (including the declaration), and hover for one source position using one fresh analyzer session. It accepts the same explicit source/context fields as navigation, including optional `crates`, and is available in the full profile. At the introduction of combined inspection, core had eighteen tools and the full catalog had thirty-one; current catalog counts are listed below.
 
 `definition` and `references` each contain normalized `ranges` and `matches`; `hover` contains the existing `path`, `hover` and `text_bytes` report. `location_count` totals returned locations. `limit` (1–1000) is shared across both native location responses before deduplication, and hover has a fixed 8192-byte UTF-8 content cap. For just one result type, use its standalone endpoint.
 
@@ -286,3 +286,6 @@ The whole request shares the existing thirty-second, source-size, frame and path
 
 
 Native backend rejection errors identify the failed LSP method and signed error code. A valid message of at most 1024 UTF-8 bytes is quoted with control characters escaped; oversized or malformed messages use fixed fallback text, and arbitrary backend `data` is never forwarded. For example, an unsupported alias rename now explains that limitation instead of only saying the request was rejected. Error text remains untrusted diagnostic data. Rejection still returns no partial result or mutation capability and shuts down the analyzer.
+
+
+Current core catalog: 19 tools; full catalog: 33. `ffsake_archive` is available in both. JSONL uses `op: "archive"` with the same `path`, optional `entry`, `offset`, `limit`, `start`, `end`, and `expected_archive_hash` fields. Search responses now expose `coverage`; exact-root targets use bounded direct search even for hidden/ignored directories. See README for bounds, exclusions, examples, and the distinction between whole-transaction undo and a fresh selective inverse edit. Existing historical catalog measurements above describe their recorded versions.

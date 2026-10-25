@@ -11,6 +11,9 @@ use std::collections::BTreeMap;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 const MAX_HANDLES: usize = 128;
+fn archive_start() -> usize {
+    1
+}
 const MAX_PROPOSAL_CACHE_BYTES: usize = 4 * 1024 * 1024;
 
 #[derive(Debug, Deserialize)]
@@ -31,6 +34,18 @@ pub enum Request {
     },
     ReadFiles {
         files: Vec<ReadFile>,
+    },
+    Archive {
+        path: String,
+        entry: Option<String>,
+        #[serde(default)]
+        offset: usize,
+        #[serde(default = "default_limit")]
+        limit: usize,
+        #[serde(default = "archive_start")]
+        start: usize,
+        end: Option<usize>,
+        expected_archive_hash: Option<String>,
     },
     List {
         path: String,
@@ -427,6 +442,23 @@ impl Resident {
             Request::List { path } => Ok(serde_json::to_value(
                 self.session.workspace().list_dir(path)?,
             )?),
+            Request::Archive {
+                path,
+                entry,
+                offset,
+                limit,
+                start,
+                end,
+                expected_archive_hash,
+            } => crate::archive::browse(
+                self.session.workspace(),
+                &path,
+                entry.as_deref(),
+                offset,
+                limit,
+                (start, end),
+                expected_archive_hash.as_deref(),
+            ),
             Request::Target { target } => {
                 Ok(json!({"files": self.session.set_target(target)?.files}))
             }

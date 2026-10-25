@@ -25,6 +25,7 @@ jobs:
       - run: python3 scripts/benchmark.py target/debug/ffsake
       - run: python3 scripts/mcp_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/directory_smoke.py target/debug/ffsake-mcp
+      - run: python3 scripts/search_archive_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/layout_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/mcp_profile_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/repository_smoke.py target/debug/ffsake-mcp

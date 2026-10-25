@@ -4,6 +4,7 @@ use std::fs;
 use std::io;
 use std::path::{Component, Path, PathBuf};
 
+mod archive;
 mod atomic;
 pub mod coordinates;
 pub mod edits;
