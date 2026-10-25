@@ -5,13 +5,23 @@ use std::io::{self, BufRead, Write};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
-    if args.len() != 2 || args[0] != "serve" {
-        eprintln!(
-            "usage: ffsake serve WORKSPACE\nOne JSON request per stdin line; one JSON response per stdout line."
-        );
-        std::process::exit(2);
+    let (root, policy) = match args.as_slice() {
+        [serve, root] if serve == "serve" => (root, None),
+        [serve, root, flag, policy] if serve == "serve" && flag == "--tasks" => (
+            root,
+            Some(fff_workspace::workflow::Tasks::load(std::path::Path::new(
+                policy,
+            ))?),
+        ),
+        _ => {
+            eprintln!("usage: ffsake serve WORKSPACE [--tasks TRUSTED_HOST_POLICY.json]");
+            std::process::exit(2);
+        }
+    };
+    let mut runtime = Resident::open(Workspace::new(root)?)?;
+    if let Some(policy) = policy {
+        runtime.configure_tasks(policy);
     }
-    let mut runtime = Resident::open(Workspace::new(&args[1])?)?;
     let mut input = io::stdin().lock();
     let mut output = io::stdout().lock();
     loop {

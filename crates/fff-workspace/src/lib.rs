@@ -32,6 +32,8 @@ pub mod session;
 pub mod syntax;
 pub mod transform;
 mod tree_move;
+pub mod workflow;
+mod workflow_process;
 
 #[derive(Debug)]
 pub enum WorkspaceError {

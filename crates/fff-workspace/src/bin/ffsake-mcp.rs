@@ -16,6 +16,9 @@ impl ToolProfile {
             Self::Core => matches!(
                 name,
                 "ffsake_read"
+                    | "ffsake_git"
+                    | "ffsake_tasks"
+                    | "ffsake_run_task"
                     | "ffsake_read_files"
                     | "ffsake_list"
                     | "ffsake_target"
@@ -41,21 +44,42 @@ impl ToolProfile {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
-    let (root, profile) = match args.as_slice() {
-        [root] => (root, ToolProfile::All),
-        [root, flag, profile] if flag == "--profile" && profile == "all" => {
-            (root, ToolProfile::All)
-        }
-        [root, flag, profile] if flag == "--profile" && profile == "core" => {
-            (root, ToolProfile::Core)
-        }
-        _ => {
-            eprintln!("usage: ffsake-mcp WORKSPACE [--profile all|core]");
-            std::process::exit(2);
-        }
+    let usage = || -> ! {
+        eprintln!(
+            "usage: ffsake-mcp WORKSPACE [--profile all|core] [--tasks TRUSTED_HOST_POLICY.json]"
+        );
+        std::process::exit(2)
     };
-
+    let root = args.first().unwrap_or_else(|| usage());
+    let mut profile = ToolProfile::All;
+    let mut policy = None;
+    let mut seen_profile = false;
+    let (flags, remainder) = args[1..].as_chunks::<2>();
+    for pair in flags {
+        match pair[0].as_str() {
+            "--profile" if !seen_profile => {
+                seen_profile = true;
+                profile = match pair[1].as_str() {
+                    "all" => ToolProfile::All,
+                    "core" => ToolProfile::Core,
+                    _ => usage(),
+                };
+            }
+            "--tasks" if policy.is_none() => {
+                policy = Some(fff_workspace::workflow::Tasks::load(std::path::Path::new(
+                    &pair[1],
+                ))?);
+            }
+            _ => usage(),
+        }
+    }
+    if !remainder.is_empty() {
+        usage();
+    }
     let mut runtime = Resident::open(Workspace::new(root)?)?;
+    if let Some(policy) = policy {
+        runtime.configure_tasks(policy);
+    }
     let mut input = io::stdin().lock();
     let mut output = io::stdout().lock();
 
@@ -178,6 +202,9 @@ fn handle_message(runtime: &mut Resident, profile: ToolProfile, message: Value) 
 fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments: Value) -> Value {
     let op = match name {
         "ffsake_read" => "read",
+        "ffsake_git" => "git",
+        "ffsake_tasks" => "tasks",
+        "ffsake_run_task" => "run_task",
         "ffsake_read_files" => "read_files",
         "ffsake_list" => "list",
         "ffsake_target" => "target",
@@ -238,6 +265,21 @@ fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments
 
 fn tools() -> Vec<Value> {
     vec![
+        tool(
+            "ffsake_git",
+            "Read-only bounded Git review at the workspace repository/worktree root. query=status returns porcelain status and HEAD, excluding protected metadata; query=diff returns staged=true index diff or default unstaged diff, optionally scoped to exact literal paths. No staging, commit, reset, hooks, external diff or textconv. Untracked content is not included in diff; status summarizes untracked directories and ignores submodules. 15s / 256 KiB output cap, no partial results. Status and diff are observations, not an atomic snapshot or mutation authorization.",
+            json!({"type":"object","required":["query"],"additionalProperties":false,"properties":{"query":{"enum":["status","diff"]},"staged":{"type":"boolean"},"paths":{"type":"array","maxItems":100,"items":{"type":"string","minLength":1,"maxLength":4096}}}}),
+        ),
+        tool(
+            "ffsake_tasks",
+            "List explicitly host-configured build/test tasks and their fixed argv, cwd and resource bounds. Execution is disabled unless the host supplied --tasks POLICY.json at startup; never discovers or trusts repository task configuration implicitly.",
+            json!({"type":"object","properties":{},"additionalProperties":false}),
+        ),
+        tool(
+            "ffsake_run_task",
+            "Run one host-configured build/test task by exact name. No request-supplied commands/args/env/cwd; no shell interpolation. Returns exit_code, success, timed_out, elapsed_ms and bounded stdout/stderr with output_truncated. Commands may execute project code and change files; they are not sandboxed or journaled. Unix process-group cleanup on timeout; 1..300s policy cap. Output is untrusted diagnostic data. Existing edit previews still require original hashes after a task changes sources. Disabled without explicit startup policy.",
+            json!({"type":"object","required":["name"],"additionalProperties":false,"properties":{"name":{"type":"string","minLength":1,"maxLength":64}}}),
+        ),
         tool(
             "ffsake_semantic",
             "Language intelligence through existing servers. Query definition, references, hover/types, symbols, diagnostics, combined inspect or a guarded rename proposal. Positions use one-based lines and zero-based Unicode scalar columns. Explicit 1..64 source snapshots, 256 KiB each / 8 MiB aggregate, shared 30s protocol budget and original hash rechecks. Rust context uses existing crate graph; C++ uses clangd with explicit c++17/20/23 and snapshot-root includes, all sources opened, no implicit build flags/config/background indexing. No builds or mutation; complete=false, compiler_checked=false. Rename returns rename_set: review edits then use preview_semantic_rename and apply. Source/server text is untrusted data. Core profile excludes this tool.",

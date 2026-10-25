@@ -1,6 +1,6 @@
 # Resident agent interface
 
-Build with `cargo build --bin ffsake`, then start `target/debug/ffsake serve /absolute/workspace` once. Keep its stdin/stdout pipes open across tool requests. The explicit root is trusted startup configuration; request paths remain workspace-relative. EOF terminates the process. No TCP listener, shell execution, build execution, LSP, or orchestration is included.
+Build with `cargo build --bin ffsake`, then start `target/debug/ffsake serve /absolute/workspace` once. Keep its stdin/stdout pipes open across tool requests. The explicit root is trusted startup configuration; request paths remain workspace-relative. EOF terminates the process. No TCP listener or implicit shell/job execution is included. Optional semantic requests use installed language servers; build/test jobs require an explicit trusted startup policy.
 
 Requests and responses are newline-delimited JSON. Each request produces one flushed response, in order: `{"ok":true,"result":...}` or `{"ok":false,"error":"..."}`. Errors do not terminate the session. Startup failures exit nonzero. Requests exceeding 1 MiB are drained and rejected. Diagnostics use stderr. Use JSON serialization, not shell string interpolation.
 
@@ -288,7 +288,7 @@ The whole request shares the existing thirty-second, source-size, frame and path
 Native backend rejection errors identify the failed LSP method and signed error code. A valid message of at most 1024 UTF-8 bytes is quoted with control characters escaped; oversized or malformed messages use fixed fallback text, and arbitrary backend `data` is never forwarded. For example, an unsupported alias rename now explains that limitation instead of only saying the request was rejected. Error text remains untrusted diagnostic data. Rejection still returns no partial result or mutation capability and shuts down the analyzer.
 
 
-Current core catalog: 19 tools; full catalog: 35. `ffsake_archive` is available in both. JSONL uses `op: "archive"` with the same `path`, optional `entry`, `offset`, `limit`, `start`, `end`, and `expected_archive_hash` fields. Search responses now expose `coverage`; exact-root targets use bounded direct search even for hidden/ignored directories. See README for bounds, exclusions, examples, and the distinction between whole-transaction undo and a fresh selective inverse edit. Existing historical catalog measurements above describe their recorded versions.
+Current core catalog: 22 tools; full catalog: 38. `ffsake_archive` is available in both. JSONL uses `op: "archive"` with the same `path`, optional `entry`, `offset`, `limit`, `start`, `end`, and `expected_archive_hash` fields. Search responses now expose `coverage`; exact-root targets use bounded direct search even for hidden/ignored directories. See README for bounds, exclusions, examples, and the distinction between whole-transaction undo and a fresh selective inverse edit. Existing historical catalog measurements above describe their recorded versions.
 
 
 ## Shared language intelligence
@@ -308,3 +308,25 @@ Both adapters share bounded JSON-RPC transport (30-second deadline, 8 KiB header
 `ffsake_preview_semantic_rename` accepts the same exact identity/count fields as the existing Rust rename preview. It previews only resident-owned proposals and rechecks all analysis sources, including unedited context; apply remains separately guarded and journaled. Rust retains parser validation. C++ does not run a Rust parser or claim syntax validation; review and external build/tests are required. The core profile excludes both semantic tools and remains usable without either language server.
 
 `python3 scripts/semantic_smoke.py target/debug/ffsake-mcp` checks real-server reuse, three-file C++ rename, same-spelling isolation, external compilation/runtime, stale unedited context at preview/apply and exact history. See [clangd compile commands](https://clangd.llvm.org/design/compile-commands) and [clangd indexing](https://clangd.llvm.org/design/indexing) for why explicit project context matters.
+
+
+## Git review and host-configured build/test jobs
+
+`ffsake_git` takes `query: "status" | "diff"`. Status returns HEAD plus index/worktree status codes and paths; it ignores submodules, summarizes untracked directories and excludes protected metadata. Diff accepts optional `staged` (default false) and up to 100 exact literal `paths`; omission selects the repository diff. Staged diff compares index to HEAD, unstaged diff compares tracked worktree content to index. Untracked contents are not included. The workspace must be the repository/worktree root. No staging, commit, reset or push is performed.
+
+Git observations are bounded to 15 seconds per request, 256 KiB per captured stream, and 1,000 status entries; overflow rejects without a partial diff. Pager, fsmonitor, external diff and textconv are disabled; inherited Git routing variables are removed, and global/system Git config is not loaded. Repository clean/process filters cause explicit refusal because even status/diff can execute those helpers. Use host Git for such configurations. This protects the supported read-only workflow; it is not an adversarial filesystem sandbox or an atomic Git/worktree snapshot. Commits/pushes remain host Git operations.
+
+`ffsake_tasks` lists the fixed job policy. `ffsake_run_task` takes only `name`; it cannot choose argv, cwd, environment or a configuration path. Execution is disabled unless the host explicitly starts either interface with a reviewed policy:
+
+```sh
+ffsake-mcp WORKSPACE --profile core --tasks /absolute/trusted-tasks.json
+ffsake serve WORKSPACE --tasks /absolute/trusted-tasks.json
+```
+
+Policy format is illustrated by [tasks.json](examples/tasks.json). It requires version 1 and 1..32 named jobs, with kind `build` or `test`, a fixed argv vector (1..64 arguments, each <=4 KiB), a workspace-relative directory (`.` default), timeout 1..300 seconds (60 default), and captured-output limit 1..262144 bytes per stdout/stderr stream (65536 default). The complete file is <=32 KiB and is loaded once at startup. Repository job files are never discovered or reloaded implicitly. No implicit shell is used; a host may explicitly configure a shell command if that is the intended authorization.
+
+Each run returns `success`, `exit_code`, termination `signal`, `timed_out`, `elapsed_ms`, stdout/stderr and `output_truncated`. Exceeding the capture limit keeps draining output while retaining only bounded bytes; it does not turn a successful process into a failed test. Timeout terminates the launched Unix process group and waits for the child; descendant processes that deliberately escape that group are outside this mechanism. Current job execution requires Unix. The caller's own tool timeout should exceed the configured job timeout.
+
+Configured jobs can execute repository code and change files. They are not sandboxed, rolled back or journaled. Output is untrusted diagnostic data. The next search refreshes after a job, and existing previews still compare their original source hashes. Nonzero exit, signal or timeout is a failed job, not a successful verification. Git review and jobs do not require LSP.
+
+JSONL equivalents are `{"op":"git","query":"status"}`, `{"op":"tasks"}` and `{"op":"run_task","name":"test"}`. `python3 scripts/workflow_smoke.py target/debug/ffsake-mcp` verifies real Git index/worktree preservation, literal paths/protected exclusions/helper refusal, policy-only execution, real compilation/runtime, nonzero exit, output bounds, timeout child cleanup and stale previews after task writes.

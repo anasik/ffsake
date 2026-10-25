@@ -27,6 +27,17 @@ pub struct ReadFile {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
+    Git {
+        query: crate::workflow::GitQuery,
+        #[serde(default)]
+        staged: bool,
+        #[serde(default)]
+        paths: Vec<String>,
+    },
+    Tasks {},
+    RunTask {
+        name: String,
+    },
     Semantic {
         request: crate::semantic::Request,
     },
@@ -264,6 +275,7 @@ struct CachedProposal {
 }
 
 pub struct Resident {
+    tasks: crate::workflow::Tasks,
     session: EditorSession,
     index: FffSearchIndex,
     matches: BTreeMap<u64, CachedMatches>,
@@ -279,6 +291,7 @@ impl Resident {
     pub fn open(workspace: Workspace) -> Result<Self> {
         let index = FffSearchIndex::open(&workspace)?;
         Ok(Self {
+            tasks: crate::workflow::Tasks::default(),
             session: EditorSession::new(workspace),
             index,
             matches: BTreeMap::new(),
@@ -289,6 +302,10 @@ impl Resident {
             next: 1,
             index_dirty: false,
         })
+    }
+
+    pub fn configure_tasks(&mut self, tasks: crate::workflow::Tasks) {
+        self.tasks = tasks;
     }
 
     fn allocate(&mut self) -> Result<u64> {
@@ -583,6 +600,16 @@ impl Resident {
                 },
                 limit,
             ),
+            Request::Git {
+                query,
+                staged,
+                paths,
+            } => crate::workflow::inspect(self.session.workspace(), query, staged, &paths),
+            Request::Tasks {} => Ok(self.tasks.list()),
+            Request::RunTask { name } => {
+                self.index_dirty = true;
+                self.tasks.run(self.session.workspace(), &name)
+            }
             Request::Semantic { request } => {
                 let report = crate::semantic::query(self.session.workspace(), &request)?;
                 if matches!(request.query, crate::semantic::Query::Rename) {

@@ -57,7 +57,7 @@ Phase 1: editing, navigation, search integration.
 
 Phase 2: LSP-backed semantic navigation and refactoring.
 
-Later: build/test execution, language adapters, sandboxing, and plugins.
+Git review and explicitly host-configured build/test execution are integrated. Broader adapters, sandboxing, and plugins remain later work.
 
 Those later concerns must not block proving that reducing edit/navigation friction is useful on its own.
 
@@ -144,7 +144,7 @@ python3 scripts/ffsake_claude.py /absolute/path/to/worktree --tool-profile core
 
 Before a core launch, the launcher checks the selected `--binary` catalog in a disposable workspace without contacting a model. A missing/incompatible core catalog stops before Claude starts. `--dry-run` only prints configuration and skips this executable check; combine it with either profile to inspect the intended launch.
 
-Use a separate git worktree for the first pilot. Start with one small repository editing task; run builds/tests and review the git diff in a separate terminal. FFSAKE currently supplies editing/navigation, not a build/test runner. Existing-file replacements preserve current permissions. New Unix journal entries also capture ordinary rwx permission bits when committing a deletion, so undo can recreate executable/private files correctly. Older entries and record-after-the-fact calls lack original modes. Copy/move destinations preserve ordinary Unix rwx bits and reject source permission changes after preview. New entries record created-file modes for redo. Ownership, ACLs, extended attributes and special mode bits are not restored.
+Use a separate git worktree for the first pilot. Start with one small repository editing task; run builds/tests and review the git diff in a separate terminal. FFSAKE supplies Git status/diff review and optional named build/test jobs; execution requires an explicit host-selected `--tasks` policy. Commit/push remain host Git operations. Existing-file replacements preserve current permissions. New Unix journal entries also capture ordinary rwx permission bits when committing a deletion, so undo can recreate executable/private files correctly. Older entries and record-after-the-fact calls lack original modes. Copy/move destinations preserve ordinary Unix rwx bits and reject source permission changes after preview. New entries record created-file modes for redo. Ownership, ACLs, extended attributes and special mode bits are not restored.
 
 To preview the generated command and MCP configuration without starting Claude:
 
@@ -207,3 +207,12 @@ Undo restores a **whole transaction**, and only when its affected state still ma
 
 
 Language intelligence is optional. The full profile exposes `ffsake_semantic` for Rust and C++ definition/reference/type/diagnostic queries and reviewed rename proposals; the core profile needs no language server. Rust and clangd adapters share transport and edit guards, with explicit snapshot/context limitations. See [the semantic interface](docs/CLI.md#shared-language-intelligence). External compilation/tests remain necessary; server acceptance is not universal semantic correctness.
+
+
+Git review and build/test jobs are available in both profiles. `ffsake_git` inspects status or staged/unstaged diffs without staging, committing or resetting. Use `ffsake_tasks` to inspect configured jobs and `ffsake_run_task` to run one by name. Execution is disabled by default; the host can explicitly enable the reviewed [example policy](docs/examples/tasks.json):
+
+```sh
+target/debug/ffsake-mcp "$PWD" --profile core --tasks "$PWD/docs/examples/tasks.json"
+```
+
+This authorizes the configured commands to run project code. It is not a sandbox: jobs may change files, and their effects are not journaled. Requests cannot provide replacement commands, arguments, environment, or policy paths. Output/time limits and Unix process-group cleanup are enforced; stale edit previews still reject after a job changes their inputs. See [workflow details](docs/CLI.md#git-review-and-host-configured-buildtest-jobs).

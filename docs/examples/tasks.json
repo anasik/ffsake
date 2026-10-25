@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "tasks": {
+    "build": {
+      "kind": "build",
+      "argv": ["cargo", "build", "--locked", "--workspace"],
+      "cwd": ".",
+      "timeout_seconds": 300,
+      "output_bytes": 65536
+    },
+    "test": {
+      "kind": "test",
+      "argv": ["cargo", "test", "--locked", "--workspace"],
+      "cwd": ".",
+      "timeout_seconds": 300,
+      "output_bytes": 65536
+    }
+  }
+}
