@@ -92,7 +92,7 @@ pub(crate) fn preview_transform(
     }
     let mut action = report["proposal"].clone();
     action["title"] = json!("Rename proposal");
-    let adapted = json!({"file_hashes":report["file_hashes"],"actions":[action]});
+    let adapted = json!({"language":report["language"],"file_hashes":report["file_hashes"],"actions":[action]});
     crate::lsp_actions::preview_transform(workspace, &adapted, 0, "Rename proposal", expected.edits)
 }
 

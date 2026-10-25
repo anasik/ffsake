@@ -288,4 +288,23 @@ The whole request shares the existing thirty-second, source-size, frame and path
 Native backend rejection errors identify the failed LSP method and signed error code. A valid message of at most 1024 UTF-8 bytes is quoted with control characters escaped; oversized or malformed messages use fixed fallback text, and arbitrary backend `data` is never forwarded. For example, an unsupported alias rename now explains that limitation instead of only saying the request was rejected. Error text remains untrusted diagnostic data. Rejection still returns no partial result or mutation capability and shuts down the analyzer.
 
 
-Current core catalog: 19 tools; full catalog: 33. `ffsake_archive` is available in both. JSONL uses `op: "archive"` with the same `path`, optional `entry`, `offset`, `limit`, `start`, `end`, and `expected_archive_hash` fields. Search responses now expose `coverage`; exact-root targets use bounded direct search even for hidden/ignored directories. See README for bounds, exclusions, examples, and the distinction between whole-transaction undo and a fresh selective inverse edit. Existing historical catalog measurements above describe their recorded versions.
+Current core catalog: 19 tools; full catalog: 35. `ffsake_archive` is available in both. JSONL uses `op: "archive"` with the same `path`, optional `entry`, `offset`, `limit`, `start`, `end`, and `expected_archive_hash` fields. Search responses now expose `coverage`; exact-root targets use bounded direct search even for hidden/ignored directories. See README for bounds, exclusions, examples, and the distinction between whole-transaction undo and a fresh selective inverse edit. Existing historical catalog measurements above describe their recorded versions.
+
+
+## Shared language intelligence
+
+`ffsake_semantic` (`op: "semantic"` in JSONL) takes one `request` object:
+
+```json
+{"files":["budget.hpp","budget.cpp","main.cpp"],"path":"budget.cpp","position":{"line":2,"column":21},"query":"rename","new_name":"joinBudget","context":{"language":"cpp","standard":"c++17"},"limit":100}
+```
+
+Queries: `definition`, `references`, `hover`, `symbols`, `diagnostics`, `inspect`, `rename`. Positions use one-based lines and zero-based Unicode scalar columns. All queries require `position`; use line 1/column 0 for document-wide queries. `limit` is 1..1000 (hover interprets it as a UTF-8 text-byte cap). Rust context uses `language: "rust"`, `crate_root`, `edition`, and optional `crates`, routing to existing guarded analysis. Old Rust endpoints remain compatible; new integrations should prefer the shared entry point.
+
+C++ uses installed `clangd`, with c++17/20/23, 1..32 explicit `.cpp/.cc/.cxx/.h/.hpp/.hh` sources, 256 KiB per file, and snapshot-root includes. It creates a temporary compilation database, opens every source, and waits for clangd file-status readiness. It disables user `.clangd` configuration, background indexing and clang-tidy, and does not enable compiler query-driver execution. It does not import real build flags, dependency discovery or generated files; installed toolchain system headers may be visible. No build is executed. These context limitations are returned, and `complete=false`/`compiler_checked=false` remain explicit.
+
+Both adapters share bounded JSON-RPC transport (30-second deadline, 8 KiB headers, 1 MiB frames, 8 MiB total incoming data), UTF-16/range validation, workspace-edit classification and source-hash guards. Definitions/references outside the supplied source snapshot reject. Rename proposals with resources or unsupported edit requirements expose no partial edits.
+
+`ffsake_preview_semantic_rename` accepts the same exact identity/count fields as the existing Rust rename preview. It previews only resident-owned proposals and rechecks all analysis sources, including unedited context; apply remains separately guarded and journaled. Rust retains parser validation. C++ does not run a Rust parser or claim syntax validation; review and external build/tests are required. The core profile excludes both semantic tools and remains usable without either language server.
+
+`python3 scripts/semantic_smoke.py target/debug/ffsake-mcp` checks real-server reuse, three-file C++ rename, same-spelling isolation, external compilation/runtime, stale unedited context at preview/apply and exact history. See [clangd compile commands](https://clangd.llvm.org/design/compile-commands) and [clangd indexing](https://clangd.llvm.org/design/indexing) for why explicit project context matters.

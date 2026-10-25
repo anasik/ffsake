@@ -261,7 +261,17 @@ pub(crate) fn preview_transform(
         ],
         max_files: Some(hashes.len()),
     };
-    crate::syntax::validate_transform(workspace, &plan, &hashes)?;
+    if report["language"] == "cpp" {
+        // Generic source/hash and range validation; no Rust parser is applied to C++.
+        for (path, expected) in &hashes {
+            let (normalized, bytes) = workspace.read_source_bounded(Path::new(path), 256 * 1024)?;
+            if &normalized != path || blake3::hash(&bytes).to_hex().as_str() != expected {
+                return Err("source changed since semantic proposal".into());
+            }
+        }
+    } else {
+        crate::syntax::validate_transform(workspace, &plan, &hashes)?;
+    }
     Ok(plan)
 }
 

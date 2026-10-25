@@ -1,5 +1,18 @@
 # Action plan
 
+## Active ordered milestones (resumed 2026-10-25)
+
+This instruction supersedes the earlier scoped pause. LSP supplies IDE language intelligence through existing servers; rename is the first acceptance case, not its entire purpose.
+
+1. Ordinary editing without LSP: already implemented and covered by the core-profile no-analyzer regression; preserve and rerun it.
+2. Separate generic protocol handling from language configuration; prove reuse with a second server. Implemented shared bounded transport and a language-neutral semantic request with Rust/clangd adapters; real-server reuse and guarded three-file C++ rename pass locally. Exact pushed CI remains the checkpoint.
+3. Real cross-file rename with sufficient project context, reviewed proposal, external build/tests, and measured agent workflow impact. Existing Rust boundary/compiler tests are useful but do not satisfy the complete acceptance requirement.
+4. Choose persistent or on-demand analysis from workload evidence; existing combined-query timings alone do not settle the decision.
+5. Continue to Git and build/test integration, with workspace boundaries, explicit execution policy and existing change preservation.
+
+No unrelated features, comprehensive language-server platform, or further Rust-specific endpoint accumulation. Integration checks prove only tested behavior and boundaries, not universal semantic correctness. Preserve user-local legacy benchmark changes and existing untracked artifacts.
+
+
 ## Phase 1A — workspace primitives
 
 Implemented/active:
@@ -310,3 +323,6 @@ A read-only scope review caught that the shared mutation-path resolver rejected 
 
 
 Focused acceptance complete: implementation `87a6c3b` passed GitHub Actions run `40194608041`. A separate Claude Code session with only 19 FFSAKE core tools recovered from an empty indexed search, found the ignored Java declaration, and read Java source inside a JAR using an expected archive hash. Observed 28.704 seconds, 9 calls, no tool errors/denials/native fallback; all 51 fixture files unchanged. The agent blurred conditional hidden filtering with the actual Git-ignore cause and inferred unread stubs from file sizes; these answer-quality limitations are preserved, not treated as backend failures. Local report/transcript/reproduction artifacts: `docs/demo-runs/20261025-174627-hidden-jar/REPORT.md`. Recommendation: ready to demo this focused workflow with coverage caveats. Pause here as requested; no further roadmap work is authorized by this scoped assignment.
+
+
+Resumed LSP milestone validation: 149 Rust and 86 harness tests pass, plus existing Rust navigation/rename boundaries, core-profile no-analyzer editing, Clippy/formatting and the new real clangd integration. The second adapter exercises definitions/references/types/symbols/diagnostics/inspection and reviewed rename, preserves an unrelated same-spelling symbol, compiles/runs externally, rejects stale unedited context at preview/apply, and restores exact bytes through undo/redo. Controlled second-server failures reject outside paths, invalid ranges and concurrent source edits. C++ context is deliberately explicit (standard, supplied source/header set, root includes); no claim of arbitrary project coverage. The shared entry point adds two generic tools, not more Rust-specific endpoints. Next: pinned TinyXML2 real-project acceptance and workflow measurement, then workload-driven lifecycle decision and Git/build-test integration.

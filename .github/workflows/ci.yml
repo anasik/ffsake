@@ -17,6 +17,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rust-analyzer
+      - run: sudo apt-get update && sudo apt-get install -y clangd clang
       - run: cargo test --locked --workspace
       - run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - run: cargo fmt --all -- --check
@@ -34,6 +35,7 @@ jobs:
       - run: python3 -m unittest discover -s tests -p 'test_rust_lsp_probe.py' -v
       - run: python3 scripts/rust_lsp_probe.py
       - run: python3 scripts/rust_lsp_smoke.py target/debug/ffsake-mcp
+      - run: python3 scripts/semantic_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/rust_manifest_context_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/rust_lsp_config_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/rust_lsp_scope_smoke.py target/debug/ffsake-mcp

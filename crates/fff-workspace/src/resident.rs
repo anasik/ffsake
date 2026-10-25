@@ -27,6 +27,9 @@ pub struct ReadFile {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
+    Semantic {
+        request: crate::semantic::Request,
+    },
     Read {
         path: String,
         start: Option<usize>,
@@ -580,6 +583,14 @@ impl Resident {
                 },
                 limit,
             ),
+            Request::Semantic { request } => {
+                let report = crate::semantic::query(self.session.workspace(), &request)?;
+                if matches!(request.query, crate::semantic::Query::Rename) {
+                    self.cache_proposal(report, ProposalKind::Rename)
+                } else {
+                    Ok(report)
+                }
+            }
             Request::RustRenameProposal {
                 files,
                 crate_root,

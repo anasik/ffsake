@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FFSAKE_MCP = (ROOT / "target" / "debug" / "ffsake-mcp").resolve()
 RESULT_DIR = ROOT / "docs" / "agent-benchmark-runs"
 FFSAKE_TOOLS = (
+    "ffsake_semantic", "ffsake_preview_semantic_rename",
     "ffsake_read", "ffsake_read_files", "ffsake_archive", "ffsake_list", "ffsake_target", "ffsake_search", "ffsake_select_rust_identifiers", "ffsake_rust_references", "ffsake_rust_definition", "ffsake_rust_inspect", "ffsake_rust_context_from_manifests", "ffsake_rust_symbols", "ffsake_rust_implementation", "ffsake_rust_hover", "ffsake_rust_diagnostics", "ffsake_rust_workspace_diagnostics", "ffsake_rust_code_actions", "ffsake_preview_rust_action", "ffsake_rust_rename_proposal", "ffsake_preview_rust_rename",
     "ffsake_preview_matches", "ffsake_preview_edit", "ffsake_preview_rename", "ffsake_apply", "ffsake_undo", "ffsake_redo",
     "ffsake_release", "ffsake_refresh",
@@ -497,6 +498,7 @@ def ffsake_prompt(task_prompt: str, tool_profile="all"):
         "For exact Rust identifier spellings excluding comments, strings and opaque macro/attribute text, use ffsake_select_rust_identifiers with explicit .rs paths and a match limit, then preview_matches with a valid replacement identifier; staged Rust is reparsed, but this does not resolve symbols or establish compiler validity. "
         "Use ffsake_rust_references, ffsake_rust_definition or ffsake_rust_implementation for read-only binding navigation in explicitly supplied Rust files when rust-analyzer is available; it analyzes an explicit incomplete snapshot, optionally with declared local crate edges/features/custom cfg, reports complete=false, and returns no edit handle. "
         "Use ffsake_rust_context_from_manifests with explicit Cargo.toml and Rust file lists to derive frozen local crate arguments; inspect omissions and re-import after manifest changes. It does not execute Cargo or infer features/external dependencies. "
+        "Prefer ffsake_semantic for language-neutral definition/references/hover/symbols/diagnostics/inspect/rename: explicit request files/path/position/query/context/limit. Context is language=rust with crate_root/edition/optional crates or language=cpp with standard=c++17/20/23. Rename discovery returns rename_set; review its edits and use ffsake_preview_semantic_rename before apply. C++ snapshots do not import build flags or dependencies; externally compile/test proposals. "
         "Use ffsake_rust_inspect when definition, references and hover are needed together at one position; it shares one analyzer session, a location budget and an 8192-byte hover cap, with no partial results on error. "
         "Use ffsake_rust_symbols for a bounded hierarchical outline of a Rust file before reading individual declarations; it shares the explicit snapshot scope and requires no position. "
         "Use ffsake_rust_rename_proposal to inspect an incomplete native rename proposal; its rename_set requires ffsake_preview_rust_rename with exact selection/name/count guards before apply. Review the diff and validate behavior separately: native acceptance cannot establish collision safety, compilation or unchanged behavior. "
