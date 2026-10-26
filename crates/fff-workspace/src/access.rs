@@ -259,8 +259,10 @@ impl Access {
         self.policy.is_some()
     }
     pub(crate) fn absolute(&self, path: &Path) -> Result<PathBuf> {
-        if path.components().any(|p| matches!(p, Component::ParentDir)) {
-            return Err(denied(path, "parent traversal is forbidden"));
+        if path.as_os_str().is_empty()
+            || path.components().any(|p| matches!(p, Component::ParentDir))
+        {
+            return Err(WorkspaceError::InvalidPath(path.display().to_string()));
         }
         let absolute = if path.is_absolute() {
             path.to_path_buf()
@@ -283,7 +285,9 @@ impl Access {
             }
             no_symlinks(&absolute)?;
             if write && absolute == self.primary {
-                return Err(denied(path, "root mutation is forbidden"));
+                return Err(WorkspaceError::InvalidPath(
+                    "root mutation is forbidden".into(),
+                ));
             }
             return Ok((absolute, self.primary.clone()));
         }
