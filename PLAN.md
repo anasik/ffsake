@@ -2,7 +2,7 @@
 
 ## Scoped host-access assignment (2026-10-26)
 
-Implement host-authorized external directory and exact-file access, explicit modes/lifetimes, live MCP-root intersection and manual host-export fallback. Preserve native execution policy boundaries; do not infer permissions from roots or tool approvals. Focused access/lifetime/history/semantic tests are passing locally; real Claude evidence and exact-head CI are the completion gates. Stock Claude automatic native filesystem approval/persistence/retry is unsupported and must be reported explicitly. Pause after this scope; no unrelated roadmap expansion.
+Implement host-authorized external directory and exact-file access, explicit modes/lifetimes, live MCP-root intersection and manual host-export fallback. Preserve native execution policy boundaries; do not infer permissions from roots or tool approvals. Implemented and locally verified. Real Claude exact-file/neighbor denial, live /add-dir notification and post-revocation denial passed; see docs/HOST_ACCESS_DEMO.md. Exact-head CI is the final completion gate. Stock Claude automatic native filesystem approval/persistence/retry is unsupported and must be reported explicitly. Pause after this scope; no unrelated roadmap expansion.
 
 ## Active ordered milestones (resumed 2026-10-25)
 
