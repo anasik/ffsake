@@ -136,7 +136,7 @@ python3 scripts/ffsake_claude.py /absolute/path/to/worktree
 
 The launcher supplies a temporary MCP configuration, disables Claude's built-in tools with `--tools ""`, loads only this MCP configuration with `--strict-mcp-config`, and approves only the named FFSAKE tools in the selected profile for this session. It does not use the broad skip-permissions flag or modify user/project configuration. Other host settings, including enterprise policy and startup hooks, are not isolated by this launcher. FFSAKE is an application-level workspace boundary, not an OS sandbox.
 
-The default `--tool-profile all` exposes the full catalog. Select `--tool-profile core` for 25 tools: 22 generic file/archive/workflow tools plus three access tools (job execution remains disabled without startup policy), with matching approvals and guidance:
+The default `--tool-profile all` exposes the full catalog. Select `--tool-profile core` for 27 tools: 24 generic file/archive/workflow/debug tools plus three access tools (job execution remains disabled without startup policy), with matching approvals and guidance:
 
 ```sh
 python3 scripts/ffsake_claude.py /absolute/path/to/worktree --tool-profile core
@@ -220,3 +220,10 @@ This authorizes the configured commands to run project code. It is not a sandbox
 ## Host-authorized external paths
 
 MCP starts with primary-project access and provides persistent `ffsake_open_access`, `ffsake_list_access`, and `ffsake_remove_access` tools by default. The host controls approval: normal settings may prompt, and deliberate allow/auto settings may approve automatically. Exact file/folder grants retain read-only/read-write modes across restarts until revoked. Generate Claude Code, Codex, or OpenCode setup with `scripts/ffsake_setup.py`; no `/add-dir` or trusted-host flag is required. Explicit `--access` exports remain authoritative and never merge persistent grants. See [setup, lifetimes, live updates and limitations](docs/HOST_ACCESS.md).
+
+
+## Debugging through existing adapters
+
+FFSAKE supports one bounded local DAP session with host-configured adapter argv and launch settings. C# netcoredbg is the first demonstrated adapter: source breakpoints, stop reason, stack/scopes/variables, stepping and continue. Debugging is disabled without `--debug /absolute/debug.json`; launch uses ordinary host approval and executes project code outside any filesystem sandbox.
+
+See [debugger setup and tool workflow](docs/DEBUGGING.md), [acceptance evidence](docs/DEBUGGING_DEMO.md), and the reproducible `scripts/debug_smoke.py` check. No adapter is bundled or downloaded by FFSAKE. Ordinary editing remains available while a program runs or stops.

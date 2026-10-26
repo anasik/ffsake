@@ -1,8 +1,12 @@
 # Action plan
 
+## Minimal DAP debugging milestone (2026-10-26)
+
+Implement one language-neutral local-stdio DAP session using existing adapters and fixed host startup configuration. Ordinary host approval governs launch; debugging executes code and is not a filesystem sandbox. Preserve access/history guards, bound asynchronous events/inspection/waits, invalidate resumed handles and clean owned processes. Implemented and locally validated: real C# netcoredbg breakpoint/stack/scopes/variables/stepping and cleanup; 15 controlled lifecycle/authorization cases; independent Claude diagnosis and minimal fix of the pinned Fibonacci sample using only FFSAKE, followed by successful external execution. Release binaries build; 155 Rust and 89 harness tests, Clippy/formatting and existing MCP/access/workflow smokes pass. See docs/DEBUGGING.md and docs/DEBUGGING_DEMO.md. Remaining gate: push and exact-head CI. Pause after this milestone; remote/attach/evaluate/mutation/downloads/UI/broad language coverage remain deferred. Previous host-approval scope passed exact CI at e078e55.
+
 ## Host-controlled access approval (2026-10-26)
 
-Current bounded scope: default persistent MCP access tools across Claude Code, Codex and OpenCode; ordinary host approval including intentional auto/allow; legacy trusted-host flag accepted without effect; explicit exports remain exclusive and restrictive. Preserve all storage/path/history guards. Setup generation, installed-host normal/allow tests, restart/revocation and automated regressions are complete. OpenCode 1.18.31 --auto still asked under explicit ask rules; explicit allow worked. Implementation is committed and pushed; final-head CI is the remaining gate, then pause. No unrelated roadmap expansion. See docs/HOST_APPROVAL_DEMO.md for acceptance evidence.
+Current bounded scope: default persistent MCP access tools across Claude Code, Codex and OpenCode; ordinary host approval including intentional auto/allow; legacy trusted-host flag accepted without effect; explicit exports remain exclusive and restrictive. Preserve all storage/path/history guards. Setup generation, installed-host normal/allow tests, restart/revocation and automated regressions are complete. OpenCode 1.18.31 --auto still asked under explicit ask rules; explicit allow worked. Completed: final-head CI passed at e078e55 (run 40356765072). No unrelated roadmap expansion. See docs/HOST_APPROVAL_DEMO.md for acceptance evidence.
 
 ## Persistent native-approved access (2026-10-26)
 

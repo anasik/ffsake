@@ -14,9 +14,9 @@ pub(crate) struct Output {
     pub timed_out: bool,
     pub elapsed_ms: u128,
 }
-struct Guard(Child);
+pub(crate) struct Guard(pub(crate) Child);
 impl Guard {
-    fn terminate(&mut self) {
+    pub(crate) fn terminate(&mut self) {
         #[cfg(unix)]
         {
             unsafe extern "C" {

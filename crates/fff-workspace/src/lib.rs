@@ -8,6 +8,8 @@ pub mod access;
 mod archive;
 mod atomic;
 pub mod coordinates;
+mod dap;
+pub mod debug;
 pub mod edits;
 mod file_ops;
 pub use file_ops::FileOperation;

@@ -27,6 +27,12 @@ pub struct ReadFile {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
+    DebugLaunch {
+        configuration: String,
+    },
+    Debug {
+        request: crate::debug::Action,
+    },
     Git {
         query: crate::workflow::GitQuery,
         #[serde(default)]
@@ -275,6 +281,7 @@ struct CachedProposal {
 }
 
 pub struct Resident {
+    debugger: crate::debug::Debugger,
     tasks: crate::workflow::Tasks,
     session: EditorSession,
     index: FffSearchIndex,
@@ -291,6 +298,7 @@ impl Resident {
     pub fn open(workspace: Workspace) -> Result<Self> {
         let index = FffSearchIndex::open(&workspace)?;
         Ok(Self {
+            debugger: crate::debug::Debugger::default(),
             tasks: crate::workflow::Tasks::default(),
             session: EditorSession::new(workspace),
             index,
@@ -302,6 +310,10 @@ impl Resident {
             next: 1,
             index_dirty: false,
         })
+    }
+
+    pub fn configure_debug(&mut self, configurations: crate::debug::Configurations) {
+        self.debugger.configure(configurations);
     }
 
     pub fn configure_tasks(&mut self, tasks: crate::workflow::Tasks) {
@@ -437,8 +449,23 @@ impl Resident {
     }
 
     pub fn execute(&mut self, request: Request) -> Result<Value> {
-        self.access().refresh()?;
+        // Cancellation must work even after a host export becomes invalid.
+        if !matches!(&request, Request::Debug { .. }) {
+            self.access().refresh()?;
+        }
         match request {
+            Request::DebugLaunch { configuration } => {
+                self.index_dirty = true;
+                self.debugger.launch(
+                    &configuration,
+                    self.session.workspace().root(),
+                    self.access(),
+                )
+            }
+            Request::Debug { request } => {
+                self.index_dirty = true;
+                self.debugger.execute(request, &self.access())
+            }
             Request::Read { path, start, end } => Ok(serde_json::to_value(
                 self.session.workspace().read_text(path, start, end)?,
             )?),

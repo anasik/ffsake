@@ -1,0 +1,3123 @@
+{
+  "debuggee_pids": [
+    80566,
+    80569
+  ],
+  "step_frames": [
+    {
+      "operation": "step_in",
+      "frame": {
+        "column": 9,
+        "handle": 6,
+        "line": 16,
+        "name": "Hello.Program.Print()",
+        "source_authorized": true,
+        "source_handle": 7,
+        "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-dap-real-jg0h6ao2/project/Program.cs"
+      }
+    },
+    {
+      "operation": "next",
+      "frame": {
+        "column": 13,
+        "handle": 10,
+        "line": 17,
+        "name": "Hello.Program.Print()",
+        "source_authorized": true,
+        "source_handle": 11,
+        "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-dap-real-jg0h6ao2/project/Program.cs"
+      }
+    },
+    {
+      "operation": "step_out",
+      "frame": {
+        "column": 13,
+        "handle": 14,
+        "line": 12,
+        "name": "Hello.Program.Main()",
+        "source_authorized": true,
+        "source_handle": 15,
+        "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-dap-real-jg0h6ao2/project/Program.cs"
+      }
+    }
+  ],
+  "adapter": "/private/tmp/ffsake-dap-adapter/unpacked/netcoredbg/netcoredbg",
+  "observed_actual": -1323752223,
+  "external_exit": 1,
+  "breakpoint": true,
+  "step_in_over_out": true,
+  "editing_while_stopped": true,
+  "stale_handles_rejected": true,
+  "cleanup": true,
+  "trace": [
+    {
+      "tool": "debug_launch",
+      "arguments": {
+        "configuration": "sample"
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "executes_project_code": true,
+          "filesystem_sandbox": false,
+          "next": "poll until configuring, set breakpoints, then continue to finish configuration",
+          "session": 1,
+          "status": "starting"
+        }
+      },
+      "elapsed_ms": 26.54
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": null,
+          "busy": true,
+          "capabilities": {},
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.09
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "capabilities",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "initialized",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "configuring",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.15
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "breakpoints",
+          "session": 1,
+          "path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-dap-real-jg0h6ao2/project/Program.cs",
+          "lines": [
+            12
+          ]
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "configuring",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.06
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "breakpoints": [
+                {
+                  "id": 1,
+                  "line": 12,
+                  "message": "The breakpoint is pending and will be resolved when debugging starts.",
+                  "verified": false
+                }
+              ]
+            }
+          },
+          "session": 1,
+          "status": "configuring",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.33
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "continue",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "configuring",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.12
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "process",
+              "exitCode": null,
+              "processId": 80566,
+              "threadId": null
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {}
+          },
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.24
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.11
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "thread",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1070486
+            },
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "breakpoint",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.17
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "stopped",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1070486
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.17
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "stack",
+          "session": 1,
+          "thread": 1070486
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "frames": [
+                {
+                  "column": 13,
+                  "handle": 1,
+                  "line": 12,
+                  "name": "Hello.Program.Main()",
+                  "source_authorized": true,
+                  "source_handle": 2,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-dap-real-jg0h6ao2/project/Program.cs"
+                }
+              ],
+              "totalFrames": 1,
+              "truncated": false
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.28
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "scopes",
+          "session": 1,
+          "handle": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.06
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "scopes": [
+                {
+                  "expensive": false,
+                  "handle": 3,
+                  "name": "Locals"
+                }
+              ],
+              "truncated": false
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.28
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "variables",
+          "session": 1,
+          "handle": 3
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "paging": "adapter-dependent; response and expansion are bounded",
+              "truncated": false,
+              "variables": [
+                {
+                  "handle": 4,
+                  "name": "generator",
+                  "type": "Hello.FibonacciGenerator",
+                  "value": "{Hello.FibonacciGenerator}"
+                },
+                {
+                  "handle": 5,
+                  "name": "terms",
+                  "type": "int[]",
+                  "value": "{int[48]}"
+                },
+                {
+                  "handle": null,
+                  "name": "actual",
+                  "type": "long",
+                  "value": "-1323752223"
+                }
+              ]
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.27
+    },
+    {
+      "tool": "preview_create",
+      "arguments": {
+        "path": "debug-note.txt",
+        "content": "host editing works\n"
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "handle": 1,
+          "preview": {
+            "changed_files": 1,
+            "files": [
+              {
+                "after_bytes": 19,
+                "after_unix_mode": null,
+                "before_bytes": 0,
+                "operation": "create",
+                "path": "debug-note.txt",
+                "unified_diff": "--- a/debug-note.txt\n+++ b/debug-note.txt\n@@ -0,0 +1 @@\n+host editing works\n"
+              }
+            ]
+          }
+        }
+      },
+      "elapsed_ms": 0.38
+    },
+    {
+      "tool": "apply",
+      "arguments": {
+        "handle": 1
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "changed_files": 1,
+          "transaction": "tx-1793036124629977000-80564-0"
+        }
+      },
+      "elapsed_ms": 1.26
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "step_in",
+          "session": 1,
+          "thread": 1070486
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.03
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "continued",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1070486
+            },
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "stopped",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1070486
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {}
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.33
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.06
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "stack",
+          "session": 1,
+          "thread": 1070486
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.03
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "frames": [
+                {
+                  "column": 9,
+                  "handle": 6,
+                  "line": 16,
+                  "name": "Hello.Program.Print()",
+                  "source_authorized": true,
+                  "source_handle": 7,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-dap-real-jg0h6ao2/project/Program.cs"
+                },
+                {
+                  "column": 13,
+                  "handle": 8,
+                  "line": 12,
+                  "name": "Hello.Program.Main()",
+                  "source_authorized": true,
+                  "source_handle": 9,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-dap-real-jg0h6ao2/project/Program.cs"
+                }
+              ],
+              "totalFrames": 2,
+              "truncated": false
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.24
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "scopes",
+          "session": 1,
+          "handle": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "error": "unknown or stale debug handle",
+            "ok": false
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.2
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "next",
+          "session": 1,
+          "thread": 1070486
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "continued",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1070486
+            },
+            {
+              "event": "stopped",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1070486
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {}
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.28
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.06
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "stack",
+          "session": 1,
+          "thread": 1070486
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "frames": [
+                {
+                  "column": 13,
+                  "handle": 10,
+                  "line": 17,
+                  "name": "Hello.Program.Print()",
+                  "source_authorized": true,
+                  "source_handle": 11,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-dap-real-jg0h6ao2/project/Program.cs"
+                },
+                {
+                  "column": 13,
+                  "handle": 12,
+                  "line": 12,
+                  "name": "Hello.Program.Main()",
+                  "source_authorized": true,
+                  "source_handle": 13,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-dap-real-jg0h6ao2/project/Program.cs"
+                }
+              ],
+              "totalFrames": 2,
+              "truncated": false
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.35
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "scopes",
+          "session": 1,
+          "handle": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.06
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "error": "unknown or stale debug handle",
+            "ok": false
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.28
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "step_out",
+          "session": 1,
+          "thread": 1070486
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "continued",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1070486
+            },
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "stopped",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1070486
+            }
+          ],
+          "output": "-1323752223\n",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {}
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.36
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.07
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "stack",
+          "session": 1,
+          "thread": 1070486
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.03
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "frames": [
+                {
+                  "column": 13,
+                  "handle": 14,
+                  "line": 12,
+                  "name": "Hello.Program.Main()",
+                  "source_authorized": true,
+                  "source_handle": 15,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-dap-real-jg0h6ao2/project/Program.cs"
+                }
+              ],
+              "totalFrames": 1,
+              "truncated": false
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.26
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "scopes",
+          "session": 1,
+          "handle": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.03
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "error": "unknown or stale debug handle",
+            "ok": false
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.25
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "continue",
+          "session": 1,
+          "thread": 1070486
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1070486
+          }
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "continued",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1070486
+            },
+            {
+              "event": "thread",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1070504
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "allThreadsContinued": true,
+              "threadId": 1070486
+            }
+          },
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.25
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80565,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": true,
+          "error": null,
+          "events": [
+            {
+              "event": "exited",
+              "exitCode": 0,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "terminated",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "terminated",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.12
+    },
+    {
+      "tool": "debug_launch",
+      "arguments": {
+        "configuration": "sample"
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "executes_project_code": true,
+          "filesystem_sandbox": false,
+          "next": "poll until configuring, set breakpoints, then continue to finish configuration",
+          "session": 2,
+          "status": "starting"
+        }
+      },
+      "elapsed_ms": 0.28
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": null,
+          "busy": true,
+          "capabilities": {},
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 2,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.07
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80568,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "capabilities",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "initialized",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 2,
+          "status": "configuring",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.13
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "breakpoints",
+          "session": 2,
+          "path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-dap-real-jg0h6ao2/project/Program.cs",
+          "lines": [
+            12
+          ]
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 2
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80568,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 2,
+          "status": "configuring",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.06
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80568,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "breakpoints": [
+                {
+                  "id": 1,
+                  "line": 12,
+                  "message": "The breakpoint is pending and will be resolved when debugging starts.",
+                  "verified": false
+                }
+              ]
+            }
+          },
+          "session": 2,
+          "status": "configuring",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.28
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "continue",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 2
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80568,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 2,
+          "status": "configuring",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80568,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 2,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.14
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80568,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "process",
+              "exitCode": null,
+              "processId": 80569,
+              "threadId": null
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {}
+          },
+          "session": 2,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.24
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80568,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 2,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80568,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "thread",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1070558
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 2,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.13
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80568,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "breakpoint",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "stopped",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1070558
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 2,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1070558
+          }
+        }
+      },
+      "elapsed_ms": 0.17
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "terminate",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll until cleaned=true",
+          "session": 2,
+          "status": "terminating"
+        }
+      },
+      "elapsed_ms": 0.04
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80568,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 2,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1070558
+          }
+        }
+      },
+      "elapsed_ms": 0.05
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 2
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 80568,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCancelRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsExceptionFilterOptions": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": false,
+            "supportsFunctionBreakpoints": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsTerminateRequest": true
+          },
+          "cleaned": true,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 2,
+          "status": "terminated",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1070558
+          }
+        }
+      },
+      "elapsed_ms": 0.13
+    }
+  ]
+}

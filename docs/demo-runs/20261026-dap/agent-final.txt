@@ -1,0 +1,23 @@
+The 48-term driver now prints `2971215073` and exits with code 0. The cause was 32-bit integer overflow in the Fibonacci generator.
+
+**What the debugger showed** (paused at `Program.cs:12`, before `Print(actual)` runs):
+- `terms` is an `int[48]`, and `actual` (a `long`) is `-1323752223`.
+- The last four terms are:
+  - `terms[44]` = `701408733`
+  - `terms[45]` = `1134903170`
+  - `terms[46]` = `1836311903`
+  - `terms[47]` = `-1323752223`
+
+**What I worked out from those values:**
+- The correct term 47 is `1134903170 + 1836311903 = 2971215073`. That is larger than `int.MaxValue` (`2147483647`).
+- In `FibonacciGenerator.cs`, the sum is computed as an `int` and stored in a `Dictionary<int, int>`. By default C# doesn't check for overflow, so the sum wraps around: `2971215073 − 2³² = −1323752223`. That exactly matches the value I saw.
+- `Program.cs` already stores the result in a `long`, but by then the value has already wrapped. Widening it there doesn't recover the lost value.
+- Term 46 still fits in an `int`, so term 47 is the first one that overflows.
+
+**Fix:** In `FibonacciGenerator.cs`, I changed the value type from `int` to `long` in four places: the cache's value type, `Fib`, `FibValue` and `Generate`. Index parameters stay `int`. I didn't touch `Program.cs`, so the 48-term check and the expected value `2971215073L` are unchanged.
+
+**Tests:**
+- `build`: succeeded, 0 warnings, 0 errors.
+- `verify`: printed `2971215073` and exited with code 0.
+
+**Debugger cleanup:** I terminated session 1, and the final poll reported `status: terminated` and `cleaned: true`.

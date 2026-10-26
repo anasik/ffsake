@@ -22,6 +22,9 @@ def main():
     parser.add_argument("--trusted-host", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--access-approval", choices=("ask", "allow"), default="ask", help="Leave open/remove to ordinary host approval (default), or explicitly allow them")
     parser.add_argument("--permission-mode", choices=("default", "auto", "acceptEdits", "dontAsk", "bypassPermissions", "plan"), help="Optional Claude permission-mode override; otherwise inherit host settings")
+    parser.add_argument("--debug", type=Path, help="Host-controlled adapter/launch configuration")
+    parser.add_argument("--debug-approval", choices=("ask", "allow"), default="ask")
+    parser.add_argument("--tasks", type=Path, help="Host-controlled fixed build/test tasks")
     parser.add_argument("--host-session-id", help="Host session identity for session/once grants")
     parser.add_argument("--dry-run", action="store_true", help="Print configuration without launching Claude")
     args = parser.parse_args()
@@ -41,11 +44,16 @@ def main():
     config = {"mcpServers": {"ffsake": {"command": str(binary), "args": mcp_arguments(root, args.tool_profile)}}}
     if args.access:
         config["mcpServers"]["ffsake"]["args"] += ["--access", str(args.access.expanduser().resolve())]
+    for flag in ("debug", "tasks"):
+        value = getattr(args, flag)
+        if value:
+            config["mcpServers"]["ffsake"]["args"] += ["--" + flag, str(value.expanduser().resolve())]
     if args.host_session_id:
         config["mcpServers"]["ffsake"]["env"] = {"FFSAKE_HOST_SESSION_ID": args.host_session_id}
     allowed = [f"mcp__ffsake__{tool}" for tool in profile_tools(args.tool_profile)
                if not (args.access and tool in FFSAKE_ACCESS_TOOLS)
-               and (tool not in FFSAKE_ACCESS_MUTATIONS or args.access_approval == "allow")]
+               and (tool not in FFSAKE_ACCESS_MUTATIONS or args.access_approval == "allow")
+               and (tool != "ffsake_debug_launch" or args.debug_approval == "allow")]
     with tempfile.TemporaryDirectory(prefix="ffsake-claude-") as td:
         config_path = Path(td) / "mcp.json"
         config_path.write_text(json.dumps(config))

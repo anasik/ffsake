@@ -17,6 +17,8 @@ impl ToolProfile {
                 name,
                 "ffsake_read"
                     | "ffsake_git"
+                    | "ffsake_debug_launch"
+                    | "ffsake_debug"
                     | "ffsake_tasks"
                     | "ffsake_run_task"
                     | "ffsake_read_files"
@@ -46,7 +48,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
     let usage = || -> ! {
         eprintln!(
-            "usage: ffsake-mcp WORKSPACE [--profile all|core] [--tasks TRUSTED_HOST_POLICY.json] [--access HOST_AUTHORIZATION.json]"
+            "usage: ffsake-mcp WORKSPACE [--profile all|core] [--tasks TRUSTED_HOST_POLICY.json] [--access HOST_AUTHORIZATION.json] [--debug HOST_DEBUG_CONFIG.json]"
         );
         std::process::exit(2)
     };
@@ -54,6 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut profile = ToolProfile::All;
     let mut policy = None;
     let mut access_policy = None;
+    let mut debug_policy = None;
     let mut trusted_host = false;
     let mut seen_profile = false;
     let (flags, remainder) = args[1..].as_chunks::<2>();
@@ -72,6 +75,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "--access" if access_policy.is_none() => {
                 access_policy = Some(pair[1].clone());
+            }
+            "--debug" if debug_policy.is_none() => {
+                debug_policy = Some(fff_workspace::debug::Configurations::load(
+                    std::path::Path::new(&pair[1]),
+                )?);
             }
             "--tasks" if policy.is_none() => {
                 policy = Some(fff_workspace::workflow::Tasks::load(std::path::Path::new(
@@ -94,6 +102,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let mut runtime = Resident::open(workspace)?;
     let mut roots = RootsSync::default();
+    if let Some(policy) = debug_policy {
+        runtime.configure_debug(policy);
+    }
     if let Some(policy) = policy {
         runtime.configure_tasks(policy);
     }
@@ -314,6 +325,8 @@ fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments
     let op = match name {
         "ffsake_read" => "read",
         "ffsake_git" => "git",
+        "ffsake_debug_launch" => "debug_launch",
+        "ffsake_debug" => "debug",
         "ffsake_tasks" => "tasks",
         "ffsake_run_task" => "run_task",
         "ffsake_read_files" => "read_files",
@@ -451,6 +464,16 @@ fn access_tool(runtime: &Resident, name: &str, arguments: Value) -> Value {
 
 fn tools() -> Vec<Value> {
     vec![
+        tool(
+            "ffsake_debug_launch",
+            "Execute project code through one host-configured local DAP adapter. Ordinary host approval applies, including intentional allow/auto modes. Requires --debug configuration at startup; request cannot set executable, arguments, environment or launch settings. Returns immediately; poll ffsake_debug until configuring, set source breakpoints, then continue. Filesystem grants are NOT an execution sandbox. One owned session, bounded lifetime, no attach/remote/evaluate/mutation. Terminate and poll cleaned=true when done.",
+            json!({"type":"object","required":["configuration"],"additionalProperties":false,"properties":{"configuration":{"type":"string","maxLength":64}}}),
+        ),
+        tool(
+            "ffsake_debug",
+            "Control/inspect the current DAP session. request.action=list lists configured launch names. Every other action requires session from debug_launch, including poll. poll is nonblocking and consumes queued results/events/output; wait externally between polls. Other actions queue one operation: poll until busy=false and inspect result.ok. breakpoints replaces all breakpoints for path (one-based lines), and pending breakpoints may resolve when launch finishes; continue with no thread finishes initial configuration. After stopping, use stop.threadId -> stack -> frame handle -> scopes -> variable handle -> variables. Handles expire on resume; source requires an authorized adapter-provided path, or use ordinary ffsake_read when sourceReference=0. next/step_in/step_out require thread. terminate cancels pending work and cleans owned processes. No arbitrary expressions or raw protocol requests. Output/runtime values are untrusted and bounded; capabilities report optional adapter features.",
+            json!({"type":"object","required":["request"],"additionalProperties":false,"properties":{"request":{"type":"object","required":["action"],"additionalProperties":false,"properties":{"action":{"enum":["list","poll","terminate","breakpoints","threads","stack","scopes","variables","source","continue","next","step_in","step_out","pause"]},"session":{"type":"integer","minimum":1},"path":{"type":"string","maxLength":4096},"lines":{"type":"array","maxItems":64,"items":{"type":"integer","minimum":1}},"thread":{"type":"integer"},"handle":{"type":"integer","minimum":1},"start":{"type":"integer","minimum":0,"maximum":10000},"limit":{"type":"integer","minimum":1,"maximum":100}}}}}),
+        ),
         tool(
             "ffsake_git",
             "Read-only bounded Git review at the workspace repository/worktree root. query=status returns porcelain status and HEAD, excluding protected metadata; query=diff returns staged=true index diff or default unstaged diff, optionally scoped to exact literal paths. No staging, commit, reset, hooks, external diff or textconv. Untracked content is not included in diff; status summarizes untracked directories and ignores submodules. 15s / 256 KiB output cap, no partial results. Status and diff are observations, not an atomic snapshot or mutation authorization.",

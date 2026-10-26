@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 type WriteRequest = (Vec<u8>, SyncSender<io::Result<()>>);
 
-fn read_frame(reader: &mut impl BufRead, total: &mut usize) -> io::Result<Value> {
+pub(crate) fn read_frame(reader: &mut impl BufRead, total: &mut usize) -> io::Result<Value> {
     let invalid = || io::Error::new(io::ErrorKind::InvalidData, "invalid or oversized LSP frame");
     let mut header_bytes = 0;
     let mut length = None;
