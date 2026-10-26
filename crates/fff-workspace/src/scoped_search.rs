@@ -33,7 +33,7 @@ pub(crate) fn search(
     {
         return Err("explicit search requires offset=0, 1..=100 exact roots and a nonempty pattern <=8192 bytes".into());
     }
-    let journal = Journal::open(workspace.root())?;
+    let journal = Journal::for_workspace(workspace)?;
     // Root is a valid read-only scope, though never a mutation target.
     let resolve = |path: &str| {
         if path == "." || path == "./" {
@@ -52,7 +52,7 @@ pub(crate) fn search(
     let mut files = BTreeSet::new();
     let mut skipped = 0;
     while let Some((path, depth)) = pending.pop() {
-        let relative = path.strip_prefix(workspace.root())?;
+        let relative = path.as_path();
         if relative
             .components()
             .any(|p| p.as_os_str() == ".git" || p.as_os_str() == ".ffsake")
@@ -135,11 +135,7 @@ pub(crate) fn search(
     let mut binary = 0;
     let mut scanned = 0;
     for path in files.iter().filter(|p| !excluded.contains(*p)) {
-        let name = path
-            .strip_prefix(workspace.root())?
-            .to_str()
-            .ok_or("explicit search path is not UTF-8")?
-            .to_string();
+        let name = workspace.relative_display(path);
         // Re-resolve every file before reading to retain ancestor/symlink guards.
         let checked = journal.resolve(&name)?;
         if !fs::symlink_metadata(&checked)?.is_file() {

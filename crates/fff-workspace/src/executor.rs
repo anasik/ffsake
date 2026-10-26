@@ -128,7 +128,7 @@ pub fn execute(
     let transaction = if changes.is_empty() {
         None
     } else {
-        Some(Journal::open(workspace.root())?.commit_changes(label, &changes)?)
+        Some(Journal::for_workspace(workspace)?.commit_changes(label, &changes)?)
     };
 
     Ok(ExecutionResult {

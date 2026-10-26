@@ -18,6 +18,8 @@ def main():
     parser.add_argument("--claude", default="claude", help="Claude executable name or path")
     parser.add_argument("--tool-profile", choices=("all", "core"), default="all",
                         help="Full catalog (default) or generic file tools only")
+    parser.add_argument("--access", type=Path, help="Host-exported authorization file outside the project; never generated from tool approval")
+    parser.add_argument("--host-session-id", help="Host session identity for session/once grants")
     parser.add_argument("--dry-run", action="store_true", help="Print configuration without launching Claude")
     args = parser.parse_args()
     root = args.workspace.expanduser().resolve()
@@ -34,6 +36,10 @@ def main():
         if not readiness["ok"]:
             parser.error("core MCP preflight failed before launching Claude: " + readiness["error"])
     config = {"mcpServers": {"ffsake": {"command": str(binary), "args": mcp_arguments(root, args.tool_profile)}}}
+    if args.access:
+        config["mcpServers"]["ffsake"]["args"] += ["--access", str(args.access.expanduser().resolve())]
+    if args.host_session_id:
+        config["mcpServers"]["ffsake"]["env"] = {"FFSAKE_HOST_SESSION_ID": args.host_session_id}
     allowed = [f"mcp__ffsake__{tool}" for tool in profile_tools(args.tool_profile)]
     with tempfile.TemporaryDirectory(prefix="ffsake-claude-") as td:
         config_path = Path(td) / "mcp.json"

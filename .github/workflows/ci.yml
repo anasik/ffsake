@@ -37,6 +37,7 @@ jobs:
       - run: python3 scripts/rust_lsp_probe.py
       - run: python3 scripts/rust_lsp_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/semantic_smoke.py target/debug/ffsake-mcp
+      - run: python3 scripts/access_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/rust_manifest_context_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/rust_lsp_config_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/rust_lsp_scope_smoke.py target/debug/ffsake-mcp

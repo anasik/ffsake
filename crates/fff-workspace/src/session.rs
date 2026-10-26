@@ -212,7 +212,7 @@ impl EditorSession {
         let transaction = if changes.is_empty() {
             None
         } else {
-            Some(Journal::open(self.workspace.root())?.commit_changes(label, &changes)?)
+            Some(Journal::for_workspace(&self.workspace)?.commit_changes(label, &changes)?)
         };
 
         Ok(EditResult {

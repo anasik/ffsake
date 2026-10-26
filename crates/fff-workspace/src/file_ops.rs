@@ -92,9 +92,31 @@ fn snapshot(journal: &Journal, path: &str) -> Result<Option<Vec<u8>>> {
     }
 }
 
+impl FileOperation {
+    fn paths(&self) -> Vec<&str> {
+        match self {
+            Self::Copy { from, to }
+            | Self::Move { from, to }
+            | Self::CopyDirectory { from, to }
+            | Self::MoveDirectory { from, to } => vec![from, to],
+            Self::Create { path, .. }
+            | Self::Delete { path }
+            | Self::Edit { path, .. }
+            | Self::CreateDirectory { path }
+            | Self::RemoveDirectory { path }
+            | Self::DeleteDirectory { path } => vec![path],
+        }
+    }
+    fn writes(&self) -> Vec<&str> {
+        match self {
+            Self::Copy { to, .. } | Self::CopyDirectory { to, .. } => vec![to],
+            _ => self.paths(),
+        }
+    }
+}
 impl FilePlan {
     pub(crate) fn preview(workspace: &Workspace, operation: FileOperation) -> Result<Self> {
-        let journal = Journal::open(workspace.root())?;
+        let journal = Journal::for_workspace(workspace)?;
         let mut changes = Vec::new();
         let mut checks = Vec::new();
         let mut mode_checks = BTreeMap::new();
@@ -296,6 +318,11 @@ impl FilePlan {
             reads.push(journal.resolve(&copy.movement.from)?);
             writes.push(journal.resolve(&copy.movement.to)?);
         }
+        for member in &self.members {
+            let (w, r) = member.affected_paths(journal)?;
+            writes.extend(w);
+            reads.extend(r);
+        }
         Ok((writes, reads))
     }
 
@@ -303,13 +330,19 @@ impl FilePlan {
         workspace: &Workspace,
         operations: Vec<FileOperation>,
     ) -> Result<Self> {
+        workspace
+            .access
+            .transaction(operations.iter().flat_map(FileOperation::paths), false)?;
+        workspace
+            .access
+            .transaction(operations.iter().flat_map(FileOperation::writes), true)?;
         if operations.is_empty() || operations.len() > 100 {
             return Err("batch must contain 1..=100 operations".into());
         }
         if operations.len() == 1 {
             return Self::preview(workspace, operations.into_iter().next().unwrap());
         }
-        let journal = Journal::open(workspace.root())?;
+        let journal = Journal::for_workspace(workspace)?;
         let mut combined = Self::empty();
         let mut directories = Vec::new();
         let mut writes: Vec<PathBuf> = Vec::new();
@@ -459,6 +492,18 @@ impl FilePlan {
     }
 
     fn verify(&self, journal: &Journal) -> Result<()> {
+        let (writes, reads) = self.affected_paths(journal)?;
+        let all: Vec<_> = writes
+            .iter()
+            .chain(&reads)
+            .map(|p| p.to_string_lossy().into_owned())
+            .collect();
+        journal.authorize(all.iter().map(String::as_str), false)?;
+        let writes: Vec<_> = writes
+            .iter()
+            .map(|p| p.to_string_lossy().into_owned())
+            .collect();
+        journal.authorize(writes.iter().map(String::as_str), true)?;
         for member in &self.members {
             member.verify(journal)?;
         }
@@ -525,7 +570,7 @@ impl FilePlan {
     }
 
     pub(crate) fn apply(&self, workspace: &Workspace) -> Result<Value> {
-        let journal = Journal::open(workspace.root())?;
+        let journal = Journal::for_workspace(workspace)?;
         self.verify(&journal)?;
         if !self.members.is_empty() {
             let transaction = journal.commit_group(self.members.len(), |nested, index| {

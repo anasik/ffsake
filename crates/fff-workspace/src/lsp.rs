@@ -356,6 +356,10 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
     let deadline = Instant::now() + Duration::from_secs(30);
     let snapshot = tempfile::tempdir()?;
     let root = snapshot.path().canonicalize()?;
+    workspace
+        .access
+        .transaction(files.iter().map(String::as_str), false)?;
+    let mut identities = BTreeMap::new();
     let mut sources = BTreeMap::new();
     let mut hashes = BTreeMap::new();
     let mut names = BTreeMap::new();
@@ -364,7 +368,9 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
         if file.len() > 4096 || Path::new(file).extension().is_none_or(|ext| ext != "rs") {
             return Err("Rust navigation requires .rs paths of at most 4096 bytes".into());
         }
-        let (normalized, bytes) = workspace.read_source_bounded(Path::new(file), 256 * 1024)?;
+        let (identity, bytes) = workspace.read_source_bounded(Path::new(file), 256 * 1024)?;
+        let normalized = crate::semantic::snapshot_name(workspace, &identity)?;
+        identities.insert(normalized.clone(), identity.clone());
         crate::semantic::account_source(&mut source_bytes, bytes.len())?;
         let source = String::from_utf8(bytes)?;
         if sources.contains_key(&normalized) {
@@ -374,7 +380,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
         std::fs::create_dir_all(destination.parent().ok_or("invalid source parent")?)?;
         std::fs::write(destination, &source)?;
         hashes.insert(
-            normalized.clone(),
+            identity,
             blake3::hash(source.as_bytes()).to_hex().to_string(),
         );
         sources.insert(normalized.clone(), source);
@@ -584,6 +590,7 @@ fn navigate(workspace: &Workspace, query: Query<'_>, kind: Navigation<'_>) -> Re
             "Native primary diagnostics only. Missing dependencies or configuration can cause semantic errors; an empty result does not prove the project compiles."
         ));
     }
+    crate::semantic::restore_paths(&mut response, &identities);
     Ok(response)
 }
 

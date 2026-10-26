@@ -2,8 +2,9 @@ use globset::Glob;
 use regex::Regex;
 use std::fs;
 use std::io;
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 
+pub mod access;
 mod archive;
 mod atomic;
 pub mod coordinates;
@@ -39,6 +40,7 @@ mod workflow_process;
 pub enum WorkspaceError {
     Io(io::Error),
     InvalidPath(String),
+    AuthorizationRequired(String),
     OutsideWorkspace(PathBuf),
     NotUtf8(PathBuf),
     NotFound(PathBuf),
@@ -65,6 +67,7 @@ impl std::fmt::Display for WorkspaceError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Io(e) => write!(f, "{e}"),
+            Self::AuthorizationRequired(message) => write!(f, "{message}"),
             Self::InvalidPath(p) => write!(f, "invalid workspace-relative path: {p}"),
             Self::OutsideWorkspace(p) => write!(f, "path escapes workspace: {}", p.display()),
             Self::NotUtf8(p) => write!(f, "file is not valid UTF-8: {}", p.display()),
@@ -108,6 +111,7 @@ pub type Result<T> = std::result::Result<T, WorkspaceError>;
 #[derive(Debug, Clone)]
 pub struct Workspace {
     root: PathBuf,
+    pub(crate) access: access::Access,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -254,7 +258,10 @@ impl Workspace {
         if !root.is_dir() {
             return Err(WorkspaceError::InvalidPath(root.display().to_string()));
         }
-        Ok(Self { root })
+        Ok(Self {
+            access: access::Access::primary(root.clone()),
+            root,
+        })
     }
 
     pub fn root(&self) -> &Path {
@@ -288,26 +295,13 @@ impl Workspace {
     }
 
     fn resolve_explicit_file(&self, relative: &Path) -> Result<Option<PathBuf>> {
-        let clean = self.validate_relative(relative)?;
-        let mut candidate = self.root.clone();
-        for component in clean.components() {
-            candidate.push(component);
-            match fs::symlink_metadata(&candidate) {
-                Ok(metadata) if metadata.file_type().is_symlink() => {
-                    return Err(WorkspaceError::InvalidPath(
-                        "symlinks are not allowed in batch reads".into(),
-                    ));
-                }
-                Ok(_) => {}
-                Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
-                Err(error) => return Err(error.into()),
-            }
+        let (path, _) = self.access.authorize(relative, false)?;
+        match fs::symlink_metadata(&path) {
+            Ok(m) if m.is_file() => Ok(Some(path)),
+            Ok(_) => Err(WorkspaceError::InvalidPath(relative.display().to_string())),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(e.into()),
         }
-        let path = self.resolve_existing(relative)?;
-        if !path.is_file() {
-            return Err(WorkspaceError::InvalidPath(relative.display().to_string()));
-        }
-        Ok(Some(path))
     }
 
     pub(crate) fn read_source_bounded(
@@ -384,6 +378,9 @@ impl Workspace {
         let mut out = Vec::new();
         for entry in fs::read_dir(path)? {
             let entry = entry?;
+            if self.access.authorize(&entry.path(), false).is_err() {
+                continue;
+            }
             let file_type = entry.file_type()?;
             let metadata = fs::symlink_metadata(entry.path())?;
             let kind = if file_type.is_file() {
@@ -763,7 +760,10 @@ impl Workspace {
             let entry = entry?;
             let path = entry.path();
             let ty = entry.file_type()?;
-            if entry.file_name() == ".ffsake" || ty.is_symlink() {
+            if entry.file_name() == ".ffsake"
+                || ty.is_symlink()
+                || self.access.authorize(&path, false).is_err()
+            {
                 continue;
             }
             if ty.is_dir() {
@@ -778,6 +778,13 @@ impl Workspace {
     }
 
     pub fn move_path(&self, from: impl AsRef<Path>, to: impl AsRef<Path>) -> Result<()> {
+        self.access.transaction(
+            [
+                from.as_ref().to_string_lossy().as_ref(),
+                to.as_ref().to_string_lossy().as_ref(),
+            ],
+            true,
+        )?;
         let from = self.resolve_entry(from.as_ref())?;
         let to = self.resolve_for_write(to.as_ref())?;
         if let Some(parent) = to.parent() {
@@ -801,110 +808,67 @@ impl Workspace {
         Ok(())
     }
 
-    fn validate_relative(&self, relative: &Path) -> Result<PathBuf> {
-        if relative.as_os_str().is_empty() {
-            return Err(WorkspaceError::InvalidPath(
-                "workspace root is not a valid mutation target".to_string(),
-            ));
-        }
-        if relative.is_absolute() {
-            return Err(WorkspaceError::InvalidPath(relative.display().to_string()));
-        }
-
-        let mut clean = PathBuf::new();
-        for component in relative.components() {
-            match component {
-                Component::Normal(part) if part == ".ffsake" => {
-                    return Err(WorkspaceError::InternalPath(relative.display().to_string()));
-                }
-                Component::Normal(part) => clean.push(part),
-                Component::CurDir => {}
-                Component::ParentDir | Component::RootDir | Component::Prefix(_) => {
-                    return Err(WorkspaceError::InvalidPath(relative.display().to_string()));
-                }
-            }
-        }
-        Ok(clean)
-    }
-
     fn resolve_existing(&self, relative: &Path) -> Result<PathBuf> {
-        let clean = self.validate_relative(relative)?;
-        let candidate = self.root.join(clean);
-        let canonical = fs::canonicalize(&candidate).map_err(|e| {
-            if e.kind() == io::ErrorKind::NotFound {
-                WorkspaceError::NotFound(candidate.clone())
-            } else {
-                WorkspaceError::Io(e)
+        let candidate = self.access.absolute(relative)?;
+        let path = if candidate.starts_with(&self.root) {
+            let canonical = fs::canonicalize(&candidate).map_err(|e| {
+                if e.kind() == io::ErrorKind::NotFound {
+                    WorkspaceError::NotFound(candidate.clone())
+                } else {
+                    e.into()
+                }
+            })?;
+            if !canonical.starts_with(&self.root) {
+                return Err(WorkspaceError::OutsideWorkspace(canonical));
             }
-        })?;
-        self.ensure_inside(canonical)
-    }
-
-    fn resolve_entry(&self, relative: &Path) -> Result<PathBuf> {
-        let clean = self.validate_relative(relative)?;
-        let candidate = self.root.join(clean);
-        let metadata = fs::symlink_metadata(&candidate).map_err(|e| {
-            if e.kind() == io::ErrorKind::NotFound {
-                WorkspaceError::NotFound(candidate.clone())
-            } else {
-                WorkspaceError::Io(e)
-            }
-        })?;
-
-        let parent = candidate.parent().unwrap_or(&self.root);
-        let canonical_parent = fs::canonicalize(parent)?;
-        self.ensure_inside(canonical_parent)?;
-
-        if !metadata.file_type().is_symlink() {
-            self.ensure_inside(fs::canonicalize(&candidate)?)?;
-        }
-        Ok(candidate)
-    }
-
-    fn resolve_for_write(&self, relative: &Path) -> Result<PathBuf> {
-        let clean = self.validate_relative(relative)?;
-        let candidate = self.root.join(clean);
-
-        if candidate.exists() {
-            let metadata = fs::symlink_metadata(&candidate)?;
-            if metadata.file_type().is_symlink() {
-                return Err(WorkspaceError::InvalidPath(format!(
-                    "refusing to write through symlink: {}",
-                    relative.display()
-                )));
-            }
-            return self.resolve_existing(relative);
-        }
-
-        let mut ancestor = candidate.as_path();
-        while !ancestor.exists() {
-            ancestor = ancestor
-                .parent()
-                .ok_or_else(|| WorkspaceError::InvalidPath(relative.display().to_string()))?;
-        }
-        self.ensure_inside(fs::canonicalize(ancestor)?)?;
-        Ok(candidate)
-    }
-
-    fn ensure_inside(&self, path: PathBuf) -> Result<PathBuf> {
-        let relative = path
-            .strip_prefix(&self.root)
-            .map_err(|_| WorkspaceError::OutsideWorkspace(path.clone()))?;
-        // Validate the resolved path as well as the caller's spelling: an
-        // otherwise innocuous symlink name can point into the reserved journal.
-        if relative
-            .components()
-            .any(|component| matches!(component, Component::Normal(part) if part == ".ffsake"))
-        {
-            return Err(WorkspaceError::InternalPath(relative.display().to_string()));
+            self.access.authorize(&canonical, false)?.0
+        } else {
+            self.access.authorize(relative, false)?.0
+        };
+        if !path.try_exists()? {
+            return Err(WorkspaceError::NotFound(path));
         }
         Ok(path)
     }
 
+    fn resolve_entry(&self, relative: &Path) -> Result<PathBuf> {
+        let (path, _) = self.access.authorize(relative, true)?;
+        fs::symlink_metadata(&path)?;
+        Ok(path)
+    }
+
+    fn resolve_for_write(&self, relative: &Path) -> Result<PathBuf> {
+        let result = self.access.authorize(relative, true).map(|(path, _)| path);
+        if result.is_err() {
+            let candidate = self.access.absolute(relative)?;
+            if candidate.starts_with(&self.root) {
+                let mut ancestor = candidate.as_path();
+                while !ancestor.exists() {
+                    ancestor = ancestor.parent().ok_or_else(|| {
+                        WorkspaceError::InvalidPath(relative.display().to_string())
+                    })?;
+                }
+                let canonical = fs::canonicalize(ancestor)?;
+                if !canonical.starts_with(&self.root) {
+                    return Err(WorkspaceError::OutsideWorkspace(canonical));
+                }
+            }
+        }
+        result
+    }
+
+    fn ensure_inside(&self, path: PathBuf) -> Result<PathBuf> {
+        self.access.authorize(&path, false).map(|(path, _)| path)
+    }
+
     fn relative_path(&self, path: &Path) -> Result<PathBuf> {
-        path.strip_prefix(&self.root)
-            .map(Path::to_path_buf)
-            .map_err(|_| WorkspaceError::OutsideWorkspace(path.to_path_buf()))
+        self.access.authorize(path, false)?;
+        Ok(PathBuf::from(self.relative_display(path)))
+    }
+
+    pub fn configure_access(&mut self, policy: &Path) -> Result<()> {
+        self.access = access::Access::configured(self.root.clone(), policy)?;
+        Ok(())
     }
 
     fn relative_display(&self, path: &Path) -> String {

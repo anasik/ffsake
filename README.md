@@ -18,7 +18,7 @@ The first implementation is `crates/fff-workspace`, a workspace-scoped file API 
 - non-committing transform previews with unified diffs;
 - resident FFF-backed indexed content search that returns reusable path-qualified match sets;
 - move/rename and delete;
-- strict workspace containment and symlink-escape protection;
+- primary-project defaults, explicit host-authorized external files/directories, and symlink-escape protection;
 - an internal `.ffsake/` journal with undo/redo and stale-state guards.
 
 ## Mutation model
@@ -216,3 +216,7 @@ target/debug/ffsake-mcp "$PWD" --profile core --tasks "$PWD/docs/examples/tasks.
 ```
 
 This authorizes the configured commands to run project code. It is not a sandbox: jobs may change files, and their effects are not journaled. Requests cannot provide replacement commands, arguments, environment, or policy paths. Output/time limits and Unix process-group cleanup are enforced; stale edit previews still reject after a job changes their inputs. See [workflow details](docs/CLI.md#git-review-and-host-configured-buildtest-jobs).
+
+## Host-authorized external paths
+
+Absolute paths work within the primary project or exact host-exported grants. Use `--access` for explicit read-only/read-write directory or single-file authorization, with project/session/one-request lifetimes. MCP roots synchronize the scope of root-dependent grants; roots and tool approval do not encode the host’s complete permission policy. Stock Claude requires manual host authorization/export/retry. See [setup, lifetimes, live updates and limitations](docs/HOST_ACCESS.md).

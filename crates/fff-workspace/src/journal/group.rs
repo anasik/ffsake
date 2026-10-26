@@ -3,12 +3,13 @@ use super::*;
 use std::collections::BTreeSet;
 
 impl Journal {
-    fn member_journal(&self, id: &str) -> Result<Journal> {
+    pub(super) fn member_journal(&self, id: &str) -> Result<Journal> {
         validate_transaction_id(id)?;
         let root = self.journal_root.join(id).join("members");
         self.check_internal_path(&root)?;
         Ok(Journal {
             workspace_root: self.workspace_root.clone(),
+            access: self.access.clone(),
             journal_root: root,
         })
     }

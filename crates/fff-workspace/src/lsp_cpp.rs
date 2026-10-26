@@ -70,6 +70,10 @@ pub(crate) fn query(
     let deadline = Instant::now() + Duration::from_secs(30);
     let temporary = tempfile::tempdir()?;
     let root = temporary.path().canonicalize()?;
+    workspace
+        .access
+        .transaction(request.files.iter().map(String::as_str), false)?;
+    let mut identities = BTreeMap::new();
     let mut sources = BTreeMap::new();
     let mut hashes = BTreeMap::new();
     let mut names = BTreeMap::new();
@@ -85,7 +89,9 @@ pub(crate) fn query(
         {
             return Err("C++ context requires bounded C++ source/header paths".into());
         }
-        let (path, bytes) = workspace.read_source_bounded(Path::new(file), 256 * 1024)?;
+        let (identity, bytes) = workspace.read_source_bounded(Path::new(file), 256 * 1024)?;
+        let path = crate::semantic::snapshot_name(workspace, &identity)?;
+        identities.insert(path.clone(), identity.clone());
         if sources.contains_key(&path) {
             return Err("duplicate semantic source".into());
         }
@@ -95,7 +101,7 @@ pub(crate) fn query(
         std::fs::create_dir_all(destination.parent().ok_or("missing parent")?)?;
         std::fs::write(destination, &source)?;
         hashes.insert(
-            path.clone(),
+            identity,
             blake3::hash(source.as_bytes()).to_hex().to_string(),
         );
         names.insert(file, path.clone());
@@ -280,5 +286,6 @@ pub(crate) fn query(
         "Only explicit source/header snapshots, the selected standard, explicit token defines and snapshot-root includes are configured. No other project build flags, generated files, dependency discovery or background index. System headers may come from the installed clangd toolchain.",
         "Server proposals and diagnostics are not proof of compilation, complete references or preserved behavior. Review and externally build/test changes."
     ]);
+    crate::semantic::restore_paths(&mut response, &identities);
     Ok(response)
 }

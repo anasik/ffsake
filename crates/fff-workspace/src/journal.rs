@@ -73,6 +73,7 @@ pub type Result<T> = std::result::Result<T, JournalError>;
 #[derive(Debug, Clone)]
 pub struct Journal {
     workspace_root: PathBuf,
+    access: crate::access::Access,
     journal_root: PathBuf,
 }
 
@@ -146,6 +147,27 @@ pub struct TransactionManifest {
 }
 
 impl Journal {
+    pub(crate) fn for_workspace(workspace: &crate::Workspace) -> Result<Self> {
+        let mut journal = Self::open(workspace.root())?;
+        journal.access = workspace.access.clone();
+        Ok(journal)
+    }
+    pub(crate) fn authorize<'a>(
+        &self,
+        paths: impl IntoIterator<Item = &'a str>,
+        write: bool,
+    ) -> Result<()> {
+        self.access
+            .transaction(paths, write)
+            .map_err(|e| JournalError::InvalidPath(e.to_string()))
+    }
+    pub(crate) fn resolve_write(&self, path: &str) -> Result<PathBuf> {
+        self.access
+            .authorize(Path::new(path), true)
+            .map(|(path, _)| path)
+            .map_err(|e| JournalError::InvalidPath(e.to_string()))
+    }
+
     pub fn open(workspace_root: impl AsRef<Path>) -> Result<Self> {
         let workspace_root = fs::canonicalize(workspace_root.as_ref())?;
         let journal_root = workspace_root.join(INTERNAL_DIR).join(JOURNAL_DIR);
@@ -156,6 +178,7 @@ impl Journal {
         }
         fs::create_dir_all(&journal_root)?;
         Ok(Self {
+            access: crate::access::Access::primary(workspace_root.clone()),
             workspace_root,
             journal_root,
         })
@@ -204,6 +227,7 @@ impl Journal {
         changes: &[JournalChange],
         destination_modes: &BTreeMap<String, u32>,
     ) -> Result<TransactionManifest> {
+        self.authorize(changes.iter().map(|change| change.path.as_str()), true)?;
         let mut manifest = self.prepare(label, changes, destination_modes)?;
         self.verify_side(&manifest, SnapshotSide::Before)?;
         crate::journal_parents::create(self, &mut manifest.created_directories, false)?;
@@ -237,7 +261,7 @@ impl Journal {
         path: &str,
         create: bool,
     ) -> Result<TransactionDirectory> {
-        let resolved = self.resolve(path)?;
+        let resolved = self.resolve_write(path)?;
         let directory = TransactionDirectory {
             path: path.into(),
             before_exists: !create,
@@ -252,6 +276,7 @@ impl Journal {
         &self,
         directory: TransactionDirectory,
     ) -> Result<TransactionManifest> {
+        self.resolve_write(&directory.path)?;
         self.verify_directory(&directory, SnapshotSide::Before)?;
         let manifest = TransactionManifest {
             id: self.reserve_transaction()?,
@@ -390,6 +415,7 @@ impl Journal {
         &self,
         movement: TransactionTreeMove,
     ) -> Result<TransactionManifest> {
+        self.authorize([movement.from.as_str(), movement.to.as_str()], true)?;
         movement.verify(self, false)?;
         let manifest = TransactionManifest {
             id: self.reserve_transaction()?,
@@ -451,6 +477,7 @@ impl Journal {
         &self,
         archive: TransactionTreeArchive,
     ) -> Result<TransactionManifest> {
+        self.resolve_write(&archive.path)?;
         let manifest = TransactionManifest {
             id: self.reserve_transaction()?,
             state: TransactionState::Prepared,
@@ -589,7 +616,7 @@ impl Journal {
         let mut files = Vec::with_capacity(changes.len());
 
         for change in changes {
-            validate_relative(Path::new(&change.path))?;
+            self.resolve_write(&change.path)?;
             let snapshot_key = blake3::hash(change.path.as_bytes()).to_hex().to_string();
 
             if let Some(before) = &change.before {
@@ -648,7 +675,7 @@ impl Journal {
         let mut files = Vec::with_capacity(changes.len());
 
         for change in changes {
-            validate_relative(Path::new(&change.path))?;
+            self.resolve_write(&change.path)?;
             let snapshot_key = blake3::hash(change.path.as_bytes()).to_hex().to_string();
 
             if let Some(before) = &change.before {
@@ -707,6 +734,7 @@ impl Journal {
 
     pub fn undo(&self, id: &str) -> Result<TransactionManifest> {
         let manifest = self.load(id)?;
+        self.authorize_manifest(&manifest)?;
         if manifest.state == TransactionState::Undone {
             return Ok(manifest);
         }
@@ -724,6 +752,7 @@ impl Journal {
 
     pub fn redo(&self, id: &str) -> Result<TransactionManifest> {
         let manifest = self.load(id)?;
+        self.authorize_manifest(&manifest)?;
         if manifest.state == TransactionState::Applied {
             return Ok(manifest);
         }
@@ -739,7 +768,39 @@ impl Journal {
         self.transition(manifest, SnapshotSide::After, TransactionState::Applied)
     }
 
+    fn manifest_paths(&self, manifest: &TransactionManifest) -> Result<Vec<String>> {
+        let mut paths: Vec<String> = manifest.files.iter().map(|f| f.path.clone()).collect();
+        paths.extend(manifest.created_directories.iter().map(|d| d.path.clone()));
+        if let Some(d) = &manifest.directory {
+            paths.push(d.path.clone());
+        }
+        if let Some(t) = &manifest.tree_move {
+            paths.extend([t.from.clone(), t.to.clone()]);
+        }
+        if let Some(t) = &manifest.tree_archive {
+            paths.push(t.path.clone());
+        }
+        if let Some(members) = &manifest.members {
+            let nested = self.member_journal(&manifest.id)?;
+            for member in members {
+                let child = nested.load(member)?;
+                if child.members.is_some() {
+                    return Err(JournalError::InvalidPath(
+                        "nested journal groups unsupported".into(),
+                    ));
+                }
+                paths.extend(nested.manifest_paths(&child)?);
+            }
+        }
+        Ok(paths)
+    }
+    fn authorize_manifest(&self, manifest: &TransactionManifest) -> Result<()> {
+        let paths = self.manifest_paths(manifest)?;
+        self.authorize(paths.iter().map(String::as_str), true)
+    }
+
     fn verify_side(&self, manifest: &TransactionManifest, side: SnapshotSide) -> Result<()> {
+        self.authorize_manifest(manifest)?;
         if manifest.members.is_some() {
             return self.verify_group(manifest, side);
         }
@@ -955,7 +1016,7 @@ impl Journal {
         side: SnapshotSide,
     ) -> Result<Vec<u8>> {
         validate_transaction_id(&manifest.id)?;
-        validate_relative(Path::new(&file.path))?;
+        self.resolve(&file.path)?;
         if file.snapshot_key != blake3::hash(file.path.as_bytes()).to_hex().as_str() {
             return Err(JournalError::InvalidPath("invalid snapshot key".into()));
         }
@@ -1041,24 +1102,11 @@ impl Journal {
         Ok(())
     }
 
-    pub(crate) fn resolve(&self, relative: &str) -> Result<PathBuf> {
-        let relative = Path::new(relative);
-        validate_relative(relative)?;
-        let mut path = self.workspace_root.clone();
-        for component in relative.components() {
-            if let Component::Normal(part) = component {
-                path.push(part);
-                match fs::symlink_metadata(&path) {
-                    Ok(metadata) if metadata.file_type().is_symlink() => {
-                        return Err(JournalError::InvalidPath(relative.display().to_string()));
-                    }
-                    Ok(_) => {}
-                    Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-                    Err(error) => return Err(error.into()),
-                }
-            }
-        }
-        Ok(path)
+    pub(crate) fn resolve(&self, path: &str) -> Result<PathBuf> {
+        self.access
+            .authorize(Path::new(path), false)
+            .map(|(path, _)| path)
+            .map_err(|e| JournalError::InvalidPath(e.to_string()))
     }
 
     fn reserve_named_transaction(&self, id: &str) -> Result<()> {
@@ -1132,31 +1180,6 @@ fn validate_transaction_id(id: &str) -> Result<()> {
     {
         return Err(JournalError::InvalidPath("invalid transaction id".into()));
     }
-    Ok(())
-}
-
-fn validate_relative(path: &Path) -> Result<()> {
-    if path.as_os_str().is_empty()
-        || path.is_absolute()
-        || !path
-            .components()
-            .any(|part| matches!(part, Component::Normal(_)))
-    {
-        return Err(JournalError::InvalidPath(path.display().to_string()));
-    }
-
-    for component in path.components() {
-        match component {
-            Component::Normal(part) if part == INTERNAL_DIR => {
-                return Err(JournalError::InvalidPath(path.display().to_string()));
-            }
-            Component::Normal(_) | Component::CurDir => {}
-            Component::ParentDir | Component::RootDir | Component::Prefix(_) => {
-                return Err(JournalError::InvalidPath(path.display().to_string()));
-            }
-        }
-    }
-
     Ok(())
 }
 

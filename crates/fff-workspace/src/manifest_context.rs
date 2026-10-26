@@ -42,6 +42,7 @@ fn relative(base: &Path, value: &str) -> Result<String> {
     let mut path = PathBuf::new();
     for component in base.join(value).components() {
         match component {
+            Component::RootDir if base.is_absolute() => path.push(component),
             Component::Normal(part) => path.push(part),
             Component::CurDir => {}
             Component::ParentDir if path.pop() => {}
@@ -308,6 +309,9 @@ pub(crate) fn import(
     {
         return Err("manifest context requires 1..=16 manifests and 1..=64 Rust files".into());
     }
+    workspace
+        .access
+        .transaction(manifests.iter().chain(files).map(String::as_str), false)?;
     let mut documents = BTreeMap::new();
     let mut manifest_hashes = BTreeMap::new();
     let mut source_hashes = BTreeMap::new();

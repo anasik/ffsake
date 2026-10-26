@@ -107,7 +107,7 @@ fn snapshot(workspace: &Workspace, path: &str) -> Result<Vec<u8>> {
     ) {
         return Err("archive path must end in .zip or .jar".into());
     }
-    let resolved = Journal::open(workspace.root())?.resolve(path)?;
+    let resolved = Journal::for_workspace(workspace)?.resolve(path)?;
     let metadata = fs::symlink_metadata(&resolved)?;
     if !metadata.is_file() || metadata.len() > ARCHIVE_BYTES {
         return Err("archive must be a regular file <=32 MiB".into());

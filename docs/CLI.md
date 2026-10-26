@@ -330,3 +330,7 @@ Each run returns `success`, `exit_code`, termination `signal`, `timed_out`, `ela
 Configured jobs can execute repository code and change files. They are not sandboxed, rolled back or journaled. Output is untrusted diagnostic data. The next search refreshes after a job, and existing previews still compare their original source hashes. Nonzero exit, signal or timeout is a failed job, not a successful verification. Git review and jobs do not require LSP.
 
 JSONL equivalents are `{"op":"git","query":"status"}`, `{"op":"tasks"}` and `{"op":"run_task","name":"test"}`. `python3 scripts/workflow_smoke.py target/debug/ffsake-mcp` verifies real Git index/worktree preservation, literal paths/protected exclusions/helper refusal, policy-only execution, real compilation/runtime, nonzero exit, output bounds, timeout child cleanup and stale previews after task writes.
+
+## Host authorization and absolute paths
+
+Both resident launchers accept `--access /host-controlled/authorization.json`. The primary project remains the default; additional paths require explicit host-exported directory/file grants. Grants distinguish modes and lifetimes, reload before requests, and are checked again at apply and history. Cross-root transactions reject. MCP roots are a live scope intersection only; they do not authorize read/write access. See [HOST_ACCESS.md](HOST_ACCESS.md) for the manual host path, exact-file setup, session/once rules and unsupported native approval automation.

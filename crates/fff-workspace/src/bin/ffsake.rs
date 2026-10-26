@@ -5,22 +5,31 @@ use std::io::{self, BufRead, Write};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
-    let (root, policy) = match args.as_slice() {
-        [serve, root] if serve == "serve" => (root, None),
-        [serve, root, flag, policy] if serve == "serve" && flag == "--tasks" => (
-            root,
-            Some(fff_workspace::workflow::Tasks::load(std::path::Path::new(
-                policy,
-            ))?),
-        ),
-        _ => {
-            eprintln!("usage: ffsake serve WORKSPACE [--tasks TRUSTED_HOST_POLICY.json]");
-            std::process::exit(2);
+    if args.len() < 2 || args[0] != "serve" || args.len() % 2 != 0 {
+        return Err(
+            "usage: ffsake serve WORKSPACE [--tasks POLICY] [--access HOST_AUTHORIZATION]".into(),
+        );
+    }
+    let mut workspace = Workspace::new(&args[1])?;
+    let mut tasks = None;
+    let mut access = None;
+    for pair in args[2..].as_chunks::<2>().0 {
+        match pair[0].as_str() {
+            "--tasks" if tasks.is_none() => {
+                tasks = Some(fff_workspace::workflow::Tasks::load(std::path::Path::new(
+                    &pair[1],
+                ))?)
+            }
+            "--access" if access.is_none() => access = Some(pair[1].clone()),
+            _ => return Err("unknown or repeated startup option".into()),
         }
-    };
-    let mut runtime = Resident::open(Workspace::new(root)?)?;
-    if let Some(policy) = policy {
-        runtime.configure_tasks(policy);
+    }
+    if let Some(path) = access {
+        workspace.configure_access(std::path::Path::new(&path))?;
+    }
+    let mut runtime = Resident::open(workspace)?;
+    if let Some(tasks) = tasks {
+        runtime.configure_tasks(tasks);
     }
     let mut input = io::stdin().lock();
     let mut output = io::stdout().lock();

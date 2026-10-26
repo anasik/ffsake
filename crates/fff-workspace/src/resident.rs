@@ -374,6 +374,16 @@ impl Resident {
         };
         plan.operations
             .insert(0, Mutation::AssertHashes { expected: hashes });
+        workspace.access.transaction(
+            plan.target.include.iter().filter_map(|p| {
+                if let PathSelector::Exact(p) = p {
+                    Some(p.as_str())
+                } else {
+                    None
+                }
+            }),
+            true,
+        )?;
         let preview = crate::preview::preview(workspace, &plan)?;
         let handle = self.allocate()?;
         self.plans.insert(handle, plan);
@@ -412,7 +422,7 @@ impl Resident {
         {
             return Err("invalid transaction id".into());
         }
-        let journal = Journal::open(self.session.workspace().root())?;
+        let journal = Journal::for_workspace(self.session.workspace())?;
         let result = if redo {
             journal.redo(transaction)?
         } else {
@@ -422,7 +432,12 @@ impl Resident {
         Ok(serde_json::to_value(result)?)
     }
 
+    pub fn access(&self) -> crate::access::Access {
+        self.session.workspace().access.clone()
+    }
+
     pub fn execute(&mut self, request: Request) -> Result<Value> {
+        self.access().refresh()?;
         match request {
             Request::Read { path, start, end } => Ok(serde_json::to_value(
                 self.session.workspace().read_text(path, start, end)?,
@@ -430,6 +445,10 @@ impl Resident {
             Request::ReadFiles { files } => {
                 if files.is_empty() || files.len() > 32 {
                     return Err("files must contain 1..=32 entries".into());
+                }
+                for file in &files {
+                    self.access()
+                        .authorize(std::path::Path::new(&file.path), false)?;
                 }
                 let mut results = Vec::new();
                 let mut remaining = 1024 * 1024;
@@ -873,6 +892,7 @@ impl Resident {
                 if expected_matches == 0 {
                     return Err("expected_matches must be positive".into());
                 }
+                self.access().authorize(std::path::Path::new(&path), true)?;
                 // Exact selectors also accept directories; this operation is
                 // deliberately limited to one existing, safe UTF-8 file.
                 self.session.workspace().read_text(&path, None, None)?;

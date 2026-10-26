@@ -171,6 +171,13 @@ pub fn execute(
         });
     }
 
+    let identities: Vec<_> = files
+        .iter()
+        .map(|p| workspace.relative_display(p))
+        .collect();
+    workspace
+        .access
+        .transaction(identities.iter().map(String::as_str), true)?;
     let selected_files = files.len();
     let mut buffers = BTreeMap::new();
 
@@ -197,7 +204,7 @@ pub fn execute(
     let transaction = if changes.is_empty() {
         None
     } else {
-        Some(Journal::open(workspace.root())?.commit_changes(label, &changes)?)
+        Some(Journal::for_workspace(workspace)?.commit_changes(label, &changes)?)
     };
 
     Ok(TransformResult {

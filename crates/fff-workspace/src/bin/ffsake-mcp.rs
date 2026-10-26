@@ -46,13 +46,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
     let usage = || -> ! {
         eprintln!(
-            "usage: ffsake-mcp WORKSPACE [--profile all|core] [--tasks TRUSTED_HOST_POLICY.json]"
+            "usage: ffsake-mcp WORKSPACE [--profile all|core] [--tasks TRUSTED_HOST_POLICY.json] [--access HOST_AUTHORIZATION.json]"
         );
         std::process::exit(2)
     };
     let root = args.first().unwrap_or_else(|| usage());
     let mut profile = ToolProfile::All;
     let mut policy = None;
+    let mut access_policy = None;
     let mut seen_profile = false;
     let (flags, remainder) = args[1..].as_chunks::<2>();
     for pair in flags {
@@ -65,6 +66,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     _ => usage(),
                 };
             }
+            "--access" if access_policy.is_none() => {
+                access_policy = Some(pair[1].clone());
+            }
             "--tasks" if policy.is_none() => {
                 policy = Some(fff_workspace::workflow::Tasks::load(std::path::Path::new(
                     &pair[1],
@@ -76,7 +80,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !remainder.is_empty() {
         usage();
     }
-    let mut runtime = Resident::open(Workspace::new(root)?)?;
+    let mut workspace = Workspace::new(root)?;
+    if let Some(path) = access_policy {
+        workspace.configure_access(std::path::Path::new(&path))?;
+    }
+    let mut runtime = Resident::open(workspace)?;
+    let mut roots = RootsSync::default();
     if let Some(policy) = policy {
         runtime.configure_tasks(policy);
     }
@@ -85,7 +94,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     while let Some(message) = read_message(&mut input)? {
         let response = match serde_json::from_slice::<Value>(&message) {
-            Ok(message) => handle_message(&mut runtime, profile, message),
+            Ok(message) => {
+                let response = handle_message(&mut runtime, profile, message.clone());
+                if let Some(response) = response {
+                    serde_json::to_writer(&mut output, &response)?;
+                    writeln!(output)?;
+                    output.flush()?;
+                }
+                if let Some(request) = roots.receive(&runtime.access(), &message) {
+                    serde_json::to_writer(&mut output, &request)?;
+                    writeln!(output)?;
+                    output.flush()?;
+                }
+                None
+            }
             Err(error) => Some(json!({
                 "jsonrpc":"2.0",
                 "id":null,
@@ -101,6 +123,80 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+/// Roots are only a live intersection on host-configured grants. No root creates rights.
+#[derive(Default)]
+struct RootsSync {
+    supported: bool,
+    pending: Option<String>,
+    sequence: u64,
+}
+impl RootsSync {
+    fn receive(
+        &mut self,
+        access: &fff_workspace::access::Access,
+        message: &Value,
+    ) -> Option<Value> {
+        if !access.has_policy() {
+            return None;
+        }
+        let method = message["method"].as_str();
+        if method == Some("initialize") {
+            self.supported = message.pointer("/params/capabilities/roots").is_some();
+        }
+        if method.is_none() {
+            if self.pending.as_deref() == message["id"].as_str() && self.pending.is_some() {
+                self.pending = None;
+                access.clear_roots();
+                let parsed = (|| -> Result<Vec<std::path::PathBuf>, Box<dyn std::error::Error>> {
+                    let roots = message
+                        .pointer("/result/roots")
+                        .and_then(Value::as_array)
+                        .ok_or("invalid roots response")?;
+                    if roots.len() > 64 {
+                        return Err("too many roots".into());
+                    }
+                    roots
+                        .iter()
+                        .map(|root| {
+                            let url =
+                                url::Url::parse(root["uri"].as_str().ok_or("missing root URI")?)?;
+                            if url.scheme() != "file"
+                                || url
+                                    .host_str()
+                                    .is_some_and(|h| !h.is_empty() && h != "localhost")
+                                || url.query().is_some()
+                                || url.fragment().is_some()
+                            {
+                                return Err("invalid file root URI".into());
+                            }
+                            url.to_file_path()
+                                .map_err(|_| "invalid file root URI".into())
+                        })
+                        .collect()
+                })();
+                if let Ok(roots) = parsed {
+                    let _ = access.roots(roots);
+                }
+            }
+            return None;
+        }
+        if self.supported
+            && matches!(
+                method,
+                Some("notifications/initialized" | "notifications/roots/list_changed")
+            )
+        {
+            // Revoke gated grants immediately, including while a refresh is pending.
+            access.clear_roots();
+            self.sequence += 1;
+            let id = format!("ffsake-roots-{}", self.sequence);
+            self.pending = Some(id.clone());
+            return Some(json!({"jsonrpc":"2.0","id":id,"method":"roots/list"}));
+        }
+        None
+    }
 }
 
 fn read_message(input: &mut impl BufRead) -> io::Result<Option<Vec<u8>>> {
@@ -146,6 +242,7 @@ fn handle_message(runtime: &mut Resident, profile: ToolProfile, message: Value) 
         }));
     }
 
+    message.get("method")?;
     let id = message.get("id")?.clone();
     let method = message
         .get("method")

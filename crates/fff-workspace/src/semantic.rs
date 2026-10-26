@@ -103,6 +103,49 @@ pub fn query(workspace: &Workspace, request: &Request) -> Result<Value> {
     }
 }
 
+/// Snapshot-relative names preserve module/include layout within one authorization root.
+pub(crate) fn snapshot_name(workspace: &Workspace, path: &str) -> Result<String> {
+    let (absolute, owner) = workspace
+        .access
+        .authorize(std::path::Path::new(path), false)?;
+    let relative = if absolute == owner {
+        absolute
+            .file_name()
+            .map(std::path::Path::new)
+            .ok_or("missing source filename")?
+    } else {
+        absolute.strip_prefix(&owner)?
+    };
+    Ok(relative
+        .to_str()
+        .ok_or("non UTF-8 source path")?
+        .to_string())
+}
+pub(crate) fn restore_paths(
+    value: &mut Value,
+    identities: &std::collections::BTreeMap<String, String>,
+) {
+    match value {
+        Value::Array(items) => {
+            for item in items {
+                restore_paths(item, identities);
+            }
+        }
+        Value::Object(fields) => {
+            for (key, field) in fields {
+                if matches!(key.as_str(), "path" | "crate_root" | "root") {
+                    if let Some(original) = field.as_str().and_then(|p| identities.get(p)) {
+                        *field = Value::String(original.clone());
+                    }
+                } else {
+                    restore_paths(field, identities);
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,5 +1,9 @@
 # Action plan
 
+## Scoped host-access assignment (2026-10-26)
+
+Implement host-authorized external directory and exact-file access, explicit modes/lifetimes, live MCP-root intersection and manual host-export fallback. Preserve native execution policy boundaries; do not infer permissions from roots or tool approvals. Focused access/lifetime/history/semantic tests are passing locally; real Claude evidence and exact-head CI are the completion gates. Stock Claude automatic native filesystem approval/persistence/retry is unsupported and must be reported explicitly. Pause after this scope; no unrelated roadmap expansion.
+
 ## Active ordered milestones (resumed 2026-10-25)
 
 This instruction supersedes the earlier scoped pause. LSP supplies IDE language intelligence through existing servers; rename is the first acceptance case, not its entire purpose.
@@ -28,7 +32,7 @@ Implemented/active:
 - protected internal `.ffsake/` namespace;
 - persistent undo/redo journal.
 
-Security invariant: all user-visible paths are workspace-relative and remain inside the canonical workspace root, including through symlinks. The workspace root itself is never a valid mutation target.
+Security invariant: the primary project is the default scope. Absolute external paths require explicit host-exported grants; roots alone never authorize access. Mutations and history recheck rights and stale content. Primary/grant directory roots and journal paths are never mutation targets. See docs/HOST_ACCESS.md.
 
 ## Phase 1B — mutation model
 

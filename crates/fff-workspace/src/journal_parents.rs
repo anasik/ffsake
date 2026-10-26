@@ -43,9 +43,7 @@ pub(crate) fn collect(
                 Err(error) if error.kind() == io::ErrorKind::NotFound => {
                     let relative = path
                         .strip_prefix(root)
-                        .map_err(|_| {
-                            conflict(&change.path, "workspace parent", "outside workspace")
-                        })?
+                        .unwrap_or(path)
                         .to_str()
                         .ok_or_else(|| conflict(&change.path, "UTF-8 parent", "non-UTF-8 parent"))?
                         .to_string();
