@@ -1,12 +1,12 @@
 # Action plan
 
-## Persistent native-approved access verification (2026-10-26)
+## Persistent native-approved access (2026-10-26)
 
-Minimal Claude 2.1.310 native-prompt probe passed auto-mode/allow-rule/hook approval and denial; noninteractive calls were denied. The supported-host boundary is unresolved: MCP client identity and call metadata do not authenticate human approval, and both an ordinary replay and the official SDK dispatch the probe without UI. The SDK used the same Claude binary and identical initialize parameters. No persistent grant creation is enabled. See docs/NATIVE_APPROVAL_PROBE.md. Complete this gate before implementing storage and access tools; do not broaden into unrelated roadmap work.
+The user explicitly authorized trusting Claude approval enforcement in opt-in trusted-host mode, resolving the earlier verification-gate decision. Implemented protected project-bound atomic persistence, three dedicated MCP access tools, live reload/revocation, and an explicit-export conflict guard. The native-prompt and SDK negative-control findings remain valid: the startup flag is a host trust declaration, not client authentication or permission synchronization. Backend/MCP checks and real-Claude denial, read-only isolation, separately approved rights expansion, session/server restart persistence and approved revocation passed. See docs/PERSISTENT_ACCESS_DEMO.md. Exact-head CI is the remaining completion gate. Pause after this scope.
 
 ## Scoped host-access assignment (2026-10-26)
 
-Implement host-authorized external directory and exact-file access, explicit modes/lifetimes, live MCP-root intersection and manual host-export fallback. Preserve native execution policy boundaries; do not infer permissions from roots or tool approvals. Implemented and locally verified. Real Claude exact-file/neighbor denial, live /add-dir notification and post-revocation denial passed; see docs/HOST_ACCESS_DEMO.md. Exact-head CI is the final completion gate. Stock Claude automatic native filesystem approval/persistence/retry is unsupported and must be reported explicitly. Pause after this scope; no unrelated roadmap expansion.
+Implement host-authorized external directory and exact-file access, explicit modes/lifetimes, live MCP-root intersection and manual host-export fallback. Preserve native execution policy boundaries; do not infer permissions from roots or tool approvals. Implemented and locally verified. Real Claude exact-file/neighbor denial, live /add-dir notification and post-revocation denial passed; see docs/HOST_ACCESS_DEMO.md. That export-only scope passed exact-head CI at 96869d2. Synchronizing Claude native filesystem permissions remains unsupported; the subsequently authorized trusted-host workflow is described above. Pause after this scope; no unrelated roadmap expansion.
 
 ## Active ordered milestones (resumed 2026-10-25)
 

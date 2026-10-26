@@ -19,9 +19,12 @@ def main():
     parser.add_argument("--tool-profile", choices=("all", "core"), default="all",
                         help="Full catalog (default) or generic file tools only")
     parser.add_argument("--access", type=Path, help="Host-exported authorization file outside the project; never generated from tool approval")
+    parser.add_argument("--trusted-host", action="store_true", help="Explicitly trust Claude native approval for persistent project grants; incompatible with --access")
     parser.add_argument("--host-session-id", help="Host session identity for session/once grants")
     parser.add_argument("--dry-run", action="store_true", help="Print configuration without launching Claude")
     args = parser.parse_args()
+    if args.trusted_host and args.access:
+        parser.error("--trusted-host and --access cannot be combined")
     root = args.workspace.expanduser().resolve()
     binary = args.binary.expanduser().resolve()
     if not root.is_dir():
@@ -36,11 +39,15 @@ def main():
         if not readiness["ok"]:
             parser.error("core MCP preflight failed before launching Claude: " + readiness["error"])
     config = {"mcpServers": {"ffsake": {"command": str(binary), "args": mcp_arguments(root, args.tool_profile)}}}
+    if args.trusted_host:
+        config["mcpServers"]["ffsake"]["args"] += ["--trusted-host", "claude-code"]
     if args.access:
         config["mcpServers"]["ffsake"]["args"] += ["--access", str(args.access.expanduser().resolve())]
     if args.host_session_id:
         config["mcpServers"]["ffsake"]["env"] = {"FFSAKE_HOST_SESSION_ID": args.host_session_id}
     allowed = [f"mcp__ffsake__{tool}" for tool in profile_tools(args.tool_profile)]
+    if args.trusted_host:
+        allowed += ["mcp__ffsake__ffsake_" + name for name in ("open_access", "list_access", "remove_access")]
     with tempfile.TemporaryDirectory(prefix="ffsake-claude-") as td:
         config_path = Path(td) / "mcp.json"
         config_path.write_text(json.dumps(config))

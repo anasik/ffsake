@@ -111,5 +111,5 @@ def main():
         c.send({'jsonrpc':'2.0','id':req['id'],'result':{'roots':[{'uri':outside.as_uri()}]}});c.call('read',path=str(file))
         c.call('read',False,path=str(file),grant=True)
         c.close()
-        print(json.dumps({'absolute_and_exact_file_access':True,'neighbor_denied':True,'read_only':True,'revocation_apply_history':True,'stale_preview':True,'cross_root_rejected':True,'persistent_journal':True,'session_lifetime':True,'once_survives_restart':True,'live_mcp_roots':True,'manual_host_export_retry':True,'native_host_approval_retry':'unsupported; not simulated'},indent=2))
+        print(json.dumps({'absolute_and_exact_file_access':True,'neighbor_denied':True,'read_only':True,'revocation_apply_history':True,'stale_preview':True,'cross_root_rejected':True,'persistent_journal':True,'session_lifetime':True,'once_survives_restart':True,'live_mcp_roots':True,'manual_host_export_retry':True,'native_host_approval_retry':'not exercised by this explicit-export suite; see persistent-access demo'},indent=2))
 if __name__=='__main__':main()

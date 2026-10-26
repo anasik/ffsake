@@ -866,6 +866,11 @@ impl Workspace {
         Ok(PathBuf::from(self.relative_display(path)))
     }
 
+    pub fn configure_persistent_access(&mut self) -> Result<()> {
+        self.access = access::Access::persistent(self.root.clone())?;
+        Ok(())
+    }
+
     pub fn configure_access(&mut self, policy: &Path) -> Result<()> {
         self.access = access::Access::configured(self.root.clone(), policy)?;
         Ok(())

@@ -1,7 +1,7 @@
 //! Host-owned filesystem grants. MCP roots constrain explicitly configured grants;
 //! they never create rights or imply a read/write permission mode.
 use crate::{Result, WorkspaceError};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeSet,
     fs,
@@ -10,26 +10,26 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Mode {
     ReadOnly,
     ReadWrite,
 }
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Kind {
     Directory,
     File,
 }
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Lifetime {
     Once,
     Session,
     Project,
 }
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Grant {
     pub path: PathBuf,
@@ -41,7 +41,7 @@ pub struct Grant {
     #[serde(default)]
     pub require_mcp_root: bool,
 }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct Policy {
     version: u32,
@@ -66,11 +66,12 @@ pub struct Access {
     primary: PathBuf,
     policy: Option<PathBuf>,
     session_id: Option<String>,
+    persistent: bool,
     state: Arc<RwLock<State>>,
 }
 fn denied(path: &Path, why: &str) -> WorkspaceError {
     WorkspaceError::AuthorizationRequired(format!(
-        "authorization required for {}: {why}; ask the host to update --access policy (tool approval does not grant filesystem access)",
+        "authorization required for {}: {why}; request exact scope with ffsake_open_access in explicitly enabled trusted-Claude mode, otherwise ask the host to update --access policy; ordinary tool approval does not grant access",
         path.display()
     ))
 }
@@ -107,6 +108,7 @@ impl Access {
         Self {
             primary,
             policy: None,
+            persistent: false,
             session_id: std::env::var("FFSAKE_HOST_SESSION_ID")
                 .ok()
                 .filter(|id| !id.is_empty()),
@@ -136,6 +138,164 @@ impl Access {
         }
         access.refresh()?;
         Ok(access)
+    }
+    /// Explicit host opt-in: the caller trusts Claude to enforce marked tool approval.
+    /// This is not client authentication and must never be inferred from clientInfo.
+    pub fn persistent(primary: PathBuf) -> Result<Self> {
+        let directory = primary.join(".ffsake/native-access");
+        no_symlinks(&directory)?;
+        fs::create_dir_all(&directory)?;
+        let access = Self {
+            policy: Some(directory.join("grants.json")),
+            persistent: true,
+            ..Self::primary(primary)
+        };
+        let _lock = access.store_lock()?;
+        if !access.policy.as_ref().unwrap().try_exists()? {
+            access.save_policy(
+                &Policy {
+                    version: 1,
+                    project: access.primary.clone(),
+                    primary_mode: Mode::ReadWrite,
+                    grants: vec![],
+                },
+                true,
+            )?;
+        }
+        // Keep the management endpoint available so the user can revoke stale
+        // grants after restart. refresh clears all external rights on failure;
+        // ordinary requests still fail closed until the store validates.
+        let _ = access.refresh();
+        Ok(access)
+    }
+    pub fn is_persistent(&self) -> bool {
+        self.persistent
+    }
+
+    // OS lock is released on crash; never unlink a locked inode. All writers use it.
+    fn store_lock(&self) -> Result<fs::File> {
+        if !self.persistent {
+            return Err(denied(&self.primary, "trusted-Claude mode is disabled"));
+        }
+        let path = self.policy.as_ref().unwrap().with_file_name("store.lock");
+        no_symlinks(&path)?;
+        let mut options = fs::OpenOptions::new();
+        options.read(true).write(true).create(true).truncate(false);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let file = options.open(&path)?;
+        if !file.metadata()?.is_file() {
+            return Err(denied(&path, "lock must be regular"));
+        }
+        let start = std::time::Instant::now();
+        loop {
+            match file.try_lock() {
+                Ok(()) => return Ok(file),
+                Err(std::fs::TryLockError::WouldBlock) if start.elapsed().as_secs() < 2 => {
+                    std::thread::sleep(std::time::Duration::from_millis(10))
+                }
+                Err(e) => return Err(denied(&path, &format!("access store busy: {e}"))),
+            }
+        }
+    }
+    fn save_policy(&self, policy: &Policy, validate: bool) -> Result<()> {
+        use std::io::Write;
+        let path = self.policy.as_ref().unwrap();
+        no_symlinks(path)?;
+        let directory = path.parent().unwrap();
+        let bytes = serde_json::to_vec_pretty(policy).map_err(|e| denied(path, &e.to_string()))?;
+        if bytes.len() > 65536 {
+            return Err(denied(path, "grant store exceeds 64 KiB"));
+        }
+        let mut temp = tempfile::NamedTempFile::new_in(directory)?;
+        temp.write_all(&bytes)?;
+        temp.as_file().sync_all()?;
+        // Run the exact existing policy validator before publication. No rights
+        // or bytes become visible if validation fails.
+        let check = Self {
+            policy: Some(temp.path().to_path_buf()),
+            ..Self::primary(self.primary.clone())
+        };
+        if validate {
+            check.refresh()?;
+        }
+        temp.persist(path).map_err(|e| e.error)?;
+        fs::File::open(directory)?.sync_all()?;
+        Ok(())
+    }
+    pub fn list_access(&self) -> Result<serde_json::Value> {
+        if !self.persistent {
+            return Err(denied(&self.primary, "trusted-Claude mode is disabled"));
+        }
+        self.refresh()?;
+        Ok(
+            serde_json::json!({"primary": self.primary, "grants": self.state.read().unwrap().grants,
+            "authority": "explicitly trusted Claude approval enforcement", "lifetime": "project"}),
+        )
+    }
+    pub fn open_access(&self, path: PathBuf, kind: Kind, mode: Mode) -> Result<serde_json::Value> {
+        clean(&path)?;
+        no_symlinks(&path)?;
+        let _lock = self.store_lock()?;
+        self.refresh()?;
+        let mut grants = self.state.read().unwrap().grants.clone();
+        let primary_mode = self.state.read().unwrap().primary_mode;
+        if let Some(grant) = grants.iter_mut().find(|g| g.path == path) {
+            if grant.kind != kind {
+                return Err(denied(&path, "existing grant has different kind"));
+            }
+            grant.mode = mode;
+        } else {
+            grants.push(Grant {
+                path,
+                kind,
+                mode,
+                lifetime: Lifetime::Project,
+                session_id: None,
+                approval_id: None,
+                require_mcp_root: false,
+            });
+        }
+        self.save_policy(
+            &Policy {
+                version: 1,
+                project: self.primary.clone(),
+                primary_mode,
+                grants,
+            },
+            true,
+        )?;
+        self.list_access()
+    }
+    pub fn remove_access(&self, path: PathBuf) -> Result<serde_json::Value> {
+        clean(&path)?;
+        let _lock = self.store_lock()?;
+        // Removal must remain possible after a granted directory disappears or
+        // is replaced by a symlink. Parse the bounded store without dereferencing grants.
+        let store = self.policy.as_ref().unwrap();
+        no_symlinks(store)?;
+        let mut bytes = vec![];
+        fs::File::open(store)?.take(65537).read_to_end(&mut bytes)?;
+        if bytes.len() > 65536 {
+            return Err(denied(store, "grant store exceeds 64 KiB"));
+        }
+        let mut policy: Policy =
+            serde_json::from_slice(&bytes).map_err(|e| denied(store, &e.to_string()))?;
+        if policy.project != self.primary || policy.version != 1 {
+            return Err(denied(store, "invalid project grant store"));
+        }
+        policy.grants.retain(|g| g.path != path);
+        self.save_policy(&policy, false)?;
+        // Revoking one invalid grant must not be blocked by another stale grant.
+        // Reload still fails closed until all remaining grants validate.
+        let warning = self.refresh().err().map(|e| e.to_string());
+        Ok(
+            serde_json::json!({"primary": self.primary, "grants": policy.grants,
+            "warning": warning, "lifetime": "project"}),
+        )
     }
     pub fn refresh(&self) -> Result<()> {
         self.state.write().unwrap().active_once.clear();
@@ -256,7 +416,7 @@ impl Access {
         self.state.write().unwrap().roots.clear();
     }
     pub fn has_policy(&self) -> bool {
-        self.policy.is_some()
+        self.policy.is_some() && !self.persistent
     }
     pub(crate) fn absolute(&self, path: &Path) -> Result<PathBuf> {
         if path.as_os_str().is_empty()
@@ -378,5 +538,128 @@ impl Access {
             owner = Some(root);
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod persistent_tests {
+    use super::*;
+
+    #[test]
+    fn concurrent_updates_survive_restart_and_revocation() {
+        let base = tempfile::tempdir().unwrap();
+        let base = base.path().canonicalize().unwrap();
+        let root = base.join("project");
+        fs::create_dir(&root).unwrap();
+        let a = Access::persistent(root.clone()).unwrap();
+        let b = Access::persistent(root.clone()).unwrap();
+        let mut threads = vec![];
+        for i in 0..8 {
+            let access = a.clone();
+            let file = base.join(format!("file{i}"));
+            threads.push(std::thread::spawn(move || {
+                access
+                    .open_access(file, Kind::File, Mode::ReadOnly)
+                    .unwrap();
+            }));
+        }
+        for t in threads {
+            t.join().unwrap();
+        }
+        assert_eq!(
+            b.list_access().unwrap()["grants"].as_array().unwrap().len(),
+            8
+        );
+        let file = base.join("file0");
+        assert!(b.authorize(&file, false).is_ok());
+        assert!(b.authorize(&file, true).is_err());
+        a.remove_access(file.clone()).unwrap();
+        b.refresh().unwrap();
+        assert!(b.authorize(&file, false).is_err());
+        assert_eq!(
+            Access::persistent(root.clone())
+                .unwrap()
+                .list_access()
+                .unwrap()["grants"]
+                .as_array()
+                .unwrap()
+                .len(),
+            7
+        );
+        assert!(
+            Access::primary(root)
+                .open_access(file, Kind::File, Mode::ReadWrite)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn invalid_update_preserves_store_and_project_identity() {
+        let base = tempfile::tempdir().unwrap();
+        let base = base.path().canonicalize().unwrap();
+        let root = base.join("project");
+        fs::create_dir(&root).unwrap();
+        let a = Access::persistent(root.clone()).unwrap();
+        let file = base.join("file");
+        a.open_access(file.clone(), Kind::File, Mode::ReadWrite)
+            .unwrap();
+        let store = root.join(".ffsake/native-access/grants.json");
+        let before = fs::read(&store).unwrap();
+        assert!(
+            a.open_access(base.clone(), Kind::Directory, Mode::ReadWrite)
+                .is_err()
+        );
+        assert_eq!(fs::read(&store).unwrap(), before);
+        assert!(a.authorize(&store, false).is_err());
+        let mut policy: Policy = serde_json::from_slice(&before).unwrap();
+        policy.primary_mode = Mode::ReadOnly;
+        fs::write(&store, serde_json::to_vec(&policy).unwrap()).unwrap();
+        a.open_access(base.join("another"), Kind::File, Mode::ReadOnly)
+            .unwrap();
+        assert!(a.authorize(&root.join("local"), true).is_err());
+        let other = base.join("other");
+        fs::create_dir(&other).unwrap();
+        let b = Access::persistent(other.clone()).unwrap();
+        assert!(b.authorize(&file, false).is_err());
+        fs::write(other.join(".ffsake/native-access/grants.json"), &before).unwrap();
+        assert!(b.refresh().is_err());
+        assert!(b.authorize(&file, false).is_err());
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn symlink_store_rejected_and_replaced_grant_revocable() {
+        let base = tempfile::tempdir().unwrap();
+        let base = base.path().canonicalize().unwrap();
+        let root = base.join("project");
+        fs::create_dir(&root).unwrap();
+        let directory = base.join("directory");
+        fs::create_dir(&directory).unwrap();
+        let a = Access::persistent(root.clone()).unwrap();
+        let second = base.join("second");
+        fs::create_dir(&second).unwrap();
+        a.open_access(second.clone(), Kind::Directory, Mode::ReadOnly)
+            .unwrap();
+        a.open_access(directory.clone(), Kind::Directory, Mode::ReadWrite)
+            .unwrap();
+        fs::remove_dir(&directory).unwrap();
+        std::os::unix::fs::symlink(&root, &directory).unwrap();
+        fs::remove_dir(&second).unwrap();
+        assert!(a.refresh().is_err());
+        let a = Access::persistent(root.clone()).unwrap();
+        assert!(a.authorize(&directory, false).is_err());
+        let result = a.remove_access(directory).unwrap();
+        assert!(result["warning"].is_string());
+        a.remove_access(second).unwrap();
+        let store = root.join(".ffsake/native-access/grants.json");
+        fs::remove_file(&store).unwrap();
+        let sentinel = base.join("sentinel");
+        fs::write(&sentinel, "untouched").unwrap();
+        std::os::unix::fs::symlink(&sentinel, &store).unwrap();
+        assert!(
+            a.open_access(base.join("file"), Kind::File, Mode::ReadWrite)
+                .is_err()
+        );
+        assert_eq!(fs::read_to_string(sentinel).unwrap(), "untouched");
     }
 }

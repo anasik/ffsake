@@ -936,6 +936,20 @@ def load_config(path):
 class ClaudePilotTests(unittest.TestCase):
     LAUNCHER = SCRIPT.with_name("ffsake_claude.py")
 
+    def test_trusted_host_is_explicit_and_incompatible_with_exports(self):
+        with tempfile.TemporaryDirectory() as td:
+            command = [sys.executable, str(self.LAUNCHER), td, "--binary", sys.executable,
+                       "--claude", sys.executable, "--trusted-host", "--dry-run"]
+            result = subprocess.run(command, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            data = json.loads(result.stdout)
+            self.assertEqual(data["mcp_config"]["mcpServers"]["ffsake"]["args"][-2:],
+                             ["--trusted-host", "claude-code"])
+            self.assertIn("mcp__ffsake__ffsake_open_access", data["approved_tools"])
+            result = subprocess.run(command + ["--access", "policy.json"], capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("cannot be combined", result.stderr)
+
     def test_dry_run_scopes_config_and_approvals_to_known_workspace_tools(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td) / 'repo with "quotes"'

@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
     let usage = || -> ! {
         eprintln!(
-            "usage: ffsake-mcp WORKSPACE [--profile all|core] [--tasks TRUSTED_HOST_POLICY.json] [--access HOST_AUTHORIZATION.json]"
+            "usage: ffsake-mcp WORKSPACE [--profile all|core] [--tasks TRUSTED_HOST_POLICY.json] [--access HOST_AUTHORIZATION.json | --trusted-host claude-code]"
         );
         std::process::exit(2)
     };
@@ -54,6 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut profile = ToolProfile::All;
     let mut policy = None;
     let mut access_policy = None;
+    let mut trusted_host = false;
     let mut seen_profile = false;
     let (flags, remainder) = args[1..].as_chunks::<2>();
     for pair in flags {
@@ -65,6 +66,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "core" => ToolProfile::Core,
                     _ => usage(),
                 };
+            }
+            "--trusted-host" if !trusted_host && pair[1] == "claude-code" => {
+                trusted_host = true;
             }
             "--access" if access_policy.is_none() => {
                 access_policy = Some(pair[1].clone());
@@ -80,7 +84,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !remainder.is_empty() {
         usage();
     }
+    if trusted_host && access_policy.is_some() {
+        return Err("--trusted-host and --access are mutually exclusive; explicit host exports must not be bypassed".into());
+    }
     let mut workspace = Workspace::new(root)?;
+    if trusted_host {
+        workspace.configure_persistent_access()?;
+    }
     if let Some(path) = access_policy {
         workspace.configure_access(std::path::Path::new(&path))?;
     }
@@ -265,7 +275,7 @@ fn handle_message(runtime: &mut Resident, profile: ToolProfile, message: Value) 
         "tools/list" => json!({
             "jsonrpc":"2.0",
             "id":id,
-            "result":{"tools":tools().into_iter().filter(|tool| tool["name"].as_str().is_some_and(|name| profile.allows(name))).collect::<Vec<_>>()}
+            "result":{"tools":catalog(runtime, profile)}
         }),
         "tools/call" => {
             let name = message
@@ -297,6 +307,12 @@ fn handle_message(runtime: &mut Resident, profile: ToolProfile, message: Value) 
 }
 
 fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments: Value) -> Value {
+    if matches!(
+        name,
+        "ffsake_open_access" | "ffsake_list_access" | "ffsake_remove_access"
+    ) {
+        return access_tool(runtime, name, arguments);
+    }
     let op = match name {
         "ffsake_read" => "read",
         "ffsake_git" => "git",
@@ -357,6 +373,83 @@ fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments
     match runtime.execute(request) {
         Ok(result) => json!({"ok":true,"result":result}),
         Err(error) => json!({"ok":false,"error":error.to_string()}),
+    }
+}
+
+fn catalog(runtime: &Resident, profile: ToolProfile) -> Vec<Value> {
+    let mut catalog = tools()
+        .into_iter()
+        .filter(|t| t["name"].as_str().is_some_and(|n| profile.allows(n)))
+        .collect::<Vec<_>>();
+    if runtime.access().is_persistent() {
+        for (name, description, schema, approval) in [
+            (
+                "ffsake_open_access",
+                "Request human approval to persistently open this EXACT absolute file or directory for this primary project until revoked. mode read_only or read_write. Every call, including rights expansion, requires Claude's native approval. File approval never includes its parent or neighbors. Does not modify Claude permissions or /add-dir. Disjoint roots only. After success retry the original operation.",
+                json!({"type":"object","properties":{"path":{"type":"string"},"kind":{"enum":["file","directory"]},"mode":{"enum":["read_only","read_write"]}},"required":["path","kind","mode"],"additionalProperties":false}),
+                true,
+            ),
+            (
+                "ffsake_list_access",
+                "List the primary project and its persistent file/directory grants. No contents are read. Grants apply to all explicitly trusted instances of this canonical primary project.",
+                json!({"type":"object","properties":{},"additionalProperties":false}),
+                false,
+            ),
+            (
+                "ffsake_remove_access",
+                "Revoke the exact persistent grant at this absolute path, after native human approval. Running instances observe removal on their next request; old previews/history do not retain permission. Does not undo edits or remove files.",
+                json!({"type":"object","properties":{"path":{"type":"string"}},"required":["path"],"additionalProperties":false}),
+                true,
+            ),
+        ] {
+            let mut item = tool(name, description, schema);
+            if approval {
+                item["_meta"] = json!({"anthropic/requiresUserInteraction":true});
+            }
+            catalog.push(item);
+        }
+    }
+    catalog
+}
+fn access_tool(runtime: &Resident, name: &str, arguments: Value) -> Value {
+    #[derive(serde::Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct Open {
+        path: std::path::PathBuf,
+        kind: fff_workspace::access::Kind,
+        mode: fff_workspace::access::Mode,
+    }
+    #[derive(serde::Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct Remove {
+        path: std::path::PathBuf,
+    }
+    #[derive(serde::Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct List {}
+    let access = runtime.access();
+    if !access.is_persistent() {
+        return json!({"ok":false,"error":"persistent access tools require explicit host startup --trusted-host claude-code; an agent cannot enable this mode"});
+    }
+    let result = (|| -> Result<Value, Box<dyn std::error::Error>> {
+        Ok(match name {
+            "ffsake_open_access" => {
+                let a: Open = serde_json::from_value(arguments)?;
+                access.open_access(a.path, a.kind, a.mode)?
+            }
+            "ffsake_remove_access" => {
+                let a: Remove = serde_json::from_value(arguments)?;
+                access.remove_access(a.path)?
+            }
+            _ => {
+                let _: List = serde_json::from_value(arguments)?;
+                access.list_access()?
+            }
+        })
+    })();
+    match result {
+        Ok(result) => json!({"ok":true,"result":result}),
+        Err(e) => json!({"ok":false,"error":e.to_string()}),
     }
 }
 
