@@ -2,7 +2,7 @@
 
 ## Host-controlled access approval (2026-10-26)
 
-Current bounded scope: default persistent MCP access tools across Claude Code, Codex and OpenCode; ordinary host approval including intentional auto/allow; legacy trusted-host flag accepted without effect; explicit exports remain exclusive and restrictive. Preserve all storage/path/history guards. Setup generation, installed-host normal/allow tests, restart/revocation and automated regressions are complete. OpenCode 1.18.31 --auto still asked under explicit ask rules; explicit allow worked. Commit/push and final-head CI are the remaining gate, then pause. No unrelated roadmap expansion. See docs/HOST_APPROVAL_DEMO.md for acceptance evidence.
+Current bounded scope: default persistent MCP access tools across Claude Code, Codex and OpenCode; ordinary host approval including intentional auto/allow; legacy trusted-host flag accepted without effect; explicit exports remain exclusive and restrictive. Preserve all storage/path/history guards. Setup generation, installed-host normal/allow tests, restart/revocation and automated regressions are complete. OpenCode 1.18.31 --auto still asked under explicit ask rules; explicit allow worked. Implementation is committed and pushed; final-head CI is the remaining gate, then pause. No unrelated roadmap expansion. See docs/HOST_APPROVAL_DEMO.md for acceptance evidence.
 
 ## Persistent native-approved access (2026-10-26)
 

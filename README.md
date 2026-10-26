@@ -136,7 +136,7 @@ python3 scripts/ffsake_claude.py /absolute/path/to/worktree
 
 The launcher supplies a temporary MCP configuration, disables Claude's built-in tools with `--tools ""`, loads only this MCP configuration with `--strict-mcp-config`, and approves only the named FFSAKE tools in the selected profile for this session. It does not use the broad skip-permissions flag or modify user/project configuration. Other host settings, including enterprise policy and startup hooks, are not isolated by this launcher. FFSAKE is an application-level workspace boundary, not an OS sandbox.
 
-The default `--tool-profile all` exposes the full catalog. Select `--tool-profile core` for the 22 generic file/archive/workflow tools (job execution remains disabled without startup policy), with matching approvals and guidance:
+The default `--tool-profile all` exposes the full catalog. Select `--tool-profile core` for 25 tools: 22 generic file/archive/workflow tools plus three access tools (job execution remains disabled without startup policy), with matching approvals and guidance:
 
 ```sh
 python3 scripts/ffsake_claude.py /absolute/path/to/worktree --tool-profile core
