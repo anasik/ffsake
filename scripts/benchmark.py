@@ -50,8 +50,13 @@ def safety(root):
     try:
         assert not client.raw('{broken')['ok']
         assert not client.raw('{"op":"refresh","unexpected":true}')['ok']
-        for path in ['../escape.txt', str(root / 'a.txt'), '.ffsake/journal/a']:
+        outside = root.parent / 'outside-scope.txt'
+        outside.write_text('unapproved sentinel\n')
+        for path in ['../escape.txt', str(outside.resolve()), '.ffsake/journal/a']:
             client.reject(op='read', path=path)
+        assert outside.read_text() == 'unapproved sentinel\n'
+        # Absolute spelling is supported within the same authorization boundary.
+        assert client.call(op='read', path=str((root / 'a.txt').resolve()))['text'] == 'needle needle'
         client.reject(op='undo', transaction='../escape')
         client.reject(op='search', pattern='needle', limit=0)
         client.reject(op='apply', handle=9999)
