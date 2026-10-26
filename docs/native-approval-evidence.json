@@ -1,0 +1,71 @@
+{
+  "tested_cli": "2.1.310",
+  "tested_python_sdk": "0.2.174",
+  "interactive_session": "3df4528c-974b-44b1-8664-882b82d73302",
+  "sdk_session": "38d08931-e762-466e-a85c-f5d2fcf56d76",
+  "initialize_parameters_identical": true,
+  "initialize": {
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2025-11-25",
+      "capabilities": {
+        "roots": {
+          "listChanged": true
+        },
+        "elicitation": {
+          "form": {},
+          "url": {}
+        },
+        "extensions": {
+          "io.modelcontextprotocol/tasks": {}
+        }
+      },
+      "clientInfo": {
+        "name": "claude-code",
+        "title": "Claude Code",
+        "version": "2.1.310",
+        "description": "Anthropic's agentic coding tool",
+        "websiteUrl": "https://claude.com/claude-code"
+      }
+    },
+    "jsonrpc": "2.0",
+    "id": 0
+  },
+  "interactive_approved_call": {
+    "method": "tools/call",
+    "params": {
+      "name": "ffsake_access_probe",
+      "arguments": {
+        "path": "/tmp/synthetic-approved.txt",
+        "kind": "file",
+        "mode": "read_only"
+      },
+      "_meta": {
+        "claudecode/toolUseId": "toolu_01SanHSSxdnw168g2GmFyoj7",
+        "progressToken": 2
+      }
+    },
+    "jsonrpc": "2.0",
+    "id": 2
+  },
+  "sdk_without_human_call": {
+    "method": "tools/call",
+    "params": {
+      "name": "ffsake_access_probe",
+      "arguments": {
+        "path": "/tmp/synthetic-approved.txt",
+        "kind": "file",
+        "mode": "read_only"
+      },
+      "_meta": {
+        "claudecode/toolUseId": "toolu_01B9CuomGJWQW3CcaRURU8vS",
+        "progressToken": 2
+      }
+    },
+    "jsonrpc": "2.0",
+    "id": 2
+  },
+  "native_tools_enabled": false,
+  "external_files_accessed": false,
+  "grants_created": false
+}

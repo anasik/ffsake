@@ -4,6 +4,10 @@ The host session is the permission authority. FFSAKE cannot infer the host's com
 
 Without additional configuration, the primary project remains the default read/write scope. Absolute paths inside that project work. Relative paths, `All`, glob/regex discovery and the watched index remain relative to the primary project. External search requires explicit `Exact` file/directory targets; it never indexes an individually granted file's parent.
 
+## Native approval investigation
+
+Claude now documents an always-prompt marker for dedicated MCP consent tools. A real 2.1.310 terminal probe passed approval/denial checks even with auto mode, allow rules and allow hooks. This does not by itself authenticate the calling host or distinguish SDK approval. Persistent open-file/add-folder grants are not enabled; see [the verification report](NATIVE_APPROVAL_PROBE.md) for evidence and the unresolved supported-host boundary. The explicit-export workflow below remains the implemented path.
+
 ## What Claude Code communicates
 
 Claude Code documents `roots/list` as its launch directory plus additional working directories from `--add-dir`, `/add-dir`, and settings, with `notifications/roots/list_changed` when that set changes. FFSAKE negotiates MCP 2025-11-25, requests roots after initialization when an access export is configured, and refreshes them on notifications. Root-dependent rights are suspended immediately while refresh is pending; malformed/error responses leave those rights disabled. Older replies cannot restore superseded roots.
