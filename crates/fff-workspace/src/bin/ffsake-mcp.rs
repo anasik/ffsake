@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
     let usage = || -> ! {
         eprintln!(
-            "usage: ffsake-mcp WORKSPACE [--profile all|core] [--tasks TRUSTED_HOST_POLICY.json] [--access HOST_AUTHORIZATION.json | --trusted-host claude-code]"
+            "usage: ffsake-mcp WORKSPACE [--profile all|core] [--tasks TRUSTED_HOST_POLICY.json] [--access HOST_AUTHORIZATION.json]"
         );
         std::process::exit(2)
     };
@@ -84,15 +84,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !remainder.is_empty() {
         usage();
     }
-    if trusted_host && access_policy.is_some() {
-        return Err("--trusted-host and --access are mutually exclusive; explicit host exports must not be bypassed".into());
-    }
+    // Legacy --trusted-host claude-code is accepted as a no-op. Explicit host
+    // exports always take precedence; persistent grants are never merged in.
     let mut workspace = Workspace::new(root)?;
-    if trusted_host {
-        workspace.configure_persistent_access()?;
-    }
     if let Some(path) = access_policy {
         workspace.configure_access(std::path::Path::new(&path))?;
+    } else {
+        workspace.configure_persistent_access()?;
     }
     let mut runtime = Resident::open(workspace)?;
     let mut roots = RootsSync::default();
@@ -385,27 +383,25 @@ fn catalog(runtime: &Resident, profile: ToolProfile) -> Vec<Value> {
         for (name, description, schema, approval) in [
             (
                 "ffsake_open_access",
-                "Request human approval to persistently open this EXACT absolute file or directory for this primary project until revoked. mode read_only or read_write. Every call, including rights expansion, requires Claude's native approval. File approval never includes its parent or neighbors. Does not modify Claude permissions or /add-dir. Disjoint roots only. After success retry the original operation.",
+                "Ask the host to persistently open this EXACT absolute file or directory for this primary project until revoked. mode read_only or read_write. The host controls approval, including automatic approval in configured allow/auto modes. File approval never includes its parent or neighbors. Does not modify Claude permissions or /add-dir. Disjoint roots only. After success retry the original operation.",
                 json!({"type":"object","properties":{"path":{"type":"string"},"kind":{"enum":["file","directory"]},"mode":{"enum":["read_only","read_write"]}},"required":["path","kind","mode"],"additionalProperties":false}),
                 true,
             ),
             (
                 "ffsake_list_access",
-                "List the primary project and its persistent file/directory grants. No contents are read. Grants apply to all explicitly trusted instances of this canonical primary project.",
+                "List the primary project and its persistent file/directory grants. No contents are read. Grants apply to all MCP instances of this canonical primary project.",
                 json!({"type":"object","properties":{},"additionalProperties":false}),
                 false,
             ),
             (
                 "ffsake_remove_access",
-                "Revoke the exact persistent grant at this absolute path, after native human approval. Running instances observe removal on their next request; old previews/history do not retain permission. Does not undo edits or remove files.",
+                "Revoke the exact persistent grant at this absolute path, subject to host approval settings. Running instances observe removal on their next request; old previews/history do not retain permission. Does not undo edits or remove files.",
                 json!({"type":"object","properties":{"path":{"type":"string"}},"required":["path"],"additionalProperties":false}),
                 true,
             ),
         ] {
             let mut item = tool(name, description, schema);
-            if approval {
-                item["_meta"] = json!({"anthropic/requiresUserInteraction":true});
-            }
+            item["annotations"] = json!({"readOnlyHint": !approval});
             catalog.push(item);
         }
     }
@@ -429,7 +425,7 @@ fn access_tool(runtime: &Resident, name: &str, arguments: Value) -> Value {
     struct List {}
     let access = runtime.access();
     if !access.is_persistent() {
-        return json!({"ok":false,"error":"persistent access tools require explicit host startup --trusted-host claude-code; an agent cannot enable this mode"});
+        return json!({"ok":false,"error":"persistent access changes are disabled by --access; ask the host to update its explicit export"});
     }
     let result = (|| -> Result<Value, Box<dyn std::error::Error>> {
         Ok(match name {

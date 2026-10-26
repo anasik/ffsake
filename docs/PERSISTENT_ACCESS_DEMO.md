@@ -1,5 +1,8 @@
 # Persistent trusted-Claude access acceptance — 2026-10-26
 
+> Historical evidence for the earlier forced-approval policy. Current host-controlled approval, default tools and legacy-flag compatibility are documented in [HOST_ACCESS.md](HOST_ACCESS.md).
+
+
 Implemented after explicit authorization to trust Claude approval enforcement in opt-in trusted-host mode. This resolves the decision recorded in [the earlier probe](NATIVE_APPROVAL_PROBE.md); it does not change its SDK/unauthenticated-client findings.
 
 ## User workflow demonstrated

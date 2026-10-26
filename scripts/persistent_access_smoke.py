@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Model-free trusted-host MCP integration. This simulates approved dispatch, NOT UI."""
+"""Model-free MCP access integration. Host approval is tested separately."""
 import json
 import os
 from pathlib import Path
@@ -10,7 +10,7 @@ import zipfile
 
 
 class Client:
-    def __init__(self, binary, root, trusted=True):
+    def __init__(self, binary, root, trusted=False):
         args = [str(binary), str(root)]
         if trusted:
             args += ['--trusted-host', 'claude-code']
@@ -53,8 +53,8 @@ def main():
         d = Client(binary, root)
         catalog = {t['name']: t for t in c.rpc('tools/list')['tools']}
         for name in ('open_access', 'remove_access'):
-            assert catalog['ffsake_' + name]['_meta']['anthropic/requiresUserInteraction'] is True
-        assert '_meta' not in catalog['ffsake_list_access']
+            assert '_meta' not in catalog['ffsake_' + name]
+        assert catalog['ffsake_list_access']['annotations']['readOnlyHint'] is True
         c.call('read', False, path=str(file))
         # A denied host prompt means NO dispatch. No grant appears spontaneously.
         assert c.call('list_access')['grants'] == []
@@ -98,10 +98,8 @@ def main():
         c.call('redo', transaction=tx)
         isolated = Client(binary, other)
         isolated.call('read', False, path=str(file)); isolated.close()
-        disabled = Client(binary, root, trusted=False)
-        assert 'ffsake_open_access' not in {t['name'] for t in disabled.rpc('tools/list')['tools']}
-        disabled.call('open_access', False, path=str(file), kind='file', mode='read_write')
-        disabled.call('read', False, path=str(file)); disabled.close()
+        legacy = Client(binary, root, trusted=True)
+        legacy.call('read', path=str(file)); legacy.close()
         store = root / '.ffsake/native-access/grants.json'
         c.call('read', False, path=str(store))
         c.call('preview_create', False, path=str(store), content='{}')
@@ -139,8 +137,16 @@ def main():
         c.close(); d.close()
         policy = base / 'host.json'
         policy.write_text(json.dumps({'version': 1, 'project': str(root), 'primary_mode': 'read_only', 'grants': []}))
-        r = subprocess.run([str(binary), str(root), '--access', str(policy), '--trusted-host', 'claude-code'], capture_output=True, text=True)
-        assert r.returncode != 0 and 'mutually exclusive' in r.stderr
+        # Both legacy and current configurations must honor restrictive exports.
+        for legacy in ([], ['--trusted-host', 'claude-code']):
+            client = Client.__new__(Client); client.n = 0
+            client.p = subprocess.Popen([str(binary), str(root), '--access', str(policy), *legacy],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            assert 'ffsake_open_access' not in {t['name'] for t in client.rpc('tools/list')['tools']}
+            client.call('read', False, path=str(file))
+            client.call('open_access', False, path=str(file), kind='file', mode='read_write')
+            client.call('preview_edit', False, path='local.txt', old_text='local', new_text='bad', expected_matches=1)
+            client.close()
     print('PASS persistent grants: restart, live revocation, isolation, rights, stale/history, archives, protected store. Native approval is tested separately.')
 
 

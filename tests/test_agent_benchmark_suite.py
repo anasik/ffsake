@@ -13,6 +13,47 @@ suite = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(suite)
 
 
+class HostSetupTests(unittest.TestCase):
+    def generate(self, host, root, *options):
+        return subprocess.run([sys.executable, str(SCRIPT.with_name("ffsake_setup.py")),
+            host, str(root), "--binary", "/absolute/ffsake-mcp", *options],
+            text=True, capture_output=True)
+
+    def test_normal_and_allow_policies_and_no_overwrite(self):
+        import tomllib
+        for host in ("claude", "codex", "opencode"):
+            for policy in ("ask", "allow"):
+                with self.subTest(host=host, policy=policy), tempfile.TemporaryDirectory() as td:
+                    root = Path(td)
+                    result = self.generate(host, root, "--output-dir", td,
+                                           "--access-approval", policy)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    if host == "claude":
+                        config = json.loads((root / ".claude/settings.json").read_text())
+                        allowed = config["permissions"]["allow"]
+                        self.assertIn("mcp__ffsake__ffsake_read", allowed)
+                        self.assertEqual("mcp__ffsake__ffsake_open_access" in allowed, policy == "allow")
+                        self.assertEqual("mcp__ffsake__ffsake_remove_access" in allowed, policy == "allow")
+                        self.assertNotIn("ask", config["permissions"])
+                    elif host == "codex":
+                        config = tomllib.loads((root / ".codex/config.toml").read_text())
+                        tools = config["mcp_servers"]["ffsake"]["tools"]
+                        self.assertEqual(tools["ffsake_read"]["approval_mode"], "approve")
+                        for name in suite.FFSAKE_ACCESS_MUTATIONS:
+                            self.assertEqual(tools[name]["approval_mode"], "prompt" if policy == "ask" else "approve")
+                    else:
+                        config = json.loads((root / "opencode.json").read_text())
+                        self.assertEqual(config["permission"]["ffsake_*"], "allow")
+                        for name in suite.FFSAKE_ACCESS_MUTATIONS:
+                            self.assertEqual(config["permission"]["ffsake_" + name], policy)
+                    before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+                    refused = self.generate(host, root, "--output-dir", td)
+                    self.assertNotEqual(refused.returncode, 0)
+                    self.assertEqual(before, {p: p.read_bytes() for p in before})
+                    for contents in before.values():
+                        self.assertNotIn(b"--trusted-host", contents)
+
+
 class GitFixtureTests(unittest.TestCase):
     def test_fixture_commit_retains_crlf_under_ambient_autocrlf(self):
         import os
@@ -936,19 +977,22 @@ def load_config(path):
 class ClaudePilotTests(unittest.TestCase):
     LAUNCHER = SCRIPT.with_name("ffsake_claude.py")
 
-    def test_trusted_host_is_explicit_and_incompatible_with_exports(self):
+    def test_access_defaults_and_legacy_flag_respect_host_overrides(self):
         with tempfile.TemporaryDirectory() as td:
             command = [sys.executable, str(self.LAUNCHER), td, "--binary", sys.executable,
                        "--claude", sys.executable, "--trusted-host", "--dry-run"]
             result = subprocess.run(command, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             data = json.loads(result.stdout)
-            self.assertEqual(data["mcp_config"]["mcpServers"]["ffsake"]["args"][-2:],
-                             ["--trusted-host", "claude-code"])
+            self.assertNotIn("--trusted-host", data["mcp_config"]["mcpServers"]["ffsake"]["args"])
+            self.assertNotIn("mcp__ffsake__ffsake_open_access", data["approved_tools"])
+            result = subprocess.run(command + ["--access-approval", "allow", "--permission-mode", "auto"], capture_output=True, text=True)
+            data = json.loads(result.stdout)
             self.assertIn("mcp__ffsake__ffsake_open_access", data["approved_tools"])
+            self.assertIn("auto", data["command"])
             result = subprocess.run(command + ["--access", "policy.json"], capture_output=True, text=True)
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("cannot be combined", result.stderr)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn("mcp__ffsake__ffsake_list_access", json.loads(result.stdout)["approved_tools"])
 
     def test_dry_run_scopes_config_and_approvals_to_known_workspace_tools(self):
         with tempfile.TemporaryDirectory() as td:
@@ -962,7 +1006,7 @@ class ClaudePilotTests(unittest.TestCase):
             self.assertEqual(data["mcp_config"], {"mcpServers": {"ffsake": {
                 "command": str(Path(sys.executable).resolve()), "args": [str(root.resolve())]}}})
             self.assertEqual(data["approved_tools"],
-                             ["mcp__ffsake__" + tool for tool in suite.FFSAKE_TOOLS])
+                             ["mcp__ffsake__" + tool for tool in suite.FFSAKE_TOOLS if tool not in suite.FFSAKE_ACCESS_MUTATIONS])
             command = data["command"]
             self.assertEqual(command[command.index("--tools") + 1], "")
             self.assertIn("--strict-mcp-config", command)
@@ -1007,7 +1051,7 @@ raise SystemExit(7)
             self.assertEqual(data["tool_profile"], "core")
             self.assertEqual(data["mcp_config"]["mcpServers"]["ffsake"]["args"],
                              [str(Path(td).resolve()), "--profile", "core"])
-            self.assertEqual(data["approved_tools"], ["mcp__ffsake__" + tool for tool in suite.FFSAKE_CORE_TOOLS])
+            self.assertEqual(data["approved_tools"], ["mcp__ffsake__" + tool for tool in suite.FFSAKE_CORE_TOOLS if tool not in suite.FFSAKE_ACCESS_MUTATIONS])
             command = data["command"]
             self.assertEqual(command[command.index("--append-system-prompt") + 1], suite.ffsake_prompt("", "core").strip())
             self.assertEqual(list(Path(td).iterdir()), [])
@@ -1047,7 +1091,7 @@ raise SystemExit(7)
             self.assertEqual(data["config"]["mcpServers"]["ffsake"],
                              {"command": str(binary.resolve()), "args": [str(root.resolve()), "--profile", "core"]})
             self.assertEqual(data["args"][data["args"].index("--allowedTools") + 1],
-                             ",".join("mcp__ffsake__" + name for name in suite.FFSAKE_CORE_TOOLS))
+                             ",".join("mcp__ffsake__" + name for name in suite.FFSAKE_CORE_TOOLS if name not in suite.FFSAKE_ACCESS_MUTATIONS))
             self.assertFalse(Path(data["config_path"]).exists())
             self.assertEqual(list(root.iterdir()), [])
 

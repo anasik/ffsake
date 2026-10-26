@@ -1,40 +1,50 @@
 # Host-authorized filesystem access
 
-The host session is the permission authority. FFSAKE supports two explicitly selected authorization modes: persistent grants approved by a trusted Claude host, or explicit host exports. Without either, only the primary project is accessible. Absolute paths inside authorized scopes work; default indexed discovery remains primary-only.
+The host controls approval. Normal settings can prompt; deliberate allow rules and automatic approval modes can dispatch access tools without a human click. FFSAKE accepts that host decision and does not authenticate clients or demand an approval receipt. Starting MCP with a primary project authorizes that project read/write; external access is initially absent.
 
-See [real-Claude acceptance and reproduction](PERSISTENT_ACCESS_DEMO.md).
-
-## Persistent open-file / add-folder workflow (trusted Claude)
-
-Enable once in the MCP server's startup configuration:
+## Persistent open-file / add-folder workflow
 
 ```sh
-ffsake-mcp /absolute/project --trusted-host claude-code
-# Or use the interactive launcher:
-python3 scripts/ffsake_claude.py /absolute/project --trusted-host
+ffsake-mcp /absolute/project
+# Interactive Claude launcher with ordinary tools preapproved:
+python3 scripts/ffsake_claude.py /absolute/project
 ```
 
-Use Claude Code 2.1.310 (the tested version), or a version whose documented native approval enforcement supports the marker. Reconnect the MCP server after updating the binary and its startup arguments; an existing chat can keep its conversation. No `/add-dir`, authorization JSON edits or per-file shell helpers are needed.
+Ask the agent to open an external file or add a folder. After an out-of-scope read, it calls `ffsake_open_access` with absolute `path`, `kind: "file"` or `"directory"`, and `mode: "read_only"` or `"read_write"`. The host applies its configured permission policy. Successful dispatch persists that exact scope until revoked, and the agent retries the original operation. Denial before dispatch creates no grant. A file grant never includes its parent or neighbors. Rights expansion requires another open-access invocation subject to the same host policy; opening read-only can also downgrade an existing grant.
 
-Ask the agent to open the external file or add a folder. On a denied read, it calls `ffsake_open_access` with an **absolute** `path`, `kind: "file"` or `"directory"`, and `mode: "read_only"` or `"read_write"`. Claude shows its native Yes/No prompt. Yes persists exactly that scope for this primary project; the agent retries the original operation. No dispatches nothing and creates no grant. A file grant never includes its parent or neighbors. An existing file grant can be expanded to read/write only through another approved call. Calling open-access with read-only also allows an approved downgrade.
+`ffsake_list_access` lists grants. `ffsake_remove_access` revokes the exact path without deleting files or reversing edits. Both mutating access tools use ordinary host approval; there is no Claude forced-interaction marker. **A host's “Allow once” approves one tool invocation; this tool explicitly creates a persistent project grant.** It does not mean a one-read grant. Use explicit exports below when host-managed once/session lifetimes are required.
 
-`ffsake_list_access` lists the grants. Ask the agent to revoke a path with `ffsake_remove_access`, then approve the native prompt. Removal changes authorization only: it neither deletes files nor reverses edits. No ordinary editing tool can change the store. Both open and remove advertise Boolean `_meta["anthropic/requiresUserInteraction"]: true`; ordinary tools keep their normal approval behavior. Every open/remove call prompts, including idempotent requests. These three tools appear in either profile only when the host enables this mode; the JSONL interface cannot create persistent grants.
+All three tools appear by default in both MCP profiles. JSONL does not create persistent grants. Old `--trusted-host claude-code` startup arguments and the launcher's `--trusted-host` remain accepted as deprecated no-ops. Remove them from new setup. Reconnect the server after replacing its binary; existing chats can retain their conversation.
 
-### Explicit trust boundary
+## Host setup
 
-The operator **trusts Claude to enforce approval** when enabling this flag. This is a host-controlled declaration, not authentication from clientInfo and not a server-verifiable approval receipt. The flag must not be enabled for clients that ignore the marker, old Claude versions, or SDK applications that automatically approve callbacks. The official SDK can dispatch marked tools without a human; see the [real probe and negative control](NATIVE_APPROVAL_PROBE.md). Ordinary MCP invocation is not proof of approval outside this explicitly trusted mode. Agents cannot enable the mode through any FFSAKE tool or an `approved` argument.
+Build `cargo build --release --bin ffsake-mcp`, then generate the configuration for the chosen host:
 
-This mode grants FFSAKE access independently; it **does not synchronize Claude's native Read/Edit permissions, deny rules or `/add-dir`**. The host/operator must not enable it where it would contradict an enforced host policy. `--trusted-host` and `--access` are mutually exclusive and startup rejects their combination. Existing exports are never silently merged or overridden. Other clients may continue using default scope or exports; persistent grants are not loaded unless trusted mode is enabled.
+```sh
+python3 scripts/ffsake_setup.py claude /absolute/project --binary /absolute/ffsake/target/release/ffsake-mcp --output-dir /absolute/project
+python3 scripts/ffsake_setup.py codex /absolute/project --binary /absolute/ffsake/target/release/ffsake-mcp --output-dir /absolute/project
+python3 scripts/ffsake_setup.py opencode /absolute/project --binary /absolute/ffsake/target/release/ffsake-mcp --output-dir /absolute/project
+```
 
-### Persistence and revocation
+Run only the desired host command. Existing files are never overwritten: omit `--output-dir` to print snippets for merging into existing configuration. Review inherited wildcard allow/deny rules and managed policy. The generator does not change them. `--access-approval allow` deliberately configures automatic allowance of open/remove; `--tool-profile core` selects the smaller catalog.
 
-The canonical primary project owns `.ffsake/native-access/grants.json` and its OS lock. The journal remains under the same primary project. Grants survive server/session restart and are durable on disk (file and parent-directory sync after atomic replacement); no session token expires them. Instances using the same canonical primary project share this store, while a different primary project has a separate store. Copying a store to another project is rejected. This is not portable identity across moving/renaming the primary directory.
+| Host | Generated setup | Normal access approval |
+| --- | --- | --- |
+| Claude Code | `.mcp.json`, `.claude/settings.json` | Preallows ordinary FFSAKE tools; open/remove use default MCP permission handling. No explicit ask rules that would override deliberate allow/auto behavior. |
+| Codex | `.codex/config.toml` | Per-tool `approval_mode = "prompt"` for open/remove, `"approve"` for ordinary tools. Trust the project to load project config. Deliberate per-tool `"approve"` or host automatic review controls unattended use. |
+| OpenCode | `opencode.json` | `ffsake_*: allow`, exact `ffsake_ffsake_open_access` and `ffsake_ffsake_remove_access`: `ask`. Use deliberate `allow` for unattended calls. In tested 1.18.31, `--auto` still prompted with these explicit `ask` rules. |
 
-The protected `.ffsake` path is unavailable through FFSAKE reads, edits, searches, archives and history. Writes use a private temporary file, validation before replacement, and an OS lock to avoid lost concurrent updates. A crash releases the lock. Existing filesystem/symlink safeguards still apply; native OS access remains a separate host capability, not sandboxed by this store.
+These are **configured defaults, not guaranteed prompts**. Global/managed policy, hooks, SDK callbacks, auto modes and user overrides remain the host's responsibility. Ordinary reads/edits gain no new approval requirement. The launcher additionally supports `--access-approval allow` and an optional `--permission-mode`; otherwise it preserves the host mode.
 
-Running instances reload before every operation. Revocation prevents subsequent reads, previews, apply, undo and redo, including cached handles. It cannot erase contents already returned to a conversation or interrupt an operation already executing. Grants remain disjoint, including from the primary root; overlapping grants and cross-root transactions remain unsupported and reject before mutation. Revoke a narrower grant before deliberately approving a broader folder. Search added folders with explicit Exact targets; the primary index and journal anchor do not move.
+Sources checked before implementation: [Claude permissions](https://code.claude.com/docs/en/permissions), [Codex configuration reference](https://developers.openai.com/codex/config-reference), [OpenCode permissions](https://opencode.ai/docs/permissions/), [OpenCode MCP configuration](https://opencode.ai/docs/mcp-servers/). Installed-version observations and reproduction are in [HOST_APPROVAL_DEMO.md](HOST_APPROVAL_DEMO.md).
 
-For noninteractive execution, the tested CLI denies marked calls. This workflow is persistent project access, not an allow-once/session chooser. Use explicit exports below for host-managed lifetimes.
+This does not synchronize native filesystem permissions, Claude `/add-dir`, or arbitrary host deny rules. An operator needing restrictive filesystem policy should use `--access`: it is authoritative, persistent grants are not loaded or merged, and access management tools are absent/rejected. Even legacy `--trusted-host claude-code --access ...` preserves the export unchanged. Tool approval never broadens an explicit export.
+
+## Persistence and revocation
+
+The canonical primary project owns `.ffsake/native-access/grants.json` and its OS lock. The journal anchor stays at that project. Atomic private-file replacement and file/directory sync persist grants across server/session restart and reboot; same canonical project instances share grants, different primary projects remain isolated. Moving the primary directory changes identity. The protected `.ffsake` store cannot be read or edited through ordinary FFSAKE tools; native OS access is a separate host capability.
+
+Running instances reload before operations. Revocation blocks subsequent reads, previews, apply, undo/redo and cached-handle access. It cannot erase content already returned or interrupt an in-flight operation. Grants remain disjoint; overlaps and cross-root transactions reject before mutation. Revoke a narrow grant before adding a broader folder. Search external folders with explicit Exact targets; primary indexing does not move. Existing symlink, traversal, stale-content, history and transaction guards remain unchanged.
 
 ## What Claude Code communicates
 
@@ -119,4 +129,4 @@ Git review remains at the primary repository, and `--tasks` remains a separate f
 
 On denial, report the exact path, operation, required mode and requested lifetime to the host. Do not edit the export, request a broad parent grant for one file, switch to native tools to evade denial, or repeatedly retry without a scope change. After a genuine host update, retry the original request and still review a fresh preview when content changed.
 
-Run `python3 scripts/access_smoke.py target/debug/ffsake-mcp`. It covers exact file/directory scope, read-only denial, neighbors, traversal/symlinks, external archive and real Rust/clangd analysis, compiled external rename, stale preview and history revocation, project persistence, host session isolation, durable once consumption, and live MCP root notifications. This suite tests exports; run `python3 scripts/persistent_access_smoke.py target/debug/ffsake-mcp` for persistent MCP integration. The latter simulates trusted dispatch and is not proof of a native prompt; the separate real-Claude acceptance report supplies that evidence.
+Run `python3 scripts/access_smoke.py target/debug/ffsake-mcp`. It covers exact file/directory scope, read-only denial, neighbors, traversal/symlinks, external archive and real Rust/clangd analysis, compiled external rename, stale preview and history revocation, project persistence, host session isolation, durable once consumption, and live MCP root notifications. This suite tests exports; run `python3 scripts/persistent_access_smoke.py target/debug/ffsake-mcp` for persistent MCP integration. The latter exercises MCP dispatch and is not proof of a native prompt; see HOST_APPROVAL_DEMO.md for installed-host observations.

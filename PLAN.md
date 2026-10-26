@@ -1,8 +1,12 @@
 # Action plan
 
+## Host-controlled access approval (2026-10-26)
+
+Current bounded scope: default persistent MCP access tools across Claude Code, Codex and OpenCode; ordinary host approval including intentional auto/allow; legacy trusted-host flag accepted without effect; explicit exports remain exclusive and restrictive. Preserve all storage/path/history guards. Setup generation, installed-host normal/allow tests, restart/revocation and automated regressions are complete. OpenCode 1.18.31 --auto still asked under explicit ask rules; explicit allow worked. Commit/push and final-head CI are the remaining gate, then pause. No unrelated roadmap expansion. See docs/HOST_APPROVAL_DEMO.md for acceptance evidence.
+
 ## Persistent native-approved access (2026-10-26)
 
-The user explicitly authorized trusting Claude approval enforcement in opt-in trusted-host mode, resolving the earlier verification-gate decision. Implemented protected project-bound atomic persistence, three dedicated MCP access tools, live reload/revocation, and an explicit-export conflict guard. The native-prompt and SDK negative-control findings remain valid: the startup flag is a host trust declaration, not client authentication or permission synchronization. Backend/MCP checks and real-Claude denial, read-only isolation, separately approved rights expansion, session/server restart persistence and approved revocation passed. See docs/PERSISTENT_ACCESS_DEMO.md. Exact-head CI is the remaining completion gate. Pause after this scope.
+The user explicitly authorized trusting Claude approval enforcement in opt-in trusted-host mode, resolving the earlier verification-gate decision. Implemented protected project-bound atomic persistence, three dedicated MCP access tools, live reload/revocation, and an explicit-export conflict guard. The native-prompt and SDK negative-control findings remain valid: the startup flag is a host trust declaration, not client authentication or permission synchronization. Backend/MCP checks and real-Claude denial, read-only isolation, separately approved rights expansion, session/server restart persistence and approved revocation passed. See docs/PERSISTENT_ACCESS_DEMO.md. That implementation passed exact-head CI at db35e64. Pause after this scope.
 
 ## Scoped host-access assignment (2026-10-26)
 

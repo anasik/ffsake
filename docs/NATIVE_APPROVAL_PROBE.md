@@ -1,5 +1,8 @@
 # Native approval verification — 2026-10-26
 
+> Historical evidence for the earlier forced-approval policy. Current host-controlled approval, default tools and legacy-flag compatibility are documented in [HOST_ACCESS.md](HOST_ACCESS.md).
+
+
 Historical checkpoint: the user subsequently authorized an explicitly enabled trusted-host mode that trusts Claude approval enforcement. The negative-control findings below still define that trust boundary; see [current setup](HOST_ACCESS.md).
 
 Status: the Claude terminal approval mechanism passed the minimal probe. The supported-host authentication boundary is **not established**, so persistent grant creation has not been implemented or enabled. Existing external-access exports and all workspace guards remain unchanged. This is a verification checkpoint, not completion of the persistent-access feature.

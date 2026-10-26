@@ -71,7 +71,7 @@ pub struct Access {
 }
 fn denied(path: &Path, why: &str) -> WorkspaceError {
     WorkspaceError::AuthorizationRequired(format!(
-        "authorization required for {}: {why}; request exact scope with ffsake_open_access in explicitly enabled trusted-Claude mode, otherwise ask the host to update --access policy; ordinary tool approval does not grant access",
+        "authorization required for {}: {why}; request exact scope with ffsake_open_access subject to host approval settings; when --access is configured ask the host to update that export",
         path.display()
     ))
 }
@@ -139,8 +139,8 @@ impl Access {
         access.refresh()?;
         Ok(access)
     }
-    /// Explicit host opt-in: the caller trusts Claude to enforce marked tool approval.
-    /// This is not client authentication and must never be inferred from clientInfo.
+    /// Persistent MCP scope. The host controls approval before tool dispatch.
+    /// No human-click receipt or client identity is inferred or required.
     pub fn persistent(primary: PathBuf) -> Result<Self> {
         let directory = primary.join(".ffsake/native-access");
         no_symlinks(&directory)?;
@@ -175,7 +175,10 @@ impl Access {
     // OS lock is released on crash; never unlink a locked inode. All writers use it.
     fn store_lock(&self) -> Result<fs::File> {
         if !self.persistent {
-            return Err(denied(&self.primary, "trusted-Claude mode is disabled"));
+            return Err(denied(
+                &self.primary,
+                "persistent access is disabled; explicit host policies cannot be expanded by tools",
+            ));
         }
         let path = self.policy.as_ref().unwrap().with_file_name("store.lock");
         no_symlinks(&path)?;
@@ -228,12 +231,15 @@ impl Access {
     }
     pub fn list_access(&self) -> Result<serde_json::Value> {
         if !self.persistent {
-            return Err(denied(&self.primary, "trusted-Claude mode is disabled"));
+            return Err(denied(
+                &self.primary,
+                "persistent access is disabled; explicit host policies cannot be expanded by tools",
+            ));
         }
         self.refresh()?;
         Ok(
             serde_json::json!({"primary": self.primary, "grants": self.state.read().unwrap().grants,
-            "authority": "explicitly trusted Claude approval enforcement", "lifetime": "project"}),
+            "authority": "host approval settings", "lifetime": "project"}),
         )
     }
     pub fn open_access(&self, path: PathBuf, kind: Kind, mode: Mode) -> Result<serde_json::Value> {
