@@ -39,4 +39,4 @@ The Claude test used `--tools ""` to disable native repository tools, strict MCP
 - MCP editing smoke: previews/apply/undo/redo and 171 rejected boundary cases. Workflow and search/archive suites passed.
 - Initial sandboxed Rust mode/symlink and workflow process-inspection checks hit OS permission errors; rerunning those checks with authorized host permissions passed. No verifier was weakened.
 
-CI status will be reported for the exact pushed commit. This scope does not expand semantic or other features.
+The first CI run exposed older LSP smoke assertions that required the entire `.ffsake` directory to be absent. Default persistent MCP now initializes an empty access store. Those checks now require exactly that empty store, reject any extra metadata/journal, and retain source/result assertions. Both real LSP and rename suites passed locally after this test compatibility correction. Final CI status will be reported for the exact pushed commit. This scope does not expand semantic or other features.

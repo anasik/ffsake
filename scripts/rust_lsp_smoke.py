@@ -8,6 +8,8 @@ import subprocess
 import sys
 import tempfile
 
+from mcp_test_support import assert_only_empty_access_store
+
 
 def failure_checks(binary):
     """A controlled server proves stale-source rejection and bounded shutdown."""
@@ -128,7 +130,7 @@ while True:
             if mode == "backend_error":
                 assert failed["error"] == 'rust-analyzer rejected textDocument/references (-32602): "unsupported fixture query"'
                 assert "hidden backend detail" not in json.dumps(failed)
-                assert not (root / ".ffsake").exists()
+                assert_only_empty_access_store(root)
             if mode == "rename_null":
                 assert failed["result"]["prepared"] is None and failed["result"]["proposal"] is None, failed
             if mode.startswith("batch_"):
@@ -136,7 +138,8 @@ while True:
                 assert "result" not in failed
             if mode.startswith("inspect_"):
                 assert (directory / "requests").read_text() == ("2" if mode in ("inspect_limit", "inspect_duplicate_limit") else "3")
-                assert "result" not in failed and not (root / ".ffsake").exists()
+                assert "result" not in failed
+                assert_only_empty_access_store(root)
                 if mode == "inspect_stale":
                     assert "source changed" in failed["error"]
                     assert (root / "context.rs").read_text() == "fn external_change() {}"

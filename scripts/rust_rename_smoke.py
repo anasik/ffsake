@@ -7,6 +7,8 @@ import subprocess
 import sys
 import tempfile
 
+from mcp_test_support import assert_only_empty_access_store
+
 from rust_rename_probe import check_program, rename_cases
 
 
@@ -51,8 +53,8 @@ def main():
                     rejected = call(arguments, ok=False)
                     assert rejected["error"] == 'rust-analyzer rejected textDocument/prepareRename (-32602): "Renaming aliases is currently unsupported"', rejected
                     assert "rename_set" not in rejected and "handle" not in rejected
-                    assert not (root / ".ffsake").exists()
-                    assert {p.name: p.read_bytes() for p in root.iterdir()} == {p: s.encode() for p, s in sources.items()}
+                    assert_only_empty_access_store(root)
+                    assert {p.name: p.read_bytes() for p in root.iterdir() if p.name != ".ffsake"} == {p: s.encode() for p, s in sources.items()}
                     check_program(base / "before", sources, "passes")
                     results.append({"case": name, "native_rejected": True, "source_restored": True, "guarded_history": False})
                     continue
@@ -67,7 +69,7 @@ def main():
                 assert source.encode()[selected["start_byte"]:selected["end_byte"]] == b"account"
                 proposal = report["proposal"]
                 assert report["rename_set"] > 0
-                assert not (root / ".ffsake").exists(), "discovery created journal state"
+                assert_only_empty_access_store(root)
                 preview_args = {"rename_set": report["rename_set"], "expected_path": query,
                     "expected_start_byte": selected["start_byte"], "expected_old_text": "account",
                     "expected_new_name": "customer", "expected_edits": count or 1}
