@@ -39,6 +39,7 @@ jobs:
       - run: python3 scripts/layout_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/mcp_profile_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/workflow_smoke.py target/debug/ffsake-mcp
+      - run: python3 scripts/git_write_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/project_tasks_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/task_output_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/debug_protocol_smoke.py target/debug/ffsake-mcp

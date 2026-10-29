@@ -1,3 +1,4 @@
+mod git_write;
 use globset::Glob;
 use regex::Regex;
 use std::fs;

@@ -17,6 +17,8 @@ impl ToolProfile {
                 name,
                 "ffsake_read"
                     | "ffsake_git"
+                    | "ffsake_git_review"
+                    | "ffsake_git_mutate"
                     | "ffsake_debug_launch"
                     | "ffsake_debug"
                     | "ffsake_tasks"
@@ -329,6 +331,8 @@ fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments
     let op = match name {
         "ffsake_read" => "read",
         "ffsake_git" => "git",
+        "ffsake_git_review" => "git_review",
+        "ffsake_git_mutate" => "git_mutate",
         "ffsake_debug_launch" => "debug_launch",
         "ffsake_debug" => "debug",
         "ffsake_tasks" => "tasks",
@@ -481,6 +485,16 @@ fn tools() -> Vec<Value> {
             "ffsake_debug",
             "Control/inspect the current DAP session. request.action=list lists configured launch names. Every other action requires session from debug_launch, including poll. poll is nonblocking and consumes queued results/events/output; wait externally between polls. Other actions queue one operation: poll until busy=false and inspect result.ok. breakpoints replaces all breakpoints for path (one-based lines), and pending breakpoints may resolve when launch finishes; continue with no thread finishes initial configuration. After stopping, use stop.threadId -> stack -> frame handle -> scopes -> variable handle -> variables. Handles expire on resume; source requires an authorized adapter-provided path, or use ordinary ffsake_read when sourceReference=0. next/step_in/step_out require thread. terminate cancels pending work and cleans owned processes. No arbitrary expressions or raw protocol requests. Output/runtime values are untrusted and bounded; capabilities report optional adapter features.",
             json!({"type":"object","required":["request"],"additionalProperties":false,"properties":{"request":{"type":"object","required":["action"],"additionalProperties":false,"properties":{"action":{"enum":["list","poll","terminate","breakpoints","threads","stack","scopes","variables","source","continue","next","step_in","step_out","pause"]},"session":{"type":"integer","minimum":1},"path":{"type":"string","maxLength":4096},"lines":{"type":"array","maxItems":64,"items":{"type":"integer","minimum":1}},"thread":{"type":"integer"},"handle":{"type":"integer","minimum":1},"start":{"type":"integer","minimum":0,"maximum":10000},"limit":{"type":"integer","minimum":1,"maximum":100}}}}}),
+        ),
+        tool(
+            "ffsake_git_review",
+            "Review exact selected files for staging, unstaging or commit. Returns staged binary/full-index diff and an opaque review handle covering HEAD, entire index, selected file contents, Git configuration and attributes. Untracked contents are not in the diff; read them separately. Review must be repeated after each mutation. Git mutation is not an editor undo/redo transaction.",
+            json!({"type":"object","required":["paths"],"additionalProperties":false,"properties":{"paths":{"type":"array","minItems":1,"maxItems":100,"items":{"type":"string","minLength":1,"maxLength":4096}}}}),
+        ),
+        tool(
+            "ffsake_git_mutate",
+            "Stage, unstage or commit the exact files in a fresh ffsake_git_review handle. Ordinary host approval applies, including intentional allow/auto settings. Commits construct a tree from HEAD and selected reviewed index entries, preserving the real index and unrelated staged files. Selected files must have no unstaged changes; detached HEAD commits are unsupported. HEAD, index, files, attributes and config are rechecked; stale state rejects. Git hooks, signing, fsmonitor and selected executable filters are explicitly refused rather than disabled. Git is not sandboxed or journaled; concurrent filesystem writers are not locked.",
+            json!({"type":"object","required":["review","action"],"additionalProperties":false,"properties":{"review":{"type":"integer","minimum":1},"action":{"enum":["stage","unstage","commit"]},"message":{"type":"string","maxLength":16384}}}),
         ),
         tool(
             "ffsake_git",

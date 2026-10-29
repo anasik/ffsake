@@ -54,6 +54,7 @@ def main():
     allowed = [f"mcp__ffsake__{tool}" for tool in profile_tools(args.tool_profile)
                if not (args.access and tool in FFSAKE_ACCESS_TOOLS)
                and (tool not in FFSAKE_ACCESS_MUTATIONS or args.access_approval == "allow")
+               and tool != "ffsake_git_mutate"
                and (tool != "ffsake_debug_launch" or args.debug_approval == "allow")
                and (tool not in ("ffsake_task_register", "ffsake_run_task") or args.task_approval == "allow")]
     with tempfile.TemporaryDirectory(prefix="ffsake-claude-") as td:

@@ -1,5 +1,9 @@
 # Action plan
 
+## Selected-file Git staging and commits (2026-10-29)
+
+Resume the isolated Git checkpoint on top of live task output. Review snapshots, selected-file staging/unstaging and reviewed-index commits must preserve unrelated index and working changes and reject stale state. Test actual MCP operations, hooks and signing refusals, unborn repositories and worktrees, then run a disposable real-agent acceptance. Commit the completed scope, push main and verify exact-head CI.
+
 ## Live project task output (2026-10-29)
 
 Add bounded, cursor-based live stdout/stderr retrieval to the asynchronous project-task runner, retaining execution authorization and fixed-policy precedence. Keep a protected rolling log per stream, expose overflow and cleanup, preserve completion status, and use graceful then forced process-group cancellation. Verify through actual MCP and a disposable Claude run; build the existing configured binary, push this scope and verify exact-head CI. Git work remains isolated at local checkpoint `codex/git-resume` / `54c5d7e`.

@@ -1,0 +1,9 @@
+I fixed `calculator.txt` and committed only that change as `0c79ea7`.
+
+1. **Inspect:** `calculator.txt` said "The calculation adds the base price and tax." `other.txt` already had both staged and unstaged changes.
+2. **Edit:** I changed the line to "The calculation subtracts the discount from the total."
+3. **Review and stage:** The review covered only `calculator.txt` and showed just that one-line change unstaged. I then staged that file.
+4. **Check the staged diff:** A second review showed the same one-line change staged and nothing left unstaged for the file.
+5. **Commit:** I committed with the message "Fix calculator description: subtract discount from total". The commit contains only `calculator.txt`.
+
+`git status` afterwards shows `other.txt` still with both staged and unstaged changes, so those were left as they were.

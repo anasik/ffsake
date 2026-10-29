@@ -42,6 +42,14 @@ pub enum Request {
     Debug {
         request: crate::debug::Action,
     },
+    GitReview {
+        paths: Vec<String>,
+    },
+    GitMutate {
+        review: u64,
+        action: String,
+        message: Option<String>,
+    },
     Git {
         query: crate::workflow::GitQuery,
         #[serde(default)]
@@ -316,6 +324,7 @@ struct CachedProposal {
 
 pub struct Resident {
     project_jobs: crate::project_tasks::Jobs,
+    git_reviews: crate::git_write::Reviews,
     debugger: crate::debug::Debugger,
     tasks: crate::workflow::Tasks,
     session: EditorSession,
@@ -334,6 +343,7 @@ impl Resident {
         let index = FffSearchIndex::open(&workspace)?;
         Ok(Self {
             project_jobs: crate::project_tasks::Jobs::default(),
+            git_reviews: crate::git_write::Reviews::default(),
             debugger: crate::debug::Debugger::default(),
             tasks: crate::workflow::Tasks::default(),
             session: EditorSession::new(workspace),
@@ -682,6 +692,18 @@ impl Resident {
                 },
                 limit,
             ),
+            Request::GitReview { paths } => {
+                self.git_reviews.review(self.session.workspace(), paths)
+            }
+            Request::GitMutate {
+                review,
+                action,
+                message,
+            } => {
+                self.index_dirty = true;
+                self.git_reviews
+                    .mutate(self.session.workspace(), review, &action, message)
+            }
             Request::Git {
                 query,
                 staged,

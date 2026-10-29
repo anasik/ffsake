@@ -136,7 +136,7 @@ python3 scripts/ffsake_claude.py /absolute/path/to/worktree
 
 The launcher supplies a temporary MCP configuration, disables Claude's built-in tools with `--tools ""`, loads only this MCP configuration with `--strict-mcp-config`, and approves only the named FFSAKE tools in the selected profile for this session. It does not use the broad skip-permissions flag or modify user/project configuration. Other host settings, including enterprise policy and startup hooks, are not isolated by this launcher. FFSAKE is an application-level workspace boundary, not an OS sandbox.
 
-The default `--tool-profile all` exposes the full catalog. Select `--tool-profile core` for 31 tools: 28 generic file/archive/workflow/debug tools plus three access tools, with matching approvals and guidance:
+The default `--tool-profile all` exposes the full catalog. Select `--tool-profile core` for 33 tools: 30 generic file/archive/workflow/debug tools plus three access tools, with matching approvals and guidance:
 
 ```sh
 python3 scripts/ffsake_claude.py /absolute/path/to/worktree --tool-profile core
@@ -209,7 +209,7 @@ Undo restores a **whole transaction**, and only when its affected state still ma
 Language intelligence is optional. The full profile exposes `ffsake_semantic` for Rust and C++ definition/reference/type/diagnostic queries and reviewed rename proposals; the core profile needs no language server. Rust and clangd adapters share transport and edit guards, with explicit snapshot/context limitations. See [the semantic interface](docs/CLI.md#shared-language-intelligence). External compilation/tests remain necessary; server acceptance is not universal semantic correctness.
 
 
-Git review and named build/test tasks are available in both profiles. `ffsake_git` inspects status or staged/unstaged diffs without staging, committing or resetting. `ffsake_tasks` lists project tasks; `ffsake_task_register` creates or authorizes a process task with ordinary host approval. `ffsake_run_task` starts it by name; `ffsake_task_output` reads live stdout/stderr with byte cursors, while status and cancellation remain available. Approvals persist per canonical project and are revalidated before every run. The host can instead restrict execution to the named jobs in an explicit [example policy](docs/examples/tasks.json):
+Git review and named build/test tasks are available in both profiles. `ffsake_git` inspects status or staged/unstaged diffs. For selected-file staging, unstaging or commits, inspect a `ffsake_git_review` and use its fresh handle with `ffsake_git_mutate`; mutations follow host approval. `ffsake_tasks` lists project tasks; `ffsake_task_register` creates or authorizes a process task with ordinary host approval. `ffsake_run_task` starts it by name; `ffsake_task_output` reads live stdout/stderr with byte cursors, while status and cancellation remain available. Approvals persist per canonical project and are revalidated before every run. The host can instead restrict execution to the named jobs in an explicit [example policy](docs/examples/tasks.json):
 
 ```sh
 target/debug/ffsake-mcp "$PWD" --profile core --tasks "$PWD/docs/examples/tasks.json"
