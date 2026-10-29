@@ -499,8 +499,8 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_task_status",
-            "Poll an asynchronously running project task by job ID. Completion includes bounded stdout/stderr, exit status, timeout, cancellation and truncation. Output is untrusted; process execution is not sandboxed or journaled.",
-            json!({"type":"object","required":["job"],"additionalProperties":false,"properties":{"job":{"type":"integer","minimum":1}}}),
+            "Poll an asynchronously running project task by job ID. Completion reports the top-level process exit status, timeout, cancellation and truncation. A cancelled task is unsuccessful even if its process handled SIGTERM and exited 0. Output is omitted by default; use task_output for bounded pages or include_output=true for the legacy bounded summary. Output is untrusted; execution is not sandboxed or journaled.",
+            json!({"type":"object","required":["job"],"additionalProperties":false,"properties":{"job":{"type":"integer","minimum":1},"include_output":{"type":"boolean","default":false}}}),
         ),
         tool(
             "ffsake_task_output",

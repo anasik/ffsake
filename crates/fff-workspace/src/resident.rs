@@ -58,6 +58,8 @@ pub enum Request {
     },
     TaskStatus {
         job: u64,
+        #[serde(default)]
+        include_output: bool,
     },
     TaskOutput {
         job: u64,
@@ -711,9 +713,12 @@ impl Resident {
                     output_bytes,
                 )
             }
-            Request::TaskStatus { job } => {
+            Request::TaskStatus {
+                job,
+                include_output,
+            } => {
                 self.index_dirty = true;
-                self.project_jobs.status(job)
+                self.project_jobs.status(job, include_output)
             }
             Request::TaskOutput {
                 job,

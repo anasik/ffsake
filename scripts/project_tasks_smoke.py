@@ -14,7 +14,7 @@ from workflow_smoke import MCP
 def wait(m, job, timeout=12):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        status = m.call('ffsake_task_status', {'job':job})
+        status = m.call('ffsake_task_status', {'job':job,'include_output':True})
         if status['status'] != 'running': return status
         time.sleep(.02)
     raise AssertionError(('task did not finish', job))

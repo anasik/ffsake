@@ -652,7 +652,6 @@ impl Jobs {
         if launch.fingerprint != record.fingerprint {
             return Err("task definition, resolved executable, cwd or approved limits changed; host must reauthorize".into());
         }
-        self.job.take();
         self.next += 1;
         let id = self.next;
         let state = Arc::new(Mutex::new(
@@ -666,6 +665,8 @@ impl Jobs {
         cmd.args(&launch.args).current_dir(&launch.cwd);
         let started = Instant::now();
         let child = workflow_process::spawn(&mut cmd)?;
+        // Preserve the previous completed log if validation or spawn fails.
+        self.job.take();
         let st = state.clone();
         let stop = cancel.clone();
         let name = label.to_owned();
@@ -707,13 +708,18 @@ impl Jobs {
         });
         Ok(json!({"job":id,"label":label,"status":"running","next":"poll ffsake_task_status"}))
     }
-    pub(crate) fn status(&self, id: u64) -> Result<Value> {
+    pub(crate) fn status(&self, id: u64, include_output: bool) -> Result<Value> {
         let job = self
             .job
             .as_ref()
             .filter(|j| j.id == id)
             .ok_or("unknown or stale task job")?;
-        let value = job.state.lock().unwrap().clone();
+        let mut value = job.state.lock().unwrap().clone();
+        if !include_output && let Some(object) = value.as_object_mut() {
+            object.remove("stdout");
+            object.remove("stderr");
+            object.insert("output_included".into(), json!(false));
+        }
         Ok(value)
     }
     pub(crate) fn output(
