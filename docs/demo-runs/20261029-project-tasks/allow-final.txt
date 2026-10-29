@@ -1,0 +1,23 @@
+I did everything you asked using only FFSAKE tools, with one addition: a third task called `SlowSleep`, because cancelling Build didn't work. The source file is back to its original content and the final test run passed.
+
+## What happened
+
+| Job | Task | Result |
+|---|---|---|
+| 1 | Build (`dotnet build fixture.csproj`) | Exit 0, 0 warnings, 0 errors, 2.6 s. Restore worked even though `NuGet.Config` turns off all package sources, so the packages must already have been cached locally. |
+| 2 | Test v1 (`dotnet test fixture.csproj --no-build`) | Exit 0. 3 passed, 0 failed. |
+| — | **Changed Test** to `dotnet test fixture.csproj --logger "console;verbosity=normal"` and registered it again under the same name | The server accepted it with a new fingerprint and was not restarted. `ffsake_tasks` showed the new arguments. |
+| 3 | Test v2 | Exit 0. This version builds first and lists each case: all 3 `CalculatesTotal` cases passed. |
+| 4 | Test v2 with a temporary bug (`unitPrice * quantity` → `unitPrice + quantity`) | Exit 1. All 3 cases failed: expected 28 got 11, expected 0 got 5, expected 36 got 15. The failure details were in both stdout and stderr. |
+| — | Undid the edit | I re-read line 5 and confirmed it has `*` again. |
+| 5 | Test v2 after the undo | Exit 0. 3 passed. |
+| 6 | Build, then cancel | The cancel was rejected with "task already completed; nothing to cancel". The incremental build took 0.73 s and was done before the cancel request arrived. |
+| 7 | `SlowSleep` (`/bin/sleep 120`), cancelled after confirming it was running | `cancelled: true`, `signal: 9`, no exit code, stopped after about 3 s. |
+
+## Friction
+- **Cancelling fast tasks:** a warm incremental build finishes in under a second, which is faster than two tool calls in a row. Since a job ID only comes back after the run starts, a quick task can't reliably be cancelled. I registered `SlowSleep` to get a reliable demo. It is still registered and authorized in `.vscode/tasks.json`, which also now contains Build and Test. You may want to remove it.
+- **Waiting on results:** `run_task` returns right away and there is no way to wait for a job to finish. I polled jobs 1, 4 and 5 twice each before they completed.
+- **Cancellation uses SIGKILL:** the process gets signal 9 straight away, with no SIGTERM first, so a task like `dotnet` has no chance to clean up. The tool description says that processes that deliberately detach from the group won't be stopped. Child processes that `dotnet` leaves running in the background, such as MSBuild nodes, might also survive. I didn't check that.
+- **Re-registering is easy:** using the same label replaces the old definition, and the next run uses the new arguments. Nothing marks that the definition changed apart from the new fingerprint.
+- **Undo was smooth:** restoring the source took a single `undo` call on the edit's transaction ID, with hash checks.
+- **Leftover files:** the builds and test runs created `bin/` and `obj/` in the project folder. They aren't journaled, so undo won't remove them. Every task result says `sandboxed: false` and `journaled: false`.

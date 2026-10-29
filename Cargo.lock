@@ -327,6 +327,7 @@ dependencies = [
  "blake3",
  "fff-search",
  "globset",
+ "jsonc-parser",
  "regex",
  "serde",
  "serde_json",
@@ -663,6 +664,15 @@ checksum = "7883d941dae510fb2d978fc3fe018c71c9e2892fd38854de3e8b92c2e5ad9cc5"
 dependencies = [
  "cfg-if",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "jsonc-parser"
+version = "0.34.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ecded084f9b9a718d39668a42657c32253663d1f6afb3fbb9134f0305f73f48"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

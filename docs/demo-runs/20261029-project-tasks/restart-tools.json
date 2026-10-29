@@ -1,0 +1,126 @@
+[
+  {
+    "type": "tool_use",
+    "id": "toolu_01EckXDAYo7Hgnrgp44Zbb1i",
+    "name": "mcp__ffsake__ffsake_tasks",
+    "input": {},
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01EckXDAYo7Hgnrgp44Zbb1i",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"authorization\":\"host-approved fingerprints; tool invocation approval is separate\",\"execution_enabled\":true,\"mode\":\"project_tasks\",\"tasks\":[{\"authorized\":true,\"definition\":{\"args\":[\"build\",\"fixture.csproj\"],\"command\":\"dotnet\",\"group\":\"build\",\"label\":\"Build\",\"options\":{},\"type\":\"process\"},\"output_bytes\":65536,\"resolved_cwd\":\"/private/tmp/ffsake-task-agent/final/\",\"resolved_executable\":\"/usr/local/share/dotnet/dotnet\",\"timeout_seconds\":240},{\"authorized\":true,\"definition\":{\"args\":[\"test\",\"fixture.csproj\",\"--logger\",\"console;verbosity=normal\"],\"command\":\"dotnet\",\"group\":\"test\",\"label\":\"Test\",\"options\":{},\"type\":\"process\"},\"output_bytes\":65536,\"resolved_cwd\":\"/private/tmp/ffsake-task-agent/final/\",\"resolved_executable\":\"/usr/local/share/dotnet/dotnet\",\"timeout_seconds\":240},{\"authorized\":true,\"definition\":{\"args\":[\"120\"],\"command\":\"/bin/sleep\",\"label\":\"SlowSleep\",\"options\":{},\"type\":\"process\"},\"output_bytes\":65536,\"resolved_cwd\":\"/private/tmp/ffsake-task-agent/final/\",\"resolved_executable\":\"/bin/sleep\",\"timeout_seconds\":180}]}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01C2hWSDeNgp7FGywBMJszGY",
+    "name": "mcp__ffsake__ffsake_run_task",
+    "input": {
+      "name": "Build"
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01C2hWSDeNgp7FGywBMJszGY",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"job\":1,\"label\":\"Build\",\"next\":\"poll ffsake_task_status\",\"status\":\"running\"}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01SgNH6QmA9JEtvbRB5kKwbo",
+    "name": "mcp__ffsake__ffsake_task_status",
+    "input": {
+      "job": 1
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01SgNH6QmA9JEtvbRB5kKwbo",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"job\":1,\"label\":\"Build\",\"status\":\"running\"}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01Bv4NRNG8rBos73jb4zUg1j",
+    "name": "mcp__ffsake__ffsake_task_status",
+    "input": {
+      "job": 1
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01Bv4NRNG8rBos73jb4zUg1j",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"cancelled\":false,\"elapsed_ms\":2516,\"exit_code\":0,\"job\":1,\"journaled\":false,\"label\":\"Build\",\"output_is_untrusted\":true,\"output_truncated\":false,\"sandboxed\":false,\"signal\":null,\"status\":\"completed\",\"stderr\":\"\",\"stdout\":\"MSBuild version 17.9.8+b34f75857 for .NET\\n  Determining projects to restore...\\n  Restored /private/tmp/ffsake-task-agent/final/fixture.csproj (in 224 ms).\\n  fixture -> /private/tmp/ffsake-task-agent/final/bin/Debug/net8.0/fixture.dll\\n\\nBuild succeeded.\\n    0 Warning(s)\\n    0 Error(s)\\n\\nTime Elapsed 00:00:02.21\\n\",\"success\":true,\"timed_out\":false}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01KxRrXBdh8MxzLoGSyrZ6kT",
+    "name": "mcp__ffsake__ffsake_run_task",
+    "input": {
+      "name": "Test"
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01KxRrXBdh8MxzLoGSyrZ6kT",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"job\":2,\"label\":\"Test\",\"next\":\"poll ffsake_task_status\",\"status\":\"running\"}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01R3c8PPJxZDU85EqfgLYwMH",
+    "name": "mcp__ffsake__ffsake_task_status",
+    "input": {
+      "job": 2
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01R3c8PPJxZDU85EqfgLYwMH",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"cancelled\":false,\"elapsed_ms\":1407,\"exit_code\":0,\"job\":2,\"journaled\":false,\"label\":\"Test\",\"output_is_untrusted\":true,\"output_truncated\":false,\"sandboxed\":false,\"signal\":null,\"status\":\"completed\",\"stderr\":\"\",\"stdout\":\"  Determining projects to restore...\\n  All projects are up-to-date for restore.\\n  fixture -> /private/tmp/ffsake-task-agent/final/bin/Debug/net8.0/fixture.dll\\nTest run for /private/tmp/ffsake-task-agent/final/bin/Debug/net8.0/fixture.dll (.NETCoreApp,Version=v8.0)\\nMicrosoft (R) Test Execution Command Line Tool Version 17.9.0 (arm64)\\nCopyright (c) Microsoft Corporation.  All rights reserved.\\n\\nStarting test execution, please wait...\\nA total of 1 test files matched the specified pattern.\\n[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.4)\\n[xUnit.net 00:00:00.04]   Discovering: fixture\\n[xUnit.net 00:00:00.07]   Discovered:  fixture\\n[xUnit.net 00:00:00.07]   Starting:    fixture\\n[xUnit.net 00:00:00.10]   Finished:    fixture\\n  Passed Fixture.InvoiceTests.CalculatesTotal(price: 7, quantity: 4, expected: 28) [4 ms]\\n  Passed Fixture.InvoiceTests.CalculatesTotal(price: 5, quantity: 0, expected: 0) [< 1 ms]\\n  Passed Fixture.InvoiceTests.CalculatesTotal(price: 12, quantity: 3, expected: 36) [< 1 ms]\\n\\nTest Run Successful.\\nTotal tests: 3\\n     Passed: 3\\n Total time: 0.4487 Seconds\\n\",\"success\":true,\"timed_out\":false}}"
+      }
+    ]
+  }
+]

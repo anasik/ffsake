@@ -1,5 +1,10 @@
 # Action plan
 
+## Persistent host-approved project tasks (2026-10-29)
+
+Implement a limited VS Code process-task format with persistent per-project fingerprint authorization and ordinary host approval for registration and running. External task edits must not authorize themselves; revalidate before every run. Preserve explicit --tasks policy and named-job compatibility, output bounds, timeout, cancellation and process cleanup. The Git prototype is paused on local branch codex/git-stage-checkpoint (208b8a0); the superseded arbitrary-execution experiment is isolated on codex/direct-execution-checkpoint and must never be merged. Validate local MCP and real Claude acceptance, update the existing configured binary, push only this scope, verify exact-head CI, then pause.
+
+
 ## Minimal DAP debugging milestone (2026-10-26)
 
 Implement one language-neutral local-stdio DAP session using existing adapters and fixed host startup configuration. Ordinary host approval governs launch; debugging executes code and is not a filesystem sandbox. Preserve access/history guards, bound asynchronous events/inspection/waits, invalidate resumed handles and clean owned processes. Implemented and locally validated: real C# netcoredbg breakpoint/stack/scopes/variables/stepping and cleanup; 15 controlled lifecycle/authorization cases; independent Claude diagnosis and minimal fix of the pinned Fibonacci sample using only FFSAKE, followed by successful external execution. Release binaries build; 155 Rust and 89 harness tests, Clippy/formatting and existing MCP/access/workflow smokes pass. See docs/DEBUGGING.md and docs/DEBUGGING_DEMO.md. Implementation checkpoint bd7f07c is pushed. CI run 40370092368 stalled on the runner’s Azure HTTP package mirror before tests; compiler dependency installation now uses the official HTTPS mirror with bounded waits. Remaining gate: final exact-head CI, then pause. Pause after this milestone; remote/attach/evaluate/mutation/downloads/UI/broad language coverage remain deferred. Previous host-approval scope passed exact CI at e078e55.

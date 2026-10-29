@@ -26,7 +26,7 @@ def main():
         index_before=(root/'.git/index').read_bytes();user_before=(root/'user.txt').read_bytes()
         m=MCP(binary,root)
         try:
-            assert not m.call('ffsake_tasks',{})['execution_enabled']
+            assert m.call('ffsake_tasks',{})['mode']=='project_tasks'
             m.call('ffsake_run_task',{'name':'build'},False)
             status=m.call('ffsake_git',{'query':'status'});entries={e['path']:e['status'] for e in status['entries']};assert entries['user.txt']=='MM',entries
             diff=m.call('ffsake_git',{'query':'diff','staged':True});assert '+user staged' in diff['diff'] and '+working' not in diff['diff'] and 'do not expose' not in diff['diff']

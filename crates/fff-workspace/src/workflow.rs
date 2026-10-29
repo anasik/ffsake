@@ -83,6 +83,9 @@ impl Tasks {
         }
         Ok(policy)
     }
+    pub(crate) fn restricted(&self) -> bool {
+        !self.tasks.is_empty()
+    }
     pub(crate) fn list(&self) -> Value {
         json!({"execution_enabled":!self.tasks.is_empty(),"tasks":self.tasks,"policy":"Only startup-configured argv; no request commands, args, environment or policy path. Jobs may change files and are not journal transactions."})
     }

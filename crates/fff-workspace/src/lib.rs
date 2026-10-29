@@ -26,6 +26,7 @@ mod lsp_symbols;
 mod lsp_transport;
 mod manifest_context;
 pub mod preview;
+pub mod project_tasks;
 pub mod resident;
 mod scoped_search;
 pub mod search;

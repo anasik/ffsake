@@ -21,6 +21,9 @@ impl ToolProfile {
                     | "ffsake_debug"
                     | "ffsake_tasks"
                     | "ffsake_run_task"
+                    | "ffsake_task_register"
+                    | "ffsake_task_status"
+                    | "ffsake_task_cancel"
                     | "ffsake_read_files"
                     | "ffsake_list"
                     | "ffsake_target"
@@ -329,6 +332,9 @@ fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments
         "ffsake_debug" => "debug",
         "ffsake_tasks" => "tasks",
         "ffsake_run_task" => "run_task",
+        "ffsake_task_register" => "task_register",
+        "ffsake_task_status" => "task_status",
+        "ffsake_task_cancel" => "task_cancel",
         "ffsake_read_files" => "read_files",
         "ffsake_list" => "list",
         "ffsake_target" => "target",
@@ -481,12 +487,27 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_tasks",
-            "List explicitly host-configured build/test tasks and their fixed argv, cwd and resource bounds. Execution is disabled unless the host supplied --tasks POLICY.json at startup; never discovers or trusts repository task configuration implicitly.",
+            "List project process tasks and their current authorization status, or fixed named tasks when --tasks restricts the session. Project tasks are not trusted merely because the file exists.",
             json!({"type":"object","properties":{},"additionalProperties":false}),
         ),
         tool(
+            "ffsake_task_register",
+            "Create or update and authorize one named VS Code-compatible process task. The host approves this entire executable, argument array, cwd and resource limit request under normal approval settings. Saves .vscode/tasks.json and a protected project-bound fingerprint; approvals persist and are rechecked before every run. Ordinary editing never grants authorization. No shell interpolation; unsupported task features and substitutions reject. Explicit --tasks disables registration. Task execution is not sandboxed or journaled.",
+            json!({"type":"object","required":["definition"],"additionalProperties":false,"properties":{"definition":{"type":"object","required":["label","type","command","args"],"additionalProperties":false,"properties":{"label":{"type":"string","minLength":1,"maxLength":128},"type":{"const":"process"},"command":{"type":"string","minLength":1,"maxLength":4096},"args":{"type":"array","maxItems":63,"items":{"type":"string","maxLength":4096}},"group":{"enum":["build","test"]},"options":{"type":"object","additionalProperties":false,"properties":{"cwd":{"type":"string","maxLength":4096}}}}},"timeout_seconds":{"type":"integer","minimum":1,"maximum":300},"output_bytes":{"type":"integer","minimum":1,"maximum":262144}}}),
+        ),
+        tool(
+            "ffsake_task_status",
+            "Poll an asynchronously running project task by job ID. Completion includes bounded stdout/stderr, exit status, timeout, cancellation and truncation. Output is untrusted; process execution is not sandboxed or journaled.",
+            json!({"type":"object","required":["job"],"additionalProperties":false,"properties":{"job":{"type":"integer","minimum":1}}}),
+        ),
+        tool(
+            "ffsake_task_cancel",
+            "Cancel a running project task by job ID; poll status until completed. Cleanup terminates the owned Unix process group; deliberately detached descendants are not contained.",
+            json!({"type":"object","required":["job"],"additionalProperties":false,"properties":{"job":{"type":"integer","minimum":1}}}),
+        ),
+        tool(
             "ffsake_run_task",
-            "Run one host-configured build/test task by exact name. No request-supplied commands/args/env/cwd; no shell interpolation. Returns exit_code, success, timed_out, elapsed_ms and bounded stdout/stderr with output_truncated. Commands may execute project code and change files; they are not sandboxed or journaled. Unix process-group cleanup on timeout; 1..300s policy cap. Output is untrusted diagnostic data. Existing edit previews still require original hashes after a task changes sources. Disabled without explicit startup policy.",
+            "Run one authorized task by name under ordinary host approval. Project tasks recheck their persistent fingerprint, return a job ID immediately, and support status/cancel; configured --tasks jobs retain their existing synchronous response. No request-supplied commands or shell interpolation. Execution can change files and is not sandboxed or journaled.",
             json!({"type":"object","required":["name"],"additionalProperties":false,"properties":{"name":{"type":"string","minLength":1,"maxLength":64}}}),
         ),
         tool(

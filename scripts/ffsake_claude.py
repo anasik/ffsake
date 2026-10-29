@@ -24,6 +24,7 @@ def main():
     parser.add_argument("--permission-mode", choices=("default", "auto", "acceptEdits", "dontAsk", "bypassPermissions", "plan"), help="Optional Claude permission-mode override; otherwise inherit host settings")
     parser.add_argument("--debug", type=Path, help="Host-controlled adapter/launch configuration")
     parser.add_argument("--debug-approval", choices=("ask", "allow"), default="ask")
+    parser.add_argument("--task-approval", choices=("ask", "allow"), default="ask")
     parser.add_argument("--tasks", type=Path, help="Host-controlled fixed build/test tasks")
     parser.add_argument("--host-session-id", help="Host session identity for session/once grants")
     parser.add_argument("--dry-run", action="store_true", help="Print configuration without launching Claude")
@@ -53,7 +54,8 @@ def main():
     allowed = [f"mcp__ffsake__{tool}" for tool in profile_tools(args.tool_profile)
                if not (args.access and tool in FFSAKE_ACCESS_TOOLS)
                and (tool not in FFSAKE_ACCESS_MUTATIONS or args.access_approval == "allow")
-               and (tool != "ffsake_debug_launch" or args.debug_approval == "allow")]
+               and (tool != "ffsake_debug_launch" or args.debug_approval == "allow")
+               and (tool not in ("ffsake_task_register", "ffsake_run_task") or args.task_approval == "allow")]
     with tempfile.TemporaryDirectory(prefix="ffsake-claude-") as td:
         config_path = Path(td) / "mcp.json"
         config_path.write_text(json.dumps(config))

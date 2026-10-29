@@ -1,0 +1,8 @@
+Build and Test both passed with exit code 0. Neither timed out or was cancelled, and I didn't change any project files.
+
+| Task | Status | Exit code | Details |
+|---|---|---|---|
+| Build | completed | **0** | `dotnet build fixture.csproj`: Build succeeded with 0 warnings and 0 errors (about 2.5s). |
+| Test | completed | **0** | `dotnet test fixture.csproj`: Test Run Successful, 3 of 3 passed (about 1.4s). |
+
+The three passing tests are the `Fixture.InvoiceTests.CalculatesTotal` cases (7×4=28, 5×0=0, 12×3=36).

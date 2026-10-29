@@ -36,17 +36,23 @@ class HostSetupTests(unittest.TestCase):
                         self.assertEqual("mcp__ffsake__ffsake_remove_access" in allowed, policy == "allow")
                         self.assertNotIn("ask", config["permissions"])
                         self.assertNotIn("mcp__ffsake__ffsake_debug_launch", allowed)
+                        self.assertNotIn("mcp__ffsake__ffsake_task_register", allowed)
+                        self.assertNotIn("mcp__ffsake__ffsake_run_task", allowed)
                     elif host == "codex":
                         config = tomllib.loads((root / ".codex/config.toml").read_text())
                         tools = config["mcp_servers"]["ffsake"]["tools"]
                         self.assertEqual(tools["ffsake_read"]["approval_mode"], "approve")
                         self.assertEqual(tools["ffsake_debug_launch"]["approval_mode"], "prompt")
+                        self.assertEqual(tools["ffsake_task_register"]["approval_mode"], "prompt")
+                        self.assertEqual(tools["ffsake_run_task"]["approval_mode"], "prompt")
                         for name in suite.FFSAKE_ACCESS_MUTATIONS:
                             self.assertEqual(tools[name]["approval_mode"], "prompt" if policy == "ask" else "approve")
                     else:
                         config = json.loads((root / "opencode.json").read_text())
                         self.assertEqual(config["permission"]["ffsake_*"], "allow")
                         self.assertEqual(config["permission"]["ffsake_ffsake_debug_launch"], "ask")
+                        self.assertEqual(config["permission"]["ffsake_ffsake_task_register"], "ask")
+                        self.assertEqual(config["permission"]["ffsake_ffsake_run_task"], "ask")
                         for name in suite.FFSAKE_ACCESS_MUTATIONS:
                             self.assertEqual(config["permission"]["ffsake_" + name], policy)
                     before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
@@ -81,6 +87,29 @@ class HostSetupTests(unittest.TestCase):
                     self.assertEqual(config["permission"]["ffsake_ffsake_open_access"], "ask")
                     args = config["mcp"]["ffsake"]["command"]
                 self.assertEqual(args[-2:], ["--debug", str(policy.resolve())])
+
+    def test_task_allow_is_explicit_and_separate_from_access(self):
+        import tomllib
+        for host in ("claude", "codex", "opencode"):
+            with self.subTest(host=host), tempfile.TemporaryDirectory() as td:
+                root = Path(td)
+                result = self.generate(host, root, "--output-dir", td, "--task-approval", "allow")
+                self.assertEqual(result.returncode, 0, result.stderr)
+                if host == "claude":
+                    allowed = json.loads((root / ".claude/settings.json").read_text())["permissions"]["allow"]
+                    self.assertIn("mcp__ffsake__ffsake_task_register", allowed)
+                    self.assertIn("mcp__ffsake__ffsake_run_task", allowed)
+                    self.assertNotIn("mcp__ffsake__ffsake_open_access", allowed)
+                elif host == "codex":
+                    tools = tomllib.loads((root / ".codex/config.toml").read_text())["mcp_servers"]["ffsake"]["tools"]
+                    self.assertEqual(tools["ffsake_task_register"]["approval_mode"], "approve")
+                    self.assertEqual(tools["ffsake_run_task"]["approval_mode"], "approve")
+                    self.assertEqual(tools["ffsake_open_access"]["approval_mode"], "prompt")
+                else:
+                    permissions = json.loads((root / "opencode.json").read_text())["permission"]
+                    self.assertEqual(permissions["ffsake_ffsake_task_register"], "allow")
+                    self.assertEqual(permissions["ffsake_ffsake_run_task"], "allow")
+                    self.assertEqual(permissions["ffsake_ffsake_open_access"], "ask")
 
 
 class GitFixtureTests(unittest.TestCase):
@@ -516,7 +545,7 @@ class CodexApprovalTests(unittest.TestCase):
             self.assertEqual(server["args"], [str(root)])
             self.assertTrue(server["required"])
             self.assertEqual(set(server["enabled_tools"]), set(suite.FFSAKE_TOOLS))
-            self.assertEqual(server["tools"], {tool: {"approval_mode": "approve"} for tool in suite.FFSAKE_TOOLS})
+            self.assertEqual(server["tools"], {tool: {"approval_mode": "prompt" if tool in ("ffsake_task_register", "ffsake_run_task") else "approve"} for tool in suite.FFSAKE_TOOLS})
             args = run.call_args.args[0]
             trust = tomllib.loads(args[args.index("-c") + 1])
             self.assertEqual(trust["projects"][str(root)]["trust_level"], "trusted")
@@ -1161,7 +1190,7 @@ class ToolProfileTests(unittest.TestCase):
             server = tomllib.loads((root / ".codex/config.toml").read_text())["mcp_servers"]["ffsake"]
             self.assertEqual(server["args"], [str(root), "--profile", "core"])
             self.assertEqual(set(server["enabled_tools"]), set(suite.FFSAKE_CORE_TOOLS))
-            self.assertEqual(server["tools"], {name: {"approval_mode": "approve"} for name in suite.FFSAKE_CORE_TOOLS})
+            self.assertEqual(server["tools"], {name: {"approval_mode": "prompt" if name in ("ffsake_task_register", "ffsake_run_task") else "approve"} for name in suite.FFSAKE_CORE_TOOLS})
             self.assertEqual(run.call_args.args[0][-1], suite.ffsake_prompt("task", "core"))
 
     def test_claude_and_opencode_core_launch_configuration(self):

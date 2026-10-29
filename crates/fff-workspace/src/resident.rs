@@ -11,6 +11,12 @@ use std::collections::BTreeMap;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 const MAX_HANDLES: usize = 128;
+fn task_timeout() -> u64 {
+    60
+}
+fn task_output_limit() -> usize {
+    65536
+}
 fn archive_start() -> usize {
     1
 }
@@ -39,6 +45,19 @@ pub enum Request {
         staged: bool,
         #[serde(default)]
         paths: Vec<String>,
+    },
+    TaskRegister {
+        definition: crate::project_tasks::Definition,
+        #[serde(default = "task_timeout")]
+        timeout_seconds: u64,
+        #[serde(default = "task_output_limit")]
+        output_bytes: usize,
+    },
+    TaskStatus {
+        job: u64,
+    },
+    TaskCancel {
+        job: u64,
     },
     Tasks {},
     RunTask {
@@ -281,6 +300,7 @@ struct CachedProposal {
 }
 
 pub struct Resident {
+    project_jobs: crate::project_tasks::Jobs,
     debugger: crate::debug::Debugger,
     tasks: crate::workflow::Tasks,
     session: EditorSession,
@@ -298,6 +318,7 @@ impl Resident {
     pub fn open(workspace: Workspace) -> Result<Self> {
         let index = FffSearchIndex::open(&workspace)?;
         Ok(Self {
+            project_jobs: crate::project_tasks::Jobs::default(),
             debugger: crate::debug::Debugger::default(),
             tasks: crate::workflow::Tasks::default(),
             session: EditorSession::new(workspace),
@@ -450,7 +471,7 @@ impl Resident {
 
     pub fn execute(&mut self, request: Request) -> Result<Value> {
         // Cancellation must work even after a host export becomes invalid.
-        if !matches!(&request, Request::Debug { .. }) {
+        if !matches!(&request, Request::Debug { .. } | Request::TaskCancel { .. }) {
             self.access().refresh()?;
         }
         match request {
@@ -651,10 +672,47 @@ impl Resident {
                 staged,
                 paths,
             } => crate::workflow::inspect(self.session.workspace(), query, staged, &paths),
-            Request::Tasks {} => Ok(self.tasks.list()),
+            Request::Tasks {} => {
+                if self.tasks.restricted() {
+                    Ok(self.tasks.list())
+                } else {
+                    crate::project_tasks::list(self.session.workspace())
+                }
+            }
+            Request::TaskRegister {
+                definition,
+                timeout_seconds,
+                output_bytes,
+            } => {
+                if self.tasks.restricted() {
+                    return Err(
+                        "project task registration is disabled by the explicit --tasks policy"
+                            .into(),
+                    );
+                }
+                self.index_dirty = true;
+                crate::project_tasks::register(
+                    self.session.workspace(),
+                    definition,
+                    timeout_seconds,
+                    output_bytes,
+                )
+            }
+            Request::TaskStatus { job } => {
+                self.index_dirty = true;
+                self.project_jobs.status(job)
+            }
+            Request::TaskCancel { job } => {
+                self.index_dirty = true;
+                self.project_jobs.cancel(job)
+            }
             Request::RunTask { name } => {
                 self.index_dirty = true;
-                self.tasks.run(self.session.workspace(), &name)
+                if self.tasks.restricted() {
+                    self.tasks.run(self.session.workspace(), &name)
+                } else {
+                    self.project_jobs.start(self.session.workspace(), &name)
+                }
             }
             Request::Semantic { request } => {
                 let report = crate::semantic::query(self.session.workspace(), &request)?;

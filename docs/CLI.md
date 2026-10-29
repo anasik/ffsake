@@ -1,6 +1,6 @@
 # Resident agent interface
 
-Build with `cargo build --bin ffsake`, then start `target/debug/ffsake serve /absolute/workspace` once. Keep its stdin/stdout pipes open across tool requests. The explicit root is trusted startup configuration; request paths remain workspace-relative. EOF terminates the process. No TCP listener or implicit shell/job execution is included. Optional semantic requests use installed language servers; build/test jobs require an explicit trusted startup policy.
+Build with `cargo build --bin ffsake`, then start `target/debug/ffsake serve /absolute/workspace` once. Keep its stdin/stdout pipes open across tool requests. The explicit root is trusted startup configuration; request paths remain workspace-relative. EOF terminates the process. No TCP listener or implicit shell/job execution is included. Optional semantic requests use installed language servers. Named project tasks require host approval; an explicit startup policy restricts execution to its fixed jobs.
 
 Requests and responses are newline-delimited JSON. Each request produces one flushed response, in order: `{"ok":true,"result":...}` or `{"ok":false,"error":"..."}`. Errors do not terminate the session. Startup failures exit nonzero. Requests exceeding 1 MiB are drained and rejected. Diagnostics use stderr. Use JSON serialization, not shell string interpolation.
 
@@ -316,7 +316,23 @@ Both adapters share bounded JSON-RPC transport (30-second deadline, 8 KiB header
 
 Git observations are bounded to 15 seconds per request, 256 KiB per captured stream, and 1,000 status entries; overflow rejects without a partial diff. Pager, fsmonitor, external diff and textconv are disabled; inherited Git routing variables are removed, and global/system Git config is not loaded. Repository clean/process filters cause explicit refusal because even status/diff can execute those helpers. Use host Git for such configurations. This protects the supported read-only workflow; it is not an adversarial filesystem sandbox or an atomic Git/worktree snapshot. Commits/pushes remain host Git operations.
 
-`ffsake_tasks` lists the fixed job policy. `ffsake_run_task` takes only `name`; it cannot choose argv, cwd, environment or a configuration path. Execution is disabled unless the host explicitly starts either interface with a reviewed policy:
+Project tasks use the [VS Code process-task](https://code.visualstudio.com/docs/reference/tasks-appendix) `version: "2.0.0"` `.vscode/tasks.json` format. FFSAKE reads JSONC (comments and trailing commas) using `jsonc-parser`, and preserves unrelated comments when updating a task. Supported task fields are `label`, `type: "process"`, `command`, string-array `args`, optional `group: "build" | "test"`, and optional `options.cwd`. Run tasks omit `group`. Only `${workspaceFolder}` and `${workspaceFolder}/relative/path` are supported in `cwd`; `.` or another workspace-relative directory also works. Substitutions in executable or arguments, shell tasks, `env`, problem matchers, dependencies, platform overrides and other properties reject clearly. The root accepts only `version` and `tasks`. This is a documented subset, not complete VS Code compatibility.
+
+`ffsake_tasks` lists existing definitions and whether their current execution fingerprint is authorized. Existing task files are not automatically trusted. To create, update or authorize a task, request host approval for `ffsake_task_register`, for example:
+
+```json
+{"definition":{"label":"Test","type":"process","command":"dotnet","args":["test","My Project.sln"],"group":"test","options":{"cwd":"${workspaceFolder}"}},"timeout_seconds":120,"output_bytes":65536}
+```
+
+Registration saves the definition and a separate protected approval under `.ffsake/project-tasks/`. The host's ordinary permission policy applies separately to registration and to `ffsake_run_task`, including intentional allow/auto overrides. The setup generators leave both for approval by default; `--task-approval allow` deliberately allows both. Ordinary file editing cannot modify the protected store or authorize a task. No explicit task-policy flag, JSON hand-edit or MCP restart is needed to register or update a task while the server runs.
+
+The project-bound approval fingerprints the canonical executable path and bytes, arguments, authorized working directory, timeout and output limit. It is atomically persisted with file/directory synchronization and rechecked against the current definition and executable before each run, including from other sessions. Formatting, comments and timestamps alone do not change it. An executable/argument/cwd/limit change requires reauthorization. A copied store fails closed in a different canonical project. Deleting a task from the project file stops it being runnable, but the approval for an identical definition remains in the protected store; there is no task-revocation UI yet. A task can be manually reauthorized through the registration tool.
+
+`ffsake_run_task` accepts only `name`; it starts an authorized project task asynchronously and returns `job`. Poll `ffsake_task_status` for bounded output and final `exit_code`, `success`, `timed_out`, `cancelled` and `output_truncated`. `ffsake_task_cancel` requests cancellation; a short task may finish first, so inspect final status. One project task can run per server instance. Closing the server cancels its owned process group. `timeout_seconds` is 1..300 (default 60) and `output_bytes` is 1..262144 per stream (default 65536). Resource bounds are part of the approved fingerprint.
+
+Tasks execute directly without an implicit shell, inherit the host environment and can run arbitrary project code. They are not sandboxed or journaled. Approval does not freeze source code, dependencies, the inherited environment, or the behavior of the program; review those separately. Ordinary filesystem access grants do not sandbox processes. Existing edit previews still check original hashes. Unix process-group cleanup cannot contain deliberately detached descendants. Registration writes `tasks.json` atomically but is not an editor undo/redo transaction.
+
+When the host supplies `--tasks`, project task registration and project task execution are disabled; only fixed policy jobs can run. Existing policy jobs retain their synchronous result API and cannot use the asynchronous project-task cancellation tool:
 
 ```sh
 ffsake-mcp WORKSPACE --profile core --tasks /absolute/trusted-tasks.json
@@ -329,7 +345,7 @@ Each run returns `success`, `exit_code`, termination `signal`, `timed_out`, `ela
 
 Configured jobs can execute repository code and change files. They are not sandboxed, rolled back or journaled. Output is untrusted diagnostic data. The next search refreshes after a job, and existing previews still compare their original source hashes. Nonzero exit, signal or timeout is a failed job, not a successful verification. Git review and jobs do not require LSP.
 
-JSONL equivalents are `{"op":"git","query":"status"}`, `{"op":"tasks"}` and `{"op":"run_task","name":"test"}`. `python3 scripts/workflow_smoke.py target/debug/ffsake-mcp` verifies real Git index/worktree preservation, literal paths/protected exclusions/helper refusal, policy-only execution, real compilation/runtime, nonzero exit, output bounds, timeout child cleanup and stale previews after task writes.
+JSONL equivalents are `{"op":"git","query":"status"}`, `{"op":"tasks"}` and `{"op":"run_task","name":"test"}`. `python3 scripts/project_tasks_smoke.py target/debug/ffsake-mcp` tests project-task authorization and lifecycle; `python3 scripts/workflow_smoke.py target/debug/ffsake-mcp` verifies real Git index/worktree preservation, literal paths/protected exclusions/helper refusal, policy-only execution, real compilation/runtime, nonzero exit, output bounds, timeout child cleanup and stale previews after task writes.
 
 ## Host authorization and absolute paths
 

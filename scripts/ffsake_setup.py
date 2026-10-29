@@ -7,12 +7,14 @@ from pathlib import Path
 from agent_benchmark_suite import FFSAKE_MCP, FFSAKE_ACCESS_MUTATIONS, FFSAKE_APPROVAL_TOOLS, profile_tools, mcp_arguments
 
 
-def configurations(host, root, binary, profile='all', access_approval='ask', debug_policy=None, debug_approval='ask'):
+def configurations(host, root, binary, profile='all', access_approval='ask', debug_policy=None, debug_approval='ask', task_approval='ask'):
     tools = profile_tools(profile)
     args = mcp_arguments(root, profile)
     if debug_policy:
         args += ['--debug', str(Path(debug_policy).expanduser().resolve())]
     def approval(name):
+        if name in ('ffsake_task_register', 'ffsake_run_task'):
+            return task_approval
         if name == 'ffsake_debug_launch':
             return debug_approval
         return access_approval if name in FFSAKE_ACCESS_MUTATIONS else 'allow'
@@ -51,13 +53,14 @@ def main():
                         help='Normal host approval defaults, or deliberate automatic allowance')
     parser.add_argument('--debug', type=Path, help='Host-controlled adapter/launch configuration')
     parser.add_argument('--debug-approval', choices=('ask', 'allow'), default='ask')
+    parser.add_argument('--task-approval', choices=('ask', 'allow'), default='ask')
     parser.add_argument('--output-dir', type=Path, help='Write new setup files here; refuses existing files')
     args = parser.parse_args()
     root = args.workspace.expanduser().resolve()
     if not root.is_dir():
         parser.error('workspace must be an existing directory')
     configs = configurations(args.host, root, args.binary.expanduser().resolve(),
-                             args.tool_profile, args.access_approval, args.debug, args.debug_approval)
+                             args.tool_profile, args.access_approval, args.debug, args.debug_approval, args.task_approval)
     if args.output_dir:
         targets = [(args.output_dir / name, content) for name, content in configs.items()]
         if any(path.exists() or path.is_symlink() for path, _ in targets):

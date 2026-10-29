@@ -1,0 +1,27 @@
+I did the whole workflow with FFSAKE tools only. Everything worked, but the first cancellation attempt didn't actually cancel anything, so I added an extra task (details below).
+
+## What happened
+
+| Step | Job | Result |
+|---|---|---|
+| Registered **Build** (`dotnet build fixture.csproj --nologo`) and **Test** (`dotnet test … --no-build`) | — | Both registered and authorized; `dotnet` was found at `/usr/local/share/dotnet/dotnet` |
+| Run Build | 1 | Exit 0 in 2.7 s. The packages restored even though `NuGet.Config` clears all sources, because they were already in the local cache |
+| Run Test | 2 | Exit 0: **Passed 3, Failed 0** |
+| Changed **Test** (removed `--no-build`, added `--logger console;verbosity=normal`) and re-registered under the same name, no server restart | — | Authorized with a new fingerprint; the task list showed the new arguments |
+| Run the changed Test | 3 | Exit 0. It rebuilt first, then listed all three cases as Passed |
+| Temporary edit in `UnitTest1.cs:5`: `unitPrice * quantity` → `unitPrice + quantity` | 4 | Exit 1: **all 3 failed** (expected 28/0/36, got 11/5/15) |
+| Restored the source by undoing that edit | 5 | Line 5 is back to `*` (checked by searching and reading the file); Test passes 3/3 again |
+| Cancel attempt on Build | 6 | **No cancellation:** the incremental build finished in 0.9 s, before the cancel took effect. It reported `cancelled:false, exit 0` |
+| Registered **Sleep** (`/bin/sleep 60`), ran it, cancelled while running | 7 | Stopped: `cancelled:true`, killed with signal 9 (SIGKILL) at 3.3 s, no exit code |
+
+## Friction
+1. **Cancelling a short task is a race.** `ffsake_task_cancel` replied "cancelling" even though job 6 then finished normally. Only the next status check shows whether anything was cancelled. To show a real cancellation I had to add a deliberately slow task.
+2. **There's no way to unregister a task.** The Sleep task is still authorized and still listed in `.vscode/tasks.json`. Deleting it means hand-editing that file, and I'm not sure whether that also clears the stored approval.
+3. **Cancellation used SIGKILL.** I couldn't tell whether a gentler SIGTERM was tried first. For `dotnet` that could leave build-server or testhost processes running.
+4. **Status checks while running show nothing.** They say only `"running"`: no elapsed time, no partial output, and no way to wait. Every task needed two checks.
+5. **The undo response labels are unclear.** `before_hash`/`after_hash` don't say whether they mean before or after the undo, so I checked the restored file directly.
+6. **Re-registering replaces a task silently.** Nothing said an existing approval was being replaced. Approval was also granted automatically in this host mode, so I never saw what the approval prompt looks like.
+7. Minor: on failure, xUnit split its output between stderr (the `[FAIL]` lines) and stdout (the details). Builds also created `bin/` and `obj/`, which the undo history doesn't track.
+
+## Current state
+`UnitTest1.cs` is back to its original content. `.vscode/tasks.json` contains Build, the updated Test, and Sleep, all authorized. Delete the Sleep entry if you don't want to keep it.
