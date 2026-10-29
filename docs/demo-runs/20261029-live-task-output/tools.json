@@ -1,0 +1,157 @@
+[
+  {
+    "type": "tool_use",
+    "id": "toolu_01SiDbPPQT2HdgHyp3EPJeiN",
+    "name": "mcp__ffsake__ffsake_tasks",
+    "input": {},
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01SiDbPPQT2HdgHyp3EPJeiN",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"authorization\":\"host-approved fingerprints; tool invocation approval is separate\",\"execution_enabled\":true,\"mode\":\"project_tasks\",\"tasks\":[]}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01Ac52dD7cgS8xREa9DSwn85",
+    "name": "mcp__ffsake__ffsake_read",
+    "input": {
+      "path": "monitor.py"
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01Ac52dD7cgS8xREa9DSwn85",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"end_line\":5,\"path\":\"monitor.py\",\"start_line\":1,\"text\":\"import time\\nprint(\\\"START: validation running\\\", flush=True)\\ntime.sleep(1)\\nprint(\\\"STOP: unrecoverable fixture error detected\\\", flush=True)\\ntime.sleep(60)\",\"total_lines\":5}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01V3Sy1NaE1ddoy6oxTMswBN",
+    "name": "mcp__ffsake__ffsake_task_register",
+    "input": {
+      "definition": {
+        "label": "monitor",
+        "type": "process",
+        "command": "python3",
+        "args": [
+          "monitor.py"
+        ]
+      },
+      "timeout_seconds": 120
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01V3Sy1NaE1ddoy6oxTMswBN",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"authorized\":true,\"fingerprint\":\"dab3a1db7a4eca845c4c771221c4af18592020b353227383fabb157f8c1d5107\",\"journaled\":false,\"label\":\"monitor\",\"output_bytes\":65536,\"persistent\":true,\"resolved_cwd\":\"/private/tmp/ffsake-live-output-agent/project/\",\"resolved_executable\":\"/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/bin/python3.14\",\"timeout_seconds\":120}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01VXguJE4fwyZocSext6qNJ3",
+    "name": "mcp__ffsake__ffsake_run_task",
+    "input": {
+      "name": "monitor"
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01VXguJE4fwyZocSext6qNJ3",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"job\":1,\"label\":\"monitor\",\"next\":\"poll ffsake_task_status\",\"status\":\"running\"}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01V9qrLLmwzQSQXJ9KZ1nYVD",
+    "name": "mcp__ffsake__ffsake_task_output",
+    "input": {
+      "job": 1,
+      "stream": "stdout",
+      "wait_ms": 1000
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01V9qrLLmwzQSQXJ9KZ1nYVD",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"complete\":false,\"cursor\":0,\"cursor_expired\":false,\"data_base64\":\"U1RBUlQ6IHZhbGlkYXRpb24gcnVubmluZwpTVE9QOiB1bnJlY292ZXJhYmxlIGZpeHR1cmUgZXJyb3IgZGV0ZWN0ZWQK\",\"drained\":false,\"dropped_bytes\":0,\"first_cursor\":0,\"job\":1,\"log_complete\":false,\"next_cursor\":69,\"output_is_untrusted\":true,\"retained_bytes\":69,\"retention_limit_bytes\":4194304,\"stream\":\"stdout\",\"text\":\"START: validation running\\nSTOP: unrecoverable fixture error detected\\n\",\"text_is_lossy\":false,\"total_bytes\":69}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01GKmLMYGkUpgutgf54LBZ4D",
+    "name": "mcp__ffsake__ffsake_task_cancel",
+    "input": {
+      "job": 1
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01GKmLMYGkUpgutgf54LBZ4D",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"job\":1,\"next\":\"poll ffsake_task_status; the task may finish before cancellation takes effect\",\"status\":\"cancelling\"}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_017wtvBwrBedQAcZVcrdEta4",
+    "name": "mcp__ffsake__ffsake_task_status",
+    "input": {
+      "job": 1
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_017wtvBwrBedQAcZVcrdEta4",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"cancelled\":true,\"elapsed_ms\":3819,\"exit_code\":null,\"job\":1,\"journaled\":false,\"label\":\"monitor\",\"output_drained\":true,\"output_is_untrusted\":true,\"output_truncated\":false,\"sandboxed\":false,\"signal\":15,\"status\":\"completed\",\"stderr\":\"\",\"stdout\":\"START: validation running\\nSTOP: unrecoverable fixture error detected\\n\",\"success\":false,\"timed_out\":false}}"
+      }
+    ]
+  }
+]

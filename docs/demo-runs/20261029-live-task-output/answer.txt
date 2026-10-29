@@ -1,0 +1,14 @@
+`monitor.py` reported an unrecoverable error while it was still running, so I cancelled it. It stopped about 4 seconds in.
+
+To run it, I registered a FFSAKE task called `monitor` (`python3 monitor.py`, run from the project folder, 120-second timeout) and ran it as job 1.
+
+**Output seen while it was running (stdout):**
+```
+START: validation running
+STOP: unrecoverable fixture error detected
+```
+stderr was empty.
+
+**Final status:** completed, `cancelled: true`, `success: false`, stopped by signal 15 (SIGTERM), no exit code, not timed out. Elapsed time was 3819 ms; without cancelling, the script would have kept sleeping for another 60 seconds.
+
+Registering the task saved it to `.vscode/tasks.json`, a new file in the project. The project has no git repository, so there's nothing to undo that change with.

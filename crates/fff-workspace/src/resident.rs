@@ -17,6 +17,9 @@ fn task_timeout() -> u64 {
 fn task_output_limit() -> usize {
     65536
 }
+fn task_output_page() -> usize {
+    4096
+}
 fn archive_start() -> usize {
     1
 }
@@ -55,6 +58,16 @@ pub enum Request {
     },
     TaskStatus {
         job: u64,
+    },
+    TaskOutput {
+        job: u64,
+        stream: String,
+        #[serde(default)]
+        cursor: usize,
+        #[serde(default = "task_output_page")]
+        max_bytes: usize,
+        #[serde(default)]
+        wait_ms: u64,
     },
     TaskCancel {
         job: u64,
@@ -702,6 +715,15 @@ impl Resident {
                 self.index_dirty = true;
                 self.project_jobs.status(job)
             }
+            Request::TaskOutput {
+                job,
+                stream,
+                cursor,
+                max_bytes,
+                wait_ms,
+            } => self
+                .project_jobs
+                .output(job, &stream, cursor, max_bytes, wait_ms),
             Request::TaskCancel { job } => {
                 self.index_dirty = true;
                 self.project_jobs.cancel(job)

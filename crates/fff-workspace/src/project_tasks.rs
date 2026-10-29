@@ -6,14 +6,18 @@ use jsonc_parser::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
+#[cfg(unix)]
+use std::os::unix::fs::FileExt;
+#[cfg(windows)]
+use std::os::windows::fs::FileExt;
 use std::{
     collections::BTreeMap,
-    fs,
+    fs::{self, File},
     io::{Read, Write},
     path::{Component, Path, PathBuf},
     process::Command,
     sync::{
-        Arc, Mutex,
+        Arc, Condvar, Mutex,
         atomic::{AtomicBool, Ordering},
     },
     thread::JoinHandle,
@@ -499,10 +503,112 @@ pub(crate) fn register(
         json!({"label":d.label,"authorized":true,"fingerprint":launch.fingerprint,"resolved_executable":launch.executable,"resolved_cwd":launch.cwd,"timeout_seconds":timeout,"output_bytes":limit,"persistent":true,"journaled":false}),
     )
 }
+// Anonymous protected files have no directory entries and are reclaimed by the
+// OS on normal exit or crash. The current job is the only retained job.
+const LOG_LIMIT: usize = 4 * 1024 * 1024;
+#[cfg(unix)]
+fn write_at(file: &File, bytes: &[u8], offset: u64) -> std::io::Result<usize> {
+    file.write_at(bytes, offset)
+}
+#[cfg(windows)]
+fn write_at(file: &File, bytes: &[u8], offset: u64) -> std::io::Result<usize> {
+    file.seek_write(bytes, offset)
+}
+#[cfg(unix)]
+fn read_at(file: &File, bytes: &mut [u8], offset: u64) -> std::io::Result<usize> {
+    file.read_at(bytes, offset)
+}
+#[cfg(windows)]
+fn read_at(file: &File, bytes: &mut [u8], offset: u64) -> std::io::Result<usize> {
+    file.seek_read(bytes, offset)
+}
+struct LogProgress {
+    lengths: [usize; 2],
+    dropped: [u64; 2],
+    done: bool,
+    drained: bool,
+}
+struct Logs {
+    files: [File; 2],
+    progress: Mutex<LogProgress>,
+    changed: Condvar,
+}
+impl Logs {
+    fn create(root: &Path) -> Result<Self> {
+        let dir = root.join(".ffsake/task-logs");
+        no_symlinks(&dir)?;
+        fs::create_dir_all(&dir)?;
+        no_symlinks(&dir)?;
+        Ok(Self {
+            files: [tempfile::tempfile_in(&dir)?, tempfile::tempfile_in(&dir)?],
+            progress: Mutex::new(LogProgress {
+                lengths: [0, 0],
+                dropped: [0, 0],
+                done: false,
+                drained: false,
+            }),
+            changed: Condvar::new(),
+        })
+    }
+    fn append(&self, which: usize, bytes: &[u8]) -> Result<()> {
+        let mut state = self.progress.lock().map_err(|_| "task log lock poisoned")?;
+        let total = state.lengths[which]
+            .checked_add(bytes.len())
+            .ok_or("task output counter overflow")?;
+        let mut written = 0;
+        while written < bytes.len() {
+            let offset = (state.lengths[which] + written) % LOG_LIMIT;
+            let end = (bytes.len() - written).min(LOG_LIMIT - offset);
+            let n = write_at(
+                &self.files[which],
+                &bytes[written..written + end],
+                offset as u64,
+            )?;
+            if n == 0 {
+                return Err("cannot write task log".into());
+            }
+            written += n;
+        }
+        state.lengths[which] = total;
+        state.dropped[which] = total.saturating_sub(LOG_LIMIT) as u64;
+        self.changed.notify_all();
+        Ok(())
+    }
+    fn finish(&self, drained: bool) {
+        if let Ok(mut state) = self.progress.lock() {
+            state.done = true;
+            state.drained = drained;
+            self.changed.notify_all();
+        }
+    }
+}
+fn base64(bytes: &[u8]) -> String {
+    const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut s = String::with_capacity(bytes.len().div_ceil(3) * 4);
+    for c in bytes.chunks(3) {
+        let a = c[0];
+        let b = *c.get(1).unwrap_or(&0);
+        let d = *c.get(2).unwrap_or(&0);
+        s.push(ALPHABET[(a >> 2) as usize] as char);
+        s.push(ALPHABET[(((a & 3) << 4) | (b >> 4)) as usize] as char);
+        s.push(if c.len() > 1 {
+            ALPHABET[(((b & 15) << 2) | (d >> 6)) as usize] as char
+        } else {
+            '='
+        });
+        s.push(if c.len() > 2 {
+            ALPHABET[(d & 63) as usize] as char
+        } else {
+            '='
+        });
+    }
+    s
+}
 struct Job {
     id: u64,
     cancel: Arc<AtomicBool>,
     state: Arc<Mutex<Value>>,
+    logs: Arc<Logs>,
     worker: Option<JoinHandle<()>>,
 }
 impl Drop for Job {
@@ -553,6 +659,7 @@ impl Jobs {
             json!({"job":id,"label":label,"status":"running"}),
         ));
         let cancel = Arc::new(AtomicBool::new(false));
+        let logs = Arc::new(Logs::create(root)?);
         // Spawn before returning the job ID: later edits cannot change which
         // executable was launched after the approved fingerprint was checked.
         let mut cmd = Command::new(&launch.executable);
@@ -562,14 +669,17 @@ impl Jobs {
         let st = state.clone();
         let stop = cancel.clone();
         let name = label.to_owned();
+        let log_writer = logs.clone();
         let worker = std::thread::spawn(move || {
-            let out = workflow_process::capture(
+            let out = workflow_process::capture_with(
                 child,
                 started,
                 Duration::from_secs(record.timeout_seconds),
                 record.output_bytes,
                 Some(&stop),
+                &mut |which, bytes| log_writer.append(which, bytes),
             );
+            let drained = out.as_ref().is_ok_and(|o| o.drained);
             let value = match out {
                 Ok(o) => {
                     #[cfg(unix)]
@@ -579,18 +689,20 @@ impl Jobs {
                     };
                     #[cfg(not(unix))]
                     let signal: Option<i32> = None;
-                    json!({"job":id,"label":name,"status":"completed","success":o.status.success()&&!o.timed_out&&!o.cancelled,"exit_code":o.status.code(),"signal":signal,"timed_out":o.timed_out,"cancelled":o.cancelled,"output_truncated":o.truncated,"stdout":String::from_utf8_lossy(&o.stdout),"stderr":String::from_utf8_lossy(&o.stderr),"elapsed_ms":o.elapsed_ms,"journaled":false,"sandboxed":false,"output_is_untrusted":true})
+                    json!({"job":id,"label":name,"status":"completed","success":o.status.success()&&!o.timed_out&&!o.cancelled,"exit_code":o.status.code(),"signal":signal,"timed_out":o.timed_out,"cancelled":o.cancelled,"output_truncated":o.truncated,"output_drained":o.drained,"stdout":String::from_utf8_lossy(&o.stdout),"stderr":String::from_utf8_lossy(&o.stderr),"elapsed_ms":o.elapsed_ms,"journaled":false,"sandboxed":false,"output_is_untrusted":true})
                 }
                 Err(e) => {
                     json!({"job":id,"label":name,"status":"failed","error":e.to_string(),"journaled":false})
                 }
             };
             *st.lock().unwrap() = value;
+            log_writer.finish(drained);
         });
         self.job = Some(Job {
             id,
             cancel,
             state,
+            logs,
             worker: Some(worker),
         });
         Ok(json!({"job":id,"label":label,"status":"running","next":"poll ffsake_task_status"}))
@@ -603,6 +715,80 @@ impl Jobs {
             .ok_or("unknown or stale task job")?;
         let value = job.state.lock().unwrap().clone();
         Ok(value)
+    }
+    pub(crate) fn output(
+        &self,
+        id: u64,
+        stream: &str,
+        cursor: usize,
+        max_bytes: usize,
+        wait_ms: u64,
+    ) -> Result<Value> {
+        if !(4..=65536).contains(&max_bytes) || wait_ms > 1000 {
+            return Err("max_bytes must be 4..65536 and wait_ms must be <=1000".into());
+        }
+        let which = match stream {
+            "stdout" => 0,
+            "stderr" => 1,
+            _ => return Err("stream must be stdout or stderr".into()),
+        };
+        let job = self
+            .job
+            .as_ref()
+            .filter(|j| j.id == id)
+            .ok_or("unknown or expired task log")?;
+        let logs = &job.logs;
+        let mut state = logs.progress.lock().map_err(|_| "task log lock poisoned")?;
+        let deadline = Instant::now() + Duration::from_millis(wait_ms);
+        let (bytes, first) = loop {
+            if cursor > state.lengths[which] {
+                return Err("cursor exceeds retained log length".into());
+            }
+            let first = state.lengths[which].saturating_sub(LOG_LIMIT);
+            if cursor < first {
+                return Ok(
+                    json!({"job":id,"stream":stream,"cursor":cursor,"next_cursor":first,"cursor_expired":true,"first_cursor":first,"retained_bytes":state.lengths[which]-first,"dropped_bytes":state.dropped[which],"complete":state.done,"drained":state.done && state.drained,"log_complete":false,"text":"","data_base64":""}),
+                );
+            }
+            let mut bytes = vec![0; (state.lengths[which] - cursor).min(max_bytes)];
+            let mut read = 0;
+            while read < bytes.len() {
+                let offset = (cursor + read) % LOG_LIMIT;
+                let amount = (bytes.len() - read).min(LOG_LIMIT - offset);
+                let n = read_at(
+                    &logs.files[which],
+                    &mut bytes[read..read + amount],
+                    offset as u64,
+                )?;
+                if n == 0 {
+                    return Err("task log unexpectedly truncated".into());
+                }
+                read += n;
+            }
+            if let Err(e) = std::str::from_utf8(&bytes)
+                && e.error_len().is_none()
+                && (!state.done || cursor + bytes.len() < state.lengths[which])
+            {
+                bytes.truncate(e.valid_up_to());
+            }
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            if !bytes.is_empty() || state.done || remaining.is_zero() {
+                break (bytes, first);
+            }
+            let previous = state.lengths[which];
+            state = logs
+                .changed
+                .wait_timeout_while(state, remaining, |s| {
+                    previous == s.lengths[which] && !s.done
+                })
+                .map_err(|_| "task log lock poisoned")?
+                .0;
+        };
+        let text = String::from_utf8_lossy(&bytes);
+        let valid = std::str::from_utf8(&bytes).is_ok();
+        Ok(
+            json!({"job":id,"stream":stream,"cursor":cursor,"next_cursor":cursor+bytes.len(),"first_cursor":first,"cursor_expired":false,"text":text,"text_is_lossy":!valid,"data_base64":base64(&bytes),"retained_bytes":state.lengths[which]-first,"total_bytes":state.lengths[which],"retention_limit_bytes":LOG_LIMIT,"dropped_bytes":state.dropped[which],"complete":state.done,"drained":state.done && state.drained,"log_complete":state.done && state.drained && state.dropped[which]==0,"output_is_untrusted":true}),
+        )
     }
     pub(crate) fn cancel(&self, id: u64) -> Result<Value> {
         let job = self

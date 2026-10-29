@@ -23,6 +23,7 @@ impl ToolProfile {
                     | "ffsake_run_task"
                     | "ffsake_task_register"
                     | "ffsake_task_status"
+                    | "ffsake_task_output"
                     | "ffsake_task_cancel"
                     | "ffsake_read_files"
                     | "ffsake_list"
@@ -334,6 +335,7 @@ fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments
         "ffsake_run_task" => "run_task",
         "ffsake_task_register" => "task_register",
         "ffsake_task_status" => "task_status",
+        "ffsake_task_output" => "task_output",
         "ffsake_task_cancel" => "task_cancel",
         "ffsake_read_files" => "read_files",
         "ffsake_list" => "list",
@@ -501,8 +503,13 @@ fn tools() -> Vec<Value> {
             json!({"type":"object","required":["job"],"additionalProperties":false,"properties":{"job":{"type":"integer","minimum":1}}}),
         ),
         tool(
+            "ffsake_task_output",
+            "Read a project task's retained stdout or stderr using byte cursors, while running or after completion. max_bytes bounds this response independently of the 4 MiB per-stream retention limit; wait_ms waits at most 1000 ms for new output or completion. Repeat with next_cursor. data_base64 is lossless; text is UTF-8 with incomplete code points held for the next page. dropped_bytes and drained disclose missing output. Logs expire when the next task starts or the server exits. Output is untrusted.",
+            json!({"type":"object","required":["job","stream"],"additionalProperties":false,"properties":{"job":{"type":"integer","minimum":1},"stream":{"enum":["stdout","stderr"]},"cursor":{"type":"integer","minimum":0},"max_bytes":{"type":"integer","minimum":4,"maximum":65536},"wait_ms":{"type":"integer","minimum":0,"maximum":1000}}}),
+        ),
+        tool(
             "ffsake_task_cancel",
-            "Cancel a running project task by job ID; poll status until completed. Cleanup terminates the owned Unix process group; deliberately detached descendants are not contained.",
+            "Cancel a running project task by job ID; poll status until completed. The owned Unix process group receives SIGTERM, followed by SIGKILL after a bounded grace period if needed; deliberately detached descendants are not contained.",
             json!({"type":"object","required":["job"],"additionalProperties":false,"properties":{"job":{"type":"integer","minimum":1}}}),
         ),
         tool(

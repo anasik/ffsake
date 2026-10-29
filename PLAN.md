@@ -1,5 +1,9 @@
 # Action plan
 
+## Live project task output (2026-10-29)
+
+Add bounded, cursor-based live stdout/stderr retrieval to the asynchronous project-task runner, retaining execution authorization and fixed-policy precedence. Keep a protected rolling log per stream, expose overflow and cleanup, preserve completion status, and use graceful then forced process-group cancellation. Verify through actual MCP and a disposable Claude run; build the existing configured binary, push this scope and verify exact-head CI. Git work remains isolated at local checkpoint `codex/git-resume` / `54c5d7e`.
+
 ## Persistent host-approved project tasks (2026-10-29)
 
 Implement a limited VS Code process-task format with persistent per-project fingerprint authorization and ordinary host approval for registration and running. External task edits must not authorize themselves; revalidate before every run. Preserve explicit --tasks policy and named-job compatibility, output bounds, timeout, cancellation and process cleanup. The Git prototype is paused on local branch codex/git-stage-checkpoint (208b8a0); the superseded arbitrary-execution experiment is isolated on codex/direct-execution-checkpoint and must never be merged. Validate local MCP and real Claude acceptance, update the existing configured binary, push only this scope, verify exact-head CI, then pause.

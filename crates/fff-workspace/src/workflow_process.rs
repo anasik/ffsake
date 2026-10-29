@@ -16,10 +16,24 @@ pub(crate) struct Output {
     pub truncated: bool,
     pub timed_out: bool,
     pub cancelled: bool,
+    pub drained: bool,
     pub elapsed_ms: u128,
 }
 pub(crate) struct Guard(pub(crate) Child);
 impl Guard {
+    pub(crate) fn graceful(&mut self) {
+        #[cfg(unix)]
+        {
+            unsafe extern "C" {
+                fn kill(pid: i32, signal: i32) -> i32;
+            }
+            if let Ok(pid) = i32::try_from(self.0.id()) {
+                unsafe {
+                    kill(-pid, 15);
+                }
+            }
+        }
+    }
     pub(crate) fn terminate(&mut self) {
         #[cfg(unix)]
         {
@@ -67,11 +81,21 @@ pub(crate) fn spawn(command: &mut Command) -> Result<Guard> {
     }
 }
 pub(crate) fn capture(
+    child: Guard,
+    started: Instant,
+    timeout: Duration,
+    limit: usize,
+    cancel: Option<&AtomicBool>,
+) -> Result<Output> {
+    capture_with(child, started, timeout, limit, cancel, &mut |_, _| Ok(()))
+}
+pub(crate) fn capture_with(
     mut child: Guard,
     started: Instant,
     timeout: Duration,
     limit: usize,
     cancel: Option<&AtomicBool>,
+    on_output: &mut dyn FnMut(usize, &[u8]) -> Result<()>,
 ) -> Result<Output> {
     let stdout = child.0.stdout.take().ok_or("missing stdout")?;
     let stderr = child.0.stderr.take().ok_or("missing stderr")?;
@@ -100,16 +124,22 @@ pub(crate) fn capture(
     let mut timed_out = false;
     let mut cancelled = false;
     let mut status = None;
+    let mut stop_started: Option<Instant> = None;
+    let mut forced_at: Option<Instant> = None;
     loop {
-        if cancel.is_some_and(|c| c.load(Ordering::SeqCst)) {
-            cancelled = true;
-            child.terminate();
-            break;
+        if stop_started.is_none() {
+            cancelled = cancel.is_some_and(|c| c.load(Ordering::SeqCst));
+            timed_out = !cancelled && started.elapsed() >= timeout;
+            if cancelled || timed_out {
+                child.graceful();
+                stop_started = Some(Instant::now());
+            }
         }
-        if started.elapsed() >= timeout {
-            timed_out = true;
+        if forced_at.is_none()
+            && stop_started.is_some_and(|t| t.elapsed() >= Duration::from_millis(500))
+        {
             child.terminate();
-            break;
+            forced_at = Some(Instant::now());
         }
         match receive.recv_timeout(Duration::from_millis(10)) {
             Ok((which, result)) => {
@@ -117,6 +147,7 @@ pub(crate) fn capture(
                 if bytes.is_empty() {
                     closed += 1;
                 } else {
+                    on_output(which, &bytes)?;
                     let remaining = limit.saturating_sub(buffers[which].len());
                     truncated |= bytes.len() > remaining;
                     buffers[which].extend_from_slice(&bytes[..bytes.len().min(remaining)]);
@@ -130,11 +161,15 @@ pub(crate) fn capture(
         if status.is_none() {
             status = child.0.try_wait()?;
         }
+        if closed == 2 && status.is_some() {
+            break;
+        }
         if closed == 2 {
-            if status.is_some() {
-                break;
-            }
             std::thread::sleep(Duration::from_millis(10));
+        }
+        // A detached descendant may keep a pipe open despite group cleanup.
+        if forced_at.is_some_and(|t| t.elapsed() >= Duration::from_secs(1)) {
+            break;
         }
     }
     let status = match status {
@@ -149,6 +184,7 @@ pub(crate) fn capture(
         truncated,
         timed_out,
         cancelled,
+        drained: closed == 2,
         elapsed_ms: started.elapsed().as_millis(),
     })
 }
