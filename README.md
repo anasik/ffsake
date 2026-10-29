@@ -1,5 +1,7 @@
 # ffsake
 
+**Install or update for an alpha project:** see [agent-followable source installation and doctor](docs/INSTALL.md).
+
 A headless, agent-facing repository editing and navigation substrate.
 
 The immediate goal is deliberately narrow: make coding agents excellent at ordinary repository navigation and editing without falling back to fragile shell plumbing such as `grep`, `find`, `sed`, `cat`, `head`, or `tail`.

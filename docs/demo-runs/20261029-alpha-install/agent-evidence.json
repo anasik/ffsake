@@ -1,0 +1,164 @@
+{
+  "source_url": "file:///private/tmp/ffsake-alpha-agent-final/source.git",
+  "clone_command": [
+    "git",
+    "clone",
+    "file:///private/tmp/ffsake-alpha-agent-final/source.git",
+    "/private/tmp/ffsake-alpha-agent-final/checkout"
+  ],
+  "clone_exit_code": 0,
+  "source_revision": "34b3db187100df8e8d463d0d48de6b17a8c81943",
+  "install_command": [
+    "python3",
+    "/private/tmp/ffsake-alpha-agent-final/checkout/scripts/ffsake_install.py",
+    "--prefix",
+    "/private/tmp/ffsake-alpha-agent-final/install",
+    "install"
+  ],
+  "install_exit_code": null,
+  "install_log": "/private/tmp/ffsake-alpha-agent-final/install.log",
+  "subsequent_commands": [
+    {
+      "command": [
+        "python3",
+        "/private/tmp/ffsake-alpha-agent-final/checkout/scripts/ffsake_install.py",
+        "--prefix",
+        "/private/tmp/ffsake-alpha-agent-final/install",
+        "configure",
+        "--host",
+        "claude",
+        "--project",
+        "/private/tmp/ffsake-alpha-agent-final/project"
+      ],
+      "cwd": "/private/tmp/ffsake-alpha-agent-final/checkout",
+      "exit_code": 0,
+      "elapsed_seconds": 0.097,
+      "stdout": "{\n  \"status\": \"planned\",\n  \"host\": \"claude\",\n  \"project\": \"/private/tmp/ffsake-alpha-agent-final/project\",\n  \"binary\": \"/private/tmp/ffsake-alpha-agent-final/install/current/ffsake-mcp\",\n  \"server_args\": [\n    \"/private/tmp/ffsake-alpha-agent-final/project\",\n    \"--profile\",\n    \"core\"\n  ],\n  \"changes\": [\n    {\n      \"file\": \"/private/tmp/ffsake-alpha-agent-final/project/.mcp.json\",\n      \"added\": [\n        {\n          \"mcpServers.ffsake\": {\n            \"command\": \"/private/tmp/ffsake-alpha-agent-final/install/current/ffsake-mcp\",\n            \"args\": [\n              \"/private/tmp/ffsake-alpha-agent-final/project\",\n              \"--profile\",\n              \"core\"\n            ]\n          }\n        }\n      ]\n    },\n    {\n      \"file\": \"/private/tmp/ffsake-alpha-agent-final/project/.claude/settings.json\",\n      \"added\": [\n        {\n          \"permissions.allow\": [\n            \"mcp__ffsake__ffsake_list_access\",\n            \"mcp__ffsake__ffsake_git\",\n            \"mcp__ffsake__ffsake_git_review\",\n            \"mcp__ffsake__ffsake_git_branches\",\n            \"mcp__ffsake__ffsake_git_operation_review\",\n            \"mcp__ffsake__ffsake_tasks\",\n            \"mcp__ffsake__ffsake_task_status\",\n            \"mcp__ffsake__ffsake_task_output\",\n            \"mcp__ffsake__ffsake_task_cancel\",\n            \"mcp__ffsake__ffsake_debug\",\n            \"mcp__ffsake__ffsake_read\",\n            \"mcp__ffsake__ffsake_read_files\",\n            \"mcp__ffsake__ffsake_archive\",\n            \"mcp__ffsake__ffsake_list\",\n            \"mcp__ffsake__ffsake_target\",\n            \"mcp__ffsake__ffsake_search\",\n            \"mcp__ffsake__ffsake_preview_matches\",\n            \"mcp__ffsake__ffsake_preview_edit\",\n            \"mcp__ffsake__ffsake_preview_rename\",\n            \"mcp__ffsake__ffsake_apply\",\n            \"mcp__ffsake__ffsake_undo\",\n            \"mcp__ffsake__ffsake_redo\",\n            \"mcp__ffsake__ffsake_release\",\n            \"mcp__ffsake__ffsake_refresh\",\n            \"mcp__ffsake__ffsake_preview_files\",\n            \"mcp__ffsake__ffsake_preview_create\",\n            \"mcp__ffsake__ffsake_preview_copy\",\n            \"mcp__ffsake__ffsake_preview_move\",\n            \"mcp__ffsake__ffsake_preview_delete\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"note\": \"Existing host permission settings and broader host policies remain authoritative.\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "/private/tmp/ffsake-alpha-agent-final/checkout/scripts/ffsake_install.py",
+        "--prefix",
+        "/private/tmp/ffsake-alpha-agent-final/install",
+        "configure",
+        "--host",
+        "claude",
+        "--project",
+        "/private/tmp/ffsake-alpha-agent-final/project",
+        "--apply"
+      ],
+      "cwd": "/private/tmp/ffsake-alpha-agent-final/checkout",
+      "exit_code": 0,
+      "elapsed_seconds": 0.096,
+      "stdout": "{\n  \"status\": \"applied\",\n  \"host\": \"claude\",\n  \"project\": \"/private/tmp/ffsake-alpha-agent-final/project\",\n  \"binary\": \"/private/tmp/ffsake-alpha-agent-final/install/current/ffsake-mcp\",\n  \"server_args\": [\n    \"/private/tmp/ffsake-alpha-agent-final/project\",\n    \"--profile\",\n    \"core\"\n  ],\n  \"changes\": [\n    {\n      \"file\": \"/private/tmp/ffsake-alpha-agent-final/project/.mcp.json\",\n      \"added\": [\n        {\n          \"mcpServers.ffsake\": {\n            \"command\": \"/private/tmp/ffsake-alpha-agent-final/install/current/ffsake-mcp\",\n            \"args\": [\n              \"/private/tmp/ffsake-alpha-agent-final/project\",\n              \"--profile\",\n              \"core\"\n            ]\n          }\n        }\n      ]\n    },\n    {\n      \"file\": \"/private/tmp/ffsake-alpha-agent-final/project/.claude/settings.json\",\n      \"added\": [\n        {\n          \"permissions.allow\": [\n            \"mcp__ffsake__ffsake_list_access\",\n            \"mcp__ffsake__ffsake_git\",\n            \"mcp__ffsake__ffsake_git_review\",\n            \"mcp__ffsake__ffsake_git_branches\",\n            \"mcp__ffsake__ffsake_git_operation_review\",\n            \"mcp__ffsake__ffsake_tasks\",\n            \"mcp__ffsake__ffsake_task_status\",\n            \"mcp__ffsake__ffsake_task_output\",\n            \"mcp__ffsake__ffsake_task_cancel\",\n            \"mcp__ffsake__ffsake_debug\",\n            \"mcp__ffsake__ffsake_read\",\n            \"mcp__ffsake__ffsake_read_files\",\n            \"mcp__ffsake__ffsake_archive\",\n            \"mcp__ffsake__ffsake_list\",\n            \"mcp__ffsake__ffsake_target\",\n            \"mcp__ffsake__ffsake_search\",\n            \"mcp__ffsake__ffsake_preview_matches\",\n            \"mcp__ffsake__ffsake_preview_edit\",\n            \"mcp__ffsake__ffsake_preview_rename\",\n            \"mcp__ffsake__ffsake_apply\",\n            \"mcp__ffsake__ffsake_undo\",\n            \"mcp__ffsake__ffsake_redo\",\n            \"mcp__ffsake__ffsake_release\",\n            \"mcp__ffsake__ffsake_refresh\",\n            \"mcp__ffsake__ffsake_preview_files\",\n            \"mcp__ffsake__ffsake_preview_create\",\n            \"mcp__ffsake__ffsake_preview_copy\",\n            \"mcp__ffsake__ffsake_preview_move\",\n            \"mcp__ffsake__ffsake_preview_delete\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"note\": \"Existing host permission settings and broader host policies remain authoritative.\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "/private/tmp/ffsake-alpha-agent-final/checkout/scripts/ffsake_install.py",
+        "--prefix",
+        "/private/tmp/ffsake-alpha-agent-final/install",
+        "doctor",
+        "--host",
+        "claude",
+        "--project",
+        "/private/tmp/ffsake-alpha-agent-final/project"
+      ],
+      "cwd": "/private/tmp/ffsake-alpha-agent-final/checkout",
+      "exit_code": 0,
+      "elapsed_seconds": 0.248,
+      "stdout": "{\n  \"ok\": true,\n  \"model_calls\": 0,\n  \"installed_revision\": \"34b3db187100df8e8d463d0d48de6b17a8c81943\",\n  \"source_revision\": \"34b3db187100df8e8d463d0d48de6b17a8c81943\",\n  \"update_available\": false,\n  \"package_version\": \"0.1.0\",\n  \"binary\": \"/private/tmp/ffsake-alpha-agent-final/install/current/ffsake-mcp\",\n  \"host\": \"claude\",\n  \"project\": \"/private/tmp/ffsake-alpha-agent-final/project\",\n  \"host_cli_available\": true,\n  \"mcp_initialized\": true,\n  \"tool_count\": 36,\n  \"note\": \"Project config checked; host trust, global overrides and current-session connection were not verified.\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "/private/tmp/ffsake-alpha-agent-final/checkout/scripts/ffsake_install.py",
+        "--prefix",
+        "/private/tmp/ffsake-alpha-agent-final/install",
+        "install"
+      ],
+      "cwd": "/private/tmp/ffsake-alpha-agent-final/checkout",
+      "exit_code": 0,
+      "elapsed_seconds": 0.168,
+      "stdout": "{\n  \"status\": \"unchanged\",\n  \"installed_revision\": \"34b3db187100df8e8d463d0d48de6b17a8c81943\",\n  \"binary\": \"/private/tmp/ffsake-alpha-agent-final/install/current/ffsake-mcp\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "/private/tmp/ffsake-alpha-agent-final/checkout/scripts/ffsake_install.py",
+        "--prefix",
+        "/private/tmp/ffsake-alpha-agent-final/install",
+        "configure",
+        "--host",
+        "claude",
+        "--project",
+        "/private/tmp/ffsake-alpha-agent-final/project"
+      ],
+      "cwd": "/private/tmp/ffsake-alpha-agent-final/checkout",
+      "exit_code": 0,
+      "elapsed_seconds": 0.097,
+      "stdout": "{\n  \"status\": \"unchanged\",\n  \"host\": \"claude\",\n  \"project\": \"/private/tmp/ffsake-alpha-agent-final/project\",\n  \"binary\": \"/private/tmp/ffsake-alpha-agent-final/install/current/ffsake-mcp\",\n  \"server_args\": [\n    \"/private/tmp/ffsake-alpha-agent-final/project\",\n    \"--profile\",\n    \"core\"\n  ],\n  \"changes\": [],\n  \"note\": \"Existing host permission settings and broader host policies remain authoritative.\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "/private/tmp/ffsake-alpha-agent-final/checkout/scripts/ffsake_install.py",
+        "--prefix",
+        "/private/tmp/ffsake-alpha-agent-final/install",
+        "configure",
+        "--host",
+        "claude",
+        "--project",
+        "/private/tmp/ffsake-alpha-agent-final/project",
+        "--apply"
+      ],
+      "cwd": "/private/tmp/ffsake-alpha-agent-final/checkout",
+      "exit_code": 0,
+      "elapsed_seconds": 0.099,
+      "stdout": "{\n  \"status\": \"unchanged\",\n  \"host\": \"claude\",\n  \"project\": \"/private/tmp/ffsake-alpha-agent-final/project\",\n  \"binary\": \"/private/tmp/ffsake-alpha-agent-final/install/current/ffsake-mcp\",\n  \"server_args\": [\n    \"/private/tmp/ffsake-alpha-agent-final/project\",\n    \"--profile\",\n    \"core\"\n  ],\n  \"changes\": [],\n  \"note\": \"Existing host permission settings and broader host policies remain authoritative.\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "/private/tmp/ffsake-alpha-agent-final/checkout/scripts/ffsake_install.py",
+        "--prefix",
+        "/private/tmp/ffsake-alpha-agent-final/install",
+        "doctor",
+        "--host",
+        "claude",
+        "--project",
+        "/private/tmp/ffsake-alpha-agent-final/project"
+      ],
+      "cwd": "/private/tmp/ffsake-alpha-agent-final/checkout",
+      "exit_code": 0,
+      "elapsed_seconds": 0.23,
+      "stdout": "{\n  \"ok\": true,\n  \"model_calls\": 0,\n  \"installed_revision\": \"34b3db187100df8e8d463d0d48de6b17a8c81943\",\n  \"source_revision\": \"34b3db187100df8e8d463d0d48de6b17a8c81943\",\n  \"update_available\": false,\n  \"package_version\": \"0.1.0\",\n  \"binary\": \"/private/tmp/ffsake-alpha-agent-final/install/current/ffsake-mcp\",\n  \"host\": \"claude\",\n  \"project\": \"/private/tmp/ffsake-alpha-agent-final/project\",\n  \"host_cli_available\": true,\n  \"mcp_initialized\": true,\n  \"tool_count\": 36,\n  \"note\": \"Project config checked; host trust, global overrides and current-session connection were not verified.\"\n}\n",
+      "stderr": ""
+    }
+  ],
+  "project_hashes_after_first_apply": {
+    ".claude/settings.json": "e3e41a7dbbe11b27a6f86b877ff960be7addbac519e92a65906c4ea330b3d2a8",
+    ".mcp.json": "9c67b3fb2b015a1e36b69c744bd446e428247321ea1384a06997df35f6e12cf1"
+  },
+  "project_hashes_after_repeat_apply": {
+    ".claude/settings.json": "e3e41a7dbbe11b27a6f86b877ff960be7addbac519e92a65906c4ea330b3d2a8",
+    ".mcp.json": "9c67b3fb2b015a1e36b69c744bd446e428247321ea1384a06997df35f6e12cf1"
+  },
+  "project_files_unchanged_on_repeat": true,
+  "friction": [
+    "The operator timing wrapper attempted to assign zsh\u2019s read-only status variable and exited 1 after the installer; this was a measurement-wrapper error, not an installer error. The installer exit code itself was not captured."
+  ],
+  "limitations": [
+    "Host trust, managed configuration overrides, and an actual Claude MCP session were not tested.",
+    "Clone timing was not recorded precisely."
+  ],
+  "install_elapsed_seconds": 61.49,
+  "install_result": "Installer reported installed and subsequent doctor validated the installation; initial installer exit status was not captured because the surrounding zsh wrapper attempted to assign its read-only status variable."
+}

@@ -1,5 +1,9 @@
 # Action plan
 
+## Alpha installation and update (2026-10-29)
+
+Document source installation into a stable user-local path, reviewable idempotent project setup, model-free MCP initialization doctor, explicit updates and safe uninstall. Preserve host settings and optional dependencies. Exercise all host configuration formats in isolated directories, run a fresh agent-led installation, push and verify exact-head CI, then pause.
+
 ## Reviewed Git branches, fetch and non-force push (2026-10-29)
 
 Extend the existing Git tools with branch inspection, reviewed branch creation/switching, branch-only fetch and exact-source non-force push. Preserve worktree changes, host authentication/configuration and protected paths; refuse unsupported hooks and scope-expanding settings. Validate with local bare remotes and a separate agent, build the configured binary, push and verify exact-head CI, then pause.

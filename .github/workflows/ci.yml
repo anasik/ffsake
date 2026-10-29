@@ -43,6 +43,7 @@ jobs:
       - run: python3 scripts/git_remote_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/project_tasks_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/task_output_smoke.py target/debug/ffsake-mcp
+      - run: python3 scripts/alpha_install_smoke.py
       - run: python3 scripts/debug_protocol_smoke.py target/debug/ffsake-mcp
       - uses: actions/setup-dotnet@v4
         with:
