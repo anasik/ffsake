@@ -45,6 +45,7 @@ jobs:
       - run: python3 scripts/task_output_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/alpha_install_smoke.py
       - run: python3 scripts/debug_protocol_smoke.py target/debug/ffsake-mcp
+      - run: python3 scripts/debug_attach_protocol_smoke.py target/debug/ffsake-mcp
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
@@ -55,6 +56,7 @@ jobs:
           mkdir "$RUNNER_TEMP/ffsake-dap"
           tar -xzf "$RUNNER_TEMP/netcoredbg.tar.gz" -C "$RUNNER_TEMP/ffsake-dap"
       - run: python3 scripts/debug_smoke.py target/debug/ffsake-mcp --adapter "$RUNNER_TEMP/ffsake-dap/netcoredbg/netcoredbg"
+      - run: python3 scripts/debug_attach_smoke.py target/debug/ffsake-mcp --adapter "$RUNNER_TEMP/ffsake-dap/netcoredbg/netcoredbg"
       - run: python3 scripts/repository_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/repository_lsp_smoke.py target/debug/ffsake-mcp --verify-rename
       - run: python3 scripts/rust_syntax_smoke.py target/debug/ffsake-mcp

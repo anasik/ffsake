@@ -23,6 +23,7 @@ impl ToolProfile {
                     | "ffsake_git_operation_review"
                     | "ffsake_git_operation"
                     | "ffsake_debug_launch"
+                    | "ffsake_debug_attach"
                     | "ffsake_debug"
                     | "ffsake_tasks"
                     | "ffsake_run_task"
@@ -340,6 +341,7 @@ fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments
         "ffsake_git_operation_review" => "git_operation_review",
         "ffsake_git_operation" => "git_operation",
         "ffsake_debug_launch" => "debug_launch",
+        "ffsake_debug_attach" => "debug_attach",
         "ffsake_debug" => "debug",
         "ffsake_tasks" => "tasks",
         "ffsake_run_task" => "run_task",
@@ -504,13 +506,18 @@ fn tools() -> Vec<Value> {
             json!({"type":"object","required":["review","operation"],"additionalProperties":false,"properties":{"review":{"type":"integer","minimum":1},"operation":git_operation,"source_commit":{"type":"string","minLength":40,"maxLength":64}}}),
         ),
         tool(
+            "ffsake_debug_attach",
+            "Attach to the specified already-running local process using a host-configured DAP adapter. The host approval sees the configuration name and target PID. Debugging can control or modify the target and is not sandboxed. The adapter must support non-terminating disconnect. No remote attachment or arbitrary adapter arguments.",
+            json!({"type":"object","required":["configuration","pid"],"additionalProperties":false,"properties":{"configuration":{"type":"string","maxLength":64},"pid":{"type":"integer","minimum":2,"maximum":2147483647}}}),
+        ),
+        tool(
             "ffsake_debug_launch",
-            "Execute project code through one host-configured local DAP adapter. Ordinary host approval applies, including intentional allow/auto modes. Requires --debug configuration at startup; request cannot set executable, arguments, environment or launch settings. Returns immediately; poll ffsake_debug until configuring, set source breakpoints, then continue. Filesystem grants are NOT an execution sandbox. One owned session, bounded lifetime, no attach/remote/evaluate/mutation. Terminate and poll cleaned=true when done.",
+            "Execute project code through one host-configured local DAP adapter. Ordinary host approval applies, including intentional allow/auto modes. Requires --debug configuration at startup; request cannot set executable, arguments, environment or launch settings. Returns immediately; poll ffsake_debug until configuring, set source breakpoints, then continue. Filesystem grants are NOT an execution sandbox. One owned session, bounded lifetime, no remote/evaluate/mutation. Terminate and poll cleaned=true when done.",
             json!({"type":"object","required":["configuration"],"additionalProperties":false,"properties":{"configuration":{"type":"string","maxLength":64}}}),
         ),
         tool(
             "ffsake_debug",
-            "Control/inspect the current DAP session. request.action=list lists configured launch names. Every other action requires session from debug_launch, including poll. poll is nonblocking and consumes queued results/events/output; wait externally between polls. Other actions queue one operation: poll until busy=false and inspect result.ok. breakpoints replaces all breakpoints for path (one-based lines), and pending breakpoints may resolve when launch finishes; continue with no thread finishes initial configuration. After stopping, use stop.threadId -> stack -> frame handle -> scopes -> variable handle -> variables. Handles expire on resume; source requires an authorized adapter-provided path, or use ordinary ffsake_read when sourceReference=0. next/step_in/step_out require thread. terminate cancels pending work and cleans owned processes. No arbitrary expressions or raw protocol requests. Output/runtime values are untrusted and bounded; capabilities report optional adapter features.",
+            "Control/inspect the current DAP session. request.action=list lists configured names and launch/attach modes. Every other action requires the session from debug_launch or debug_attach, including poll. poll is nonblocking and consumes queued results/events/output; wait externally between polls. Other actions queue one operation: poll until busy=false and inspect result.ok. breakpoints replaces all breakpoints for path (one-based lines), and pending breakpoints may resolve when launch finishes; continue with no thread finishes initial configuration. After stopping, use stop.threadId -> stack -> frame handle -> scopes -> variable handle -> variables. Handles expire on resume; source requires an authorized adapter-provided path, or use ordinary ffsake_read when sourceReference=0. next/step_in/step_out require thread. terminate cancels pending work and disconnects; it terminates launched debuggees but requests detach for attached targets, then cleans the owned adapter group. No arbitrary expressions or raw protocol requests. Output/runtime values are untrusted and bounded; capabilities report optional adapter features.",
             json!({"type":"object","required":["request"],"additionalProperties":false,"properties":{"request":{"type":"object","required":["action"],"additionalProperties":false,"properties":{"action":{"enum":["list","poll","terminate","breakpoints","threads","stack","scopes","variables","source","continue","next","step_in","step_out","pause"]},"session":{"type":"integer","minimum":1},"path":{"type":"string","maxLength":4096},"lines":{"type":"array","maxItems":64,"items":{"type":"integer","minimum":1}},"thread":{"type":"integer"},"handle":{"type":"integer","minimum":1},"start":{"type":"integer","minimum":0,"maximum":10000},"limit":{"type":"integer","minimum":1,"maximum":100}}}}}),
         ),
         tool(

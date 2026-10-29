@@ -37,6 +37,7 @@ struct Client {
     responses: BTreeMap<i64, Value>,
     pending: BTreeMap<i64, String>,
     launch: Option<i64>,
+    attached: bool,
     initialized: bool,
     configured: bool,
     stopped: bool,
@@ -64,6 +65,7 @@ fn output(state: &Arc<Mutex<State>>, s: &str) {
 impl Client {
     fn spawn(
         c: &Configuration,
+        attached: bool,
         root: PathBuf,
         access: Access,
         state: Arc<Mutex<State>>,
@@ -138,6 +140,7 @@ impl Client {
                 responses: BTreeMap::new(),
                 pending: BTreeMap::new(),
                 launch: None,
+                attached,
                 initialized: false,
                 configured: false,
                 stopped: false,
@@ -552,7 +555,7 @@ impl Client {
         let seq = self.next;
         self.next += 1;
         let (send, _) = mpsc::sync_channel(1);
-        let _=self.outgoing.try_send((json!({"seq":seq,"type":"request","command":"disconnect","arguments":{"terminateDebuggee":true}}),send));
+        let _=self.outgoing.try_send((json!({"seq":seq,"type":"request","command":"disconnect","arguments":{"terminateDebuggee":!self.attached}}),send));
         let until = Instant::now() + Duration::from_millis(250);
         while Instant::now() < until {
             if self.child.0.try_wait().ok().flatten().is_some() {
@@ -601,7 +604,8 @@ fn expand(value: &mut Value, root: &Path) {
     }
 }
 pub(crate) fn run(
-    mut config: Configuration,
+    config: Configuration,
+    target_pid: Option<u32>,
     root: PathBuf,
     access: Access,
     state: Arc<Mutex<State>>,
@@ -609,8 +613,14 @@ pub(crate) fn run(
     commands: Receiver<Action>,
 ) {
     let result = (|| -> Result<()> {
-        let mut client =
-            Client::spawn(&config, root.clone(), access, state.clone(), cancel.clone())?;
+        let mut client = Client::spawn(
+            &config,
+            target_pid.is_some(),
+            root.clone(),
+            access,
+            state.clone(),
+            cancel.clone(),
+        )?;
         let result = (|| -> Result<()> {
             let capabilities=client.request("initialize",json!({"clientID":"ffsake","clientName":"FFSAKE","adapterID":"configured","pathFormat":"path","linesStartAt1":true,"columnsStartAt1":true,"supportsVariableType":true,"supportsVariablePaging":true,"supportsRunInTerminalRequest":false,"supportsStartDebuggingRequest":false}))?;
             state.lock().unwrap().capabilities = boolean_capabilities(&capabilities);
@@ -619,11 +629,41 @@ pub(crate) fn run(
                     "adapter lacks configurationDone support required by this milestone".into(),
                 );
             }
-            expand(&mut config.launch, &root);
-            if config.launch.get("cwd").is_none() {
-                config.launch["cwd"] = json!(root);
+            if let Some(pid) = target_pid {
+                if !client.capability("supportTerminateDebuggee") {
+                    return Err(
+                        "adapter lacks supportTerminateDebuggee required for safe attach".into(),
+                    );
+                }
+                #[cfg(unix)]
+                {
+                    unsafe extern "C" {
+                        fn getpgid(pid: i32) -> i32;
+                    }
+                    let group = unsafe { getpgid(pid as i32) };
+                    if group < 0 {
+                        return Err("target process is unavailable or inaccessible".into());
+                    }
+                    if group == client.child.0.id() as i32 {
+                        return Err("target shares adapter process group; attach refused".into());
+                    }
+                }
+                let field = &config
+                    .attach
+                    .as_ref()
+                    .ok_or("attach configuration required")?
+                    .pid_field;
+                let mut args = serde_json::Map::new();
+                args.insert(field.clone(), json!(pid));
+                client.launch = Some(client.send("attach", Value::Object(args))?);
+            } else {
+                let mut launch = config.launch.ok_or("launch configuration required")?;
+                expand(&mut launch, &root);
+                if launch.get("cwd").is_none() {
+                    launch["cwd"] = json!(root);
+                }
+                client.launch = Some(client.send("launch", launch)?);
             }
-            client.launch = Some(client.send("launch", config.launch)?);
             let deadline = Instant::now() + client.timeout;
             while !client.initialized {
                 client.live(deadline)?;

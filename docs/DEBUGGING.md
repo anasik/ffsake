@@ -33,18 +33,30 @@ target/release/ffsake-mcp /absolute/project --profile core --debug /absolute/hos
 python3 scripts/ffsake_setup.py claude /absolute/project --binary /absolute/ffsake-mcp --debug /absolute/host/debug.json
 ```
 
-Replace `claude` with `codex` or `opencode` to print that host's setup snippets; merge with existing policy. The generator refuses to overwrite existing files. `scripts/ffsake_claude.py /absolute/project --debug /absolute/host/debug.json` also forwards the fixed configuration. `--debug-approval allow` deliberately preallows launch; default `ask` uses normal host approval. Access approval is separate: `--access-approval allow` does **not** preallow debug launch. Ordinary editing and debug control/inspection gain no extra prompts.
+Replace `claude` with `codex` or `opencode` to print that host's setup snippets; merge with existing policy. The alpha installer configures the ordinary profile without `--debug`; adding this startup flag requires a reviewed host configuration change. Its doctor expects the ordinary installer arguments and can report a manually added `--debug` entry as a conflict; use the host MCP status and the debugging checks below for that configuration. The generator refuses to overwrite existing files. `scripts/ffsake_claude.py /absolute/project --debug /absolute/host/debug.json` also forwards the fixed configuration. `--debug-approval allow` deliberately preallows launch and attach; default `ask` uses normal host approval. Access approval is separate: `--access-approval allow` does **not** preallow debug launch or attach. Ordinary editing and debug control/inspection gain no extra prompts.
 
-Claude's setup omits launch from its allow list, Codex uses per-tool `approval_mode="prompt"`, and OpenCode uses the exact launch tool permission `ask`. These are configured defaults, not guaranteed human prompts: host overrides and automatic approval remain authoritative. No forced interaction marker or independent click proof is used. The acceptance run observed Claude's normal launch prompt; this milestone does not claim fresh interactive Codex/OpenCode debugger tests.
+Claude's setup omits launch and attach from its allow list, Codex uses per-tool `approval_mode="prompt"`, and OpenCode uses the exact launch and attach tool permissions `ask`. Existing setup files are preserved, so after updating, inspect their rules before enabling attach. In particular, an older OpenCode `ffsake_*: allow` wildcard can automatically allow the new attach tool unless you add an explicit `ffsake_ffsake_debug_attach: ask` rule after it. Codex configurations may also need an explicit `[mcp_servers.ffsake.tools.ffsake_debug_attach]` with `approval_mode = "prompt"`. These are configured defaults, not guaranteed human prompts: host overrides and automatic approval remain authoritative. No forced interaction marker or independent click proof is used. The acceptance run observed Claude's normal launch prompt; this milestone does not claim fresh interactive Codex/OpenCode debugger tests.
 
 Debugging **executes project code**, including adapter-dependent behavior during value inspection. The fixed startup policy and host approval authorize execution; filesystem grants do not sandbox either adapter or program. FFSAKE does not journal their side effects. Review adapter settings for implicit command execution. Configuration is loaded once; requests cannot replace argv, settings, environment or the policy path. Build separately using the host or reviewed `--tasks` jobs. There is no implicit build.
 
+## Attaching to a local process
+
+Add a separate host-controlled configuration with an absolute adapter executable and a PID field supported by that adapter:
+
+```json
+{"version":1,"configurations":{"local":{"argv":["/absolute/path/to/netcoredbg","--interpreter=vscode"],"attach":{"pid_field":"processId"},"timeout_seconds":20,"session_seconds":300}}}
+```
+
+Only `processId` and `pid` are accepted for the adapter's local PID argument. Launch and attach are mutually exclusive per configuration; remote settings and arbitrary request-supplied adapter arguments are not supported. Restart/reconnect MCP after changing this startup file. Inspect the configuration and PID before approving `ffsake_debug_attach`; ordinary host approval applies, including deliberate automatic allowance. OS debugger permissions and adapter support determine whether an attach succeeds. DAP has no universal attach capability flag: FFSAKE requires `supportsConfigurationDoneRequest` and `supportTerminateDebuggee`, then reports an adapter's attach rejection. A missing process or inaccessible process group is rejected.
+
+Attachment can pause, resume and otherwise affect an independent program; filesystem grants do not sandbox it. Disconnect requests `terminateDebuggee=false` and FFSAKE only signals the adapter's separately created process group. A compliant adapter should detach rather than terminate the target. Adapter crashes and OS debugger behavior are outside FFSAKE's control; select and trust the adapter accordingly. [Real-adapter and controlled cleanup evidence](demo-runs/20261029-debug-attach/REPORT.md).
+
 ## Agent workflow
 
-Two tools are available in both MCP profiles. `ffsake_debug_launch` accepts only `{"configuration":"app"}`. `ffsake_debug` accepts `{"request":{...}}`. Use:
+Three tools are available in both MCP profiles. `ffsake_debug_launch` accepts only `{"configuration":"app"}`. `ffsake_debug_attach` accepts a reviewed configuration and explicit local process ID, for example `{"configuration":"local","pid":1234}`. `ffsake_debug` accepts `{"request":{...}}`. Use:
 
 1. `{"action":"list"}` to discover names. No configuration means execution is disabled.
-2. Launch, retain its `session` ID, and poll until `status="configuring"`. **Every action except list requires that session ID.**
+2. Launch or attach, retain its `session` ID, and poll until `status="configuring"`. **Every action except list requires that session ID.**
 3. `{"action":"breakpoints","session":1,"path":"Program.cs","lines":[12]}`. This replaces that file's source breakpoints; `[]` clears them. Lines start at 1. A pending/unverified breakpoint may resolve once the program loads.
 4. `{"action":"continue","session":1}` finishes initial configuration and runs. Later continue requires `thread`.
 5. Poll for `status="stopped"`; inspect `stop.reason` and `stop.threadId`. Request `stack` with `thread`, `scopes` with a frame `handle`, then `variables` with a scope or expandable-variable `handle`. Stack/variables support `start` and `limit`.
@@ -65,7 +77,7 @@ Keep observed debugger values separate from inferred causes. Adapter output and 
 - Requires adapter `supportsConfigurationDoneRequest`. Baseline stack/scopes/variables/stepping are standard DAP operations; unsupported operations return the adapter's rejection. Reverse requests (including terminals and nested debug sessions) are rejected. Use an adapter's internal-console/local launch mode.
 - Source breakpoints and adapter source reads use normal read authorization. Frames with unauthorized/unmapped source paths expose metadata but no usable inspection/source handles. For `sourceReference=0`, use ordinary `ffsake_read`. Positive source references require an authorized mapped path and content <=64 KiB. Authorization is rechecked before/after inspection and again before poll delivery, so revocation rejects cached results. This protects tool-mediated source retrieval, **not arbitrary memory/output of code the host authorized to execute**.
 - Stopped handles expire on resume, stop-state change and invalidation. An inspection racing a resume rejects. Existing editing, stale previews, protected paths and history rules remain unchanged.
-- Cleanup first sends standard `disconnect` with `terminateDebuggee=true`, allows 250 ms, then kills/reaps the owned adapter process group. Real netcoredbg and deliberately uncooperative same-group descendants are tested. A hostile adapter/program that detaches into another group is not contained by this mechanism; this is not an OS execution sandbox. No attach-to-existing-process or remote debugging is exposed.
+- Cleanup first sends standard `disconnect` with `terminateDebuggee=true` for launched processes and `false` for attached processes, allows 250 ms, then kills/reaps the owned adapter process group. Real netcoredbg and deliberately uncooperative same-group descendants are tested. A hostile adapter/program that detaches into another group is not contained by this mechanism; this is not an OS execution sandbox. Remote debugging is not exposed.
 - No expression evaluation, variable mutation, hot reload, breakpoint conditions, custom UI or automatic adapter installation.
 
 ## Another adapter
@@ -89,6 +101,8 @@ The smaller fit was the standard subset here, reusing FFSAKE's existing bounded 
 ```sh
 cargo build --locked --bin ffsake-mcp
 python3 scripts/debug_protocol_smoke.py target/debug/ffsake-mcp
+python3 scripts/debug_attach_protocol_smoke.py target/debug/ffsake-mcp
+python3 scripts/debug_attach_smoke.py target/debug/ffsake-mcp --adapter /absolute/netcoredbg --report /tmp/dap-attach-report.json
 python3 scripts/debug_smoke.py target/debug/ffsake-mcp --adapter /absolute/netcoredbg --report /tmp/dap-report.json
 ```
 

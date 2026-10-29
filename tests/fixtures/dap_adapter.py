@@ -56,10 +56,10 @@ while True:
             sys.exit(7)
         if mode == 'timeout':
             continue
-        body = {'supportsConfigurationDoneRequest': mode != 'unsupported'}
+        body = {'supportsConfigurationDoneRequest': mode != 'unsupported', 'supportTerminateDebuggee': mode == 'attach'}
         if mode == 'bad_correlation':
             command = 'WRONG_COMMAND'
-    elif command == 'launch':
+    elif command in ('launch', 'attach'):
         if mode == 'reverse':
             send({'type': 'request', 'command': 'runInTerminal', 'arguments': {'args': ['DO_NOT_EXECUTE']}})
         event('initialized')

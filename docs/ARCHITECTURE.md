@@ -1,6 +1,6 @@
-# Implementation and development reference
+# Architecture and development reference
 
-This preserves the detailed project overview previously in the README. For current installation and user-facing guidance, start with the [README](../README.md) and [installation guide](INSTALL.md). The phase labels below describe the original development sequence, not the current feature status.
+This reference preserves the detailed project overview previously in the README and describes the architecture. For current installation and user-facing guidance, start with the [README](../README.md) and [installation guide](INSTALL.md). The phase labels below describe the original development sequence, not the current feature status. Current behavior and limits are in [CLI.md](CLI.md), [DEBUGGING.md](DEBUGGING.md), and [INSTALL.md](INSTALL.md).
 
 # ffsake
 
@@ -142,7 +142,7 @@ python3 scripts/ffsake_claude.py /absolute/path/to/worktree
 
 The launcher supplies a temporary MCP configuration, disables Claude's built-in tools with `--tools ""`, loads only this MCP configuration with `--strict-mcp-config`, and approves only the named FFSAKE tools in the selected profile for this session. It does not use the broad skip-permissions flag or modify user/project configuration. Other host settings, including enterprise policy and startup hooks, are not isolated by this launcher. FFSAKE is an application-level workspace boundary, not an OS sandbox.
 
-The default `--tool-profile all` exposes the full catalog. Select `--tool-profile core` for 36 tools: 33 generic file/archive/workflow/debug tools plus three access tools, with matching approvals and guidance:
+The default `--tool-profile all` exposes the full catalog. Select `--tool-profile core` for 37 tools: 34 generic file/archive/workflow/debug tools plus three access tools, with matching approvals and guidance:
 
 ```sh
 python3 scripts/ffsake_claude.py /absolute/path/to/worktree --tool-profile core

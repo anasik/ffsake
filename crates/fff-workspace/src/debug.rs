@@ -19,11 +19,19 @@ pub(crate) type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 #[serde(deny_unknown_fields)]
 pub struct Configuration {
     pub(crate) argv: Vec<String>,
-    pub(crate) launch: Value,
+    #[serde(default)]
+    pub(crate) launch: Option<Value>,
+    #[serde(default)]
+    pub(crate) attach: Option<AttachConfiguration>,
     #[serde(default = "timeout")]
     pub(crate) timeout_seconds: u64,
     #[serde(default = "lifetime")]
     pub(crate) session_seconds: u64,
+}
+#[derive(Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct AttachConfiguration {
+    pub(crate) pid_field: String,
 }
 fn timeout() -> u64 {
     10
@@ -60,11 +68,15 @@ impl Configurations {
                 || c.argv.len() > 32
                 || !Path::new(&c.argv[0]).is_absolute()
                 || c.argv.iter().any(|s| s.len() > 4096 || s.contains('\0'))
-                || !c.launch.is_object()
+                || (c.launch.is_some() == c.attach.is_some())
+                || c.launch.as_ref().is_some_and(|v| !v.is_object())
+                || c.attach
+                    .as_ref()
+                    .is_some_and(|a| !matches!(a.pid_field.as_str(), "pid" | "processId"))
                 || !(1..=30).contains(&c.timeout_seconds)
                 || !(5..=600).contains(&c.session_seconds)
             {
-                return Err("invalid debug configuration: absolute adapter executable, bounded argv/launch/time required".into());
+                return Err("invalid debug configuration: absolute adapter executable, bounded argv/time and exactly one valid launch or attach setting required".into());
             }
         }
         Ok(value)
@@ -216,6 +228,21 @@ impl Debugger {
         self.configurations = configurations;
     }
     pub fn launch(&mut self, name: &str, root: &Path, access: Access) -> Result<Value> {
+        self.start(name, None, root, access)
+    }
+    pub fn attach(&mut self, name: &str, pid: u32, root: &Path, access: Access) -> Result<Value> {
+        if pid < 2 || pid > i32::MAX as u32 || pid == std::process::id() {
+            return Err("invalid local target process ID".into());
+        }
+        self.start(name, Some(pid), root, access)
+    }
+    fn start(
+        &mut self,
+        name: &str,
+        pid: Option<u32>,
+        root: &Path,
+        access: Access,
+    ) -> Result<Value> {
         if self
             .session
             .as_ref()
@@ -229,13 +256,19 @@ impl Debugger {
             .get(name)
             .ok_or("unknown debug configuration; host must configure --debug at startup")?
             .clone();
+        if pid.is_some() != configuration.attach.is_some() {
+            return Err(
+                "configuration does not support the requested launch or attach mode".into(),
+            );
+        }
         self.session.take();
         self.next += 1;
         let state = Arc::new(Mutex::new(State::default()));
         let cancel = Arc::new(AtomicBool::new(false));
         let (commands, receive) = mpsc::sync_channel(1);
         let (s, c, r) = (state.clone(), cancel.clone(), root.to_owned());
-        let worker = std::thread::spawn(move || dap::run(configuration, r, access, s, c, receive));
+        let worker =
+            std::thread::spawn(move || dap::run(configuration, pid, r, access, s, c, receive));
         self.session = Some(Session {
             id: self.next,
             state,
@@ -244,13 +277,13 @@ impl Debugger {
             worker: Some(worker),
         });
         Ok(
-            json!({"session":self.next,"status":"starting","next":"poll until configuring, set breakpoints, then continue to finish configuration","executes_project_code":true,"filesystem_sandbox":false}),
+            json!({"session":self.next,"status":"starting","next":"poll until configuring, set breakpoints, then continue to finish configuration","executes_project_code":true,"filesystem_sandbox":false,"mode":if pid.is_some(){"attach"}else{"launch"},"target_pid":pid}),
         )
     }
     pub fn execute(&mut self, action: Action, access: &Access) -> Result<Value> {
         if matches!(action, Action::List) {
             return Ok(
-                json!({"configurations":self.configurations.configurations.keys().collect::<Vec<_>>(),"execution_enabled":!self.configurations.configurations.is_empty(),"transport":"local stdio DAP","one_session":true}),
+                json!({"configurations":self.configurations.configurations.keys().collect::<Vec<_>>(),"configuration_modes":self.configurations.configurations.iter().map(|(name,c)| (name, if c.attach.is_some() { "attach" } else { "launch" })).collect::<BTreeMap<_,_>>(),"execution_enabled":!self.configurations.configurations.is_empty(),"transport":"local stdio DAP","one_session":true}),
             );
         }
         let session = self
@@ -323,6 +356,19 @@ mod tests {
             fs::write(&path, invalid.to_string()).unwrap();
             assert!(Configurations::load(&path).is_err(), "{field}");
         }
+        let attach = json!({"version":1,"configurations":{"local":{"argv":["/adapter"],"attach":{"pid_field":"processId"}}}});
+        fs::write(&path, attach.to_string()).unwrap();
+        assert!(Configurations::load(&path).is_ok());
+        for field in ["remote", "process", ""] {
+            let mut invalid = attach.clone();
+            invalid["configurations"]["local"]["attach"]["pid_field"] = json!(field);
+            fs::write(&path, invalid.to_string()).unwrap();
+            assert!(Configurations::load(&path).is_err());
+        }
+        let mut invalid = attach.clone();
+        invalid["configurations"]["local"]["launch"] = json!({});
+        fs::write(&path, invalid.to_string()).unwrap();
+        assert!(Configurations::load(&path).is_err());
         fs::write(&path, vec![b' '; 65537]).unwrap();
         assert!(Configurations::load(&path).is_err());
     }

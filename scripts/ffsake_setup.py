@@ -17,7 +17,7 @@ def configurations(host, root, binary, profile='all', access_approval='ask', deb
             return task_approval
         if name in ('ffsake_git_mutate', 'ffsake_git_operation'):
             return 'ask'
-        if name == 'ffsake_debug_launch':
+        if name in ('ffsake_debug_launch', 'ffsake_debug_attach'):
             return debug_approval
         return access_approval if name in FFSAKE_ACCESS_MUTATIONS else 'allow'
     if host == 'claude':

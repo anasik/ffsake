@@ -55,7 +55,7 @@ def main():
                if not (args.access and tool in FFSAKE_ACCESS_TOOLS)
                and (tool not in FFSAKE_ACCESS_MUTATIONS or args.access_approval == "allow")
                and tool not in ("ffsake_git_mutate", "ffsake_git_operation")
-               and (tool != "ffsake_debug_launch" or args.debug_approval == "allow")
+               and (tool not in ("ffsake_debug_launch", "ffsake_debug_attach") or args.debug_approval == "allow")
                and (tool not in ("ffsake_task_register", "ffsake_run_task") or args.task_approval == "allow")]
     with tempfile.TemporaryDirectory(prefix="ffsake-claude-") as td:
         config_path = Path(td) / "mcp.json"

@@ -36,6 +36,10 @@ pub struct ReadFile {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
+    DebugAttach {
+        configuration: String,
+        pid: u32,
+    },
     DebugLaunch {
         configuration: String,
     },
@@ -511,6 +515,15 @@ impl Resident {
             self.access().refresh()?;
         }
         match request {
+            Request::DebugAttach { configuration, pid } => {
+                self.index_dirty = true;
+                self.debugger.attach(
+                    &configuration,
+                    pid,
+                    self.session.workspace().root(),
+                    self.access(),
+                )
+            }
             Request::DebugLaunch { configuration } => {
                 self.index_dirty = true;
                 self.debugger.launch(

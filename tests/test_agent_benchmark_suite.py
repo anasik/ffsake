@@ -36,6 +36,7 @@ class HostSetupTests(unittest.TestCase):
                         self.assertEqual("mcp__ffsake__ffsake_remove_access" in allowed, policy == "allow")
                         self.assertNotIn("ask", config["permissions"])
                         self.assertNotIn("mcp__ffsake__ffsake_debug_launch", allowed)
+                        self.assertNotIn("mcp__ffsake__ffsake_debug_attach", allowed)
                         self.assertNotIn("mcp__ffsake__ffsake_task_register", allowed)
                         self.assertNotIn("mcp__ffsake__ffsake_run_task", allowed)
                         self.assertNotIn("mcp__ffsake__ffsake_git_mutate", allowed)
@@ -47,6 +48,7 @@ class HostSetupTests(unittest.TestCase):
                         tools = config["mcp_servers"]["ffsake"]["tools"]
                         self.assertEqual(tools["ffsake_read"]["approval_mode"], "approve")
                         self.assertEqual(tools["ffsake_debug_launch"]["approval_mode"], "prompt")
+                        self.assertEqual(tools["ffsake_debug_attach"]["approval_mode"], "prompt")
                         self.assertEqual(tools["ffsake_task_register"]["approval_mode"], "prompt")
                         self.assertEqual(tools["ffsake_run_task"]["approval_mode"], "prompt")
                         self.assertEqual(tools["ffsake_git_mutate"]["approval_mode"], "prompt")
@@ -59,6 +61,7 @@ class HostSetupTests(unittest.TestCase):
                         config = json.loads((root / "opencode.json").read_text())
                         self.assertEqual(config["permission"]["ffsake_*"], "allow")
                         self.assertEqual(config["permission"]["ffsake_ffsake_debug_launch"], "ask")
+                        self.assertEqual(config["permission"]["ffsake_ffsake_debug_attach"], "ask")
                         self.assertEqual(config["permission"]["ffsake_ffsake_task_register"], "ask")
                         self.assertEqual(config["permission"]["ffsake_ffsake_run_task"], "ask")
                         self.assertEqual(config["permission"]["ffsake_ffsake_git_mutate"], "ask")

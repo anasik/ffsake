@@ -1,5 +1,9 @@
 # Action plan
 
+## Alpha consolidation and local debugger attachment (2026-10-29)
+
+Git branches/fetch/non-force push and idempotent installation are complete on main. Add a PID-specific, host-approved local DAP attach mode with non-terminating detach, retaining source and stale-handle checks. Verify real netcoredbg state/stepping and independent target survival, controlled failure cleanup, host approval defaults, documentation and exact-head CI; preserve other agents' artifacts. Reconcile OpenCode evidence without conflating simulations with adapter tests. Pause afterward and prioritize alpha use and reproducible bugs.
+
 ## Alpha installation and update (2026-10-29)
 
 Document source installation into a stable user-local path, reviewable idempotent project setup, model-free MCP initialization doctor, explicit updates and safe uninstall. Preserve host settings and optional dependencies. Exercise all host configuration formats in isolated directories, run a fresh agent-led installation, push and verify exact-head CI, then pause.
