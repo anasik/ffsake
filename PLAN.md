@@ -1,5 +1,9 @@
 # Action plan
 
+## Reviewed Git branches, fetch and non-force push (2026-10-29)
+
+Extend the existing Git tools with branch inspection, reviewed branch creation/switching, branch-only fetch and exact-source non-force push. Preserve worktree changes, host authentication/configuration and protected paths; refuse unsupported hooks and scope-expanding settings. Validate with local bare remotes and a separate agent, build the configured binary, push and verify exact-head CI, then pause.
+
 ## Selected-file Git staging and commits (2026-10-29)
 
 Resume the isolated Git checkpoint on top of live task output. Review snapshots, selected-file staging/unstaging and reviewed-index commits must preserve unrelated index and working changes and reject stale state. Test actual MCP operations, hooks and signing refusals, unborn repositories and worktrees, then run a disposable real-agent acceptance. Commit the completed scope, push main and verify exact-head CI.

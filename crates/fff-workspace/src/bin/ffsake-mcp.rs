@@ -19,6 +19,9 @@ impl ToolProfile {
                     | "ffsake_git"
                     | "ffsake_git_review"
                     | "ffsake_git_mutate"
+                    | "ffsake_git_branches"
+                    | "ffsake_git_operation_review"
+                    | "ffsake_git_operation"
                     | "ffsake_debug_launch"
                     | "ffsake_debug"
                     | "ffsake_tasks"
@@ -333,6 +336,9 @@ fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments
         "ffsake_git" => "git",
         "ffsake_git_review" => "git_review",
         "ffsake_git_mutate" => "git_mutate",
+        "ffsake_git_branches" => "git_branches",
+        "ffsake_git_operation_review" => "git_operation_review",
+        "ffsake_git_operation" => "git_operation",
         "ffsake_debug_launch" => "debug_launch",
         "ffsake_debug" => "debug",
         "ffsake_tasks" => "tasks",
@@ -475,7 +481,28 @@ fn access_tool(runtime: &Resident, name: &str, arguments: Value) -> Value {
 }
 
 fn tools() -> Vec<Value> {
+    let git_operation = json!({"oneOf":[
+        {"type":"object","required":["action","branch"],"additionalProperties":false,"properties":{"action":{"const":"create"},"branch":{"type":"string","minLength":1,"maxLength":256}}},
+        {"type":"object","required":["action","branch"],"additionalProperties":false,"properties":{"action":{"const":"switch"},"branch":{"type":"string","minLength":1,"maxLength":256}}},
+        {"type":"object","required":["action","remote"],"additionalProperties":false,"properties":{"action":{"const":"fetch"},"remote":{"type":"string","minLength":1,"maxLength":128}}},
+        {"type":"object","required":["action","branch","remote","remote_branch"],"additionalProperties":false,"properties":{"action":{"const":"push"},"branch":{"type":"string","minLength":1,"maxLength":256},"remote":{"type":"string","minLength":1,"maxLength":128},"remote_branch":{"type":"string","minLength":1,"maxLength":256},"set_upstream":{"type":"boolean","default":false}}}
+    ]});
     vec![
+        tool(
+            "ffsake_git_branches",
+            "List local branches, current branch, commits and upstreams. Read-only; no network.",
+            json!({"type":"object","additionalProperties":false,"properties":{}}),
+        ),
+        tool(
+            "ffsake_git_operation_review",
+            "Review an exact branch create/switch, branch-only fetch or non-force push. Push review shows source branch, exact commit, remote name and destination branch; no remote snapshot is promised. No network is contacted during review. Git credential helpers and SSH may execute code on network operations.",
+            json!({"type":"object","required":["operation"],"additionalProperties":false,"properties":{"operation":git_operation.clone()}}),
+        ),
+        tool(
+            "ffsake_git_operation",
+            "Execute the exact operation from a fresh review. For push, supply source_commit from the review so the host approval shows the exact commit along with source branch and destination. Auto/allow is respected. No force, tags, deletion, arbitrary refspecs, merge or rebase. Switch uses Git's overwrite protection; fetch updates only configured remote-tracking branches. Push uses the reviewed immutable commit and remote enforces fast-forward safety. Configured credential helpers and SSH may execute; raw network output is withheld to protect credentials. Not sandboxed or journaled.",
+            json!({"type":"object","required":["review","operation"],"additionalProperties":false,"properties":{"review":{"type":"integer","minimum":1},"operation":git_operation,"source_commit":{"type":"string","minLength":40,"maxLength":64}}}),
+        ),
         tool(
             "ffsake_debug_launch",
             "Execute project code through one host-configured local DAP adapter. Ordinary host approval applies, including intentional allow/auto modes. Requires --debug configuration at startup; request cannot set executable, arguments, environment or launch settings. Returns immediately; poll ffsake_debug until configuring, set source breakpoints, then continue. Filesystem grants are NOT an execution sandbox. One owned session, bounded lifetime, no attach/remote/evaluate/mutation. Terminate and poll cleaned=true when done.",

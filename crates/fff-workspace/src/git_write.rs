@@ -47,16 +47,16 @@ fn command_with_index(
     cmd.args(args);
     workflow_process::run(&mut cmd, Duration::from_secs(30), OUTPUT)
 }
-fn command_inner(root: &Path, args: &[String], mutate: bool) -> Result<Output> {
+pub(crate) fn command_inner(root: &Path, args: &[String], mutate: bool) -> Result<Output> {
     command_with_index(root, args, mutate, None)
 }
-fn command(root: &Path, args: &[String]) -> Result<Output> {
+pub(crate) fn command(root: &Path, args: &[String]) -> Result<Output> {
     command_inner(root, args, false)
 }
-fn run(root: &Path, args: &[&str]) -> Result<Output> {
+pub(crate) fn run(root: &Path, args: &[&str]) -> Result<Output> {
     command(root, &args.iter().map(|s| (*s).into()).collect::<Vec<_>>())
 }
-fn good(out: Output) -> Result<Vec<u8>> {
+pub(crate) fn good(out: Output) -> Result<Vec<u8>> {
     if out.timed_out {
         return Err("Git timed out; inspect HEAD, index and worktree before retrying because the outcome may be uncertain".into());
     }
@@ -76,7 +76,7 @@ fn good(out: Output) -> Result<Vec<u8>> {
     }
     Ok(out.stdout)
 }
-fn config(root: &Path, key: &str) -> Result<Option<String>> {
+pub(crate) fn config(root: &Path, key: &str) -> Result<Option<String>> {
     let out = run(root, &["config", "--get", key])?;
     if out.timed_out || out.truncated {
         return Err("cannot safely inspect Git configuration".into());
@@ -108,7 +108,7 @@ fn path_check(p: &str) -> Result<()> {
 fn pathspec(p: &str) -> String {
     format!(":(literal){p}")
 }
-fn root_check(root: &Path) -> Result<()> {
+pub(crate) fn root_check(root: &Path) -> Result<()> {
     let top = good(run(root, &["rev-parse", "--show-toplevel"])?)?;
     let top = std::str::from_utf8(&top)?.trim_end_matches('\n');
     if Path::new(top).canonicalize()? != root {
@@ -116,7 +116,7 @@ fn root_check(root: &Path) -> Result<()> {
     }
     Ok(())
 }
-fn head(root: &Path) -> Result<(Option<String>, Option<String>)> {
+pub(crate) fn head(root: &Path) -> Result<(Option<String>, Option<String>)> {
     let out = run(root, &["rev-parse", "--verify", "HEAD"])?;
     if out.timed_out || out.truncated {
         return Err("cannot inspect HEAD".into());
@@ -140,7 +140,7 @@ fn head(root: &Path) -> Result<(Option<String>, Option<String>)> {
     }
     Ok((value, reference))
 }
-fn git_path(root: &Path, name: &str) -> Result<PathBuf> {
+pub(crate) fn git_path(root: &Path, name: &str) -> Result<PathBuf> {
     let bytes = good(run(
         root,
         &["rev-parse", "--path-format=absolute", "--git-path", name],
@@ -149,7 +149,7 @@ fn git_path(root: &Path, name: &str) -> Result<PathBuf> {
         std::str::from_utf8(&bytes)?.trim_end_matches('\n'),
     ))
 }
-fn hash_file(path: &Path, max: u64) -> Result<Option<String>> {
+pub(crate) fn hash_file(path: &Path, max: u64) -> Result<Option<String>> {
     let meta = match fs::symlink_metadata(path) {
         Ok(m) => m,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
@@ -185,7 +185,7 @@ fn hash_file(path: &Path, max: u64) -> Result<Option<String>> {
     let mode = 0;
     Ok(Some(format!("{}:{mode:o}:{}", h.finalize(), n)))
 }
-fn hooks(root: &Path) -> Result<()> {
+pub(crate) fn hooks(root: &Path) -> Result<()> {
     let directory = git_path(root, "hooks")?;
     for name in [
         "pre-commit",

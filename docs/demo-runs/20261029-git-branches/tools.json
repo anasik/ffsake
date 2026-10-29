@@ -1,0 +1,442 @@
+[
+  {
+    "type": "tool_use",
+    "id": "toolu_01MUJh6Jp8JpXsQTF9Xo5Z6Q",
+    "name": "mcp__ffsake__ffsake_git_branches",
+    "input": {},
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_016JqkU7AUuCU7ccDUQjGcLT",
+    "name": "mcp__ffsake__ffsake_git",
+    "input": {
+      "query": "status"
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01MUJh6Jp8JpXsQTF9Xo5Z6Q",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"branches\":[{\"branch\":\"main\",\"commit\":\"34404f488f7f7b9acca2554ae697532b4363f684\",\"current\":true,\"upstream\":null}],\"current\":\"main\",\"head\":\"34404f488f7f7b9acca2554ae697532b4363f684\"}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01GGYzULbHRwabHm1UgU6WCh",
+    "name": "mcp__ffsake__ffsake_read",
+    "input": {
+      "path": "README.txt"
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_016JqkU7AUuCU7ccDUQjGcLT",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"atomic_snapshot\":false,\"entries\":[{\"original_path\":null,\"path\":\"unrelated.txt\",\"status\":\" M\"}],\"head\":\"34404f488f7f7b9acca2554ae697532b4363f684\",\"protected_entries_excluded\":1,\"read_only\":true,\"submodules\":\"ignored\",\"untracked\":\"directory summaries\"}}"
+      }
+    ]
+  },
+  {
+    "tool_use_id": "toolu_01GGYzULbHRwabHm1UgU6WCh",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"end_line\":1,\"path\":\"README.txt\",\"start_line\":1,\"text\":\"A calculator reports prices.\",\"total_lines\":1}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01KkoYDCEbcdRNNb7rVb6qfL",
+    "name": "mcp__ffsake__ffsake_git_operation_review",
+    "input": {
+      "operation": {
+        "action": "create",
+        "branch": "feature/calculator"
+      }
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01KkoYDCEbcdRNNb7rVb6qfL",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"current_ref\":\"refs/heads/main\",\"head\":\"34404f488f7f7b9acca2554ae697532b4363f684\",\"operation\":{\"action\":\"create\",\"branch\":\"feature/calculator\"},\"remote_state\":\"not inspected; the server enforces fast-forward safety\",\"review\":1,\"source_commit\":null,\"target_commit\":null,\"warning\":\"Git configuration, credential helpers and SSH can execute code. Network output may contain secrets and is not returned. Git is not sandboxed or journaled.\"}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01FwSV7Y9zsB1wkkmEM1E3B5",
+    "name": "mcp__ffsake__ffsake_git_operation",
+    "input": {
+      "review": 1,
+      "operation": {
+        "action": "create",
+        "branch": "feature/calculator"
+      }
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01FwSV7Y9zsB1wkkmEM1E3B5",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"journaled\":false,\"operation\":{\"action\":\"create\",\"branch\":\"feature/calculator\"},\"output_withheld\":true,\"source_commit\":null,\"success\":true}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01LsW2EvCKEbPdbVr3tJa81E",
+    "name": "mcp__ffsake__ffsake_git_operation_review",
+    "input": {
+      "operation": {
+        "action": "switch",
+        "branch": "feature/calculator"
+      }
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01LsW2EvCKEbPdbVr3tJa81E",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"current_ref\":\"refs/heads/main\",\"head\":\"34404f488f7f7b9acca2554ae697532b4363f684\",\"operation\":{\"action\":\"switch\",\"branch\":\"feature/calculator\"},\"remote_state\":\"not inspected; the server enforces fast-forward safety\",\"review\":2,\"source_commit\":null,\"target_commit\":\"34404f488f7f7b9acca2554ae697532b4363f684\",\"warning\":\"Git configuration, credential helpers and SSH can execute code. Network output may contain secrets and is not returned. Git is not sandboxed or journaled.\"}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01FVN2JNqw8ttwLAugJJ7Jbq",
+    "name": "mcp__ffsake__ffsake_git_operation",
+    "input": {
+      "review": 2,
+      "operation": {
+        "action": "switch",
+        "branch": "feature/calculator"
+      }
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01FVN2JNqw8ttwLAugJJ7Jbq",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"journaled\":false,\"operation\":{\"action\":\"switch\",\"branch\":\"feature/calculator\"},\"output_withheld\":true,\"source_commit\":null,\"success\":true}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01XPpWc5Fndnq5FBMrXMvRmd",
+    "name": "mcp__ffsake__ffsake_preview_edit",
+    "input": {
+      "path": "README.txt",
+      "old_text": "A calculator reports prices.",
+      "new_text": "A calculator reports prices after discounts.",
+      "expected_matches": 1
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01XPpWc5Fndnq5FBMrXMvRmd",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"handle\":1,\"preview\":{\"changed_files\":1,\"files\":[{\"path\":\"README.txt\",\"unified_diff\":\"--- a/README.txt\\n+++ b/README.txt\\n@@ -1 +1 @@\\n-A calculator reports prices.\\n+A calculator reports prices after discounts.\\n\"}],\"selected_files\":1}}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01D1fPUhRrefkfqwVTui3GgF",
+    "name": "mcp__ffsake__ffsake_apply",
+    "input": {
+      "handle": 1
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01D1fPUhRrefkfqwVTui3GgF",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"changed_files\":1,\"transaction\":\"tx-1793285981623515000-26613-0\"}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01VMQXdAioWpiV16cePYKQiS",
+    "name": "mcp__ffsake__ffsake_git_review",
+    "input": {
+      "paths": [
+        "README.txt"
+      ]
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01VMQXdAioWpiV16cePYKQiS",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"head\":\"34404f488f7f7b9acca2554ae697532b4363f684\",\"journaled\":false,\"paths\":[\"README.txt\"],\"review\":1,\"staged_diff\":\"\",\"unstaged_diff\":\"diff --git a/README.txt b/README.txt\\nindex c6481676994c0e532ef2b58dd8347ea50c0626bc..8b06d0aeb5fab8e3de5cbcfa7f5f81ea98bb84e8 100644\\n--- a/README.txt\\n+++ b/README.txt\\n@@ -1 +1 @@\\n-A calculator reports prices.\\n+A calculator reports prices after discounts.\\n\",\"untracked_content_in_diff\":false,\"warning\":\"Review is scoped to selected files. Mutations may execute Git and are not editor transactions.\",\"worktree_hashes\":[\"e0b7eafaa3bcc2122cca3a8eff76abb3a85c1aa5f972aea0e4fa8f636d7b9104:644:45\"]}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01F2gy3X5PneibqKiv7eD99j",
+    "name": "mcp__ffsake__ffsake_git_mutate",
+    "input": {
+      "review": 1,
+      "action": "stage"
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01F2gy3X5PneibqKiv7eD99j",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"action\":\"stage\",\"journaled\":false,\"next\":\"review again before the next mutation\",\"paths\":[\"README.txt\"]}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_013svj6ndxfFtTv3Ux4GbCBz",
+    "name": "mcp__ffsake__ffsake_git_review",
+    "input": {
+      "paths": [
+        "README.txt"
+      ]
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_013svj6ndxfFtTv3Ux4GbCBz",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"head\":\"34404f488f7f7b9acca2554ae697532b4363f684\",\"journaled\":false,\"paths\":[\"README.txt\"],\"review\":2,\"staged_diff\":\"diff --git a/README.txt b/README.txt\\nindex c6481676994c0e532ef2b58dd8347ea50c0626bc..8b06d0aeb5fab8e3de5cbcfa7f5f81ea98bb84e8 100644\\n--- a/README.txt\\n+++ b/README.txt\\n@@ -1 +1 @@\\n-A calculator reports prices.\\n+A calculator reports prices after discounts.\\n\",\"unstaged_diff\":\"\",\"untracked_content_in_diff\":false,\"warning\":\"Review is scoped to selected files. Mutations may execute Git and are not editor transactions.\",\"worktree_hashes\":[\"e0b7eafaa3bcc2122cca3a8eff76abb3a85c1aa5f972aea0e4fa8f636d7b9104:644:45\"]}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01BupYCTFDraQVmfwBb6E2tx",
+    "name": "mcp__ffsake__ffsake_git_mutate",
+    "input": {
+      "review": 2,
+      "action": "commit",
+      "message": "Document that calculator reports prices after discounts"
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01BupYCTFDraQVmfwBb6E2tx",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"action\":\"commit\",\"head\":\"fa76af7f1ddddc40109e3483f756da2dbaefca8f\",\"journaled\":false,\"paths\":[\"README.txt\"]}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_015WNeJCgjEjSPUTnCfgJoRA",
+    "name": "mcp__ffsake__ffsake_git_operation_review",
+    "input": {
+      "operation": {
+        "action": "push",
+        "branch": "feature/calculator",
+        "remote": "origin",
+        "remote_branch": "feature/calculator",
+        "set_upstream": true
+      }
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_015WNeJCgjEjSPUTnCfgJoRA",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"current_ref\":\"refs/heads/feature/calculator\",\"head\":\"fa76af7f1ddddc40109e3483f756da2dbaefca8f\",\"operation\":{\"action\":\"push\",\"branch\":\"feature/calculator\",\"remote\":\"origin\",\"remote_branch\":\"feature/calculator\",\"set_upstream\":true},\"remote_state\":\"not inspected; the server enforces fast-forward safety\",\"review\":3,\"source_commit\":\"fa76af7f1ddddc40109e3483f756da2dbaefca8f\",\"target_commit\":null,\"warning\":\"Git configuration, credential helpers and SSH can execute code. Network output may contain secrets and is not returned. Git is not sandboxed or journaled.\"}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_013vFtbRQDhNegEbcPRHxErc",
+    "name": "mcp__ffsake__ffsake_git_operation",
+    "input": {
+      "review": 3,
+      "operation": {
+        "action": "push",
+        "branch": "feature/calculator",
+        "remote": "origin",
+        "remote_branch": "feature/calculator",
+        "set_upstream": true
+      },
+      "source_commit": "fa76af7f1ddddc40109e3483f756da2dbaefca8f"
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_013vFtbRQDhNegEbcPRHxErc",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"journaled\":false,\"operation\":{\"action\":\"push\",\"branch\":\"feature/calculator\",\"remote\":\"origin\",\"remote_branch\":\"feature/calculator\",\"set_upstream\":true},\"output_withheld\":true,\"source_commit\":\"fa76af7f1ddddc40109e3483f756da2dbaefca8f\",\"success\":true}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01EqK4FPsE3tCkMTs5NLAEVz",
+    "name": "mcp__ffsake__ffsake_git_operation_review",
+    "input": {
+      "operation": {
+        "action": "fetch",
+        "remote": "origin"
+      }
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01EqK4FPsE3tCkMTs5NLAEVz",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"current_ref\":\"refs/heads/feature/calculator\",\"head\":\"fa76af7f1ddddc40109e3483f756da2dbaefca8f\",\"operation\":{\"action\":\"fetch\",\"remote\":\"origin\"},\"remote_state\":\"not inspected; the server enforces fast-forward safety\",\"review\":4,\"source_commit\":null,\"target_commit\":null,\"warning\":\"Git configuration, credential helpers and SSH can execute code. Network output may contain secrets and is not returned. Git is not sandboxed or journaled.\"}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_019dvUwmMFL6LTX29LFLZR2R",
+    "name": "mcp__ffsake__ffsake_git_operation",
+    "input": {
+      "review": 4,
+      "operation": {
+        "action": "fetch",
+        "remote": "origin"
+      }
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_019dvUwmMFL6LTX29LFLZR2R",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"journaled\":false,\"operation\":{\"action\":\"fetch\",\"remote\":\"origin\"},\"output_withheld\":true,\"source_commit\":null,\"success\":true}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01GmqcMxHqBDU76kvcdV6ASU",
+    "name": "mcp__ffsake__ffsake_git_branches",
+    "input": {},
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01GmqcMxHqBDU76kvcdV6ASU",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"branches\":[{\"branch\":\"feature/calculator\",\"commit\":\"fa76af7f1ddddc40109e3483f756da2dbaefca8f\",\"current\":true,\"upstream\":\"origin/feature/calculator\"},{\"branch\":\"main\",\"commit\":\"34404f488f7f7b9acca2554ae697532b4363f684\",\"current\":false,\"upstream\":null}],\"current\":\"feature/calculator\",\"head\":\"fa76af7f1ddddc40109e3483f756da2dbaefca8f\"}}"
+      }
+    ]
+  },
+  {
+    "type": "tool_use",
+    "id": "toolu_01LaLBLe7rD3bLPDHZpVUvWd",
+    "name": "mcp__ffsake__ffsake_git",
+    "input": {
+      "query": "status"
+    },
+    "caller": {
+      "type": "direct"
+    }
+  },
+  {
+    "tool_use_id": "toolu_01LaLBLe7rD3bLPDHZpVUvWd",
+    "type": "tool_result",
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":true,\"result\":{\"atomic_snapshot\":false,\"entries\":[{\"original_path\":null,\"path\":\"unrelated.txt\",\"status\":\" M\"}],\"head\":\"fa76af7f1ddddc40109e3483f756da2dbaefca8f\",\"protected_entries_excluded\":1,\"read_only\":true,\"submodules\":\"ignored\",\"untracked\":\"directory summaries\"}}"
+      }
+    ]
+  }
+]

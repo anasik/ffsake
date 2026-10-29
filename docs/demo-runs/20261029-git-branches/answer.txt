@@ -1,0 +1,10 @@
+I created and switched to `feature/calculator`, committed the README change, pushed it to origin with upstream tracking, and fetched. Everything was done through FFSAKE and each step reported success.
+
+- **Branch:** `feature/calculator` started from `main` (`34404f4`) and is now the current branch.
+- **Edit:** `README.txt` changed from "A calculator reports prices." to "A calculator reports prices after discounts."
+- **Commit:** `fa76af7`, "Document that calculator reports prices after discounts". Only `README.txt` was staged and committed.
+- **Push:** `fa76af7` went to `origin/feature/calculator`, and the branch now tracks it.
+- **Fetch and check:** After fetching from origin, the branch list shows `feature/calculator` at `fa76af7` with upstream `origin/feature/calculator`. `main` is unchanged at `34404f4`.
+- **Unrelated work:** Your edit to `unrelated.txt` is still there and still uncommitted, and nothing was staged.
+
+FFSAKE doesn't show git's network output, so I couldn't see the remote's own response. The upstream setting comes from local git config. I couldn't confirm the remote branch's commit beyond the push succeeding.

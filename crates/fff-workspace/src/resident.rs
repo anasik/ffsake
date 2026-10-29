@@ -50,6 +50,15 @@ pub enum Request {
         action: String,
         message: Option<String>,
     },
+    GitBranches {},
+    GitOperationReview {
+        operation: crate::git_remote::Operation,
+    },
+    GitOperation {
+        review: u64,
+        operation: crate::git_remote::Operation,
+        source_commit: Option<String>,
+    },
     Git {
         query: crate::workflow::GitQuery,
         #[serde(default)]
@@ -325,6 +334,7 @@ struct CachedProposal {
 pub struct Resident {
     project_jobs: crate::project_tasks::Jobs,
     git_reviews: crate::git_write::Reviews,
+    git_operations: crate::git_remote::Reviews,
     debugger: crate::debug::Debugger,
     tasks: crate::workflow::Tasks,
     session: EditorSession,
@@ -344,6 +354,7 @@ impl Resident {
         Ok(Self {
             project_jobs: crate::project_tasks::Jobs::default(),
             git_reviews: crate::git_write::Reviews::default(),
+            git_operations: crate::git_remote::Reviews::default(),
             debugger: crate::debug::Debugger::default(),
             tasks: crate::workflow::Tasks::default(),
             session: EditorSession::new(workspace),
@@ -694,6 +705,23 @@ impl Resident {
             ),
             Request::GitReview { paths } => {
                 self.git_reviews.review(self.session.workspace(), paths)
+            }
+            Request::GitBranches {} => crate::git_remote::branches(self.session.workspace()),
+            Request::GitOperationReview { operation } => self
+                .git_operations
+                .review(self.session.workspace(), operation),
+            Request::GitOperation {
+                review,
+                operation,
+                source_commit,
+            } => {
+                self.index_dirty = true;
+                self.git_operations.apply(
+                    self.session.workspace(),
+                    review,
+                    operation,
+                    source_commit,
+                )
             }
             Request::GitMutate {
                 review,

@@ -39,6 +39,8 @@ class HostSetupTests(unittest.TestCase):
                         self.assertNotIn("mcp__ffsake__ffsake_task_register", allowed)
                         self.assertNotIn("mcp__ffsake__ffsake_run_task", allowed)
                         self.assertNotIn("mcp__ffsake__ffsake_git_mutate", allowed)
+                        self.assertNotIn("mcp__ffsake__ffsake_git_operation", allowed)
+                        self.assertIn("mcp__ffsake__ffsake_git_branches", allowed)
                         self.assertIn("mcp__ffsake__ffsake_git_review", allowed)
                     elif host == "codex":
                         config = tomllib.loads((root / ".codex/config.toml").read_text())
@@ -48,6 +50,8 @@ class HostSetupTests(unittest.TestCase):
                         self.assertEqual(tools["ffsake_task_register"]["approval_mode"], "prompt")
                         self.assertEqual(tools["ffsake_run_task"]["approval_mode"], "prompt")
                         self.assertEqual(tools["ffsake_git_mutate"]["approval_mode"], "prompt")
+                        self.assertEqual(tools["ffsake_git_operation"]["approval_mode"], "prompt")
+                        self.assertEqual(tools["ffsake_git_branches"]["approval_mode"], "approve")
                         self.assertEqual(tools["ffsake_git_review"]["approval_mode"], "approve")
                         for name in suite.FFSAKE_ACCESS_MUTATIONS:
                             self.assertEqual(tools[name]["approval_mode"], "prompt" if policy == "ask" else "approve")
@@ -58,6 +62,7 @@ class HostSetupTests(unittest.TestCase):
                         self.assertEqual(config["permission"]["ffsake_ffsake_task_register"], "ask")
                         self.assertEqual(config["permission"]["ffsake_ffsake_run_task"], "ask")
                         self.assertEqual(config["permission"]["ffsake_ffsake_git_mutate"], "ask")
+                        self.assertEqual(config["permission"]["ffsake_ffsake_git_operation"], "ask")
                         for name in suite.FFSAKE_ACCESS_MUTATIONS:
                             self.assertEqual(config["permission"]["ffsake_" + name], policy)
                     before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
@@ -550,7 +555,7 @@ class CodexApprovalTests(unittest.TestCase):
             self.assertEqual(server["args"], [str(root)])
             self.assertTrue(server["required"])
             self.assertEqual(set(server["enabled_tools"]), set(suite.FFSAKE_TOOLS))
-            self.assertEqual(server["tools"], {tool: {"approval_mode": "prompt" if tool in ("ffsake_task_register", "ffsake_run_task", "ffsake_git_mutate") else "approve"} for tool in suite.FFSAKE_TOOLS})
+            self.assertEqual(server["tools"], {tool: {"approval_mode": "prompt" if tool in ("ffsake_task_register", "ffsake_run_task", "ffsake_git_mutate", "ffsake_git_operation") else "approve"} for tool in suite.FFSAKE_TOOLS})
             args = run.call_args.args[0]
             trust = tomllib.loads(args[args.index("-c") + 1])
             self.assertEqual(trust["projects"][str(root)]["trust_level"], "trusted")
@@ -1195,7 +1200,7 @@ class ToolProfileTests(unittest.TestCase):
             server = tomllib.loads((root / ".codex/config.toml").read_text())["mcp_servers"]["ffsake"]
             self.assertEqual(server["args"], [str(root), "--profile", "core"])
             self.assertEqual(set(server["enabled_tools"]), set(suite.FFSAKE_CORE_TOOLS))
-            self.assertEqual(server["tools"], {name: {"approval_mode": "prompt" if name in ("ffsake_task_register", "ffsake_run_task", "ffsake_git_mutate") else "approve"} for name in suite.FFSAKE_CORE_TOOLS})
+            self.assertEqual(server["tools"], {name: {"approval_mode": "prompt" if name in ("ffsake_task_register", "ffsake_run_task", "ffsake_git_mutate", "ffsake_git_operation") else "approve"} for name in suite.FFSAKE_CORE_TOOLS})
             self.assertEqual(run.call_args.args[0][-1], suite.ffsake_prompt("task", "core"))
 
     def test_claude_and_opencode_core_launch_configuration(self):
