@@ -11,12 +11,12 @@ FFSAKE_SOURCE="$HOME/.local/src/ffsake"
 git clone https://github.com/anasik/ffsake.git "$FFSAKE_SOURCE"
 cd "$FFSAKE_SOURCE"
 python3 scripts/ffsake_install.py install
-python3 scripts/ffsake_install.py configure --host claude --project "$PROJECT_DIR"          # review
-python3 scripts/ffsake_install.py configure --host claude --project "$PROJECT_DIR" --apply  # apply
+python3 scripts/ffsake_install.py configure --host claude --project "$PROJECT_DIR" --guidance          # review
+python3 scripts/ffsake_install.py configure --host claude --project "$PROJECT_DIR" --guidance --apply  # apply
 python3 scripts/ffsake_install.py doctor --host claude --project "$PROJECT_DIR"
 ```
 
-Install the binaries once per machine; configure each host and project you want to use. Repeated setup reuses matching installations and entries without silently upgrading. Replace `claude` with `codex` or `opencode` for those hosts. Trust or approve the MCP server if your host asks. In an existing Claude chat, use `/mcp` → `ffsake` → **Reconnect**; a new chat in the configured project needs no setup. [Full setup, updates and limitations](docs/INSTALL.md).
+Install the binaries once per machine; configure each host and project you want to use. Repeated setup reuses matching installations and entries without silently upgrading. The optional `--guidance` flag previews a marked, idempotent addition to the host's project instructions. Replace `claude` with `codex` or `opencode` for those hosts. Trust or approve the MCP server if your host asks. In an existing Claude chat, use `/mcp` → `ffsake` → **Reconnect**; a new chat in the configured project needs no setup. [Full setup, updates and limitations](docs/INSTALL.md).
 
 ## Contents
 
@@ -44,7 +44,7 @@ For Git, the agent can inspect changes, review selected-file staging and commits
 ## Optional build, debugging and language tools
 
 - **Build and test:** Ask the agent to list existing tasks or propose a named process task. Task registration and execution follow host approval; task authorizations persist per project and definitions are revalidated before each run. Output can be read incrementally and running tasks cancelled. Tasks execute project code, can change files, and are neither sandboxed nor part of editor history. Explicit restrictive startup task policies remain authoritative. [Task workflow and limits](docs/CLI.md#git-review-and-host-configured-buildtest-jobs).
-- **Debug:** A configured external DAP adapter can launch a local program or attach to an explicitly selected already-running local process, set breakpoints, inspect stack frames and variables, step, pause and continue. Attachment uses host approval and detaches without requesting termination of the independent target. C# with netcoredbg is the demonstrated adapter; FFSAKE does not bundle it. [Setup and limitations](docs/DEBUGGING.md) · [demonstration](docs/DEBUGGING_DEMO.md).
+- **Debug:** A configured external DAP adapter can launch a local program or attach to an explicitly selected already-running local process, set breakpoints, inspect stack frames and variables, step, pause and continue. Attachment uses host approval and detaches without requesting termination of the independent target. C# with netcoredbg and Python with debugpy have passed local launch tests; the installed Apple LLDB adapter crashed during C++ launch and is not yet validated. See the [compatibility report](docs/demo-runs/20261030-debug-compatibility/REPORT.md). FFSAKE does not bundle it. [Setup and limitations](docs/DEBUGGING.md) · [demonstration](docs/DEBUGGING_DEMO.md).
 - **Language intelligence:** The full MCP profile supports bounded semantic navigation, diagnostics and reviewed rename proposals through configured Rust and C++ language servers. Language servers are optional dependencies; other servers have not been established as supported. Results depend on supplied project context; external builds and tests are still needed. Ordinary editing does not require a language server. [Semantic interface and limitations](docs/CLI.md#shared-language-intelligence).
 
 These capabilities are implemented and tested within their documented bounds. Broader adapters, sandboxing and plugins remain planned, not guarantees of the current alpha. See [PLAN.md](PLAN.md) for the roadmap and evidence.

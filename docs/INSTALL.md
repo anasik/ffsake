@@ -25,10 +25,12 @@ For isolated tests or a different location, put `--prefix /absolute/path` **befo
 Choose exactly one host (`claude`, `codex`, or `opencode`). First print and review the proposed FFSAKE entry and any new permission defaults, then approve the explicit apply command through the host. Substitute the chosen host below:
 
 ```sh
-python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" configure --host claude --project "$PROJECT_DIR"
-python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" configure --host claude --project "$PROJECT_DIR" --apply
+python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" configure --host claude --project "$PROJECT_DIR" --guidance
+python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" configure --host claude --project "$PROJECT_DIR" --guidance --apply
 python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" doctor --host claude --project "$PROJECT_DIR"
 ```
+
+The optional `--guidance` adds a clearly marked block to `CLAUDE.md` for Claude or `AGENTS.md` for Codex/OpenCode. The preview prints the proposed block. Existing instructions are retained, repeating setup leaves a matching block unchanged, and edited or malformed markers require manual review. Because OpenCode selects the nearest instruction file, adding a new project `AGENTS.md` is refused if it would shadow an existing project or ancestor `CLAUDE.md` or `AGENTS.md`; merge guidance manually in that case. Omit `--guidance` if you do not want project guidance. Hosts may have other instruction precedence and trust settings; installing guidance does not prove that an agent followed it.
 
 The configuration is project-scoped: Claude Code uses `.mcp.json` and, if absent, `.claude/settings.json`; Codex uses `.codex/config.toml`; OpenCode 1.x uses `opencode.json`. Existing unrelated entries are preserved. A compatible entry in the project or the standard user configuration is reused, and repeated setup leaves it unchanged. Existing duplicate entries, entries under another name pointing to an `ffsake-mcp` executable, and conflicting entries require manual review. Custom or managed configuration locations and differently named executables cannot all be discovered automatically. A conflicting FFSAKE entry, unsafe symlink, invalid file or existing OpenCode `opencode.jsonc` stops for manual review without replacing it. Existing Claude settings and existing OpenCode permission policies are left alone, including deliberate auto/allow rules. When new defaults are created, ordinary file tools are allowed and access changes, task execution, debugger launch and Git mutations follow the host's normal approval policy. Host or organization policy may override these defaults.
 

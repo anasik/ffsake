@@ -1,6 +1,6 @@
 # Minimal local DAP debugging
 
-FFSAKE uses existing debug adapters through standard [Debug Adapter Protocol](https://microsoft.github.io/debug-adapter-protocol/overview) messages. The first validated adapter is Samsung **netcoredbg 3.2.0-1** (release asset **3.2.0-1092**, commit `9744e1f`) for C#/.NET 8. The core has no C# commands or language dispatch.
+FFSAKE uses existing debug adapters through standard [Debug Adapter Protocol](https://microsoft.github.io/debug-adapter-protocol/overview) messages. Tested local launch adapters include Python debugpy 1.8.17 and Samsung **netcoredbg 3.2.0-1** (release asset **3.2.0-1092**, commit `9744e1f`) for C#/.NET 8. The installed Apple LLDB adapter failed its C++ test; see the [compatibility evidence](demo-runs/20261030-debug-compatibility/REPORT.md). The core has no C# commands or language dispatch.
 
 ## Install and enable
 
@@ -38,6 +38,16 @@ Replace `claude` with `codex` or `opencode` to print that host's setup snippets;
 Claude's setup omits launch and attach from its allow list, Codex uses per-tool `approval_mode="prompt"`, and OpenCode uses the exact launch and attach tool permissions `ask`. Existing setup files are preserved, so after updating, inspect their rules before enabling attach. In particular, an older OpenCode `ffsake_*: allow` wildcard can automatically allow the new attach tool unless you add an explicit `ffsake_ffsake_debug_attach: ask` rule after it. Codex configurations may also need an explicit `[mcp_servers.ffsake.tools.ffsake_debug_attach]` with `approval_mode = "prompt"`. These are configured defaults, not guaranteed human prompts: host overrides and automatic approval remain authoritative. No forced interaction marker or independent click proof is used. The acceptance run observed Claude's normal launch prompt; this milestone does not claim fresh interactive Codex/OpenCode debugger tests.
 
 Debugging **executes project code**, including adapter-dependent behavior during value inspection. The fixed startup policy and host approval authorize execution; filesystem grants do not sandbox either adapter or program. FFSAKE does not journal their side effects. Review adapter settings for implicit command execution. Configuration is loaded once; requests cannot replace argv, settings, environment or the policy path. Build separately using the host or reviewed `--tasks` jobs. There is no implicit build.
+
+## Python launch with debugpy
+
+Install [debugpy](https://github.com/microsoft/debugpy) separately in a Python virtual environment, then use an absolute path to that environment's Python executable in both adapter argv and launch settings. Preserve the virtual-environment path; resolving its interpreter symlink can select the system Python instead.
+
+```json
+{"version":1,"configurations":{"python":{"argv":["/absolute/venv/bin/python","-m","debugpy.adapter"],"launch":{"program":"${workspaceFolder}/app.py","python":["/absolute/venv/bin/python"],"console":"internalConsole","justMyCode":true,"subProcess":false}}}}
+```
+
+Debugpy 1.8.17 launch, breakpoint, variables, stepping and cleanup passed on macOS. PID attach was blocked by the non-terminating-disconnect capability guard. Apple `lldb-dap` failed on the tested macOS host; its status and direct control are in the [compatibility report](demo-runs/20261030-debug-compatibility/REPORT.md).
 
 ## Attaching to a local process
 

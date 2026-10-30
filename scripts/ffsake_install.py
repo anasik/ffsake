@@ -345,10 +345,42 @@ def plan_config(prefix, host, project, profile):
     return changes
 
 
-def configure(prefix, host, project, profile, apply):
+GUIDANCE_START = "<!-- ffsake-guidance:start -->"
+GUIDANCE_END = "<!-- ffsake-guidance:end -->"
+GUIDANCE = """<!-- ffsake-guidance:start -->
+## FFSAKE repository tools
+
+When FFSAKE MCP is available, prefer it for repository exploration, scoped search, previewed edits, and transaction undo/redo when those tools fit the task. Check tool descriptions and existing project instructions. For build/test, inspect `ffsake_tasks` and use authorized named tasks; `ffsake_debug` with action `list` shows configured debugging capabilities. Tasks and debugging execute code and require host approval; they are not sandboxed or editor transactions.
+
+Use native host tools when FFSAKE lacks a needed capability, is unavailable, or a task calls for host-specific operations, subject to the host's permissions. Never use a fallback to evade an FFSAKE access denial; obtain the required authorization through the host first. Respect existing project instructions and review changes.
+<!-- ffsake-guidance:end -->"""
+
+
+def plan_guidance(host, project):
+    path = project / ('CLAUDE.md' if host == 'claude' else 'AGENTS.md')
+    if host == 'opencode' and not path.exists() and not path.is_symlink():
+        for directory in (project, *project.parents):
+            for name in ('CLAUDE.md', 'AGENTS.md'):
+                candidate = directory / name
+                if candidate.exists() or candidate.is_symlink():
+                    fail('new OpenCode AGENTS.md would shadow existing instructions at ' + str(candidate) + '; review manually')
+    if path.is_symlink(): fail('guidance file cannot be a symlink: ' + str(path))
+    before = path.read_bytes() if path.exists() else None
+    if before is not None and len(before) > 1024 * 1024: fail('guidance file exceeds 1 MiB')
+    content = before.decode('utf-8') if before is not None else ''
+    if GUIDANCE_START in content or GUIDANCE_END in content:
+        if content.count(GUIDANCE_START) != 1 or content.count(GUIDANCE_END) != 1 or GUIDANCE not in content:
+            fail('existing FFSAKE guidance was changed or malformed; review it manually: ' + str(path))
+        return []
+    separator = '' if not content else ('\n' if content.endswith('\n') else '\n\n')
+    return [(path, before, (content + separator + GUIDANCE + '\n').encode(), [{'guidance': GUIDANCE}])]
+
+
+def configure(prefix, host, project, profile, apply, guidance=False):
     if current(prefix) is None: fail('FFSAKE is not installed')
     existing = existing_scope(prefix, host, project, profile)
     changes = [] if existing else plan_config(prefix, host, project, profile)
+    if guidance: changes += plan_guidance(host, project)
     summary = [{'file': str(p), 'added': added} for p, _, _, added in changes]
     print(json.dumps({'status': 'planned' if changes and not apply else 'applied' if changes else 'unchanged',
                       'host': host, 'project': str(project), 'binary': str(prefix / 'current/ffsake-mcp'),
@@ -438,7 +470,9 @@ def main():
         p=sub.add_parser(name);p.add_argument('--profile', choices=('release','debug'),default='release')
     for name in ('configure','doctor'):
         p=sub.add_parser(name);p.add_argument('--host', choices=('claude','codex','opencode'),required=True);p.add_argument('--project',type=Path,required=True);p.add_argument('--tool-profile',choices=('core','all'),default='core')
-        if name=='configure':p.add_argument('--apply',action='store_true',help='Apply the reviewed project configuration')
+        if name=='configure':
+            p.add_argument('--apply',action='store_true',help='Apply the reviewed project configuration')
+            p.add_argument('--guidance',action='store_true',help='Also review/add project guidance for this host')
     sub.add_parser('uninstall')
     args=parser.parse_args()
     try:
@@ -448,7 +482,7 @@ def main():
         elif args.action in ('configure','doctor'):
             project=args.project.expanduser().resolve(strict=True)
             if not project.is_dir():fail('project must be an existing directory')
-            if args.action=='configure': configure(prefix,args.host,project,args.tool_profile,args.apply)
+            if args.action=='configure': configure(prefix,args.host,project,args.tool_profile,args.apply,args.guidance)
             else:doctor(prefix,args.host,project,args.tool_profile)
         else:print(json.dumps(uninstall(prefix),indent=2))
     except (ValueError, OSError, subprocess.SubprocessError, json.JSONDecodeError, tomllib.TOMLDecodeError) as e:

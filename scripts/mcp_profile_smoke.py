@@ -34,6 +34,11 @@ def main():
             assert run.returncode == 0, run.stderr
             return json.loads(run.stdout)["result"]["tools"]
 
+        init = {"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}
+        run = subprocess.run([str(binary), str(root)], input=json.dumps(init)+"\n", capture_output=True, text=True, env=env, timeout=10)
+        assert run.returncode == 0
+        instructions = json.loads(run.stdout)["result"]["instructions"]
+        assert "ffsake_tasks" in instructions and "ffsake_debug" in instructions and "evade access denial" in instructions
         full = catalog([])
         assert full == catalog(["--profile", "all"])
         core = catalog(["--profile", "core"])

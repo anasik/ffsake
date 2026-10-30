@@ -46,6 +46,10 @@ jobs:
       - run: python3 scripts/alpha_install_smoke.py
       - run: python3 scripts/debug_protocol_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/debug_attach_protocol_smoke.py target/debug/ffsake-mcp
+      - run: python3 -m venv "$RUNNER_TEMP/ffsake-debugpy" && "$RUNNER_TEMP/ffsake-debugpy/bin/python" -m pip install debugpy==1.8.17
+      - run: python3 scripts/debug_compat_smoke.py target/debug/ffsake-mcp --kind python --adapter "$RUNNER_TEMP/ffsake-debugpy/bin/python" --report "$RUNNER_TEMP/debugpy-report.json"
+      - run: python3 scripts/debugpy_attach_probe.py target/debug/ffsake-mcp --python "$RUNNER_TEMP/ffsake-debugpy/bin/python" --report "$RUNNER_TEMP/debugpy-attach-report.json"
+      - run: python3 -m unittest tests.test_install_guidance
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'

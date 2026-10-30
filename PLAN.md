@@ -1,5 +1,9 @@
 # Action plan
 
+## Alpha onboarding and debugger compatibility (2026-10-30)
+
+Add reviewable, idempotent host-specific project guidance and MCP instructions without overriding existing rules or evading access denial. Verify natural adoption in fresh sessions. Exercise real debugpy and LLDB adapters using disposable bug fixtures, preserve traces and investigate LLDB failure without weakening guards. Report adapter outcomes, run checks, push and verify exact-head CI, then pause.
+
 ## Alpha consolidation and local debugger attachment (2026-10-29)
 
 Git branches/fetch/non-force push and idempotent installation are complete on main. Add a PID-specific, host-approved local DAP attach mode with non-terminating detach, retaining source and stale-handle checks. Verify real netcoredbg state/stepping and independent target survival, controlled failure cleanup, host approval defaults, documentation and exact-head CI; preserve other agents' artifacts. Reconcile OpenCode evidence without conflating simulations with adapter tests. Pause afterward and prioritize alpha use and reproducible bugs.

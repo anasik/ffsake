@@ -1,0 +1,4967 @@
+{
+  "adapter_kind": "python",
+  "adapter": "/private/tmp/ffsake-debugpy-env/bin/python",
+  "result": "passed",
+  "trace": [
+    {
+      "tool": "debug_launch",
+      "arguments": {
+        "configuration": "test"
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "executes_project_code": true,
+          "filesystem_sandbox": false,
+          "mode": "launch",
+          "next": "poll until configuring, set breakpoints, then continue to finish configuration",
+          "session": 1,
+          "status": "starting",
+          "target_pid": null
+        }
+      },
+      "elapsed_ms": 63.93
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": null,
+          "busy": true,
+          "capabilities": {},
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.51
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {},
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.21
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {},
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.22
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {},
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.21
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "debugpySockets",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "debugpySockets",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "debugpySockets",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            }
+          ],
+          "output": "ptvsddebugpy",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.31
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.28
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.29
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.29
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.29
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.25
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.32
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.24
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.22
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.29
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "debugpySockets",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "initialized",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "configuring",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.3
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "breakpoints",
+          "session": 1,
+          "path": "payroll.py",
+          "lines": [
+            18
+          ]
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.17
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "configuring",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.16
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "breakpoints": [
+                {
+                  "id": 0,
+                  "line": 18,
+                  "source": {
+                    "path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-debug-compat-d_lfn4zd/project/payroll.py"
+                  },
+                  "verified": true
+                }
+              ]
+            }
+          },
+          "session": 1,
+          "status": "configuring",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.3
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "continue",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.08
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "configuring",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.16
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "process",
+              "exitCode": null,
+              "processId": 14233,
+              "threadId": null
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {}
+          },
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.32
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.18
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.24
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "thread",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1
+            },
+            {
+              "event": "stopped",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.25
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "stack",
+          "session": 1,
+          "thread": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.09
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.21
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "module",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "frames": [
+                {
+                  "column": 1,
+                  "handle": 1,
+                  "line": 18,
+                  "name": "total_pay",
+                  "source_authorized": true,
+                  "source_handle": 2,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-debug-compat-d_lfn4zd/project/payroll.py"
+                },
+                {
+                  "column": 1,
+                  "handle": 3,
+                  "line": 24,
+                  "name": "run",
+                  "source_authorized": true,
+                  "source_handle": 4,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-debug-compat-d_lfn4zd/project/payroll.py"
+                },
+                {
+                  "column": 1,
+                  "handle": 5,
+                  "line": 34,
+                  "name": "main",
+                  "source_authorized": true,
+                  "source_handle": 6,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-debug-compat-d_lfn4zd/project/payroll.py"
+                },
+                {
+                  "column": 1,
+                  "handle": 7,
+                  "line": 41,
+                  "name": "<module>",
+                  "source_authorized": true,
+                  "source_handle": 8,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-debug-compat-d_lfn4zd/project/payroll.py"
+                }
+              ],
+              "totalFrames": 4,
+              "truncated": false
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.55
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "scopes",
+          "session": 1,
+          "handle": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.1
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.22
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "scopes": [
+                {
+                  "expensive": false,
+                  "handle": 9,
+                  "name": "Locals"
+                },
+                {
+                  "expensive": false,
+                  "handle": 10,
+                  "name": "Globals"
+                }
+              ],
+              "truncated": false
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.54
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "variables",
+          "session": 1,
+          "handle": 9
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.11
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.25
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "paging": "adapter-dependent; response and expansion are bounded",
+              "truncated": false,
+              "variables": [
+                {
+                  "handle": 11,
+                  "name": "adjustments",
+                  "type": "list",
+                  "value": "[50.0]"
+                },
+                {
+                  "handle": null,
+                  "name": "base",
+                  "type": "int",
+                  "value": "900"
+                },
+                {
+                  "handle": null,
+                  "name": "hours",
+                  "type": "int",
+                  "value": "45"
+                },
+                {
+                  "handle": null,
+                  "name": "rate",
+                  "type": "int",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.72
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "variables",
+          "session": 1,
+          "handle": 10
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.13
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.29
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "paging": "adapter-dependent; response and expansion are bounded",
+              "truncated": false,
+              "variables": [
+                {
+                  "handle": 12,
+                  "name": "special variables",
+                  "type": "",
+                  "value": ""
+                },
+                {
+                  "handle": 13,
+                  "name": "function variables",
+                  "type": "",
+                  "value": ""
+                },
+                {
+                  "handle": 14,
+                  "name": "class variables",
+                  "type": "",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 1.02
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "next",
+          "session": 1,
+          "thread": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.25
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.49
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "continued",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1
+            },
+            {
+              "event": "stopped",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {}
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.85
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.35
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "scopes",
+          "session": 1,
+          "handle": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.16
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.34
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "error": "unknown or stale debug handle",
+            "ok": false
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 1.21
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "continue",
+          "session": 1,
+          "thread": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.2
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "step",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.53
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "continued",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1
+            },
+            {
+              "event": "stopped",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "allThreadsContinued": true
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 1.12
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.49
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "stack",
+          "session": 1,
+          "thread": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.17
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.47
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "frames": [
+                {
+                  "column": 1,
+                  "handle": 15,
+                  "line": 18,
+                  "name": "total_pay",
+                  "source_authorized": true,
+                  "source_handle": 16,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-debug-compat-d_lfn4zd/project/payroll.py"
+                },
+                {
+                  "column": 1,
+                  "handle": 17,
+                  "line": 24,
+                  "name": "run",
+                  "source_authorized": true,
+                  "source_handle": 18,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-debug-compat-d_lfn4zd/project/payroll.py"
+                },
+                {
+                  "column": 1,
+                  "handle": 19,
+                  "line": 34,
+                  "name": "main",
+                  "source_authorized": true,
+                  "source_handle": 20,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-debug-compat-d_lfn4zd/project/payroll.py"
+                },
+                {
+                  "column": 1,
+                  "handle": 21,
+                  "line": 41,
+                  "name": "<module>",
+                  "source_authorized": true,
+                  "source_handle": 22,
+                  "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-debug-compat-d_lfn4zd/project/payroll.py"
+                }
+              ],
+              "totalFrames": 4,
+              "truncated": false
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 1.62
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "scopes",
+          "session": 1,
+          "handle": 15
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.2
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.49
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "scopes": [
+                {
+                  "expensive": false,
+                  "handle": 23,
+                  "name": "Locals"
+                },
+                {
+                  "expensive": false,
+                  "handle": 24,
+                  "name": "Globals"
+                }
+              ],
+              "truncated": false
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 2.96
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "variables",
+          "session": 1,
+          "handle": 23
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.28
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.6
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "paging": "adapter-dependent; response and expansion are bounded",
+              "truncated": false,
+              "variables": [
+                {
+                  "handle": 25,
+                  "name": "adjustments",
+                  "type": "list",
+                  "value": "[50.0]"
+                },
+                {
+                  "handle": null,
+                  "name": "base",
+                  "type": "int",
+                  "value": "1000"
+                },
+                {
+                  "handle": null,
+                  "name": "hours",
+                  "type": "int",
+                  "value": "40"
+                },
+                {
+                  "handle": null,
+                  "name": "rate",
+                  "type": "int",
+                  "value": "25"
+                }
+              ]
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 1.54
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "variables",
+          "session": 1,
+          "handle": 24
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.87
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.62
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "paging": "adapter-dependent; response and expansion are bounded",
+              "truncated": false,
+              "variables": [
+                {
+                  "handle": 26,
+                  "name": "special variables",
+                  "type": "",
+                  "value": ""
+                },
+                {
+                  "handle": 27,
+                  "name": "function variables",
+                  "type": "",
+                  "value": ""
+                },
+                {
+                  "handle": 28,
+                  "name": "class variables",
+                  "type": "",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 5.02
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "breakpoints",
+          "session": 1,
+          "path": "payroll.py",
+          "lines": []
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.54
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 1.37
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "breakpoints": []
+            }
+          },
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.64
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "continue",
+          "session": 1,
+          "thread": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll; ordinary editing remains available",
+          "queued": true,
+          "session": 1
+        }
+      },
+      "elapsed_ms": 0.11
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": true,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "stopped",
+          "stop": {
+            "allThreadsStopped": true,
+            "description": "",
+            "reason": "breakpoint",
+            "threadId": 1
+          }
+        }
+      },
+      "elapsed_ms": 0.25
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "continued",
+              "exitCode": null,
+              "processId": null,
+              "threadId": 1
+            }
+          ],
+          "output": "actual={'grace': 950.0, 'ada': 1050.0}\nexpected={'grace': 950.0, 'ada': 1000.0}\n",
+          "output_truncated": false,
+          "result": {
+            "ok": true,
+            "result": {
+              "allThreadsContinued": true
+            }
+          },
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.62
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.26
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.33
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.33
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 1.49
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.93
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 4.09
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 2.6
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 10.36
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 1.77
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 1.84
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 1.54
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 1.82
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 3.21
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 2.18
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 1.84
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 1.71
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 1.65
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 1.24
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 1.46
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 1.51
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 1.44
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 1.28
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.94
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.86
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "running",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.63
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [
+            {
+              "event": "exited",
+              "exitCode": 1,
+              "processId": null,
+              "threadId": null
+            },
+            {
+              "event": "terminated",
+              "exitCode": null,
+              "processId": null,
+              "threadId": null
+            }
+          ],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "terminated",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.35
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "terminated",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.27
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "terminated",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.31
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "terminated",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.3
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "terminated",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.37
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "terminated",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.4
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "terminated",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.62
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "terminated",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.36
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": true,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "terminated",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.34
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "terminate",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll until cleaned=true",
+          "session": 1,
+          "status": "terminating"
+        }
+      },
+      "elapsed_ms": 0.36
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14227,
+          "busy": false,
+          "capabilities": {
+            "supportsClipboardContext": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDebuggerProperties": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": true,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsSetExpression": true,
+            "supportsSetVariable": true,
+            "supportsStepInTargetsRequest": true,
+            "supportsTerminateDebuggee": true,
+            "supportsTerminateRequest": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": true,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "terminated",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.26
+    }
+  ],
+  "before": {
+    "exit_code": 1,
+    "stdout": "actual={'grace': 950.0, 'ada': 1050.0}\nexpected={'grace': 950.0, 'ada': 1000.0}\n"
+  },
+  "stop": {
+    "allThreadsStopped": true,
+    "description": "",
+    "reason": "breakpoint",
+    "threadId": 1
+  },
+  "frame": {
+    "column": 1,
+    "handle": 1,
+    "line": 18,
+    "name": "total_pay",
+    "source_authorized": true,
+    "source_handle": 2,
+    "source_path": "/private/var/folders/1r/f47wxf3900d38thcw0b675sr0000gn/T/ffsake-debug-compat-d_lfn4zd/project/payroll.py"
+  },
+  "variables": [
+    {
+      "handle": 11,
+      "name": "adjustments",
+      "type": "list",
+      "value": "[50.0]"
+    },
+    {
+      "handle": null,
+      "name": "base",
+      "type": "int",
+      "value": "900"
+    },
+    {
+      "handle": null,
+      "name": "hours",
+      "type": "int",
+      "value": "45"
+    },
+    {
+      "handle": null,
+      "name": "rate",
+      "type": "int",
+      "value": "20"
+    },
+    {
+      "handle": 12,
+      "name": "special variables",
+      "type": "",
+      "value": ""
+    },
+    {
+      "handle": 13,
+      "name": "function variables",
+      "type": "",
+      "value": ""
+    },
+    {
+      "handle": 14,
+      "name": "class variables",
+      "type": "",
+      "value": ""
+    }
+  ],
+  "second_variables": [
+    {
+      "handle": 25,
+      "name": "adjustments",
+      "type": "list",
+      "value": "[50.0]"
+    },
+    {
+      "handle": null,
+      "name": "base",
+      "type": "int",
+      "value": "1000"
+    },
+    {
+      "handle": null,
+      "name": "hours",
+      "type": "int",
+      "value": "40"
+    },
+    {
+      "handle": null,
+      "name": "rate",
+      "type": "int",
+      "value": "25"
+    },
+    {
+      "handle": 26,
+      "name": "special variables",
+      "type": "",
+      "value": ""
+    },
+    {
+      "handle": 27,
+      "name": "function variables",
+      "type": "",
+      "value": ""
+    },
+    {
+      "handle": 28,
+      "name": "class variables",
+      "type": "",
+      "value": ""
+    }
+  ],
+  "adapter_cleaned": true,
+  "debuggee_pids": [
+    14233
+  ],
+  "debuggees_cleaned": true
+}

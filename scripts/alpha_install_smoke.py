@@ -62,12 +62,15 @@ def main():
         d=projects['codex'];(d/'.codex').mkdir();(d/'.codex/config.toml').write_text('# existing comment\nmodel = "fixture"\n[mcp_servers.other]\ncommand = "other"\n')
         o=projects['opencode'];(o/'opencode.json').write_text('{"mcp":{"other":{"type":"local","command":["other"]}},"permission":{"*":"allow"},"custom":true}\n')
         for host,root in projects.items():
+            guidance=root/('CLAUDE.md' if host=='claude' else 'AGENTS.md');guidance.write_text('# Existing instructions\nKeep me.\n')
             names={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
-            plan=tool('configure','--host',host,'--project',str(root));assert plan['status']=='planned'
+            plan=tool('configure','--host',host,'--project',str(root),'--guidance');assert plan['status']=='planned' and any('guidance' in str(item['added']) for item in plan['changes'])
             assert names=={p:p.read_bytes() for p in names}
-            assert tool('configure','--host',host,'--project',str(root),'--apply')['status']=='applied'
+            assert tool('configure','--host',host,'--project',str(root),'--guidance','--apply')['status']=='applied'
             saved={p:p.read_bytes() for p in root.rglob('*') if p.is_file()}
-            assert tool('configure','--host',host,'--project',str(root),'--apply')['status']=='unchanged'
+            assert tool('configure','--host',host,'--project',str(root),'--guidance','--apply')['status']=='unchanged'
+            assert guidance.read_text().startswith('# Existing instructions\nKeep me.\n')
+            assert guidance.read_text().count('<!-- ffsake-guidance:start -->') == 1
             assert saved=={p:p.read_bytes() for p in saved}
             checked=tool('doctor','--host',host,'--project',str(root));assert checked['ok'] and checked['mcp_initialized'] and checked['model_calls']==0
         assert (c/'.claude/settings.json').read_bytes()==settings

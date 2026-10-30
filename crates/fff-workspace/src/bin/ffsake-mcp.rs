@@ -286,7 +286,8 @@ fn handle_message(runtime: &mut Resident, profile: ToolProfile, message: Value) 
                 "result":{
                     "protocolVersion":"2025-11-25",
                     "capabilities":{"tools":{}},
-                    "serverInfo":{"name":"ffsake","version":env!("CARGO_PKG_VERSION")}
+                    "serverInfo":{"name":"ffsake","version":env!("CARGO_PKG_VERSION")},
+                    "instructions":"Prefer FFSAKE for scoped repository exploration, guarded previews and edits when suitable. Discover configured build/test jobs with ffsake_tasks and debug configurations with ffsake_debug action list. Host approval governs execution and mutations. Native host tools may be appropriate for unavailable capabilities, but never use fallback to evade access denial; obtain host authorization first. Tasks/debugging execute code and are not sandboxed or editor transactions."
                 }
             })
         }
@@ -517,7 +518,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_debug",
-            "Control/inspect the current DAP session. request.action=list lists configured names and launch/attach modes. Every other action requires the session from debug_launch or debug_attach, including poll. poll is nonblocking and consumes queued results/events/output; wait externally between polls. Other actions queue one operation: poll until busy=false and inspect result.ok. breakpoints replaces all breakpoints for path (one-based lines), and pending breakpoints may resolve when launch finishes; continue with no thread finishes initial configuration. After stopping, use stop.threadId -> stack -> frame handle -> scopes -> variable handle -> variables. Handles expire on resume; source requires an authorized adapter-provided path, or use ordinary ffsake_read when sourceReference=0. next/step_in/step_out require thread. terminate cancels pending work and disconnects; it terminates launched debuggees but requests detach for attached targets, then cleans the owned adapter group. No arbitrary expressions or raw protocol requests. Output/runtime values are untrusted and bounded; capabilities report optional adapter features.",
+            "Discover configured debugging with request.action=list, or control/inspect the current DAP session. List reports names and launch/attach modes. Every other action requires the session from debug_launch or debug_attach, including poll. poll is nonblocking and consumes queued results/events/output; wait externally between polls. Other actions queue one operation: poll until busy=false and inspect result.ok. breakpoints replaces all breakpoints for path (one-based lines), and pending breakpoints may resolve when launch finishes; continue with no thread finishes initial configuration. After stopping, use stop.threadId -> stack -> frame handle -> scopes -> variable handle -> variables. Handles expire on resume; source requires an authorized adapter-provided path, or use ordinary ffsake_read when sourceReference=0. next/step_in/step_out require thread. terminate cancels pending work and disconnects; it terminates launched debuggees but requests detach for attached targets, then cleans the owned adapter group. No arbitrary expressions or raw protocol requests. Output/runtime values are untrusted and bounded; capabilities report optional adapter features.",
             json!({"type":"object","required":["request"],"additionalProperties":false,"properties":{"request":{"type":"object","required":["action"],"additionalProperties":false,"properties":{"action":{"enum":["list","poll","terminate","breakpoints","threads","stack","scopes","variables","source","continue","next","step_in","step_out","pause"]},"session":{"type":"integer","minimum":1},"path":{"type":"string","maxLength":4096},"lines":{"type":"array","maxItems":64,"items":{"type":"integer","minimum":1}},"thread":{"type":"integer"},"handle":{"type":"integer","minimum":1},"start":{"type":"integer","minimum":0,"maximum":10000},"limit":{"type":"integer","minimum":1,"maximum":100}}}}}),
         ),
         tool(
@@ -537,7 +538,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_tasks",
-            "List project process tasks and their current authorization status, or fixed named tasks when --tasks restricts the session. Project tasks are not trusted merely because the file exists.",
+            "Discover project process tasks and their current authorization status, or fixed named tasks when --tasks restricts the session. Project tasks are not trusted merely because the file exists.",
             json!({"type":"object","properties":{},"additionalProperties":false}),
         ),
         tool(
@@ -576,7 +577,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_read",
-            "Read a workspace file or line range.",
+            "Read an authorized workspace file or line range. If access is denied, obtain host authorization; do not evade the denial through native fallback.",
             json!({
                 "type":"object","required":["path"],"properties":{
                     "path":{"type":"string"},

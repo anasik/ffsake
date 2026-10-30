@@ -1,0 +1,817 @@
+{
+  "adapter_kind": "cpp",
+  "adapter": "/Library/Developer/CommandLineTools/usr/bin/lldb-dap",
+  "result": "failed",
+  "trace": [
+    {
+      "tool": "debug_launch",
+      "arguments": {
+        "configuration": "test"
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "executes_project_code": true,
+          "filesystem_sandbox": false,
+          "mode": "launch",
+          "next": "poll until configuring, set breakpoints, then continue to finish configuration",
+          "session": 1,
+          "status": "starting",
+          "target_pid": null
+        }
+      },
+      "elapsed_ms": 78.14
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": null,
+          "busy": true,
+          "capabilities": {},
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.49
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {},
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.14
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {},
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.17
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {},
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.17
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {},
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.23
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {},
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.19
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDataBreakpoints": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsDisassembleRequest": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": false,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsInstructionBreakpoints": true,
+            "supportsLoadedSourcesRequest": false,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsProgressReporting": true,
+            "supportsReadMemoryRequest": true,
+            "supportsRestartFrame": false,
+            "supportsRestartRequest": true,
+            "supportsRunInTerminalRequest": true,
+            "supportsSetVariable": true,
+            "supportsStepBack": false,
+            "supportsStepInTargetsRequest": true,
+            "supportsSteppingGranularity": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.29
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDataBreakpoints": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsDisassembleRequest": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": false,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsInstructionBreakpoints": true,
+            "supportsLoadedSourcesRequest": false,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsProgressReporting": true,
+            "supportsReadMemoryRequest": true,
+            "supportsRestartFrame": false,
+            "supportsRestartRequest": true,
+            "supportsRunInTerminalRequest": true,
+            "supportsSetVariable": true,
+            "supportsStepBack": false,
+            "supportsStepInTargetsRequest": true,
+            "supportsSteppingGranularity": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.28
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDataBreakpoints": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsDisassembleRequest": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": false,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsInstructionBreakpoints": true,
+            "supportsLoadedSourcesRequest": false,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsProgressReporting": true,
+            "supportsReadMemoryRequest": true,
+            "supportsRestartFrame": false,
+            "supportsRestartRequest": true,
+            "supportsRunInTerminalRequest": true,
+            "supportsSetVariable": true,
+            "supportsStepBack": false,
+            "supportsStepInTargetsRequest": true,
+            "supportsSteppingGranularity": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.3
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDataBreakpoints": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsDisassembleRequest": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": false,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsInstructionBreakpoints": true,
+            "supportsLoadedSourcesRequest": false,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsProgressReporting": true,
+            "supportsReadMemoryRequest": true,
+            "supportsRestartFrame": false,
+            "supportsRestartRequest": true,
+            "supportsRunInTerminalRequest": true,
+            "supportsSetVariable": true,
+            "supportsStepBack": false,
+            "supportsStepInTargetsRequest": true,
+            "supportsSteppingGranularity": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.25
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDataBreakpoints": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsDisassembleRequest": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": false,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsInstructionBreakpoints": true,
+            "supportsLoadedSourcesRequest": false,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsProgressReporting": true,
+            "supportsReadMemoryRequest": true,
+            "supportsRestartFrame": false,
+            "supportsRestartRequest": true,
+            "supportsRunInTerminalRequest": true,
+            "supportsSetVariable": true,
+            "supportsStepBack": false,
+            "supportsStepInTargetsRequest": true,
+            "supportsSteppingGranularity": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.23
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDataBreakpoints": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsDisassembleRequest": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": false,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsInstructionBreakpoints": true,
+            "supportsLoadedSourcesRequest": false,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsProgressReporting": true,
+            "supportsReadMemoryRequest": true,
+            "supportsRestartFrame": false,
+            "supportsRestartRequest": true,
+            "supportsRunInTerminalRequest": true,
+            "supportsSetVariable": true,
+            "supportsStepBack": false,
+            "supportsStepInTargetsRequest": true,
+            "supportsSteppingGranularity": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.33
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDataBreakpoints": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsDisassembleRequest": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": false,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsInstructionBreakpoints": true,
+            "supportsLoadedSourcesRequest": false,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsProgressReporting": true,
+            "supportsReadMemoryRequest": true,
+            "supportsRestartFrame": false,
+            "supportsRestartRequest": true,
+            "supportsRunInTerminalRequest": true,
+            "supportsSetVariable": true,
+            "supportsStepBack": false,
+            "supportsStepInTargetsRequest": true,
+            "supportsSteppingGranularity": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.34
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDataBreakpoints": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsDisassembleRequest": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": false,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsInstructionBreakpoints": true,
+            "supportsLoadedSourcesRequest": false,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsProgressReporting": true,
+            "supportsReadMemoryRequest": true,
+            "supportsRestartFrame": false,
+            "supportsRestartRequest": true,
+            "supportsRunInTerminalRequest": true,
+            "supportsSetVariable": true,
+            "supportsStepBack": false,
+            "supportsStepInTargetsRequest": true,
+            "supportsSteppingGranularity": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.34
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": true,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDataBreakpoints": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsDisassembleRequest": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": false,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsInstructionBreakpoints": true,
+            "supportsLoadedSourcesRequest": false,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsProgressReporting": true,
+            "supportsReadMemoryRequest": true,
+            "supportsRestartFrame": false,
+            "supportsRestartRequest": true,
+            "supportsRunInTerminalRequest": true,
+            "supportsSetVariable": true,
+            "supportsStepBack": false,
+            "supportsStepInTargetsRequest": true,
+            "supportsSteppingGranularity": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": false,
+          "error": null,
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "starting",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.3
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDataBreakpoints": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsDisassembleRequest": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": false,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsInstructionBreakpoints": true,
+            "supportsLoadedSourcesRequest": false,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsProgressReporting": true,
+            "supportsReadMemoryRequest": true,
+            "supportsRestartFrame": false,
+            "supportsRestartRequest": true,
+            "supportsRunInTerminalRequest": true,
+            "supportsSetVariable": true,
+            "supportsStepBack": false,
+            "supportsStepInTargetsRequest": true,
+            "supportsSteppingGranularity": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": true,
+          "error": "DAP frame/connection error: invalid or oversized LSP frame",
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "failed",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.27
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "terminate",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "next": "poll until cleaned=true",
+          "session": 1,
+          "status": "terminating"
+        }
+      },
+      "elapsed_ms": 0.11
+    },
+    {
+      "tool": "debug",
+      "arguments": {
+        "request": {
+          "action": "poll",
+          "session": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "result": {
+          "adapter_pid": 14207,
+          "busy": false,
+          "capabilities": {
+            "supportTerminateDebuggee": true,
+            "supportsCompletionsRequest": true,
+            "supportsConditionalBreakpoints": true,
+            "supportsConfigurationDoneRequest": true,
+            "supportsDataBreakpoints": true,
+            "supportsDelayedStackTraceLoading": true,
+            "supportsDisassembleRequest": true,
+            "supportsEvaluateForHovers": true,
+            "supportsExceptionInfoRequest": true,
+            "supportsExceptionOptions": true,
+            "supportsFunctionBreakpoints": true,
+            "supportsGotoTargetsRequest": false,
+            "supportsHitConditionalBreakpoints": true,
+            "supportsInstructionBreakpoints": true,
+            "supportsLoadedSourcesRequest": false,
+            "supportsLogPoints": true,
+            "supportsModulesRequest": true,
+            "supportsProgressReporting": true,
+            "supportsReadMemoryRequest": true,
+            "supportsRestartFrame": false,
+            "supportsRestartRequest": true,
+            "supportsRunInTerminalRequest": true,
+            "supportsSetVariable": true,
+            "supportsStepBack": false,
+            "supportsStepInTargetsRequest": true,
+            "supportsSteppingGranularity": true,
+            "supportsValueFormattingOptions": true
+          },
+          "cleaned": true,
+          "error": "DAP frame/connection error: invalid or oversized LSP frame",
+          "events": [],
+          "output": "",
+          "output_truncated": false,
+          "result": null,
+          "session": 1,
+          "status": "failed",
+          "stop": null
+        }
+      },
+      "elapsed_ms": 0.2
+    }
+  ],
+  "before": {
+    "exit_code": 1,
+    "stdout": "sum=0 count=5\n"
+  },
+  "error": "AssertionError({'adapter_pid': 14207, 'busy': False, 'capabilities': {'supportTerminateDebuggee': True, 'supportsCompletionsRequest': True, 'supportsConditionalBreakpoints': True, 'supportsConfigurationDoneRequest': True, 'supportsDataBreakpoints': True, 'supportsDelayedStackTraceLoading': True, 'supportsDisassembleRequest': True, 'supportsEvaluateForHovers': True, 'supportsExceptionInfoRequest': True, 'supportsExceptionOptions': True, 'supportsFunctionBreakpoints': True, 'supportsGotoTargetsRequest': False, 'supportsHitConditionalBreakpoints': True, 'supportsInstructionBreakpoints': True, 'supportsLoadedSourcesRequest': False, 'supportsLogPoints': True, 'supportsModulesRequest': True, 'supportsProgressReporting': True, 'supportsReadMemoryRequest': True, 'supportsRestartFrame': False, 'supportsRestartRequest': True, 'supportsRunInTerminalRequest': True, 'supportsSetVariable': True, 'supportsStepBack': False, 'supportsStepInTargetsRequest': True, 'supportsSteppingGranularity': True, 'supportsValueFormattingOptions': True}, 'cleaned': True, 'error': 'DAP frame/connection error: invalid or oversized LSP frame', 'events': [], 'output': '', 'output_truncated': False, 'result': None, 'session': 1, 'status': 'failed', 'stop': None})",
+  "traceback": "Traceback (most recent call last):\n  File \"/private/tmp/ffsake-onboarding/scripts/debug_compat_smoke.py\", line 31, in main\n    assert not configured['cleaned'], configured\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: {'adapter_pid': 14207, 'busy': False, 'capabilities': {'supportTerminateDebuggee': True, 'supportsCompletionsRequest': True, 'supportsConditionalBreakpoints': True, 'supportsConfigurationDoneRequest': True, 'supportsDataBreakpoints': True, 'supportsDelayedStackTraceLoading': True, 'supportsDisassembleRequest': True, 'supportsEvaluateForHovers': True, 'supportsExceptionInfoRequest': True, 'supportsExceptionOptions': True, 'supportsFunctionBreakpoints': True, 'supportsGotoTargetsRequest': False, 'supportsHitConditionalBreakpoints': True, 'supportsInstructionBreakpoints': True, 'supportsLoadedSourcesRequest': False, 'supportsLogPoints': True, 'supportsModulesRequest': True, 'supportsProgressReporting': True, 'supportsReadMemoryRequest': True, 'supportsRestartFrame': False, 'supportsRestartRequest': True, 'supportsRunInTerminalRequest': True, 'supportsSetVariable': True, 'supportsStepBack': False, 'supportsStepInTargetsRequest': True, 'supportsSteppingGranularity': True, 'supportsValueFormattingOptions': True}, 'cleaned': True, 'error': 'DAP frame/connection error: invalid or oversized LSP frame', 'events': [], 'output': '', 'output_truncated': False, 'result': None, 'session': 1, 'status': 'failed', 'stop': None}\n"
+}
