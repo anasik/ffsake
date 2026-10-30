@@ -1,5 +1,9 @@
 # Action plan
 
+## Authorized Git repositories in added folders (2026-10-30)
+
+Allow the existing Git inspection, reviewed mutation and branch/remote tools to select a separately authorized repository or linked worktree, defaulting to the primary root. Bind review handles to canonical repository identity, recheck read/write access, preserve Git safeguards and primary journal ownership, and test isolated repositories, revocation and local bare remotes. Update agent guidance, push and verify exact-head CI, then pause.
+
 ## Versioned alpha release and update awareness (2026-10-30)
 
 Prepare native macOS ARM64 and Linux x86-64 package workflows with checksum verification, tested MCP initialization, explicit install/update/pins and retained rollback generations. Add nonblocking, daily shared-cache release awareness without automatic installation. Test lifecycle and agent notice handling, push and verify exact-head CI, test the nonpublishing release workflow, and propose the first tag before any publication.

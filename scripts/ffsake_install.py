@@ -351,6 +351,13 @@ Use native host tools when FFSAKE lacks a needed capability, is unavailable, or 
 <!-- ffsake-guidance:end -->"""
 
 
+GIT_GUIDANCE_START = "<!-- ffsake-git-guidance:start -->"
+GIT_GUIDANCE_END = "<!-- ffsake-git-guidance:end -->"
+GIT_GUIDANCE = """<!-- ffsake-git-guidance:start -->
+For Git in an authorized added repository, set its repository root on inspection, review and execution. Omit the selector only for the primary repository; never reuse a review for another repository.
+<!-- ffsake-git-guidance:end -->"""
+
+
 def plan_guidance(host, project):
     path = project / ('CLAUDE.md' if host == 'claude' else 'AGENTS.md')
     if host == 'opencode' and not path.exists() and not path.is_symlink():
@@ -363,12 +370,16 @@ def plan_guidance(host, project):
     before = path.read_bytes() if path.exists() else None
     if before is not None and len(before) > 1024 * 1024: fail('guidance file exceeds 1 MiB')
     content = before.decode('utf-8') if before is not None else ''
-    if GUIDANCE_START in content or GUIDANCE_END in content:
-        if content.count(GUIDANCE_START) != 1 or content.count(GUIDANCE_END) != 1 or GUIDANCE not in content:
-            fail('existing FFSAKE guidance was changed or malformed; review it manually: ' + str(path))
-        return []
-    separator = '' if not content else ('\n' if content.endswith('\n') else '\n\n')
-    return [(path, before, (content + separator + GUIDANCE + '\n').encode(), [{'guidance': GUIDANCE}])]
+    added=[]
+    for start, end, block in ((GUIDANCE_START, GUIDANCE_END, GUIDANCE), (GIT_GUIDANCE_START, GIT_GUIDANCE_END, GIT_GUIDANCE)):
+        if start in content or end in content:
+            if content.count(start) != 1 or content.count(end) != 1 or block not in content:
+                fail('existing FFSAKE guidance was changed or malformed; review it manually: ' + str(path))
+            continue
+        separator = '' if not content else ('\n' if content.endswith('\n') else '\n\n')
+        content += separator + block + '\n'
+        added.append({'guidance': block})
+    return [(path, before, content.encode(), added)] if added else []
 
 
 def configure(prefix, host, project, profile, apply, guidance=False):

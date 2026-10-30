@@ -424,6 +424,9 @@ impl Access {
     pub fn has_policy(&self) -> bool {
         self.policy.is_some() && !self.persistent
     }
+    pub(crate) fn primary_root(&self) -> &Path {
+        &self.primary
+    }
     pub(crate) fn absolute(&self, path: &Path) -> Result<PathBuf> {
         if path.as_os_str().is_empty()
             || path.components().any(|p| matches!(p, Component::ParentDir))

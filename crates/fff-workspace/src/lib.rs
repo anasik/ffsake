@@ -273,6 +273,67 @@ impl Workspace {
         &self.root
     }
 
+    /// A Git repository view retains the original access authority and journal anchor.
+    pub(crate) fn git_repository(&self, selector: Option<&str>, write: bool) -> Result<Self> {
+        let requested = match selector {
+            None | Some(".") => self.root.clone(),
+            Some(path) => PathBuf::from(path),
+        };
+        let (root, _) = self.access.authorize(&requested, false)?;
+        if !root.is_dir() || fs::canonicalize(&root)? != root {
+            return Err(WorkspaceError::InvalidPath(requested.display().to_string()));
+        }
+        // A directory grant is required for the repository; an isolated file grant
+        // cannot authorize status/diff or metadata mutations for the whole tree.
+        let metadata = root.join(".git");
+        self.access.authorize(&metadata, write)?;
+        let kind = fs::symlink_metadata(&metadata)?;
+        if !kind.is_file() && !kind.is_dir() {
+            return Err(WorkspaceError::InvalidPath(metadata.display().to_string()));
+        }
+        if kind.is_file() && root != self.access.primary_root() {
+            // Linked worktrees store their private Git metadata elsewhere. Require
+            // its Git-maintained reverse pointer to identify this exact worktree;
+            // a forged pointer must not expose a neighboring repository's index.
+            if kind.len() > 8192 {
+                return Err(WorkspaceError::InvalidPath(metadata.display().to_string()));
+            }
+            let pointer = fs::read_to_string(&metadata)?;
+            let gitdir = pointer
+                .trim()
+                .strip_prefix("gitdir: ")
+                .ok_or_else(|| WorkspaceError::InvalidPath(metadata.display().to_string()))?;
+            let gitdir = if Path::new(gitdir).is_absolute() {
+                PathBuf::from(gitdir)
+            } else {
+                root.join(gitdir)
+            };
+            access::no_symlinks(&gitdir)?;
+            let gitdir = fs::canonicalize(gitdir)?;
+            let reverse = gitdir.join("gitdir");
+            access::no_symlinks(&reverse)?;
+            let info = fs::symlink_metadata(&reverse)?;
+            if !info.is_file() || info.len() > 8192 {
+                return Err(WorkspaceError::InvalidPath(metadata.display().to_string()));
+            }
+            let back = fs::read_to_string(&reverse)?;
+            let back = Path::new(back.trim());
+            let back = if back.is_absolute() {
+                back.to_path_buf()
+            } else {
+                gitdir.join(back)
+            };
+            access::no_symlinks(&back)?;
+            if fs::canonicalize(back)? != metadata {
+                return Err(WorkspaceError::InvalidPath(metadata.display().to_string()));
+            }
+        }
+        Ok(Self {
+            root,
+            access: self.access.clone(),
+        })
+    }
+
     pub fn read_all_text(&self, relative: impl AsRef<Path>) -> Result<String> {
         let path = self.resolve_existing(relative.as_ref())?;
         if !path.is_file() {

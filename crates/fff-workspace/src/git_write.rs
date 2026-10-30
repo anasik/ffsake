@@ -284,9 +284,9 @@ fn snapshot(workspace: &Workspace, paths: &[String], write: bool) -> Result<Snap
     let mut files = Vec::new();
     for p in paths {
         path_check(p)?;
-        let (resolved, owner) = workspace.access.authorize(Path::new(p), write)?;
-        if owner != root {
-            return Err("Git paths must belong to the primary project".into());
+        let (resolved, owner) = workspace.access.authorize(&root.join(p), write)?;
+        if !root.starts_with(&owner) || !resolved.starts_with(root) {
+            return Err("Git paths must belong to the selected repository grant".into());
         }
         files.push(hash_file(&resolved, 32 * 1024 * 1024)?);
         // Literal pathspecs can still select descendants when naming a directory.
@@ -411,7 +411,7 @@ fn commit_reviewed(workspace: &Workspace, review: &Review, message: &str) -> Res
         .1
         .as_ref()
         .ok_or("detached HEAD commits are not supported; use host Git")?;
-    let internal = root.join(".ffsake");
+    let internal = workspace.access.primary_root().join(".ffsake");
     crate::access::no_symlinks(&internal)?;
     fs::create_dir_all(&internal)?;
     crate::access::no_symlinks(&internal)?;
@@ -531,6 +531,7 @@ fn commit_reviewed(workspace: &Workspace, review: &Review, message: &str) -> Res
     Ok(json!({"action":"commit","paths":review.paths,"head":commit,"journaled":false}))
 }
 struct Review {
+    repository: PathBuf,
     paths: Vec<String>,
     snapshot: Snapshot,
 }
@@ -563,12 +564,13 @@ impl Reviews {
         self.entries.insert(
             id,
             Review {
+                repository: workspace.root().to_path_buf(),
                 paths: paths.clone(),
                 snapshot: before.clone(),
             },
         );
         Ok(
-            json!({"review":id,"head":before.head.0,"paths":paths,"staged_diff":staged,"unstaged_diff":unstaged,"worktree_hashes":before.files,"untracked_content_in_diff":false,"journaled":false,"warning":"Review is scoped to selected files. Mutations may execute Git and are not editor transactions."}),
+            json!({"review":id,"repository":workspace.root(),"head":before.head.0,"paths":paths,"staged_diff":staged,"unstaged_diff":unstaged,"worktree_hashes":before.files,"untracked_content_in_diff":false,"journaled":false,"warning":"Review is scoped to selected files. Mutations may execute Git and are not editor transactions."}),
         )
     }
     pub(crate) fn mutate(
@@ -582,6 +584,9 @@ impl Reviews {
             .entries
             .remove(&id)
             .ok_or("unknown, expired or consumed Git review")?;
+        if review.repository != workspace.root() {
+            return Err("Git review belongs to a different repository; review again".into());
+        }
         if !["stage", "unstage", "commit"].contains(&action) {
             return Err("unsupported Git action".into());
         }

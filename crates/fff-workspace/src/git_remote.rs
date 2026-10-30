@@ -229,9 +229,9 @@ fn inspect_switch(workspace: &Workspace, target: &str) -> Result<String> {
         if name == ".gitattributes" || name.ends_with("/.gitattributes") {
             return Err("switch changes attributes; use host Git".into());
         }
-        let (path, owner) = workspace.access.authorize(Path::new(name), true)?;
-        if owner != root {
-            return Err("switch paths must remain in the primary project".into());
+        let (path, owner) = workspace.access.authorize(&root.join(name), true)?;
+        if !root.starts_with(&owner) || !path.starts_with(root) {
+            return Err("switch paths must remain in the selected repository grant".into());
         }
         if let Ok(metadata) = std::fs::symlink_metadata(&path) {
             total_bytes = total_bytes
@@ -437,10 +437,11 @@ pub(crate) fn branches(workspace: &Workspace) -> Result<Value> {
         items.push(json!({"branch":name,"commit":commit,"upstream":if upstream.is_empty(){None}else{Some(upstream)},"upstream_ref":if upstream_ref.is_empty(){None}else{Some(upstream_ref)},"current":h.1.as_deref()==Some(&format!("refs/heads/{name}"))}));
     }
     Ok(
-        json!({"current":h.1.and_then(|r|r.strip_prefix("refs/heads/").map(str::to_owned)),"head":h.0,"branches":items}),
+        json!({"repository":root,"current":h.1.and_then(|r|r.strip_prefix("refs/heads/").map(str::to_owned)),"head":h.0,"branches":items}),
     )
 }
 struct Review {
+    repository: std::path::PathBuf,
     operation: Operation,
     snapshot: Snapshot,
 }
@@ -483,10 +484,11 @@ impl Reviews {
         }
         self.next += 1;
         let id = self.next;
-        let result = json!({"review":id,"operation":operation,"head":s.head.0,"current_ref":s.head.1,"source_commit":s.source,"target_commit":s.target,"remote_state":"not inspected; the server enforces fast-forward safety","warning":"Git configuration, credential helpers and SSH can execute code. Network output may contain secrets and is not returned. Git is not sandboxed or journaled."});
+        let result = json!({"review":id,"repository":workspace.root(),"operation":operation,"head":s.head.0,"current_ref":s.head.1,"source_commit":s.source,"target_commit":s.target,"remote_state":"not inspected; the server enforces fast-forward safety","warning":"Git configuration, credential helpers and SSH can execute code. Network output may contain secrets and is not returned. Git is not sandboxed or journaled."});
         self.reviews.insert(
             id,
             Review {
+                repository: workspace.root().to_path_buf(),
                 operation,
                 snapshot: s,
             },
@@ -502,11 +504,18 @@ impl Reviews {
     ) -> Result<Value> {
         // All four operations can write repository metadata (and switch also
         // writes files). A read-only primary project must not authorize them.
-        workspace.access.authorize(Path::new(".git"), true)?;
+        workspace
+            .access
+            .authorize(&workspace.root().join(".git"), true)?;
         let r = self
             .reviews
             .remove(&id)
             .ok_or("unknown, expired or consumed Git operation review")?;
+        if r.repository != workspace.root() {
+            return Err(
+                "Git operation review belongs to a different repository; review again".into(),
+            );
+        }
         if r.operation != operation {
             return Err("operation differs from reviewed request; review again".into());
         }

@@ -39,7 +39,7 @@ Ask your agent to use FFSAKE to explore and edit your project. For example: “F
 
 The project directory is the default file scope. To open an external file or folder, ask the agent to use the access tools; the host's normal approval policy applies. Grants can be read-only or read/write and persist until removed. A file grant does not open its parent directory. Explicit restrictive access exports remain authoritative. See [host access and its limits](docs/HOST_ACCESS.md).
 
-For Git, the agent can inspect changes, review selected-file staging and commits, and review branch creation, switching, fetch and non-force push before executing them. Host approval applies to mutations and network operations. Force push, tags, pull, merge, rebase and arbitrary refspecs are outside this scope; some executable Git configurations are refused. See [Git and task workflows](docs/CLI.md#git-review-and-host-configured-buildtest-jobs).
+For Git, the agent can inspect changes, review selected-file staging and commits, and review branch creation, switching, fetch and non-force push before executing them. Use the optional `repository` selector to choose an authorized added repository or linked worktree; omit it for the primary project and use the same selector when applying a review. Host approval applies to mutations and network operations. Force push, tags, pull, merge, rebase and arbitrary refspecs are outside this scope; some executable Git configurations are refused. See [Git and task workflows](docs/CLI.md#git-review-and-host-configured-buildtest-jobs).
 
 ## Optional build, debugging and language tools
 

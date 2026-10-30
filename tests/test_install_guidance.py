@@ -28,6 +28,13 @@ class GuidanceTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'shadow'):installer.plan_guidance('opencode',root)
             self.assertFalse((root/'AGENTS.md').exists())
             self.assertEqual((parent/'CLAUDE.md').read_text(),'existing instructions')
+    def test_existing_guidance_is_preserved_when_git_block_is_added(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);path=root/'AGENTS.md';original=installer.GUIDANCE+'\n';path.write_text(original)
+            plan=installer.plan_guidance('codex',root)
+            self.assertEqual(len(plan),1);self.assertTrue(plan[0][2].decode().startswith(original))
+            self.assertIn(installer.GIT_GUIDANCE,plan[0][2].decode())
+            path.write_bytes(plan[0][2]);self.assertEqual(installer.plan_guidance('codex',root),[])
     def test_modified_marker_fails_closed(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td);path=root/'AGENTS.md';path.write_text(installer.GUIDANCE.replace('When FFSAKE','Changed FFSAKE'))

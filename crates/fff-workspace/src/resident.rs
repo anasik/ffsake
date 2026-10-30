@@ -47,23 +47,30 @@ pub enum Request {
         request: crate::debug::Action,
     },
     GitReview {
+        repository: Option<String>,
         paths: Vec<String>,
     },
     GitMutate {
+        repository: Option<String>,
         review: u64,
         action: String,
         message: Option<String>,
     },
-    GitBranches {},
+    GitBranches {
+        repository: Option<String>,
+    },
     GitOperationReview {
+        repository: Option<String>,
         operation: crate::git_remote::Operation,
     },
     GitOperation {
+        repository: Option<String>,
         review: u64,
         operation: crate::git_remote::Operation,
         source_commit: Option<String>,
     },
     Git {
+        repository: Option<String>,
         query: crate::workflow::GitQuery,
         #[serde(default)]
         staged: bool,
@@ -716,40 +723,74 @@ impl Resident {
                 },
                 limit,
             ),
-            Request::GitReview { paths } => {
-                self.git_reviews.review(self.session.workspace(), paths)
+            Request::GitReview { repository, paths } => {
+                let workspace = self
+                    .session
+                    .workspace()
+                    .git_repository(repository.as_deref(), false)?;
+                self.git_reviews.review(&workspace, paths)
             }
-            Request::GitBranches {} => crate::git_remote::branches(self.session.workspace()),
-            Request::GitOperationReview { operation } => self
-                .git_operations
-                .review(self.session.workspace(), operation),
+            Request::GitBranches { repository } => {
+                let workspace = self
+                    .session
+                    .workspace()
+                    .git_repository(repository.as_deref(), false)?;
+                crate::git_remote::branches(&workspace)
+            }
+            Request::GitOperationReview {
+                repository,
+                operation,
+            } => {
+                let workspace = self
+                    .session
+                    .workspace()
+                    .git_repository(repository.as_deref(), false)?;
+                self.git_operations.review(&workspace, operation)
+            }
             Request::GitOperation {
+                repository,
                 review,
                 operation,
                 source_commit,
             } => {
+                let workspace = self
+                    .session
+                    .workspace()
+                    .git_repository(repository.as_deref(), true)?;
                 self.index_dirty = true;
-                self.git_operations.apply(
-                    self.session.workspace(),
-                    review,
-                    operation,
-                    source_commit,
-                )
+                self.git_operations
+                    .apply(&workspace, review, operation, source_commit)
             }
             Request::GitMutate {
+                repository,
                 review,
                 action,
                 message,
             } => {
+                let workspace = self
+                    .session
+                    .workspace()
+                    .git_repository(repository.as_deref(), true)?;
                 self.index_dirty = true;
                 self.git_reviews
-                    .mutate(self.session.workspace(), review, &action, message)
+                    .mutate(&workspace, review, &action, message)
             }
             Request::Git {
+                repository,
                 query,
                 staged,
                 paths,
-            } => crate::workflow::inspect(self.session.workspace(), query, staged, &paths),
+            } => {
+                let workspace = self
+                    .session
+                    .workspace()
+                    .git_repository(repository.as_deref(), false)?;
+                let mut result = crate::workflow::inspect(&workspace, query, staged, &paths)?;
+                if let Some(object) = result.as_object_mut() {
+                    object.insert("repository".into(), json!(workspace.root()));
+                }
+                Ok(result)
+            }
             Request::Tasks {} => {
                 if self.tasks.restricted() {
                     Ok(self.tasks.list())

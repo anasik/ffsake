@@ -309,7 +309,7 @@ fn handle_message(runtime: &mut Resident, profile: ToolProfile, message: Value) 
                     "protocolVersion":"2025-11-25",
                     "capabilities":{"tools":{}},
                     "serverInfo":{"name":"ffsake","version":option_env!("FFSAKE_RELEASE_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"))},
-                    "instructions":"Prefer FFSAKE for scoped repository exploration, guarded previews and edits when suitable. Discover configured build/test jobs with ffsake_tasks and debug configurations with ffsake_debug action list. Host approval governs execution and mutations. Native host tools may be appropriate for unavailable capabilities, but never use fallback to evade access denial; obtain host authorization first. Tasks/debugging execute code and are not sandboxed or editor transactions. If a tool result includes update_notice, relay the available release and instructions to the user; do not install automatically."
+                    "instructions":"Prefer FFSAKE for scoped repository exploration, guarded previews and edits when suitable. Git tools accept an optional repository selector for authorized added repository roots; use the same selector for review and execution. Discover configured build/test jobs with ffsake_tasks and debug configurations with ffsake_debug action list. Host approval governs execution and mutations. Native host tools may be appropriate for unavailable capabilities, but never use fallback to evade access denial; obtain host authorization first. Tasks/debugging execute code and are not sandboxed or editor transactions. If a tool result includes update_notice, relay the available release and instructions to the user; do not install automatically."
                 }
             })
         }
@@ -515,18 +515,18 @@ fn tools() -> Vec<Value> {
     vec![
         tool(
             "ffsake_git_branches",
-            "List local branches, current branch, commits and upstreams. Read-only; no network.",
-            json!({"type":"object","additionalProperties":false,"properties":{}}),
+            "List local branches, current branch, commits and upstreams. Read-only; no network. Optional repository selects an authorized repository root; omit for primary. Use the same repository for review and execution.",
+            json!({"type":"object","additionalProperties":false,"properties":{"repository":{"type":"string","minLength":1,"maxLength":4096}}}),
         ),
         tool(
             "ffsake_git_operation_review",
-            "Review an exact branch create/switch, branch-only fetch or non-force push. Push review shows source branch, exact commit, remote name and destination branch; no remote snapshot is promised. No network is contacted during review. Git credential helpers and SSH may execute code on network operations.",
-            json!({"type":"object","required":["operation"],"additionalProperties":false,"properties":{"operation":git_operation.clone()}}),
+            "Review an exact branch create/switch, branch-only fetch or non-force push. Push review shows source branch, exact commit, remote name and destination branch; no remote snapshot is promised. No network is contacted during review. Git credential helpers and SSH may execute code on network operations. Optional repository selects an authorized repository root; omit for primary. Use the same repository for review and execution.",
+            json!({"type":"object","required":["operation"],"additionalProperties":false,"properties":{"repository":{"type":"string","minLength":1,"maxLength":4096},"operation":git_operation.clone()}}),
         ),
         tool(
             "ffsake_git_operation",
-            "Execute the exact operation from a fresh review. For push, supply source_commit from the review so the host approval shows the exact commit along with source branch and destination. Auto/allow is respected. No force, tags, deletion, arbitrary refspecs, merge or rebase. Switch uses Git's overwrite protection; fetch updates only configured remote-tracking branches. Push uses the reviewed immutable commit and remote enforces fast-forward safety. Configured credential helpers and SSH may execute; raw network output is withheld to protect credentials. Not sandboxed or journaled.",
-            json!({"type":"object","required":["review","operation"],"additionalProperties":false,"properties":{"review":{"type":"integer","minimum":1},"operation":git_operation,"source_commit":{"type":"string","minLength":40,"maxLength":64}}}),
+            "Execute the exact operation from a fresh review. For push, supply source_commit from the review so the host approval shows the exact commit along with source branch and destination. Auto/allow is respected. No force, tags, deletion, arbitrary refspecs, merge or rebase. Switch uses Git's overwrite protection; fetch updates only configured remote-tracking branches. Push uses the reviewed immutable commit and remote enforces fast-forward safety. Configured credential helpers and SSH may execute; raw network output is withheld to protect credentials. Not sandboxed or journaled. Optional repository selects an authorized repository root; omit for primary. Use the same repository for review and execution.",
+            json!({"type":"object","required":["review","operation"],"additionalProperties":false,"properties":{"repository":{"type":"string","minLength":1,"maxLength":4096},"review":{"type":"integer","minimum":1},"operation":git_operation,"source_commit":{"type":"string","minLength":40,"maxLength":64}}}),
         ),
         tool(
             "ffsake_debug_attach",
@@ -545,18 +545,18 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_git_review",
-            "Review exact selected files for staging, unstaging or commit. Returns staged binary/full-index diff and an opaque review handle covering HEAD, entire index, selected file contents, Git configuration and attributes. Untracked contents are not in the diff; read them separately. Review must be repeated after each mutation. Git mutation is not an editor undo/redo transaction.",
-            json!({"type":"object","required":["paths"],"additionalProperties":false,"properties":{"paths":{"type":"array","minItems":1,"maxItems":100,"items":{"type":"string","minLength":1,"maxLength":4096}}}}),
+            "Review exact selected files for staging, unstaging or commit. Returns staged binary/full-index diff and an opaque review handle covering HEAD, entire index, selected file contents, Git configuration and attributes. Untracked contents are not in the diff; read them separately. Review must be repeated after each mutation. Git mutation is not an editor undo/redo transaction. Optional repository selects an authorized repository root; omit for primary. Use the same repository for review and execution.",
+            json!({"type":"object","required":["paths"],"additionalProperties":false,"properties":{"repository":{"type":"string","minLength":1,"maxLength":4096},"paths":{"type":"array","minItems":1,"maxItems":100,"items":{"type":"string","minLength":1,"maxLength":4096}}}}),
         ),
         tool(
             "ffsake_git_mutate",
-            "Stage, unstage or commit the exact files in a fresh ffsake_git_review handle. Ordinary host approval applies, including intentional allow/auto settings. Commits construct a tree from HEAD and selected reviewed index entries, preserving the real index and unrelated staged files. Selected files must have no unstaged changes; detached HEAD commits are unsupported. HEAD, index, files, attributes and config are rechecked; stale state rejects. Git hooks, signing, fsmonitor and selected executable filters are explicitly refused rather than disabled. Git is not sandboxed or journaled; concurrent filesystem writers are not locked.",
-            json!({"type":"object","required":["review","action"],"additionalProperties":false,"properties":{"review":{"type":"integer","minimum":1},"action":{"enum":["stage","unstage","commit"]},"message":{"type":"string","maxLength":16384}}}),
+            "Stage, unstage or commit the exact files in a fresh ffsake_git_review handle. Ordinary host approval applies, including intentional allow/auto settings. Commits construct a tree from HEAD and selected reviewed index entries, preserving the real index and unrelated staged files. Selected files must have no unstaged changes; detached HEAD commits are unsupported. HEAD, index, files, attributes and config are rechecked; stale state rejects. Git hooks, signing, fsmonitor and selected executable filters are explicitly refused rather than disabled. Git is not sandboxed or journaled; concurrent filesystem writers are not locked. Optional repository selects an authorized repository root; omit for primary. Use the same repository for review and execution.",
+            json!({"type":"object","required":["review","action"],"additionalProperties":false,"properties":{"repository":{"type":"string","minLength":1,"maxLength":4096},"review":{"type":"integer","minimum":1},"action":{"enum":["stage","unstage","commit"]},"message":{"type":"string","maxLength":16384}}}),
         ),
         tool(
             "ffsake_git",
-            "Read-only bounded Git review at the workspace repository/worktree root. query=status returns porcelain status and HEAD, excluding protected metadata; query=diff returns staged=true index diff or default unstaged diff, optionally scoped to exact literal paths. No staging, commit, reset, hooks, external diff or textconv. Untracked content is not included in diff; status summarizes untracked directories and ignores submodules. 15s / 256 KiB output cap, no partial results. Status and diff are observations, not an atomic snapshot or mutation authorization.",
-            json!({"type":"object","required":["query"],"additionalProperties":false,"properties":{"query":{"enum":["status","diff"]},"staged":{"type":"boolean"},"paths":{"type":"array","maxItems":100,"items":{"type":"string","minLength":1,"maxLength":4096}}}}),
+            "Read-only bounded Git review at the workspace repository/worktree root. query=status returns porcelain status and HEAD, excluding protected metadata; query=diff returns staged=true index diff or default unstaged diff, optionally scoped to exact literal paths. No staging, commit, reset, hooks, external diff or textconv. Untracked content is not included in diff; status summarizes untracked directories and ignores submodules. 15s / 256 KiB output cap, no partial results. Status and diff are observations, not an atomic snapshot or mutation authorization. Optional repository selects an authorized repository root; omit for primary. Use the same repository for review and execution.",
+            json!({"type":"object","required":["query"],"additionalProperties":false,"properties":{"repository":{"type":"string","minLength":1,"maxLength":4096},"query":{"enum":["status","diff"]},"staged":{"type":"boolean"},"paths":{"type":"array","maxItems":100,"items":{"type":"string","minLength":1,"maxLength":4096}}}}),
         ),
         tool(
             "ffsake_tasks",
