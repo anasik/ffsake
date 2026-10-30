@@ -1,0 +1,68 @@
+name: Alpha release
+on:
+  push:
+    tags: ['v*-alpha.*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Alpha version for package test (does not publish)
+        required: true
+        default: v0.1.0-alpha.1
+permissions:
+  contents: read
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            platform: linux-x86_64
+          - runner: macos-14
+            platform: macos-arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build and verify archive
+        env:
+          FFSAKE_RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+        run: |
+          cargo build --locked --release --bins
+          if [ "$(uname -s)" = Darwin ]; then otool -L target/release/ffsake-mcp; else ldd target/release/ffsake-mcp; fi
+          python3 scripts/release_package.py --version "$FFSAKE_RELEASE_VERSION" --binary-dir target/release --output dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}
+          path: dist/*.tar.gz
+  checksums:
+    needs: package
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Generate checksums
+        run: cd dist && sha256sum *.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: dist/*
+  publish:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    needs: checksums
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-assets
+          path: dist
+      - name: Publish prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" dist/* --prerelease --title "$TAG" --notes 'Alpha binaries: macOS ARM64 (macOS 14+) and Linux x86-64 (glibc 2.35+), with system runtime libraries. Git is needed for Git operations; curl enables update notices. Language servers and debug adapters are separate optional dependencies. See INSTALL.md for installation, checksums, updates and reconnection.'

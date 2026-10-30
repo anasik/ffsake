@@ -1,8 +1,8 @@
 # Install FFSAKE for an alpha project
 
-An agent can follow these instructions when given the FFSAKE repository URL and the project to configure. The supported source-build path uses Git, Python 3.11 or later, a current stable Rust/Cargo toolchain, a C compiler and build tools. It has been exercised on macOS; the same Unix path is checked on Linux in CI. Windows is not supported by this installer or the current process-group runner. Language servers and debug adapters are optional and are not installed here. FFSAKE has no permanent daemon: the coding host starts and stops its MCP server over stdio.
+An agent can follow these instructions when given the FFSAKE repository URL and the project to configure. The installer uses Git and Python 3.11 or later. Release binaries target macOS ARM64 (macOS 14 or later) and Linux x86-64 (glibc 2.35 or later). Source builds additionally need stable Rust/Cargo and a C compiler/build tools. It has been exercised on macOS; the same Unix path is checked on Linux in CI. Windows is not supported by this installer or the current process-group runner. Language servers and debug adapters are optional and are not installed here. FFSAKE has no permanent daemon: the coding host starts and stops its MCP server over stdio.
 
-There were no published GitHub release binaries when this path was audited. Do not download an unverified build or assume another platform is supported. Source builds use the repository's locked Cargo dependencies.
+Alpha archives and SHA-256 checksums are published on GitHub Releases once a release is approved and tagged. Before the first release, `install` reports that no release is available; use `install --source` as an explicit fallback. Checksums verify downloaded bytes against the release checksum file; they are not an independent signature. Source builds use locked Cargo dependencies. The versioned binaries may require standard OS runtime libraries; Git is required for Git operations, and `curl` is used for optional update awareness. Language servers and debug adapters are separate optional dependencies.
 
 ## One-time installation
 
@@ -16,9 +16,9 @@ cd "$FFSAKE_SOURCE"
 python3 scripts/ffsake_install.py install
 ```
 
-The installer builds `ffsake` and `ffsake-mcp`, verifies the MCP catalog, and publishes them under `~/.local/share/ffsake/current/`. MCP configuration uses that stable path, not the checkout's `target` directory. Repeating `install` reuses an unchanged installation. If the source revision differs, it reports the installed and available revisions without upgrading. Builds and Git may execute code; the host's normal approval policy applies, including deliberate auto/allow settings.
+The installer downloads the latest alpha for the supported platform, verifies its SHA-256 and MCP catalog, and installs `ffsake` and `ffsake-mcp` under `~/.local/share/ffsake/current/`. MCP configuration uses that stable path, not the checkout's `target` directory. Repeating `install` reuses a matching installation. Use `install --version v0.1.0-alpha.1` to select and pin a release. If a different version is available, install reports it without upgrading. Builds and Git may execute code; the host's normal approval policy applies, including deliberate auto/allow settings.
 
-For isolated tests or a different location, put `--prefix /absolute/path` **before** the subcommand on every invocation. `--profile debug` is available for development; the default is `release`.
+For isolated tests or a different location, put `--prefix /absolute/path` **before** the subcommand on every invocation. `--source` explicitly selects a source build; `--profile debug` is available with `--source`.
 
 ## Configure a project
 
@@ -43,15 +43,19 @@ The doctor validates both installed binary checksums and the project entry, then
 Only update when the user authorizes it through the host. Inspect the source checkout for local changes first; do not discard or reset them. Fetch/pull and build are separate actions subject to host approval:
 
 ```sh
-git -C "$FFSAKE_SOURCE" status --short
-git -C "$FFSAKE_SOURCE" pull --ff-only
-python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" install
-# After reviewing the reported revision and obtaining host approval:
+python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" check-update
+# Explicit host approval is required before changing the installed version:
 python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" update
+# Select and pin a specific version instead:
+python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" update --version v0.1.0-alpha.1
+# Restore an already retained release (or use `--revision REVISION` for a source build):
+python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" rollback --version v0.1.0-alpha.1
 python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" doctor --host claude --project "$PROJECT_DIR"
 ```
 
-An explicit `update` builds and verifies a new generation before atomically switching the stable `current` link. A running MCP server continues on its old process until reconnected; new sessions use the updated binary. The installer removes the previous generation only if it contains exactly its own verified files; `previous_generation_retained: true` means it left that generation for inspection. An interrupted install may leave an `.install.lock`; inspect it and any temporary files before removing them.
+An explicit update verifies a new generation before atomically switching `current` and keeps the old generation for rollback. A running MCP process keeps its existing binary; reconnect the host session to use the replacement. `update --source` is the explicit source-build alternative; inspect and update the source checkout separately without discarding changes. An interrupted install may leave an `.install.lock`; inspect it before removing it.
+
+Unpinned alpha servers check the configured channel asynchronously at startup and at most once per day during use, using a shared per-installation cache and a short timeout. A newer compatible release is included once in an ordinary tool response; the agent should relay it. Offline failures do not block tools. A pinned installation suppresses automatic notices and ordinary `update` will not move it. Use an explicit `--version` to change the pin or `update --unpin` to follow the channel again; `check-update` remains available. No automatic installation, background service or forced restart occurs. FFSAKE release versions (for example `v0.1.0-alpha.1`) are distinct from MCP protocol versions; MCP manages the server connection, not software installation.
 
 ## Uninstall
 
@@ -59,6 +63,6 @@ An explicit `update` builds and verifies a new generation before atomically swit
 python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" uninstall
 ```
 
-This removes the managed active binaries and link, not project files, `.ffsake` journals, source checkout or host configuration. The host entry will point to a missing binary until you remove only its FFSAKE entry using your host's configuration mechanism. Review the relevant project files rather than deleting them wholesale. Repeating uninstall is harmless.
+This removes the managed active binaries and link; retained generations are left for manual review. It does not remove project files, `.ffsake` journals, source checkout or host configuration. The host entry will point to a missing binary until you remove only its FFSAKE entry using your host's configuration mechanism. Review the relevant project files rather than deleting them wholesale. Repeating uninstall is harmless.
 
 Host references: [Claude Code MCP](https://code.claude.com/docs/en/mcp), [Codex MCP](https://developers.openai.com/codex/mcp), and [OpenCode MCP](https://opencode.ai/docs/mcp-servers/).

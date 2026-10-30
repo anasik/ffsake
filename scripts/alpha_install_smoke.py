@@ -15,9 +15,10 @@ def main():
         base=Path(td).resolve();clone=base/'source';prefix=base/'install'
         command(['git','clone','--quiet','--no-hardlinks',str(SOURCE),str(clone)])
         # Include the working installer when exercising uncommitted development changes.
-        shutil.copy2(SOURCE/'scripts/ffsake_install.py',clone/'scripts/ffsake_install.py')
+        for name in ('ffsake_install.py','ffsake_releases.py'):
+            shutil.copy2(SOURCE/'scripts'/name,clone/'scripts'/name)
         command(['git','config','user.name','Alpha Fixture'],clone);command(['git','config','user.email','fixture@example.invalid'],clone)
-        command(['git','add','scripts/ffsake_install.py'],clone)
+        command(['git','add','scripts/ffsake_install.py','scripts/ffsake_releases.py'],clone)
         if subprocess.run(['git','diff','--cached','--quiet'],cwd=clone).returncode:
             command(['git','-c','core.hooksPath=/dev/null','-c','commit.gpgsign=false','commit','-qm','installer fixture'],clone)
         env={**os.environ,'CARGO_TARGET_DIR':os.environ.get('FFSAKE_ALPHA_TEST_TARGET',str(base/'cargo-target'))}
@@ -27,9 +28,9 @@ def main():
         def tool(*args,ok=True):
             p=command([sys.executable,str(clone/'scripts/ffsake_install.py'),'--prefix',str(prefix),*args],cwd=clone,env=env,ok=ok)
             return json.loads(p.stdout) if ok else p.stderr
-        installed=tool('install','--profile','debug');assert installed['status']=='installed'
+        installed=tool('install','--source','--profile','debug');assert installed['status']=='installed'
         binary=prefix/'current/ffsake-mcp';assert binary.is_file()
-        before=binary.read_bytes();again=tool('install','--profile','debug');assert again['status']=='unchanged' and binary.read_bytes()==before
+        before=binary.read_bytes();again=tool('install','--source','--profile','debug');assert again['status']=='unchanged' and binary.read_bytes()==before
         # Reuse compatible user-scope entries; refuse conflicts and duplicates.
         for host in ('claude','codex','opencode'):
             root=base/('global-'+host);root.mkdir()
@@ -90,12 +91,14 @@ def main():
         lib=clone/'crates/fff-workspace/src/lib.rs';lib.write_text(lib.read_text()+'\n// isolated update fixture\n')
         command(['git','add','crates/fff-workspace/src/lib.rs'],clone)
         command(['git','-c','core.hooksPath=/dev/null','-c','commit.gpgsign=false','commit','-qm','update fixture'],clone)
-        notice=tool('install','--profile','debug');assert notice['status']=='update_available' and binary.read_bytes()==before
+        notice=tool('install','--source','--profile','debug');assert notice['status']=='update_available' and binary.read_bytes()==before
         child=subprocess.Popen([str(binary),str(c),'--profile','core'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
-        updated=tool('update','--profile','debug');assert updated['status']=='updated' and updated['reconnect']
-        assert len(list((prefix/'versions').iterdir()))==1
+        updated=tool('update','--source','--profile','debug');assert updated['status']=='updated' and updated['reconnect']
+        assert len(list((prefix/'versions').iterdir()))==2 and updated['previous_generation_retained']
         child.stdin.write('{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}\n');child.stdin.flush();assert 'ffsake_read' in child.stdout.readline()
         child.stdin.close();assert child.wait(timeout=10)==0;child.stdout.close();child.stderr.close()
+        assert tool('rollback','--revision',installed['source_revision'])['status']=='rolled_back'
+        assert tool('rollback','--revision',updated['source_revision'])['status']=='rolled_back'
         assert tool('doctor','--host','claude','--project',str(c))['ok']
         journal=c/'.ffsake/journal';journal.mkdir(parents=True,exist_ok=True);(journal/'keep').write_text('do not delete')
         extra=(prefix/'current').resolve()/'user-file';extra.write_text('keep')

@@ -1,5 +1,9 @@
 # Action plan
 
+## Versioned alpha release and update awareness (2026-10-30)
+
+Prepare native macOS ARM64 and Linux x86-64 package workflows with checksum verification, tested MCP initialization, explicit install/update/pins and retained rollback generations. Add nonblocking, daily shared-cache release awareness without automatic installation. Test lifecycle and agent notice handling, push and verify exact-head CI, test the nonpublishing release workflow, and propose the first tag before any publication.
+
 ## Alpha onboarding and debugger compatibility (2026-10-30)
 
 Add reviewable, idempotent host-specific project guidance and MCP instructions without overriding existing rules or evading access denial. Verify natural adoption in fresh sessions. Exercise real debugpy and LLDB adapters using disposable bug fixtures, preserve traces and investigate LLDB failure without weakening guards. Report adapter outcomes, run checks, push and verify exact-head CI, then pause.

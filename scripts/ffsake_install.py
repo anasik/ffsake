@@ -13,6 +13,7 @@ import tomllib
 
 from agent_benchmark_suite import mcp_profile_preflight
 from ffsake_setup import configurations
+import ffsake_releases
 
 SOURCE = Path(__file__).resolve().parents[1]
 BINARIES = ('ffsake', 'ffsake-mcp')
@@ -56,6 +57,12 @@ def current(prefix):
     if versions.is_symlink(): fail('versions directory cannot be a symlink')
     target = link.resolve(strict=True)
     if target.parent != versions.resolve() or not target.is_dir(): fail('installation link points outside its managed versions directory')
+    return validate_generation(prefix, target)
+
+
+def validate_generation(prefix, target):
+    versions = prefix / 'versions'
+    if target.is_symlink() or target.parent != versions.resolve() or not target.is_dir(): fail('unsafe generation path')
     manifest_path = target / 'manifest.json'
     if manifest_path.is_symlink() or not manifest_path.is_file(): fail('installation manifest is missing or unsafe')
     manifest = json.loads(manifest_path.read_text())
@@ -117,20 +124,8 @@ def replace_generation(prefix, profile, update):
             os.replace(pending, prefix / 'current')
         finally:
             if pending.is_symlink(): pending.unlink()
-        # Delete only an intact generation owned by this installer, never unknown files.
-        retained = False
-        if old:
-            try:
-                intact = (set(p.name for p in old[0].iterdir()) == set(BINARIES) | {'manifest.json'}
-                          and not (old[0]/'manifest.json').is_symlink()
-                          and json.loads((old[0]/'manifest.json').read_text()) == old[1]
-                          and all(not (old[0]/name).is_symlink() and digest(old[0]/name) == old[1]['sha256'][name] for name in BINARIES))
-                if intact:
-                    shutil.rmtree(old[0])
-                else:
-                    retained = True
-            except (OSError, ValueError):
-                retained = True
+        # Keep the previous generation for explicit rollback and running sessions.
+        retained = bool(old)
         return {'status': 'updated' if old else 'installed', 'source_revision': wanted,
                 'binary': str(prefix / 'current/ffsake-mcp'), 'reconnect': bool(old),
                 'previous_generation_retained': retained}
@@ -435,11 +430,15 @@ def doctor(prefix, host, project, profile):
         init = next((r for r in responses if r.get('id') == 1), None)
         listing = next((r for r in responses if r.get('id') == 2), None)
         if not init or init.get('result', {}).get('serverInfo', {}).get('name') != 'ffsake' or not listing or 'tools' not in listing.get('result', {}): fail('MCP handshake or discovery failed')
-    catalog = mcp_profile_preflight(profile, binary)
-    if not catalog['ok']: fail('MCP catalog check failed: ' + str(catalog.get('error')))
-    source_revision = revision()
+    if item[1].get('release_version'):
+        names = [tool.get('name') for tool in listing['result']['tools'] if isinstance(tool,dict)]
+        if not {'ffsake_read','ffsake_list','ffsake_search'}.issubset(names) or len(names)>256 or len(names)!=len(set(names)): fail('release MCP catalog is invalid')
+    else:
+        catalog = mcp_profile_preflight(profile, binary)
+        if not catalog['ok']: fail('MCP catalog check failed: ' + str(catalog.get('error')))
+    source_revision = revision() if item[1].get('source_revision') else None
     print(json.dumps({'ok': True, 'model_calls': 0, 'installed_revision': item[1]['source_revision'],
-                      'source_revision': source_revision, 'update_available': source_revision != item[1]['source_revision'],
+                      'source_revision': source_revision, 'update_available': source_revision != item[1].get('source_revision') if source_revision else None,
                       'package_version': item[1]['package_version'],
                       'binary': str(binary), 'host': host, 'project': str(project),
                       'host_cli_available': bool(shutil.which({'claude':'claude','codex':'codex','opencode':'opencode'}[host])),
@@ -467,7 +466,9 @@ def main():
     parser.add_argument('--prefix', default=str(Path.home()/'.local/share/ffsake'), help='Absolute user-local installation directory')
     sub=parser.add_subparsers(dest='action', required=True)
     for name in ('install','update'):
-        p=sub.add_parser(name);p.add_argument('--profile', choices=('release','debug'),default='release')
+        p=sub.add_parser(name);p.add_argument('--profile', choices=('release','debug'),default='release');p.add_argument('--source',action='store_true');p.add_argument('--version',help='Pin an explicit alpha release tag');p.add_argument('--unpin',action='store_true',help='Explicitly follow the alpha channel again')
+    p=sub.add_parser('rollback');choice=p.add_mutually_exclusive_group(required=True);choice.add_argument('--version',help='Restore a previously installed alpha release');choice.add_argument('--revision',help='Restore a retained source revision')
+    sub.add_parser('check-update')
     for name in ('configure','doctor'):
         p=sub.add_parser(name);p.add_argument('--host', choices=('claude','codex','opencode'),required=True);p.add_argument('--project',type=Path,required=True);p.add_argument('--tool-profile',choices=('core','all'),default='core')
         if name=='configure':
@@ -478,7 +479,27 @@ def main():
     try:
         prefix=prefix_path(args.prefix)
         if args.action in ('install','update'):
-            print(json.dumps(replace_generation(prefix,args.profile,args.action=='update'),indent=2))
+            if args.source:
+                if args.version or args.unpin: fail('--source cannot be combined with --version or --unpin')
+                result=replace_generation(prefix,args.profile,args.action=='update')
+            else:
+                if args.profile!='release': fail('--profile debug requires --source')
+                if args.unpin and (args.action!='update' or args.version): fail('--unpin requires update and cannot be combined with --version')
+                installed=current(prefix)
+                if args.action=='install' and not args.version and installed:
+                    result={'status':'unchanged','installed_version':installed[1].get('release_version'),'installed_revision':installed[1].get('source_revision'),'pinned':installed[1].get('pinned',False),'binary':str(prefix/'current/ffsake-mcp')}
+                else:
+                    if args.action=='update' and installed and installed[1].get('pinned') and not args.version and not args.unpin:
+                        fail('installation is pinned; specify --version or explicitly use --unpin')
+                    result=ffsake_releases.install(prefix,args.version or ffsake_releases.latest(),args.action=='update',bool(args.version),current,digest)
+            print(json.dumps(result,indent=2))
+        elif args.action=='check-update':
+            old=current(prefix)
+            if not old: fail('no existing installation')
+            latest=ffsake_releases.latest()
+            print(json.dumps({'installed_version':old[1].get('release_version'),'latest_version':latest,'pinned':old[1].get('pinned',False),'note':'Check only; no changes made.'},indent=2))
+        elif args.action=='rollback':
+            print(json.dumps(ffsake_releases.rollback(prefix,args.version or args.revision,current,validate_generation,source=bool(args.revision)),indent=2))
         elif args.action in ('configure','doctor'):
             project=args.project.expanduser().resolve(strict=True)
             if not project.is_dir():fail('project must be an existing directory')

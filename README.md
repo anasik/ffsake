@@ -2,7 +2,7 @@
 
 FFSAKE gives coding agents repository tools through MCP: find and read files, review and apply guarded edits, and undo or redo editor transactions. It also provides reviewed Git operations and named build/test tasks. It is an alpha project; host approval settings still control tool use, and task execution is not sandboxed.
 
-**Quick setup:** from the project you want to use, give your agent the [repository URL](https://github.com/anasik/ffsake) and ask it to follow [the installation guide](docs/INSTALL.md). Or run the commands below. You need Git, Python 3.11+, stable Rust/Cargo, and a C compiler/build tools.
+**Quick setup:** from the project you want to use, give your agent the [repository URL](https://github.com/anasik/ffsake) and ask it to follow [the installation guide](docs/INSTALL.md). Or run the commands below. You need Git and Python 3.11+. Source builds additionally need Rust/Cargo and a C compiler. Release archives cover macOS ARM64 and Linux x86-64; before the first alpha is published use `install --source`.
 
 ```sh
 # Run from your project. Reuse an existing source checkout if present.
@@ -10,7 +10,7 @@ PROJECT_DIR="$(pwd -P)"
 FFSAKE_SOURCE="$HOME/.local/src/ffsake"
 git clone https://github.com/anasik/ffsake.git "$FFSAKE_SOURCE"
 cd "$FFSAKE_SOURCE"
-python3 scripts/ffsake_install.py install
+python3 scripts/ffsake_install.py install  # before the first release: install --source
 python3 scripts/ffsake_install.py configure --host claude --project "$PROJECT_DIR" --guidance          # review
 python3 scripts/ffsake_install.py configure --host claude --project "$PROJECT_DIR" --guidance --apply  # apply
 python3 scripts/ffsake_install.py doctor --host claude --project "$PROJECT_DIR"
@@ -31,7 +31,7 @@ Install the binaries once per machine; configure each host and project you want 
 
 The source installer and MCP configuration cover Claude Code, Codex and OpenCode 1.x. Isolated checks recognized Claude Code 2.1.312 and Codex CLI 0.163.0 configurations and connected OpenCode 1.19.5. A fresh Codex agent completed an installation; interactive Claude approval was not tested in that installation exercise. See the [acceptance report](docs/demo-runs/20261029-alpha-install/REPORT.md).
 
-Source installation has been exercised on macOS and in Linux CI. Windows is not supported by the installer or current process-group runner. No downloadable release binaries were published when the installation path was audited. FFSAKE runs as a host-managed MCP stdio process; it does not require a daemon.
+Source installation has been exercised on macOS and in Linux CI. Windows is not supported by the installer or current process-group runner. Release archives target macOS ARM64 and Linux x86-64; check the release page for availability. FFSAKE runs as a host-managed MCP stdio process; it does not require a daemon.
 
 ## Everyday usage
 
@@ -56,7 +56,7 @@ Inspect the source checkout for local changes, pull without discarding them, and
 ```sh
 git -C "$FFSAKE_SOURCE" status --short
 git -C "$FFSAKE_SOURCE" pull --ff-only
-python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" install  # reports available revision
+python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" check-update
 python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" update
 python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" doctor --host claude --project "$PROJECT_DIR"
 ```

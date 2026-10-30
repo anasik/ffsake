@@ -1,3 +1,5 @@
+#[path = "ffsake_mcp/update_notice.rs"]
+mod update_notice;
 use fff_workspace::Workspace;
 use fff_workspace::resident::{Request, Resident};
 use serde_json::{Value, json};
@@ -112,6 +114,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let mut runtime = Resident::open(workspace)?;
     let mut roots = RootsSync::default();
+    let mut updates = update_notice::UpdateNotice::new();
+    if let Some(updates) = &mut updates {
+        updates.tick();
+    }
     if let Some(policy) = debug_policy {
         runtime.configure_debug(policy);
     }
@@ -124,7 +130,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     while let Some(message) = read_message(&mut input)? {
         let response = match serde_json::from_slice::<Value>(&message) {
             Ok(message) => {
-                let response = handle_message(&mut runtime, profile, message.clone());
+                let mut response = handle_message(&mut runtime, profile, message.clone());
+                if message["method"] == "tools/call"
+                    && let Some(updates) = &mut updates
+                {
+                    updates.tick();
+                    if let Some(notice) = updates.notice()
+                        && let Some(content) = response
+                            .as_mut()
+                            .and_then(|r| r.pointer_mut("/result/content/0/text"))
+                        && let Some(raw) = content.as_str()
+                        && let Ok(mut body) = serde_json::from_str::<Value>(raw)
+                        && let Some(object) = body.as_object_mut()
+                    {
+                        object.insert("update_notice".into(), notice);
+                        *content = json!(body.to_string());
+                    }
+                }
                 if let Some(response) = response {
                     serde_json::to_writer(&mut output, &response)?;
                     writeln!(output)?;
@@ -286,8 +308,8 @@ fn handle_message(runtime: &mut Resident, profile: ToolProfile, message: Value) 
                 "result":{
                     "protocolVersion":"2025-11-25",
                     "capabilities":{"tools":{}},
-                    "serverInfo":{"name":"ffsake","version":env!("CARGO_PKG_VERSION")},
-                    "instructions":"Prefer FFSAKE for scoped repository exploration, guarded previews and edits when suitable. Discover configured build/test jobs with ffsake_tasks and debug configurations with ffsake_debug action list. Host approval governs execution and mutations. Native host tools may be appropriate for unavailable capabilities, but never use fallback to evade access denial; obtain host authorization first. Tasks/debugging execute code and are not sandboxed or editor transactions."
+                    "serverInfo":{"name":"ffsake","version":option_env!("FFSAKE_RELEASE_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"))},
+                    "instructions":"Prefer FFSAKE for scoped repository exploration, guarded previews and edits when suitable. Discover configured build/test jobs with ffsake_tasks and debug configurations with ffsake_debug action list. Host approval governs execution and mutations. Native host tools may be appropriate for unavailable capabilities, but never use fallback to evade access denial; obtain host authorization first. Tasks/debugging execute code and are not sandboxed or editor transactions. If a tool result includes update_notice, relay the available release and instructions to the user; do not install automatically."
                 }
             })
         }
