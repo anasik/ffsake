@@ -36,6 +36,8 @@ The configuration is project-scoped: Claude Code uses `.mcp.json` and, if absent
 
 These project files can contain machine-specific absolute paths. Review them before committing or sharing them. Claude may ask you to trust the project and approve its MCP server; Codex may require the project to be trusted. New chats in the same configured project do not need setup again. In an already-running Claude chat, use `/mcp`, select `ffsake` and choose **Reconnect** after setup or update. Other hosts may require reconnecting or restarting their MCP session.
 
+Forks and subagents need special care when they use another worktree: a shared MCP server remains rooted at its original project. See [subagent setup and worktree checks](SUBAGENTS.md) for a reviewable root-only rebind and host-specific limitations.
+
 The doctor validates both installed binary checksums and the project entry, then launches the installed MCP server in a disposable workspace, performs `initialize`, and checks tool discovery and the expected catalog. It makes no model calls and does not create a project journal. It reports whether the host CLI is on PATH but cannot confirm workspace trust, global/managed configuration overrides, or an already-running host connection.
 
 ## Update

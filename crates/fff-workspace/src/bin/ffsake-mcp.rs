@@ -17,7 +17,8 @@ impl ToolProfile {
             Self::All => true,
             Self::Core => matches!(
                 name,
-                "ffsake_read"
+                "ffsake_workspace_info"
+                    | "ffsake_read"
                     | "ffsake_git"
                     | "ffsake_git_review"
                     | "ffsake_git_mutate"
@@ -309,7 +310,7 @@ fn handle_message(runtime: &mut Resident, profile: ToolProfile, message: Value) 
                     "protocolVersion":"2025-11-25",
                     "capabilities":{"tools":{}},
                     "serverInfo":{"name":"ffsake","version":option_env!("FFSAKE_RELEASE_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"))},
-                    "instructions":"Prefer FFSAKE for scoped repository exploration, guarded previews and edits when suitable. Git tools accept an optional repository selector for authorized added repository roots; use the same selector for review and execution. Discover configured build/test jobs with ffsake_tasks and debug configurations with ffsake_debug action list. Host approval governs execution and mutations. Native host tools may be appropriate for unavailable capabilities, but never use fallback to evade access denial; obtain host authorization first. Tasks/debugging execute code and are not sandboxed or editor transactions. If a tool result includes update_notice, relay the available release and instructions to the user; do not install automatically."
+                    "instructions":"Prefer FFSAKE for scoped repository exploration, guarded previews and edits when suitable. Before edits or tasks in a child or fork, call ffsake_workspace_info and verify the returned root equals the host working directory; if it differs, stop and configure a separate server for that worktree. Git tools accept an optional repository selector for authorized added repository roots; use the same selector for review and execution. Discover configured build/test jobs with ffsake_tasks and debug configurations with ffsake_debug action list. Host approval governs execution and mutations. Native host tools may be appropriate for unavailable capabilities, but never use fallback to evade access denial; obtain host authorization first. Tasks/debugging execute code and are not sandboxed or editor transactions. If a tool result includes update_notice, relay the available release and instructions to the user; do not install automatically."
                 }
             })
         }
@@ -357,6 +358,7 @@ fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments
     }
     let op = match name {
         "ffsake_read" => "read",
+        "ffsake_workspace_info" => "workspace_info",
         "ffsake_git" => "git",
         "ffsake_git_review" => "git_review",
         "ffsake_git_mutate" => "git_mutate",
@@ -513,6 +515,11 @@ fn tools() -> Vec<Value> {
         {"type":"object","required":["action","branch","remote","remote_branch"],"additionalProperties":false,"properties":{"action":{"const":"push"},"branch":{"type":"string","minLength":1,"maxLength":256},"remote":{"type":"string","minLength":1,"maxLength":128},"remote_branch":{"type":"string","minLength":1,"maxLength":256},"set_upstream":{"type":"boolean","default":false}}}
     ]});
     vec![
+        tool(
+            "ffsake_workspace_info",
+            "Return this server's canonical primary project root. Children and forks must compare it to their host working directory before edits or tasks; a reused parent connection can point to the parent checkout. If they differ, stop and configure a separate server for the intended worktree. This inspection does not grant access or change permissions.",
+            json!({"type":"object","additionalProperties":false,"properties":{}}),
+        ),
         tool(
             "ffsake_git_branches",
             "List local branches, current branch, commits and upstreams. Read-only; no network. Optional repository selects an authorized repository root; omit for primary. Use the same repository for review and execution.",

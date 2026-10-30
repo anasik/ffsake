@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -358,6 +359,13 @@ For Git in an authorized added repository, set its repository root on inspection
 <!-- ffsake-git-guidance:end -->"""
 
 
+FORK_GUIDANCE_START = "<!-- ffsake-fork-guidance:start -->"
+FORK_GUIDANCE_END = "<!-- ffsake-fork-guidance:end -->"
+FORK_GUIDANCE = """<!-- ffsake-fork-guidance:start -->
+In a fork or subagent, call `ffsake_workspace_info` and compare its root with your host working directory before edits or tasks. If they differ, stop and ask the host to configure a worktree-bound MCP server; do not use a parent connection to modify another checkout. Host approvals and access restrictions still apply.
+<!-- ffsake-fork-guidance:end -->"""
+
+
 def plan_guidance(host, project):
     path = project / ('CLAUDE.md' if host == 'claude' else 'AGENTS.md')
     if host == 'opencode' and not path.exists() and not path.is_symlink():
@@ -371,7 +379,7 @@ def plan_guidance(host, project):
     if before is not None and len(before) > 1024 * 1024: fail('guidance file exceeds 1 MiB')
     content = before.decode('utf-8') if before is not None else ''
     added=[]
-    for start, end, block in ((GUIDANCE_START, GUIDANCE_END, GUIDANCE), (GIT_GUIDANCE_START, GIT_GUIDANCE_END, GIT_GUIDANCE)):
+    for start, end, block in ((GUIDANCE_START, GUIDANCE_END, GUIDANCE), (GIT_GUIDANCE_START, GIT_GUIDANCE_END, GIT_GUIDANCE), (FORK_GUIDANCE_START, FORK_GUIDANCE_END, FORK_GUIDANCE)):
         if start in content or end in content:
             if content.count(start) != 1 or content.count(end) != 1 or block not in content:
                 fail('existing FFSAKE guidance was changed or malformed; review it manually: ' + str(path))
@@ -382,15 +390,71 @@ def plan_guidance(host, project):
     return [(path, before, content.encode(), added)] if added else []
 
 
-def configure(prefix, host, project, profile, apply, guidance=False):
+def git_common(project):
+    def query(*args):
+        env={k:v for k,v in os.environ.items() if not k.startswith('GIT_')}
+        out = subprocess.check_output(['git', '-C', str(project), *args], text=True, stderr=subprocess.DEVNULL, env=env).strip()
+        return Path(out).resolve(strict=True)
+    if query('rev-parse', '--show-toplevel') != project:
+        fail('rebind requires exact Git worktree roots')
+    return query('rev-parse', '--path-format=absolute', '--git-common-dir')
+
+
+def plan_rebind(prefix, host, project, parent):
+    parent=parent.expanduser().resolve(strict=True)
+    if not parent.is_dir() or parent == project or git_common(parent) != git_common(project):
+        fail('rebind requires two distinct worktrees of the same Git repository')
+    if outside_entries(host, project):
+        fail('host user-scope FFSAKE entry may override the child; review it manually')
+    rel={'claude':'.mcp.json','codex':'.codex/config.toml','opencode':'opencode.json'}[host]
+    path=project/rel
+    if path.is_symlink() or path.parent.is_symlink() or not path.is_file():
+        fail('existing worktree-local FFSAKE configuration is required and cannot be a symlink')
+    if host=='opencode' and any(p.exists() or p.is_symlink() for p in (project/'opencode.jsonc', project/'.opencode/opencode.json', project/'.opencode/opencode.jsonc')):
+        fail('additional OpenCode configuration requires manual review')
+    before=path.read_bytes()
+    if len(before)>1024*1024: fail('configuration exceeds 1 MiB')
+    binary=str(prefix/'current/ffsake-mcp')
+    if host=='codex':
+        data=tomllib.loads(before.decode());entry=get_entries(data,'mcp_servers',path).get('ffsake')
+    else:
+        data=json_content(path);entry=get_entries(data,'mcpServers' if host=='claude' else 'mcp',path).get('ffsake')
+    if not isinstance(entry,dict): fail('existing project FFSAKE entry required')
+    if entry.get('enabled') is False: fail('existing FFSAKE server is disabled; review manually')
+    if host=='claude' and entry.get('type', 'stdio') != 'stdio': fail('existing Claude FFSAKE entry is not stdio; review manually')
+    if host=='opencode':
+        command=entry.get('command');args=command[1:] if isinstance(command,list) and command and command[0]==binary and entry.get('type')=='local' else None
+    else:
+        args=entry.get('args') if entry.get('command')==binary else None
+    if not isinstance(args,list) or not args or not all(isinstance(x,str) for x in args): fail('existing FFSAKE command or arguments differ; review manually')
+    if args[0]==str(project): return []
+    if args[0]!=str(parent): fail('existing FFSAKE root does not match the expected parent; review manually')
+    replacement=[str(project),*args[1:]]
+    if host=='codex':
+        text=before.decode();match=re.search(r'(?ms)^\[mcp_servers\.ffsake\][ \t]*(?:\r?\n|$)(.*?)(?=^\[|\Z)',text)
+        if not match: fail('cannot safely locate Codex FFSAKE table')
+        section=match.group(1);lines=list(re.finditer(r'(?m)^([ \t]*args[ \t]*=[ \t]*)([^\r\n]*)(\r?\n|$)',section))
+        if len(lines)!=1: fail('Codex args require manual review')
+        line=lines[0];new_section=section[:line.start()]+line.group(1)+json.dumps(replacement)+line.group(3)+section[line.end():]
+        after=(text[:match.start(1)]+new_section+text[match.end(1):]).encode()
+        parsed=tomllib.loads(after.decode());data['mcp_servers']['ffsake']['args']=replacement
+        if parsed!=data: fail('cannot safely preserve Codex configuration')
+    else:
+        if host=='opencode': entry['command']=[binary,*replacement]
+        else: entry['args']=replacement
+        after=(json.dumps(data,indent=2,ensure_ascii=False)+'\n').encode()
+    return [(path,before,after,[{'old_root':str(parent),'new_root':str(project),'unchanged_arguments':args[1:]}])]
+
+
+def configure(prefix, host, project, profile, apply, guidance=False, rebind_from=None):
     if current(prefix) is None: fail('FFSAKE is not installed')
-    existing = existing_scope(prefix, host, project, profile)
-    changes = [] if existing else plan_config(prefix, host, project, profile)
+    existing = None if rebind_from else existing_scope(prefix, host, project, profile)
+    changes = plan_rebind(prefix, host, project, rebind_from) if rebind_from else ([] if existing else plan_config(prefix, host, project, profile))
     if guidance: changes += plan_guidance(host, project)
     summary = [{'file': str(p), 'added': added} for p, _, _, added in changes]
     print(json.dumps({'status': 'planned' if changes and not apply else 'applied' if changes else 'unchanged',
                       'host': host, 'project': str(project), 'binary': str(prefix / 'current/ffsake-mcp'),
-                      'server_args': [str(project), '--profile', profile], 'changes': summary, 'existing_scope': existing[0] if existing else None,
+                      'server_args': None if rebind_from else [str(project), '--profile', profile], 'changes': summary, 'existing_scope': existing[0] if existing else None,
                       'note': 'Existing host permission settings and broader host policies remain authoritative.'}, indent=2))
     if not apply: return
     for path, before, after, _ in changes:
@@ -485,6 +549,7 @@ def main():
         if name=='configure':
             p.add_argument('--apply',action='store_true',help='Apply the reviewed project configuration')
             p.add_argument('--guidance',action='store_true',help='Also review/add project guidance for this host')
+            p.add_argument('--rebind-from',type=Path,help='Review rebinding a copied parent configuration to this worktree')
     sub.add_parser('uninstall')
     args=parser.parse_args()
     try:
@@ -514,7 +579,7 @@ def main():
         elif args.action in ('configure','doctor'):
             project=args.project.expanduser().resolve(strict=True)
             if not project.is_dir():fail('project must be an existing directory')
-            if args.action=='configure': configure(prefix,args.host,project,args.tool_profile,args.apply,args.guidance)
+            if args.action=='configure': configure(prefix,args.host,project,args.tool_profile,args.apply,args.guidance,args.rebind_from)
             else:doctor(prefix,args.host,project,args.tool_profile)
         else:print(json.dumps(uninstall(prefix),indent=2))
     except (ValueError, OSError, subprocess.SubprocessError, json.JSONDecodeError, tomllib.TOMLDecodeError) as e:

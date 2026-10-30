@@ -1,0 +1,67 @@
+[
+  {
+    "timestamp": "2026-10-30T13:09:54.114Z",
+    "call_id": "call_f183a53298af4065afa990bc49c4eeea",
+    "input": "const matches = ALL_TOOLS.filter(x => /ffsake_(workspace_info|tasks|read|edit|search|list)/i.test(x.name));\ntext(matches);\n"
+  },
+  {
+    "timestamp": "2026-10-30T13:09:54.262Z",
+    "call_id": "call_f183a53298af4065afa990bc49c4eeea",
+    "output": [
+      "Script completed\nWall time 0.0 seconds\nOutput:\n",
+      "[{\"name\":\"mcp__ffsake__ffsake_list\",\"description\":\"Prefer FFSAKE for scoped repository exploration, guarded previews and edits when suitable. Before edits or tasks in a child or fork, call ffsake_workspace_info and verify the returned root equals the host working directory; if it differs, stop and configure a separate server for that worktree. Git tools accept an optional repository selector for authorized added repository roots; use the same selector for review and execution. Discover configured build/test jobs with ffsake_tasks and debug configurations with ffsake_debug action list. Host approval governs execution and mutations. Native host tools may be appropriate for unavailable capabilities, but never use fallback to evade access denial; obtain host authorization first. Tasks/debugging execute code and are not sandboxed or editor transactions. If a tool result includes update_notice, relay the available release and instructions to the user; do not install automatically.\\n\\nList a safe workspace-relative directory.\\n\\nexec tool declaration:\\n```ts\\ndeclare const tools: { mcp__ffsake__ffsake_list(args: { path: string; }): Promise<CallToolResult>; };\\n```\"},{\"name\":\"mcp__ffsake__ffsake_list_access\",\"description\":\"Prefer FFSAKE for scoped repository exploration, guarded previews and edits when suitable. Before edits or tasks in a child or fork, call ffsake_workspace_info and verify the returned root equals the host working directory; if it differs, stop and configure a separate server for that worktree. Git tools accept an optional repository selector for authorized added repository roots; use the same selector for review and execution. Discover configured build/test jobs with ffsake_tasks and debug configurations with ffsake_debug action list. Host approval governs execution and mutations. Native host tools may be appropriate for unavailable capabilities, but never use fallback to evade access denial; obtain host authorization first. Tasks/debugging execute code a"
+    ]
+  },
+  {
+    "timestamp": "2026-10-30T13:09:57.825Z",
+    "call_id": "call_d2f6526cb4f84d2d831db565eb48b2f5",
+    "input": "text(await tools.mcp__ffsake__ffsake_workspace_info({}));\n"
+  },
+  {
+    "timestamp": "2026-10-30T13:09:58.109Z",
+    "call_id": "call_d2f6526cb4f84d2d831db565eb48b2f5",
+    "output": [
+      "Script completed\nWall time 0.0 seconds\nOutput:\n",
+      "{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"ok\\\":true,\\\"result\\\":{\\\"note\\\":\\\"Confirm this canonical root matches the host session worktree before editing or running tasks.\\\",\\\"root\\\":\\\"/private/tmp/ffsake-subagent/child4\\\",\\\"scope\\\":\\\"primary project\\\"}}\"}],\"isError\":false}"
+    ]
+  },
+  {
+    "timestamp": "2026-10-30T13:10:01.672Z",
+    "call_id": "call_5f6bc3e3b20545b0b47cd4d07cd62f74",
+    "input": "text(await tools.mcp__ffsake__ffsake_list({path:\".\"}));\ntext(ALL_TOOLS.filter(x=>/ffsake_(preview_edit|apply|run_task)/.test(x.name)));\n"
+  },
+  {
+    "timestamp": "2026-10-30T13:10:01.776Z",
+    "call_id": "call_5f6bc3e3b20545b0b47cd4d07cd62f74",
+    "output": [
+      "Script completed\nWall time 0.0 seconds\nOutput:\n",
+      "{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"ok\\\":true,\\\"result\\\":[{\\\"kind\\\":\\\"Directory\\\",\\\"path\\\":\\\".codex\\\",\\\"size\\\":96},{\\\"kind\\\":\\\"File\\\",\\\"path\\\":\\\".git\\\",\\\"size\\\":66},{\\\"kind\\\":\\\"File\\\",\\\"path\\\":\\\".gitignore\\\",\\\"size\\\":22},{\\\"kind\\\":\\\"File\\\",\\\"path\\\":\\\"AGENTS.md\\\",\\\"size\\\":1547},{\\\"kind\\\":\\\"File\\\",\\\"path\\\":\\\"calc.py\\\",\\\"size\\\":48},{\\\"kind\\\":\\\"File\\\",\\\"path\\\":\\\"test_calc.py\\\",\\\"size\\\":138}]}\"}],\"isError\":false}",
+      "[{\"name\":\"mcp__ffsake__ffsake_apply\",\"description\":\"Prefer FFSAKE for scoped repository exploration, guarded previews and edits when suitable. Before edits or tasks in a child or fork, call ffsake_workspace_info and verify the returned root equals the host working directory; if it differs, stop and configure a separate server for that worktree. Git tools accept an optional repository selector for authorized added repository roots; use the same selector for review and execution. Discover configured build/test jobs with ffsake_tasks and debug configurations with ffsake_debug action list. Host approval governs execution and mutations. Native host tools may be appropriate for unavailable capabilities, but never use fallback to evade access denial; obtain host authorization first. Tasks/debugging execute code and are not sandboxed or editor transactions. If a tool result includes update_notice, relay the available release and instructions to the user; do not install automatically.\\n\\nAtomically apply a previously previewed transform. The next search refreshes the index automatically; no separate refresh call is needed.\\n\\nexec tool declaration:\\n```ts\\ndeclare const tools: { mcp__ffsake__ffsake_apply(args: { handle: number; }): Promise<CallToolResult>; };\\n```\"},{\"name\":\"mcp__ffsake__ffsake_preview_edit\",\"description\":\"Prefer FFSAKE for scoped repository exploration, guarded previews and edits when suitable. Before edits or tasks in a child or fork, call ffsake_workspace_info and verify the returned root equals the host working directory; if it differs, stop and configure a separate server for that worktree. Git tools accept an optional repository selector for authorized added repository roots; use the same selector for review and execution. Discover configured build/test jobs with ffsake_tasks and debug configurations with ffsake_debug action list. Host approval governs execution and mutations. Native host tools may be appropriate for unavailable capabilities, but never"
+    ]
+  },
+  {
+    "timestamp": "2026-10-30T13:10:04.149Z",
+    "call_id": "call_e86bf27172ef455893b8f875d348e23a",
+    "input": "const results = await Promise.allSettled([\ntools.mcp__ffsake__ffsake_read_files({files:[{path:\"AGENTS.md\"},{path:\"calc.py\"},{path:\"test_calc.py\"}]}),\ntools.mcp__ffsake__ffsake_tasks({})\n]); results.forEach(text);\n"
+  },
+  {
+    "timestamp": "2026-10-30T13:10:04.420Z",
+    "call_id": "call_e86bf27172ef455893b8f875d348e23a",
+    "output": [
+      "Script completed\nWall time 0.0 seconds\nOutput:\n",
+      "{\"status\":\"fulfilled\",\"value\":{\"content\":[{\"type\":\"text\",\"text\":\"MCP tool call requires approval, but approval policy is never\"}],\"isError\":true}}",
+      "{\"status\":\"fulfilled\",\"value\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"ok\\\":true,\\\"result\\\":{\\\"execution_enabled\\\":true,\\\"policy\\\":\\\"Only startup-configured argv; no request commands, args, environment or policy path. Jobs may change files and are not journal transactions.\\\",\\\"tasks\\\":{\\\"test\\\":{\\\"argv\\\":[\\\"/usr/bin/python3\\\",\\\"-m\\\",\\\"unittest\\\",\\\"test_calc\\\"],\\\"cwd\\\":\\\".\\\",\\\"kind\\\":\\\"test\\\",\\\"output_bytes\\\":8192,\\\"timeout_seconds\\\":30}}}}\"}],\"isError\":false}}"
+    ]
+  },
+  {
+    "timestamp": "2026-10-30T13:10:12.583Z",
+    "final": [
+      {
+        "type": "output_text",
+        "text": "FFSAKE root verified: `/private/tmp/ffsake-subagent/child4`.\n\nReading `AGENTS.md`, `calc.py`, and `test_calc.py` was blocked: \u201cMCP tool call requires approval, but approval policy is never.\u201d I stopped without bypassing the denial.\n\nConfigured task found: `test` \u2192 `/usr/bin/python3 -m unittest test_calc`. No files changed; tests were not run. Host authorization for file access is required to continue.",
+        "annotations": [],
+        "logprobs": []
+      }
+    ]
+  }
+]

@@ -36,6 +36,7 @@ pub struct ReadFile {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
+    WorkspaceInfo {},
     DebugAttach {
         configuration: String,
         pid: u32,
@@ -522,6 +523,9 @@ impl Resident {
             self.access().refresh()?;
         }
         match request {
+            Request::WorkspaceInfo {} => Ok(
+                json!({"root": self.session.workspace().root(), "scope": "primary project", "note": "Confirm this canonical root matches the host session worktree before editing or running tasks."}),
+            ),
             Request::DebugAttach { configuration, pid } => {
                 self.index_dirty = true;
                 self.debugger.attach(
