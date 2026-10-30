@@ -65,4 +65,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" dist/* --prerelease --title "$TAG" --notes 'Alpha binaries: macOS ARM64 (macOS 14+) and Linux x86-64 (glibc 2.35+), with system runtime libraries. Git is needed for Git operations; curl enables update notices. Language servers and debug adapters are separate optional dependencies. See INSTALL.md for installation, checksums, updates and reconnection.'
+        run: |
+          gh release create "$TAG" dist/* --prerelease --title "$TAG" --notes 'Alpha binaries: macOS ARM64 (macOS 14+) and Linux x86-64 (glibc 2.35+), with system runtime libraries. Git is needed for Git operations; curl enables update notices. Language servers and debug adapters are separate optional dependencies. See INSTALL.md for installation, checksums, updates and reconnection.'
