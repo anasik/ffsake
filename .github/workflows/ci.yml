@@ -39,6 +39,7 @@ jobs:
       - run: python3 scripts/layout_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/mcp_profile_smoke.py target/debug/ffsake-mcp
       - run: python3 -m unittest tests.test_worktree_rebind
+      - run: python3 -m unittest tests.test_rc_benchmark
       - run: python3 scripts/worktree_mcp_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/workflow_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/git_write_smoke.py target/debug/ffsake-mcp
