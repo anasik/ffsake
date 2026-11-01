@@ -39,6 +39,7 @@ def main():
         assert run.returncode == 0
         instructions = json.loads(run.stdout)["result"]["instructions"]
         assert "ffsake_tasks" in instructions and "ffsake_debug" in instructions and "evade access denial" in instructions
+        assert "ffsake_read_files" in instructions and "ffsake_preview_files" in instructions and "review the combined diff" in instructions
         full = catalog([])
         assert full == catalog(["--profile", "all"])
         core = catalog(["--profile", "core"])
