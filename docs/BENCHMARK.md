@@ -425,7 +425,9 @@ Five repetitions per arm were run on four synthetic tasks: a cross-file fix, a m
 
 Cross-file and maintenance are focused editing comparisons; build and debug are whole-workflow comparisons. They should not be pooled into one editing-performance figure.
 
-**Git is not a scored Codex pair:** in pilots, Codex's native workspace sandbox denied writes to the linked worktree's Git index while the MCP server could commit. A full-clone pilot had the same native restriction. An attempted common host-isolation profile prevented Codex itself from initializing. Scoring the unequal setup as an FFSAKE win would be misleading. OpenCode `1.19.5` returned HTTP 401 on its configured provider's token refresh; it has no measured runs. Cold installation/setup was not timed.
+**Git is not a scored Codex pair:** in pilots, Codex's native workspace sandbox denied writes to the linked worktree's Git index while the MCP server could commit. A full-clone pilot had the same native restriction. An attempted common host-isolation profile prevented Codex itself from initializing. Scoring the unequal setup as an FFSAKE win would be misleading. OpenCode `1.19.5` returned HTTP 401 on its configured provider's token refresh; it has no measured runs.
+
+One separate, model-free setup sample used a new installation prefix and empty Cargo build directory, with the source checkout and existing toolchain/download caches already present: source installation took 58.56 s, Codex project configuration 0.120 s, doctor 0.234 s and repeated installation 0.171 s. The repeat reported an unchanged installation. This is not a fully cold download, an interactive approval measurement, or a measured native-host installation. [Setup evidence](agent-benchmark-runs/20261101-codex/setup.json).
 
 ### Outcomes and elapsed time
 
@@ -472,3 +474,17 @@ python3 scripts/rc_safety_evidence.py target/release/ffsake-mcp /private/path/to
 ```
 
 The driver refuses a scored Codex Git run with the known unequal sandbox setup. A new study should record its own source/binary identities, host settings and model availability rather than pooling results across revisions.
+
+For a separate source-setup timing, run the following from the source checkout. This intentionally uses an isolated host configuration and does not measure interactive approval:
+
+```sh
+(
+BENCH_DIR="$(mktemp -d)"
+mkdir -p "$BENCH_DIR/project"
+export CARGO_TARGET_DIR="$BENCH_DIR/target" CODEX_HOME="$BENCH_DIR/codex" XDG_CONFIG_HOME="$BENCH_DIR/xdg"
+/usr/bin/time -p python3 scripts/ffsake_install.py --prefix "$BENCH_DIR/install" install --source
+/usr/bin/time -p python3 scripts/ffsake_install.py --prefix "$BENCH_DIR/install" configure --host codex --project "$BENCH_DIR/project" --guidance --apply
+/usr/bin/time -p python3 scripts/ffsake_install.py --prefix "$BENCH_DIR/install" doctor --host codex --project "$BENCH_DIR/project"
+/usr/bin/time -p python3 scripts/ffsake_install.py --prefix "$BENCH_DIR/install" install --source
+)
+```

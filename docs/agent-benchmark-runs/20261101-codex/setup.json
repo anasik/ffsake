@@ -1,0 +1,41 @@
+{
+  "sample_count": 1,
+  "method": "new isolated prefix and Cargo target; existing machine Cargo/download caches and toolchains retained; source checkout already present; no model calls",
+  "host": "codex",
+  "revision": "16cc8e51115b971406d4439bc9e86a306a192380",
+  "stages": [
+    {
+      "stage": "source_install",
+      "exit_code": 0,
+      "elapsed_ms": 58562.069,
+      "status": "installed",
+      "stdout_sha256": "21c735a76ca20d7e8f8db8f2e2e6cc6acd47d4d3b23912c51726a237b30a6385",
+      "stderr_sha256": "d0fe75aacd9520d98b00adb3fa554cbdb4d2fa712d4ab553da32961b0d9f8297"
+    },
+    {
+      "stage": "project_configure",
+      "exit_code": 0,
+      "elapsed_ms": 119.587,
+      "status": "applied",
+      "stdout_sha256": "503ab59ef255b58a40cb7906a5cc990ae337a2fce1769c1d956c9fa6fe618984",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "stage": "doctor",
+      "exit_code": 0,
+      "elapsed_ms": 234.097,
+      "status": null,
+      "stdout_sha256": "443b32c5c6e9b9fb7e09e7ada95632b043cbffc4e2551a4d0b88c38f7bed3ed7",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "stage": "repeat_install",
+      "exit_code": 0,
+      "elapsed_ms": 171.052,
+      "status": "unchanged",
+      "stdout_sha256": "a081c1fef306afb18d1004eaa7e6592884235dcbcd456b8025f9de2a464909eb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "success": true
+}
