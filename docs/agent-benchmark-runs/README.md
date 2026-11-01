@@ -2,7 +2,7 @@
 
 ## 2026-10-30 Claude measured matrix
 
-- The 50 surviving Claude Code session transcripts are retained in local salvage storage. They were removed from the current public tree because raw sessions contained personal information. The previously published archive remains reachable in Git history; removal from the current tree does not erase past copies.
+- The 50 surviving Claude Code session transcripts are retained in local salvage storage. They were removed from the public tree and reachable branch history because raw sessions contained personal information. GitHub still served the old commit by ID after the rewrite; cached objects and copies require separate cleanup.
 - `rc-claude-20261030-2.reconstructed.json` is derived from those transcripts. It records the run order, role, prompt, reported cost, token components, tool calls and preserved correctness outcome. It is not the original harness JSON.
 - `SHA256SUMS` records the public reconstructed summary.
 
