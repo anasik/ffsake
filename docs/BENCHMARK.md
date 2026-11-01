@@ -357,3 +357,62 @@ On pinned TinyXML2 11.0.0 (`9148bdf719e997d1f474be6bcc7943881046dba1`), independ
 One pair, fixed order, different catalog sizes and an explicit semantic treatment prompt do not establish general performance. Correctness was equal; observed speed/call improvements came with higher reported cost. Native proposals missed inactive code, so source review remained necessary. Full report/raw traces/reproduction: `docs/demo-runs/20261025-lsp-acceptance/REPORT.md` (local evidence retained).
 
 Lifecycle probe on the same 249,761 source bytes: five equal-result samples measured median 0.134842 s cold versus 0.000877 s warm, retained startup 0.132311 s. Only unchanged documents were measured. The actual agent used one semantic request, so on-demand remains the default; persistent invalidation/resource correctness is not established by this probe. Reproduce with `python3 scripts/lsp_lifecycle_probe.py PINNED_TINYXML2_CHECKOUT`.
+
+## Release-candidate Claude comparison, 2026-10-30
+
+This matrix exercised the five release-candidate workflows: a two-module percentage-discount fix (`cross`), existing-project maintenance (`maintenance`), discovery and live observation of a named build task followed by repair (`build`), reviewed Git staging and commit while preserving unrelated work (`git`), and debugger-assisted diagnosis of a payroll failure (`debug`). It is a small paired study, not a general performance claim.
+
+### Scope and method
+
+- Claude Code `2.1.314`, host model alias `sonnet`, reported model `claude-sonnet-5-5`, `--effort low`, 40-turn cap. Runs were on macOS ARM64 with Python `3.14.6`.
+- Five tasks x two arms x five matched repetitions = 50 runs. Each cell has five runs. Order was counterbalanced by task and repetition.
+- The task prompt was identical in both arms and native tools remained available in both. The baseline arm had no FFSAKE MCP server. The FFSAKE arm advertised the `core` profile (38 tools in this revision, 31,468 catalog bytes) and appended host guidance naming FFSAKE for repository reading, search, previews, edits, Git, tasks and debugging without removing native tools.
+- Each run used a fresh full Git clone with `.git` inside the disposable workspace. A separate one-repetition pilot was used to fix harness and fixture defects; it is not pooled with this matrix.
+- Behavior verifiers ran after the agent. A post-run file audit rejected changes outside each task's allowlist. `build`, `debug` and `git` also required trace-visible workflow evidence: task run plus output polling, debugger state inspection plus resume, and review before commit, respectively.
+- Permissions were noninteractive for disposable fixtures. This does not test host approval flows, authorization persistence or host-enforced sandboxing.
+
+An earlier six-repetition attempt stopped on a Claude provider spend-limit error (`429`, `usage_limit_reached`); it is not pooled. Codex `0.163.0` was authenticated but returned a workspace-out-of-credits error, so no Codex measurement was possible. OpenCode `1.19.5` had credentials available, but repository instructions pause OpenCode benchmarking and provider/approval parity was not established. This report is therefore Claude-only.
+
+### Results
+
+| Task | Native correct | FFSAKE correct | Native median cost | FFSAKE median cost | Native median wall | FFSAKE median wall | FFSAKE called |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cross | 4/5 | 5/5 | $0.081 | $0.086 | 13.6 s | 12.7 s | 1/5 |
+| maintenance | 5/5 | 5/5 | $0.104 | $0.117 | 21.0 s | 24.1 s | 2/5 |
+| build | 5/5 | 5/5 | $0.103 | $0.164 | 31.6 s | 28.5 s | 5/5 |
+| git | 5/5 | 5/5 | $0.074 | $0.090 | 10.7 s | 14.6 s | 3/5 |
+| debug | 5/5 | 5/5 | $0.091 | $0.191 | 18.2 s | 40.5 s | 5/5 |
+
+`FFSAKE called` counts runs with at least one FFSAKE tool call; it does not mean exclusive use. Medians describe each cell and are not paired estimates.
+
+| Arm | Correct | Reported cost | Wall time | Total input tokens | Output tokens | Tool calls |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Native | 24/25 | $2.2678 | 471.4 s | 3,964,974 | 38,504 | 188 |
+| FFSAKE | 25/25 | $3.3006 | 622.8 s | 8,613,701 | 52,820 | 376 |
+
+Wall time is the sum of harness-measured per-run elapsed time. Reported cost is the provider-reported cost, not an invoice. Input totals include cache reads; uncached input was only 306 tokens for native and 626 for FFSAKE, so most of the input-token difference is repeated cached context from longer sessions. Cache reads were 3,583,724 versus 8,123,360 tokens, and cache creation was 380,944 versus 489,715.
+
+| Task | Paired cost ratio | Paired wall-time ratio |
+| --- | ---: | ---: |
+| cross | 1.05 (0.91-1.14) | 0.95 |
+| maintenance | 1.06 (0.90-1.46) | 1.08 |
+| build | 1.60 (1.46-1.74) | 1.02 |
+| git | 1.25 (1.11-1.58) | 1.35 |
+| debug | 2.14 (1.68-2.54) | 1.85 |
+
+Ratios compare FFSAKE with native on the same task and repetition; values above 1 mean FFSAKE was more expensive or slower. The parenthesized range is the minimum and maximum of the five paired cost ratios.
+
+### Findings
+
+- Correctness was 25/25 for FFSAKE and 24/25 for native. The single native failure passed the behavior test but also edited `README.md`, outside the allowed change set, so the file audit rejected it. This one-run difference is descriptive, not a significance test.
+- FFSAKE overhead was concentrated in build, Git and debug. Median paired cost was 1.60x for build, 1.25x for Git and 2.14x for debug; cross and maintenance were near parity but variable. Overall reported cost was 1.45x and wall time 1.32x. The build cell's unpaired median wall time favored FFSAKE slightly, while the paired median was 1.02x, so the build result does not establish a speed improvement.
+- FFSAKE tools were called in 16/25 FFSAKE runs. Adoption was 5/5 for build and debug, 3/5 for Git, 2/5 for maintenance and 1/5 for cross. Only 3/25 FFSAKE runs avoided native file or shell tools entirely, all in build. Native fallback remained common even when FFSAKE was used; the task prompts did not require exclusive FFSAKE use, and native tools were intentionally left available.
+- Build, debug and Git workflow evidence passed 30/30 required arm-task cells (five native and five FFSAKE runs for each task). There were no timeouts, provider errors, invalid comparisons, MCP failed or approval-blocked calls, retries, human interventions or nonzero exits. All 50 file audits completed. FFSAKE runs produced no unexpected file changes; the only unexpected change was the native `README.md` edit.
+
+### Evidence and limitations
+
+The original consolidated harness JSON and logs were written under `/private/tmp/ffsake-onboarding`, which macOS removed before the report was committed. The 50 Claude Code session transcripts survived under `~/.claude/projects` and are preserved in `docs/agent-benchmark-runs/20261030-claude-transcripts.tar.gz`. `docs/agent-benchmark-runs/rc-claude-20261030-2.reconstructed.json` is derived from them and records per-run role, prompt, cost, token components, tool calls and the preserved correctness outcome. Its cost, token, tool-call, adoption and correctness totals match the pre-cleanup aggregate exactly. Per-run harness wall time and exact verifier metadata were not recovered; the aggregate wall time, correctness, workflow-evidence and safety counts above are from the pre-cleanup report.
+
+Five repetitions per cell, one model alias, one host and one operating system do not support confidence intervals or general speed/cost claims. The model alias does not identify model weights, and the installed Claude Code version may change. Noninteractive permissions mean the run does not establish approval behavior or OS isolation. Codex and OpenCode are absent, so this is not a cross-agent comparison. The visible native fallback also means FFSAKE adoption is not the same as enforced routing.
+
+Reproduce with a fresh output path using the command in `docs/agent-benchmark-runs/README.md`. A re-run writes complete harness JSON but will use the current Claude Code version and may not match this sample.

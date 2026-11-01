@@ -305,6 +305,8 @@ Populated-directory `delete_directory` now previews the same bounded inventory a
 
 Bounded `copy_directory` now freezes source bytes and inventory, creates a private complete copy with ordinary file/directory modes, rechecks the source and publishes through the journal archive mechanism. Undo parks the copy privately and redo restores it without rereading the original source. Tests cover source changes before apply, source independence after undo, binary content, empty directories, read-only child/file modes, reopened history and persistence failure. macOS rejects cross-parent renames of read-only tree roots; that OS refusal is preserved without chmod of source or publication, with a platform-specific regression. Failed preparation may retain a private prepared payload. Directory copies use the same 100-entry/4-MiB/depth-32 bounds and single-operation restriction.
 
+Release-candidate Claude matrix on 2026-10-30 completed 50 valid runs across five workflows: FFSAKE was correct 25/25 versus native 24/25, but used 1.45x reported cost and 1.32x wall time overall; overhead was concentrated in build, Git and debug. FFSAKE tools were called in 16/25 runs, but only 3/25 avoided native file/shell tools, so natural adoption remains partial for ordinary edits. Codex measurement was blocked by workspace credits, OpenCode remains paused, and the original consolidated JSON was lost with `/private/tmp`; the 50 surviving Claude transcripts and a reconstructed summary are preserved under `docs/agent-benchmark-runs/`. See `docs/BENCHMARK.md` for evidence, caveats and reproduction.
+
 ## Phase 2 — syntax and LSP
 
 Before full LSP, consider parser/tree-sitter-backed syntax-aware mutation for identifiers, comments, strings, imports, and AST node kinds.
