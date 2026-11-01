@@ -12,10 +12,12 @@ import json
 import os
 import platform
 from pathlib import Path
+import re
 import statistics
 import subprocess
 import tempfile
 import time
+import uuid
 
 import agent_benchmark_suite as suite
 import rc_benchmark_fixtures as fixtures
@@ -69,6 +71,7 @@ def summarize(items):
         row = {'agent': agent, 'task': task, 'mode': mode, 'runs': len(group),
                'valid': len(valid), 'invalid': len(group) - len(valid),
                'correct': sum(x['correct'] for x in group),
+               'artifact_correct': sum(x.get('artifact_correct', x['correct']) for x in group),
                'correct_valid': sum(x['correct'] for x in valid),
                'correct_rate': sum(x['correct'] for x in group) / len(group),
                'valid_rate': len(valid) / len(group),
@@ -84,6 +87,34 @@ def summarize(items):
             row[field] = stats([x['trace'].get(field) for x in valid])
         rows.append(row)
     return rows
+
+
+def validate_pair(first, second):
+    """Invalidate both arms if the frozen prompt or starting state differs."""
+    keys = ('prompt_sha256', 'fixture_manifest_sha256',
+            'initial_staged_diff_sha256', 'initial_unstaged_diff_sha256')
+    mismatches = [key for key in keys if not first['provenance'].get(key)
+                  or first['provenance'].get(key) != second['provenance'].get(key)]
+    if first['agent'] == 'claude' and (not first.get('reported_model') or
+                                       first.get('reported_model') != second.get('reported_model')):
+        mismatches.append('reported_model')
+    if mismatches:
+        for result in (first, second):
+            result['comparison_invalid_reasons'].append('paired_input_mismatch:' + ','.join(mismatches))
+            result['comparison_valid'] = False
+    return mismatches
+
+
+def hardware_info():
+    result = {'cpu': None, 'memory_bytes': None, 'model': None}
+    if platform.system() == 'Darwin':
+        for key, name in (('cpu', 'machdep.cpu.brand_string'), ('memory_bytes', 'hw.memsize'), ('model', 'hw.model')):
+            try:
+                value = subprocess.check_output(['sysctl', '-n', name], text=True, stderr=subprocess.DEVNULL, timeout=5).strip()
+                result[key] = int(value) if key == 'memory_bytes' else value
+            except (OSError, ValueError, subprocess.SubprocessError):
+                pass
+    return result
 
 
 def error_count(agent, events):
@@ -109,18 +140,31 @@ def tool_calls(agent, events):
     """Extract model-issued tool calls, not lifecycle events or prose."""
     calls = []
     if agent == 'claude':
+        by_id = {}
         for event in events:
             if not isinstance(event, dict):
                 continue
             message = event.get('message', {})
-            if not isinstance(message, dict) or message.get('role') != 'assistant':
+            if not isinstance(message, dict):
                 continue
-            for block in message.get('content', []):
-                if isinstance(block, dict) and block.get('type') == 'tool_use':
+            blocks = message.get('content', [])
+            if not isinstance(blocks, list):
+                continue
+            for block in blocks:
+                if not isinstance(block, dict):
+                    continue
+                if message.get('role') == 'assistant' and block.get('type') == 'tool_use':
                     arguments = block.get('input') or {}
-                    calls.append({'name': str(block.get('name') or ''),
-                                  'input': arguments if isinstance(arguments, dict) else {},
-                                  'text': json.dumps(arguments)})
+                    call = {'name': str(block.get('name') or ''),
+                            'input': arguments if isinstance(arguments, dict) else {},
+                            'text': json.dumps(arguments), 'output': ''}
+                    calls.append(call)
+                    if block.get('id'):
+                        by_id[block.get('id')] = call
+                elif message.get('role') == 'user' and block.get('type') == 'tool_result':
+                    call = by_id.get(block.get('tool_use_id'))
+                    if call is not None:
+                        call['output'] = '\n'.join(suite.recursive_strings(block.get('content')))
     elif agent == 'codex':
         for event in events:
             if not isinstance(event, dict) or event.get('type') != 'item.completed':
@@ -132,10 +176,12 @@ def tool_calls(agent, events):
                 arguments = item.get('arguments') or {}
                 calls.append({'name': 'mcp__' + str(item.get('server', '')) + '__' + str(item.get('tool', '')),
                               'input': arguments if isinstance(arguments, dict) else {},
-                              'text': json.dumps(arguments)})
+                              'text': json.dumps(arguments),
+                              'output': '\n'.join(suite.recursive_strings(item.get('result') or {}))})
             elif item.get('type') == 'command_execution':
                 command = str(item.get('command') or '')
-                calls.append({'name': 'command_execution', 'input': {'command': command}, 'text': command})
+                calls.append({'name': 'command_execution', 'input': {'command': command}, 'text': command,
+                              'output': str(item.get('aggregated_output') or '')})
     return calls
 
 
@@ -177,9 +223,15 @@ def workflow_evidence(agent, task, calls, output):
         ffsake_observe = any('ffsake_task_output' in name or 'ffsake_task_status' in name for name in names)
         native_run = any('slow_test.py' in command for command in commands)
         markers = 'test started' in lower and 'test finished' in lower
+        live_mcp = any('ffsake_task_output' in c['name'] and 'test started' in c.get('output', '').lower()
+                       and re.search(r'"complete"\s*:\s*false', c.get('output', ''), re.I) for c in calls)
+        live_native = any(('&' in c['text'] or 'tail -f' in c['text'])
+                          and 'test started' in c.get('output', '').lower()
+                          and 'test finished' not in c.get('output', '').lower() for c in calls)
         details = {'ffsake_run_task': ffsake_run, 'ffsake_output_polled': ffsake_observe,
-                   'native_task_command': native_run, 'output_markers': markers}
-        passed = markers and ((ffsake_run and ffsake_observe) or native_run)
+                   'native_task_command': native_run, 'output_markers': markers,
+                   'live_mcp_observed': bool(live_mcp), 'live_native_observed': bool(live_native)}
+        passed = markers and ((ffsake_run and ffsake_observe and live_mcp) or (native_run and live_native))
     elif task == 'debug':
         ffsake_launch = any('ffsake_debug_launch' in name or 'ffsake_debug_attach' in name for name in names)
         actions = set()
@@ -190,26 +242,37 @@ def workflow_evidence(agent, task, calls, output):
             action = request.get('action') if isinstance(request, dict) else None
             if isinstance(action, str):
                 actions.add(action)
-        ffsake_inspect = 'breakpoints' in actions and ('scopes' in actions or 'variables' in actions)
+        ffsake_inspect = 'breakpoints' in actions and 'scopes' in actions and 'variables' in actions
         ffsake_resume = 'continue' in actions
         native_debugger = any(any(marker in command.lower() for marker in
                                   ('pdb', 'debugpy', 'lldb', 'gdb', 'dlv', '--inspect'))
                               for command in commands)
-        native_state = '(pdb)' in lower or 'breakpoint' in lower or 'stopped' in lower
+        native_state = any(any(marker in c['text'].lower() for marker in ('pdb', 'debugpy', 'lldb', 'gdb', 'dlv', '--inspect'))
+                           and 'adjustments' in c.get('output', '').lower() and '50' in c.get('output', '')
+                           for c in calls)
+        ffsake_state = any('ffsake_debug' in c['name'] and 'adjustments' in c.get('output', '').lower()
+                           and '50' in c.get('output', '') for c in calls)
         details = {'ffsake_launch': ffsake_launch, 'debug_actions': sorted(actions),
                    'ffsake_inspected_state': ffsake_inspect, 'ffsake_resumed': ffsake_resume,
-                   'native_debugger': native_debugger, 'native_state_observed': native_state}
-        passed = (ffsake_launch and ffsake_inspect and ffsake_resume) or (native_debugger and native_state)
+                   'native_debugger': native_debugger, 'native_state_observed': native_state,
+                   'ffsake_state_observed': ffsake_state}
+        passed = (ffsake_launch and ffsake_inspect and ffsake_resume and ffsake_state) or (native_debugger and native_state)
     elif task == 'git':
-        review = next((i for i, call in enumerate(calls)
-                       if 'ffsake_git_review' in call['name'] or 'git diff --cached' in call['text']
-                       or 'git diff --staged' in call['text']), None)
-        commit = next((i for i, call in enumerate(calls)
-                       if 'ffsake_git_mutate' in call['name'] or 'git commit' in call['text']), None)
-        ordered = review is not None and commit is not None and (
-            review < commit or (
-                review == commit and 'git diff --cached' in calls[review]['text']
-                and calls[review]['text'].find('git diff --cached') < calls[review]['text'].find('git commit')))
+        commit = next((i for i, c in enumerate(calls) if
+                       ('ffsake_git_mutate' in c['name'] and c['input'].get('action') == 'commit')
+                       or 'git commit' in c['text']), None)
+        reviews = [i for i, c in enumerate(calls) if 'ffsake_git_review' in c['name']
+                   or 'git diff --cached' in c['text'] or 'git diff --staged' in c['text']]
+        stages = [i for i, c in enumerate(calls) if
+                  ('ffsake_git_mutate' in c['name'] and c['input'].get('action') == 'stage') or 'git add' in c['text']]
+        eligible = [r for r in reviews if commit is not None and any(s <= r <= commit for s in stages)
+                    and 'calculator.py' in calls[r].get('output', '')
+                    and 'return left + right' in calls[r].get('output', '')]
+        review = eligible[-1] if eligible else None
+        ordered = review is not None
+        if ordered and review == commit:
+            text = calls[commit]['text']
+            ordered = text.find('git add') < text.find('git diff --cached') < text.find('git commit')
         details = {'review_index': review, 'commit_index': commit, 'review_before_commit': ordered}
         passed = ordered
     else:
@@ -242,9 +305,8 @@ def normalize_usage(agent, trace):
     if agent == 'claude':
         parts = [trace.get('input_tokens'), trace.get('cache_read_input_tokens'),
                  trace.get('cache_creation_input_tokens')]
-        if any(isinstance(value, (int, float)) and not isinstance(value, bool) for value in parts):
-            trace['total_input_tokens'] = sum(
-                value for value in parts if isinstance(value, (int, float)) and not isinstance(value, bool))
+        if all(isinstance(value, (int, float)) and not isinstance(value, bool) for value in parts):
+            trace['total_input_tokens'] = sum(parts)
         else:
             trace['total_input_tokens'] = None
         trace['uncached_input_tokens'] = trace.get('input_tokens')
@@ -256,17 +318,12 @@ def normalize_usage(agent, trace):
                                          and isinstance(cached, (int, float)) else None)
 
 
-def make_clone_fixture(template, state, debug_python=None):
-    """Populate each run from the same commit, restoring untracked empty dirs/modes.
-
-    A full clone keeps .git inside the disposable workspace. Linked worktrees put
-    their index and refs in the template's common directory, which Codex's
-    workspace-write sandbox denies; the baseline then cannot commit while the
-    unsandboxed MCP server can.
-    """
+def make_worktree_fixture(template, state, debug_python=None):
+    """Create a linked worktree from one frozen commit and restore fixture modes."""
     def fixture(root):
         root.rmdir()  # suite supplies an empty, uniquely reserved directory
-        subprocess.run(['git', 'clone', '-q', '--no-hardlinks', str(template), str(root)], check=True)
+        subprocess.run(['git', '-C', str(template), 'worktree', 'add', '-q',
+                        '-b', 'bench-' + uuid.uuid4().hex, str(root)], check=True)
         for key, value in (('user.name', 'FFSAKE Benchmark'),
                            ('user.email', 'ffsake-benchmark@example.invalid'),
                            ('commit.gpgsign', 'false'), ('gc.auto', '0'),
@@ -321,13 +378,16 @@ def main():
     agents, tasks = a.agents.split(','), a.tasks.split(',')
     if any(x not in ('claude', 'codex') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug') for x in tasks):
         p.error('unsupported agent or task')
+    if not a.pilot and 'codex' in agents and 'git' in tasks:
+        p.error('Codex Git comparison unavailable: native workspace sandbox denies linked-worktree Git metadata while MCP can write it')
     if 'debug' in tasks and (not a.debug_python or not a.debug_python.is_file()):
         p.error('--debug-python must identify a Python with the validated debugpy adapter')
     if not a.pilot and a.repetitions < 5:
         p.error('measured pairs require at least five repetitions')
     suite.FFSAKE_MCP = a.binary.resolve(strict=True)
     for task in tasks:
-        suite.TASKS[task]['prompt'] += '\nWork only in this repository; do not write scratch files elsewhere.'
+        suite.TASKS[task]['prompt'] += ('\nWork only in this repository; do not write scratch files elsewhere. '
+                                        'Do not use process-name-based termination or signal processes outside this task.')
     old_provenance = suite.task_provenance
     def task_provenance(root, files, prompt):
         result = old_provenance(root, files, prompt)
@@ -360,12 +420,12 @@ def main():
                            'task_prompt_identical': True, 'ffsake_profile': 'core',
                            'ffsake_host_guidance': GUIDANCE,
                            'debug_python': str(a.debug_python) if a.debug_python else None,
-                           'fixture_isolation': 'full clone per run; .git is inside the disposable workspace',
+                           'fixture_isolation': 'linked worktree per run from one frozen bare fixture',
                            'token_accounting': {
                                'claude': 'total_input_tokens = input_tokens + cache_read + cache_creation',
                                'codex': 'total_input_tokens = input_tokens (includes cached); uncached = input - cached'},
                            'platform': platform.platform(), 'machine': platform.machine(),
-                           'python': platform.python_version()},
+                           'python': platform.python_version(), 'hardware': hardware_info()},
               'started_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
               'results': [], 'aggregate': [], 'complete': False}
     if a.output.exists(): raise SystemExit('output already exists; choose a new path')
@@ -375,7 +435,7 @@ def main():
             template = Path(stack.enter_context(tempfile.TemporaryDirectory(prefix='ffsake-rc-template-'))).resolve()
             state = suite.TASKS[task]['fixture'](template)
             bare = bare_template(template)
-            suite.TASKS[task]['fixture'] = make_clone_fixture(bare, state, a.debug_python if task == 'debug' else None)
+            suite.TASKS[task]['fixture'] = make_worktree_fixture(bare, state, a.debug_python if task == 'debug' else None)
         for agent in agents:
             for task in tasks:
                 for repetition in range(1, a.repetitions + 1):
@@ -387,17 +447,24 @@ def main():
                         # disposable container rather than the user's shared tmp.
                         with tempfile.TemporaryDirectory(prefix='ffsake-rc-run-') as run_base:
                             previous_tempdir = tempfile.tempdir
+                            previous_tmpdir = os.environ.get('TMPDIR')
                             try:
                                 tempfile.tempdir = run_base
+                                os.environ['TMPDIR'] = run_base
                                 result = suite.one(agent, task, mode, a.timeout, None, 'core')
                             finally:
                                 tempfile.tempdir = previous_tempdir
+                                if previous_tmpdir is None:
+                                    os.environ.pop('TMPDIR', None)
+                                else:
+                                    os.environ['TMPDIR'] = previous_tmpdir
                         result['repetition'] = repetition
                         events = suite.parse_jsonl(result['stdout'])
                         calls = tool_calls(agent, events)
                         evidence = workflow_evidence(agent, task, calls, tool_output_text(agent, events))
                         result['workflow_evidence'] = evidence
                         result['workflow_evidence_reviewed'] = evidence['passed']
+                        result['artifact_correct'] = result['correct']
                         result['correct'] = bool(result['correct'] and evidence['passed'])
                         result['trace']['observed_tool_errors'] = error_count(agent, events)
                         result['trace']['retries'] = None  # Repeated calls are not necessarily retries.
@@ -418,6 +485,10 @@ def main():
                         result['comparison_invalid_reasons'] = [x for x in result['comparison_invalid_reasons'] if x != 'tool_policy_violation']
                         result['comparison_valid'] = not result['comparison_invalid_reasons']
                         report['results'].append(result)
+                        if len(report['results']) >= 2:
+                            previous = report['results'][-2]
+                            if (previous['agent'], previous['task'], previous['repetition']) == (agent, task, repetition):
+                                validate_pair(previous, result)
                         report['aggregate'] = summarize(report['results'])
                         suite.save_report(a.output, report)
                         print(json.dumps({'correct': result['correct'], 'valid': result['comparison_valid'],
