@@ -1,0 +1,85 @@
+{
+  "binary_sha256": "1c0916bfa2a2149bad1caaa4ecb612db8cd2c933d6623cc46968f2635e0b6fd6",
+  "checks": [
+    {
+      "script": "access_smoke.py",
+      "exit_code": 0,
+      "outcomes": {
+        "absolute_and_exact_file_access": true,
+        "neighbor_denied": true,
+        "read_only": true,
+        "revocation_apply_history": true,
+        "stale_preview": true,
+        "cross_root_rejected": true,
+        "persistent_journal": true,
+        "session_lifetime": true,
+        "once_survives_restart": true,
+        "live_mcp_roots": true,
+        "manual_host_export_retry": true
+      },
+      "stdout_sha256": "58982089edfc831cf23ea3f20d4c9e75349b2411f3e75f9c26738ab7345560c1",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "script": "mcp_smoke.py",
+      "exit_code": 0,
+      "outcomes": {},
+      "stdout_sha256": "6904f4520eb7fecef2bbf41441f2beca543fee5c95821596dc5de3f7b05fb80a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "script": "git_write_smoke.py",
+      "exit_code": 0,
+      "outcomes": {
+        "selected_commit": true,
+        "unrelated_preserved": true,
+        "stage_unstage": true,
+        "stale_rejected": true,
+        "hook_and_fsmonitor_refused": true,
+        "unborn": true,
+        "worktree": true
+      },
+      "stdout_sha256": "126db1f3772289ae512ae15789c7bda020aafbc61fe6ed443393518e39debced",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "script": "project_tasks_smoke.py",
+      "exit_code": 0,
+      "outcomes": {
+        "external_file_not_trusted": true,
+        "authorization_persistent": true,
+        "formatting_preserved": true,
+        "ordinary_edits_do_not_authorize": true,
+        "reauthorization": true,
+        "unsupported_rejected": true,
+        "project_isolation": true,
+        "failed_test": true,
+        "output_bounds": true,
+        "timeout": true,
+        "cancellation_cleanup": true,
+        "stale_preview": true,
+        "restrictive_policy": true
+      },
+      "stdout_sha256": "22e4a5b53c9826d4d73161305fc4c3e9e452a45550655e9f00e03f5a71d50c74",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "script": "task_output_smoke.py",
+      "exit_code": 0,
+      "outcomes": {
+        "live_output_and_edit": true,
+        "utf8_cursor_pagination": true,
+        "failure_tail_and_overflow": true,
+        "expired_job": true,
+        "graceful_cancellation": true,
+        "descendant_cleanup": true,
+        "timeout_drained": true
+      },
+      "stdout_sha256": "5293c31cf7b3052b872309e8d63a742181b2e4a0dd1a45657b50cbee003eb117",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "all_passed": true,
+  "model_calls": 0,
+  "scope": "FFSAKE operations and owned process cleanup; not an OS execution sandbox"
+}

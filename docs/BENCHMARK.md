@@ -416,3 +416,59 @@ The original consolidated harness JSON and logs were written under `/private/tmp
 Five repetitions per cell, one model alias, one host and one operating system do not support confidence intervals or general speed/cost claims. The model alias does not identify model weights, and the installed Claude Code version may change. Noninteractive permissions mean the run does not establish approval behavior or OS isolation. Codex and OpenCode are absent, so this is not a cross-agent comparison. The visible native fallback also means FFSAKE adoption is not the same as enforced routing.
 
 Reproduce with a fresh output path using the command in `docs/agent-benchmark-runs/README.md`. A re-run writes complete harness JSON but will use the current Claude Code version and may not match this sample.
+
+## Release-candidate Codex comparison, 2026-11-01
+
+This is a new sample, not pooled with the reconstructed Claude results. Codex CLI `0.163.0` used the requested model name `gpt-6-astra` with reasoning effort `low`, on an Apple M1 Pro MacBook Pro with 16 GiB RAM and Python 3.14. The CLI did not report an immutable model identifier in these traces. The benchmark source revision was `f8b891c0f79377160f7a07919e7555cc62b9f922`; the optimized MCP binary SHA-256 was `1c0916bfa2a2149bad1caaa4ecb612db8cd2c933d6623cc46968f2635e0b6fd6`. The binary was built from the preceding source tree; the intervening commit changed benchmark code and documentation, not FFSAKE source or Cargo inputs.
+
+Five repetitions per arm were run on four synthetic tasks: a cross-file fix, a maintenance change involving creation/move/delete, live test-output inspection and repair, and debugger-assisted diagnosis. Each run used a fresh linked worktree from a frozen fixture. Task prompts, model settings and initial file/Git-state hashes matched within each pair; order alternated. The FFSAKE arm had the core MCP catalog and explicit FFSAKE-first host guidance; native tools remained available. The baseline had no FFSAKE server. The core catalog was 38 tools and 31,468 serialized bytes; bytes are not a measured token cost. Both arms used deliberate noninteractive allowance in disposable fixtures. Approval-prompt friction was not measured.
+
+Cross-file and maintenance are focused editing comparisons; build and debug are whole-workflow comparisons. They should not be pooled into one editing-performance figure.
+
+**Git is not a scored Codex pair:** in pilots, Codex's native workspace sandbox denied writes to the linked worktree's Git index while the MCP server could commit. A full-clone pilot had the same native restriction. An attempted common host-isolation profile prevented Codex itself from initializing. Scoring the unequal setup as an FFSAKE win would be misleading. OpenCode `1.19.5` returned HTTP 401 on its configured provider's token refresh; it has no measured runs. Cold installation/setup was not timed.
+
+### Outcomes and elapsed time
+
+Each row has five runs per arm. Times are median seconds with the minimum–maximum in parentheses; they include failed and timed-out attempts. “Complete” requires both the external artifact checks and the trace-visible workflow evidence. All 40 final fixture states passed the independent file and behavior checks; the timed-out debugger agent did not finish despite its resulting program passing the external check.
+
+| Task | Native complete | FFSAKE complete | Native time | FFSAKE time |
+| --- | ---: | ---: | ---: | ---: |
+| Cross-file fix | 5/5 | 5/5 | 22.2 (21.5–27.9) | 35.3 (32.8–40.0) |
+| Maintenance | 5/5 | 5/5 | 36.8 (25.9–39.3) | 44.7 (39.2–49.7) |
+| Live test and repair | 0/5 | 5/5 | 41.6 (39.6–44.6) | 56.0 (48.2–58.9) |
+| Debug and repair | 5/5 | 4/5 | 39.0 (36.4–44.9) | 124.4 (95.2–300.0) |
+
+The native live-test runs all passed the final test, but their captured command results did not establish that the agent observed output *before* completion; that is missing evidence, not a failing repair. All five FFSAKE traces included an incremental output response marked incomplete. One FFSAKE debugger run timed out at 300 seconds; its trace contained runtime-state evidence and the externally rerun program passed. The native debugger used Python `pdb`; FFSAKE used debugpy `1.8.17`, so adapter workflows and call counts differ.
+
+### Tokens and calls
+
+Values are medians with minimum–maximum in parentheses. Input includes cache reads; output and input are separate quantities. Sample size is five per cell except FFSAKE debug token fields, which have **four**: the timed-out run did not report final usage. Codex reported no dollar cost, so cost is unavailable rather than zero. Tool-call counts are host-reported calls; batching and interface differences limit direct comparisons.
+
+| Task / arm | Total input tokens | Cached input tokens | Output tokens | Tool calls |
+| --- | ---: | ---: | ---: | ---: |
+| Cross native | 72,246 (64,732–89,889) | 65,536 (55,552–77,568) | 449 (429–497) | 4 (4–7) |
+| Cross FFSAKE | 210,037 (182,063–239,467) | 192,512 (164,736–216,320) | 572 (570–605) | 15 (15–16) |
+| Maintenance native | 93,580 (50,163–111,241) | 86,272 (45,312–104,064) | 1,220 (1,147–1,429) | 4 (2–5) |
+| Maintenance FFSAKE | 219,025 (202,169–234,454) | 198,016 (180,224–211,712) | 1,349 (1,302–1,370) | 24 (18–24) |
+| Build native | 210,259 (209,990–210,798) | 193,280 (178,688–193,920) | 709 (647–734) | 7 (7–7) |
+| Build FFSAKE | 338,220 (333,714–364,200) | 319,744 (308,480–343,936) | 909 (846–950) | 24 (22–25) |
+| Debug native | 121,154 (119,291–166,027) | 110,976 (92,416–148,992) | 697 (679–808) | 6 (5–7) |
+| Debug FFSAKE | 888,095 (790,174–1,006,429), n=4 | 849,792 (745,984–962,432), n=4 | 1,594 (1,465–1,806), n=4 | 41 (33–41) |
+
+All 20 FFSAKE-arm runs called FFSAKE, and native tools remained available. No unexpected fixture-file changes were recorded. The host reported failed tool/command events in some runs, including expected failing tests; these counts do not identify retries. Retry counts are unavailable, and there were no human interventions during the unattended runs. A single fixture, host and small sample do not establish a general performance or safety advantage. In this sample, FFSAKE used more time and input tokens in each task, and debugger polling was a visible usability cost.
+
+### Safety and evidence
+
+Separate, model-free checks exercised denied access, stale previews, history undo/redo, unrelated staged/unstaged Git preservation, changed task authorization, live logs, cancellation and owned-process cleanup. They test FFSAKE's guards and documented boundaries; authorized task/debug execution is not an OS sandbox. [Safety results](agent-benchmark-runs/20261101-codex/safety.json) and the [redacted per-run event indexes](agent-benchmark-runs/README.md#2026-11-01-codex-measured-matrix) are available. Those indexes deliberately omit prompts, commands, arguments, tool output, paths and session IDs; the full raw transcripts remain local and are required to independently review every evidence decision.
+
+To reproduce after installing the dependencies and building the release binary, use a fresh private output path:
+
+```sh
+python3 scripts/rc_benchmark.py --binary target/release/ffsake-mcp \
+  --output /private/path/to/new-codex-report.json --agents codex \
+  --tasks cross,maintenance,build,debug --repetitions 5 \
+  --debug-python /absolute/path/to/debugpy-venv/bin/python
+python3 scripts/rc_safety_evidence.py target/release/ffsake-mcp /private/path/to/new-safety.json
+```
+
+The driver refuses a scored Codex Git run with the known unequal sandbox setup. A new study should record its own source/binary identities, host settings and model availability rather than pooling results across revisions.

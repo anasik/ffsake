@@ -1,0 +1,5051 @@
+{
+  "schema_version": 1,
+  "kind": "content-free redacted event index",
+  "limitations": "Commands, arguments, output and private content are omitted; retain the original report privately.",
+  "source_revision": "f8b891c0f79377160f7a07919e7555cc62b9f922",
+  "binary_sha256": "1c0916bfa2a2149bad1caaa4ecb612db8cd2c933d6623cc46968f2635e0b6fd6",
+  "driver_sha256": "de6d5b8ea854815535a18f471ba14154d4daf753b28a3ea2534399e0c1ec1140",
+  "fixture_sha256": "adb219bcb9d4d272084ba5ec8e9e9b7b9c9fa3ed30a8970d86b124239ef87839",
+  "agents": [
+    "codex"
+  ],
+  "tasks": [
+    "debug"
+  ],
+  "repetitions": 5,
+  "complete": true,
+  "platform": "arm64",
+  "results": [
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 1,
+      "elapsed_ms": 129010.892,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "ffsake",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 41,
+        "ffsake_tool_calls": 41,
+        "shell_tool_calls": 0,
+        "observed_tool_errors": 0,
+        "input_tokens": 886487,
+        "total_input_tokens": 886487,
+        "uncached_input_tokens": 48983,
+        "output_tokens": 1589,
+        "cache_read_input_tokens": 837504,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_preview_edit",
+          "mcp__ffsake__ffsake_apply",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": true,
+          "ffsake_inspected_state": true,
+          "ffsake_resumed": true,
+          "ffsake_state_observed": true,
+          "native_debugger": false,
+          "native_state_observed": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "3b9160f8c3c53c0ef9f81c1e331b3d92a8758e0546e6281c621356ca24ed67b6",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "events": [
+        {
+          "type": "thread.started"
+        },
+        {
+          "type": "turn.started"
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_workspace_info"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_workspace_info"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_tasks"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_tasks"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_list"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_list"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_preview_edit"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_preview_edit"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_apply"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_apply"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "turn.completed"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 1,
+      "elapsed_ms": 38950.533,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 5,
+        "observed_tool_errors": 0,
+        "input_tokens": 120419,
+        "total_input_tokens": 120419,
+        "uncached_input_tokens": 28003,
+        "output_tokens": 688,
+        "cache_read_input_tokens": 92416,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "file_change",
+          "command_execution",
+          "command_execution"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": false,
+          "ffsake_inspected_state": false,
+          "ffsake_resumed": false,
+          "ffsake_state_observed": false,
+          "native_debugger": true,
+          "native_state_observed": true
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "04fb39f2721d92d613ba8fe103aa258058600fea237244c2075b468d5cdc4cee",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "events": [
+        {
+          "type": "thread.started"
+        },
+        {
+          "type": "turn.started"
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "file_change",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "file_change",
+            "status": "completed"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "turn.completed"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 2,
+      "elapsed_ms": 38562.519,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 5,
+        "observed_tool_errors": 0,
+        "input_tokens": 166027,
+        "total_input_tokens": 166027,
+        "uncached_input_tokens": 17035,
+        "output_tokens": 717,
+        "cache_read_input_tokens": 148992,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "file_change",
+          "command_execution",
+          "command_execution"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": false,
+          "ffsake_inspected_state": false,
+          "ffsake_resumed": false,
+          "ffsake_state_observed": false,
+          "native_debugger": true,
+          "native_state_observed": true
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "4f9e52acee85454ebb3b075f0bc73e54be447e3d91b02a85966857d07e6e2d8e",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "events": [
+        {
+          "type": "thread.started"
+        },
+        {
+          "type": "turn.started"
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "file_change",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "file_change",
+            "status": "completed"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "turn.completed"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 2,
+      "elapsed_ms": 124379.306,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "ffsake",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 41,
+        "ffsake_tool_calls": 41,
+        "shell_tool_calls": 0,
+        "observed_tool_errors": 0,
+        "input_tokens": 1006429,
+        "total_input_tokens": 1006429,
+        "uncached_input_tokens": 43997,
+        "output_tokens": 1806,
+        "cache_read_input_tokens": 962432,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_preview_edit",
+          "mcp__ffsake__ffsake_apply",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": true,
+          "ffsake_inspected_state": true,
+          "ffsake_resumed": true,
+          "ffsake_state_observed": true,
+          "native_debugger": false,
+          "native_state_observed": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "26af3b07e40ea77562f1fc4eb0b992f0763717a0343d59ba5c0fd64a86f33e9f",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "events": [
+        {
+          "type": "thread.started"
+        },
+        {
+          "type": "turn.started"
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_workspace_info"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_workspace_info"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_tasks"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_tasks"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_list"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_list"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_preview_edit"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_preview_edit"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_apply"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_apply"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "turn.completed"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 3,
+      "elapsed_ms": 95162.094,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "ffsake",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 39,
+        "ffsake_tool_calls": 39,
+        "shell_tool_calls": 0,
+        "observed_tool_errors": 0,
+        "input_tokens": 790174,
+        "total_input_tokens": 790174,
+        "uncached_input_tokens": 44190,
+        "output_tokens": 1465,
+        "cache_read_input_tokens": 745984,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_preview_edit",
+          "mcp__ffsake__ffsake_apply",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_git"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": true,
+          "ffsake_inspected_state": true,
+          "ffsake_resumed": true,
+          "ffsake_state_observed": true,
+          "native_debugger": false,
+          "native_state_observed": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "74ab13e3b4b490e1f33f939613dcb5a81fdac27a87f8a2c49f019b756a01ff79",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "events": [
+        {
+          "type": "thread.started"
+        },
+        {
+          "type": "turn.started"
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_workspace_info"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_workspace_info"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_tasks"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_tasks"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_list"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_list"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_preview_edit"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_preview_edit"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_apply"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_apply"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "turn.completed"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 3,
+      "elapsed_ms": 44852.737,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 5,
+        "observed_tool_errors": 0,
+        "input_tokens": 137936,
+        "total_input_tokens": 137936,
+        "uncached_input_tokens": 10064,
+        "output_tokens": 697,
+        "cache_read_input_tokens": 127872,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "file_change",
+          "command_execution",
+          "command_execution"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": false,
+          "ffsake_inspected_state": false,
+          "ffsake_resumed": false,
+          "ffsake_state_observed": false,
+          "native_debugger": true,
+          "native_state_observed": true
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "71f292b1aa3a96d8a637a8d92a770bdca5b901bda97bdd7d2b5e56b2177548fa",
+      "private_stderr_sha256": "43a301b35f78c8182c54a95cbe562331fc6ccdecd3e306b8e2985256ceb06d2a",
+      "events": [
+        {
+          "type": "thread.started"
+        },
+        {
+          "type": "turn.started"
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "file_change",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "file_change",
+            "status": "completed"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "turn.completed"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 4,
+      "elapsed_ms": 36367.521,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 7,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 6,
+        "observed_tool_errors": 0,
+        "input_tokens": 121154,
+        "total_input_tokens": 121154,
+        "uncached_input_tokens": 10178,
+        "output_tokens": 679,
+        "cache_read_input_tokens": 110976,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "file_change",
+          "command_execution",
+          "command_execution"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": false,
+          "ffsake_inspected_state": false,
+          "ffsake_resumed": false,
+          "ffsake_state_observed": false,
+          "native_debugger": true,
+          "native_state_observed": true
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "36446c45d961cbca61a6edd5b9551abfc90ee90028e7db26b2c7eb7dbb3dec80",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "events": [
+        {
+          "type": "thread.started"
+        },
+        {
+          "type": "turn.started"
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "file_change",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "file_change",
+            "status": "completed"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "turn.completed"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 4,
+      "elapsed_ms": 106734.849,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "ffsake",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 41,
+        "ffsake_tool_calls": 41,
+        "shell_tool_calls": 0,
+        "observed_tool_errors": 0,
+        "input_tokens": 889703,
+        "total_input_tokens": 889703,
+        "uncached_input_tokens": 27623,
+        "output_tokens": 1599,
+        "cache_read_input_tokens": 862080,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_preview_edit",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_apply",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": true,
+          "ffsake_inspected_state": true,
+          "ffsake_resumed": true,
+          "ffsake_state_observed": true,
+          "native_debugger": false,
+          "native_state_observed": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "beca911c7c4335290687a08be9ca93ff6489ea6165232cdc46efae202a9a27ad",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "events": [
+        {
+          "type": "thread.started"
+        },
+        {
+          "type": "turn.started"
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_workspace_info"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_workspace_info"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_tasks"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_tasks"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_list"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_list"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_preview_edit"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_preview_edit"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_apply"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_apply"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "turn.completed"
+        }
+      ]
+    },
+    {
+      "correct": false,
+      "artifact_correct": false,
+      "comparison_valid": true,
+      "timed_out": true,
+      "repetition": 5,
+      "elapsed_ms": 300024.669,
+      "exit_code": null,
+      "task": "debug",
+      "mode": "ffsake",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 33,
+        "ffsake_tool_calls": 33,
+        "shell_tool_calls": 0,
+        "observed_tool_errors": 0,
+        "input_tokens": null,
+        "total_input_tokens": null,
+        "uncached_input_tokens": null,
+        "output_tokens": null,
+        "cache_read_input_tokens": null,
+        "cache_creation_input_tokens": null,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_preview_edit",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_apply",
+          "mcp__ffsake__ffsake_debug"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": true,
+          "ffsake_inspected_state": true,
+          "ffsake_resumed": true,
+          "ffsake_state_observed": true,
+          "native_debugger": false,
+          "native_state_observed": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "7594d8e8d272c2002d0cc6e988217f3554b84f5db075d27f5138b039958c74db",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "events": [
+        {
+          "type": "thread.started"
+        },
+        {
+          "type": "turn.started"
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_workspace_info"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_workspace_info"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_git"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_tasks"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_tasks"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_list"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_list"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_read"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug_launch"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_preview_edit"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_preview_edit"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_apply"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_apply"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "in_progress",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "mcp_tool_call",
+            "status": "completed",
+            "server": "ffsake",
+            "tool": "ffsake_debug"
+          }
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 5,
+      "elapsed_ms": 39057.812,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 5,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 4,
+        "observed_tool_errors": 1,
+        "input_tokens": 119291,
+        "total_input_tokens": 119291,
+        "uncached_input_tokens": 18427,
+        "output_tokens": 808,
+        "cache_read_input_tokens": 100864,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "file_change",
+          "command_execution"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": false,
+          "ffsake_inspected_state": false,
+          "ffsake_resumed": false,
+          "ffsake_state_observed": false,
+          "native_debugger": true,
+          "native_state_observed": true
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "611653eb8561d1a4459193075e25fa68d740b365096ec74ca602369873f39809",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "events": [
+        {
+          "type": "thread.started"
+        },
+        {
+          "type": "turn.started"
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "failed",
+            "exit_code": 1
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "file_change",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "file_change",
+            "status": "completed"
+          }
+        },
+        {
+          "type": "item.started",
+          "item": {
+            "type": "command_execution",
+            "status": "in_progress"
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "command_execution",
+            "status": "completed",
+            "exit_code": 0
+          }
+        },
+        {
+          "type": "item.completed",
+          "item": {
+            "type": "agent_message"
+          }
+        },
+        {
+          "type": "turn.completed"
+        }
+      ]
+    }
+  ]
+}

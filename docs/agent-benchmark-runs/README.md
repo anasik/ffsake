@@ -25,3 +25,7 @@ python3 scripts/rc_benchmark.py \
 ```
 
 A fresh run writes a complete harness JSON with verifier metadata. It will use the current Claude Code version and may not reproduce the 2026-10-30 sample exactly. Codex and OpenCode were not part of this matrix; see the limitations in `docs/BENCHMARK.md`.
+
+## 2026-11-01 Codex measured matrix
+
+The [cross](20261101-codex/cross.json), [maintenance](20261101-codex/maintenance.json), [build](20261101-codex/build.json), and [debug](20261101-codex/debug.json) files contain per-run metrics and a content-free redacted event index. They omit prompts, commands, arguments, tool output, session IDs and paths to protect privacy; they cannot independently establish every workflow observation. Original transcripts and verification details remain in local private storage. [Model-free safety outcomes](20261101-codex/safety.json) are separate. See [methodology and results](../BENCHMARK.md#release-candidate-codex-comparison-2026-11-01).
