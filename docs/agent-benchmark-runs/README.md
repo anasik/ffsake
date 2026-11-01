@@ -2,13 +2,13 @@
 
 ## 2026-10-30 Claude measured matrix
 
-- `20261030-claude-transcripts.tar.gz` contains the 50 surviving Claude Code session transcripts from the complete measured matrix: five tasks, two arms, five matched repetitions. Each directory is one run and contains the raw stream transcript.
+- The 50 surviving Claude Code session transcripts are retained in local salvage storage. They were removed from the current public tree because raw sessions contained personal information. The previously published archive remains reachable in Git history; removal from the current tree does not erase past copies.
 - `rc-claude-20261030-2.reconstructed.json` is derived from those transcripts. It records the run order, role, prompt, reported cost, token components, tool calls and preserved correctness outcome. It is not the original harness JSON.
-- `SHA256SUMS` records both files.
+- `SHA256SUMS` records the public reconstructed summary.
 
 The original consolidated JSON and harness logs were written under `/private/tmp/ffsake-onboarding`, which macOS removed before the report was committed. The Claude Code transcripts under `~/.claude/projects` survived because they live outside `/private/tmp`; they were copied into the archive. Cost, token, tool-call, adoption and correctness totals in the reconstructed summary match the pre-cleanup aggregate exactly. Per-run harness wall time and verifier metadata (changed-file lists and exact audit fields) were not recovered. The preserved aggregate correctness is 24/25 native and 25/25 FFSAKE, with one native cross-file run editing `README.md` outside its allowed change set. See `docs/BENCHMARK.md` for the full method and caveats.
 
-The transcripts contain prompts, model output, tool calls and absolute disposable paths. They were checked for credential patterns; no API keys or private keys were found. They are local benchmark evidence, not a sanitized public transcript.
+The local transcripts contain prompts, model output, tool calls, account email and absolute paths. A pattern scan found no obvious API keys or private keys; it is not a complete secret audit. They require sanitization before publication.
 
 ## Reproduce
 
