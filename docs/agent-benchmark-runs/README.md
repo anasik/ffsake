@@ -6,7 +6,7 @@
 - `rc-claude-20261030-2.reconstructed.json` is derived from those transcripts. It records the run order, role, prompt, reported cost, token components, tool calls and preserved correctness outcome. It is not the original harness JSON.
 - `SHA256SUMS` records the public reconstructed summary.
 
-The original consolidated JSON and harness logs were written under `/private/tmp/ffsake-onboarding`, which macOS removed before the report was committed. The Claude Code transcripts under `~/.claude/projects` survived because they live outside `/private/tmp`; they were copied into the archive. Cost, token, tool-call, adoption and correctness totals in the reconstructed summary match the pre-cleanup aggregate exactly. Per-run harness wall time and verifier metadata (changed-file lists and exact audit fields) were not recovered. The preserved aggregate correctness is 24/25 native and 25/25 FFSAKE, with one native cross-file run editing `README.md` outside its allowed change set. See `docs/BENCHMARK.md` for the full method and caveats.
+The original consolidated JSON and harness logs were written under `/private/tmp/ffsake-onboarding`, which macOS removed before the report was committed. The Claude Code transcripts under `~/.claude/projects` survived because they live outside `/private/tmp`; they were retained in local salvage storage. Cost, token, tool-call, adoption and correctness totals in the reconstructed summary match the pre-cleanup aggregate exactly. Per-run harness wall time and verifier metadata (changed-file lists and exact audit fields) were not recovered. The preserved aggregate correctness is 24/25 native and 25/25 FFSAKE, with one native cross-file run editing `README.md` outside its allowed change set. See `docs/BENCHMARK.md` for the full method and caveats.
 
 The local transcripts contain prompts, model output, tool calls, account email and absolute paths. A pattern scan found no obvious API keys or private keys; it is not a complete secret audit. They require sanitization before publication.
 
@@ -17,7 +17,7 @@ Run from the repository root with Claude Code installed, the MCP binary built, a
 ```sh
 python3 scripts/rc_benchmark.py \
   --binary target/release/ffsake-mcp \
-  --output docs/agent-benchmark-runs/rc-claude-REPLACE.json \
+  --output /private/path/to/rc-claude-REPLACE.json \
   --agents claude \
   --tasks cross,maintenance,build,git,debug \
   --repetitions 5 \
@@ -29,3 +29,7 @@ A fresh run writes a complete harness JSON with verifier metadata. It will use t
 ## 2026-11-01 Codex measured matrix
 
 The [cross](20261101-codex/cross.json), [maintenance](20261101-codex/maintenance.json), [build](20261101-codex/build.json), and [debug](20261101-codex/debug.json) files contain per-run metrics and a content-free redacted event index. They omit prompts, commands, arguments, tool output, session IDs and paths to protect privacy; they cannot independently establish every workflow observation. Original transcripts and verification details remain in local private storage. [Model-free safety outcomes](20261101-codex/safety.json) and [one setup timing](20261101-codex/setup.json) are separate. See [methodology and results](../BENCHMARK.md#release-candidate-codex-comparison-2026-11-01).
+
+## 2026-11-01 Cross-file optimization
+
+The [sanitized follow-up index](20261101-codex/cross-optimization.json) retains per-run metrics and content-free events. The [model-free debugger probe](20261101-codex/debug-poll-probe.json) contains only synthetic observations and timings. Full transcripts, verifier records and frozen binaries remain in local private storage. See the [audit and comparison](../BENCHMARK.md#cross-file-interaction-optimization-2026-11-01).

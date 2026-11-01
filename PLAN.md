@@ -400,3 +400,5 @@ Git/build-test integration is implemented for validation: `ffsake_git` provides 
 
 
 The real-project workflow proof now uses FFSAKE Git review and startup-configured build/test tasks on a fresh worktree containing the independently accepted TinyXML2 rename. Both jobs succeed and all 517 upstream checks pass; every tracked byte and the Git index remain unchanged by verification. Evidence: `docs/demo-runs/20261025-lsp-acceptance/workflow-proof.json`. Local validation passes 150 Rust tests, 86 harness tests, Clippy/formatting, existing MCP boundaries/core independence, and workflow integration through both MCP and JSONL. The final pushed commit’s CI result is retained with the report.
+
+Cross-file interaction optimization (2026-11-01): guarded batch guidance was adopted in 5/5 Codex reruns, reducing median calls from 15 to 10; median elapsed time and input tokens increased in this small separate sample. Debug traces showed frequent polling; a model-free local probe separates approximate startup from interaction but does not establish the cause of agent elapsed time. No safety guards changed. See `docs/BENCHMARK.md` for evidence, controls and limitations.

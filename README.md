@@ -6,6 +6,8 @@ FFSAKE gives coding agents repository tools through MCP: find and read files, re
 
 **Codex comparison (2026-11-01):** Four tasks, five matched pairs each: external checks passed for all 40 resulting projects; one FFSAKE debugger run timed out before the agent finished. The native build/test traces did not establish live-output observation in any of five runs; FFSAKE traces did in five. Median cross-file time was 22.2 s native versus 35.3 s with FFSAKE, and median total input was 72,246 versus 210,037 tokens, including cached input. Git and OpenCode could not be compared fairly; this small, auto-approved sample is not a general performance claim. [Results, limitations and redacted evidence](docs/BENCHMARK.md#release-candidate-codex-comparison-2026-11-01).
 
+**Cross-file optimization:** In a follow-up of five pairs, guidance for guarded batching reduced median FFSAKE calls from 15 to 10, but median elapsed time rose from 35.3 to 43.4 seconds and total input tokens from 210,037 to 213,648. These are separate small samples, not a general efficiency claim. [Audit and results](docs/BENCHMARK.md#cross-file-interaction-optimization-2026-11-01).
+
 **Quick setup:** from the project you want to use, give your agent the [repository URL](https://github.com/anasik/ffsake) and ask it to follow [the installation guide](docs/INSTALL.md). Or run the commands below. You need Git and Python 3.11+. Source builds additionally need Rust/Cargo and a C compiler. Release archives cover macOS ARM64 and Linux x86-64; before the first alpha is published use `install --source`.
 
 ```sh

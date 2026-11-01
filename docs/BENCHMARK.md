@@ -488,3 +488,44 @@ export CARGO_TARGET_DIR="$BENCH_DIR/target" CODEX_HOME="$BENCH_DIR/codex" XDG_CO
 /usr/bin/time -p python3 scripts/ffsake_install.py --prefix "$BENCH_DIR/install" install --source
 )
 ```
+
+## Cross-file interaction optimization, 2026-11-01
+
+We audited all five prior Codex cross-file pairs and then repeated five matched pairs after changing only FFSAKE's tool descriptions and server guidance to suggest existing batch reads and a combined, reviewed multi-file preview. The prompt, fixture, verifier, benchmark driver, host guidance, model request and settings were frozen before the change. Every run had the same prompt SHA-256 `bd2bc4505d341d2330eebcd2e1f88933716069d00533c281f5b13be8fba66e50` and initial fixture manifest `3443a91a40dfc620a441db1da155b0b365e8170bba0dcbe1abf9eededc8f0b48`; initial staged and unstaged diffs were empty. The earlier source revision and binary are identified in the preceding section. The changed source revision was `38bc0c8f18c69325b1736b2e7c27e4d7191f4b38`, binary SHA-256 `5ee31f025784f41055da907742b32f973f2d88f3db5f97db866236787f865c76`. The driver SHA-256 was `de6d5b8ea854815535a18f471ba14154d4daf753b28a3ea2534399e0c1ec1140`; fixture implementation SHA-256 `adb219bcb9d4d272084ba5ec8e9e9b7b9c9fa3ed30a8970d86b124239ef87839`. Codex CLI 0.163.0 requested `gpt-6-astra`, reasoning low; its immutable model version was not reported. Runs used an Apple M1 Pro with 16 GiB RAM, the core profile, FFSAKE-first guidance, native tools available in both arms, and noninteractive allowance. Order alternated within each set of five pairs. The before and after sets were run at different times; model and service latency can vary.
+
+In each old FFSAKE trace, four files were read separately and two files received separate preview/apply cycles. All five also listed the workspace, discovered tasks, checked Git before and after, and listed files; three searched for the relevant term and three made an extra Git status call. The native arm generally used two shell calls to explore, one edit call and one shell call to test and inspect the diff. The task discovery was unnecessary for this fixture; workspace checks still matter for subagents and must not be skipped as a general rule. Estimated compact JSON sizes of captured MCP results were 5,616–6,357 bytes per original FFSAKE run; captured native command outputs were 1,162–2,170 bytes. Those are differently encoded observations, not token counts or a controlled decomposition of model context.
+
+All ten follow-up runs passed independent checks, with no timeouts or unexpected file changes. FFSAKE was used in 5/5 FFSAKE runs; each also used one native command for testing. Both native and FFSAKE arms remained able to use native tools. Every new FFSAKE run batched reads and used one reviewed multi-file preview and apply; the old runs used neither batch. One old native and one new FFSAKE run recorded a tool error; no other run did. Retry counts and cost were not reported. No human intervention occurred, and approval prompt friction was not measured.
+
+Values are median (minimum–maximum), five runs per cell. Total input includes cached reads; uncached input is total minus cached input per run. Cache writes were reported as zero in all runs. Medians of components need not add to the median total.
+
+| Measure | Old native | Old FFSAKE | New native | New FFSAKE |
+| --- | ---: | ---: | ---: | ---: |
+| Correct | 5/5 | 5/5 | 5/5 | 5/5 |
+| Calls | 4 (4–7) | 15 (15–16) | 4 (4–4) | 10 (9–11) |
+| Seconds | 22.2 (21.5–27.9) | 35.3 (32.8–40.0) | 23.8 (23.1–28.4) | 43.4 (40.7–49.5) |
+| Total input | 72,246 (64,732–89,889) | 210,037 (182,063–239,467) | 72,051 (64,747–72,277) | 213,648 (200,615–216,144) |
+| Cached input | 65,536 (55,552–77,568) | 192,512 (164,736–216,320) | 59,264 (56,448–65,408) | 195,840 (184,064–197,632) |
+| Uncached input | 6,838 (6,608–12,321) | 17,525 (17,327–29,451) | 12,075 (6,605–13,013) | 18,440 (16,551–23,422) |
+| Output | 449 (429–497) | 572 (570–605) | 443 (429–455) | 578 (536–631) |
+
+This guidance removed interactions, but the measured median time and token totals did not improve. The core catalog grew from 31,468 to 31,687 serialized UTF-8 bytes and initialization instructions from 938 to 1,209 bytes; exact catalog tokens were not measured. The results do not establish catalog size as the cause of token use or isolate the cost of repeated conversation context. A combined transaction also makes undo/redo operate on the batch together. Preview review, stale rejection, authorization, and journal guards remain unchanged; the MCP smoke and access checks exercise those boundaries.
+
+### Debugger polling investigation
+
+The prior five debugger pairs are a useful warning, not a clean startup comparison. FFSAKE runs issued 12–15 explicit poll actions each and took a median 124.4 seconds (one 300-second timeout); native took 39.0 seconds. Four completed FFSAKE runs launched the adapter twice, while native used one `pdb` session and a separate program run, so they performed different startup work. Their event streams do not contain per-call timestamps. Both arms observed the same synthetic values (`hours=40`, `base=1000`, `adjustments=[50.0]`), but overall agent time cannot be assigned to adapter startup, polling or model latency from those traces.
+
+A separate, model-free probe used one debugger launch per arm, a breakpoint hit twice and inspection of those values, then cleaned up the process. Across three counterbalanced samples, native `pdb` reached its first prompt in 73–90 ms and completed inspection in 75–91 ms; FFSAKE/debugpy 1.8.17 reached its configuring state in 311–413 ms and completed inspection in 571–650 ms. These startup states are different protocol phases, and the probe is not an agent benchmark. Its DAP path used 48–50 MCP calls, 39–41 polls, with the existing smoke helper polling every 25 ms; those counts reflect that helper's aggressive polling, not an inherent minimum. All samples observed the expected values and cleaned up their owned processes. This supports investigating more efficient waiting, but does not establish an end-to-end agent improvement; no debugger feature or guard was changed.
+
+[Sanitized run indexes and probe results](agent-benchmark-runs/README.md#2026-11-01-cross-file-optimization) omit personal transcripts, prompts, arguments and paths; full evidence and frozen binaries are retained privately. The index alone cannot verify every interpretation. Reproduce on an isolated project, writing raw results only to private storage:
+
+```sh
+python3 scripts/rc_benchmark.py --binary target/release/ffsake-mcp \
+  --output /private/path/to/cross-result.json --agents codex --tasks cross \
+  --repetitions 5 --debug-python /absolute/path/to/debugpy-venv/bin/python
+python3 scripts/debug_poll_probe.py target/release/ffsake-mcp \
+  --python /absolute/path/to/debugpy-venv/bin/python \
+  --output /private/path/to/debug-probe.json --repetitions 3
+```
+
+This is one small fixture, model request and host configuration, and separate before/after periods. It does not establish general speed or token efficiency.
