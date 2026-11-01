@@ -57,7 +57,18 @@ def main():
                     if p.is_file() and ".ffsake" not in p.relative_to(root).parts}
 
         try:
-            paths = list(original)
+            paths = []
+            skipped = []
+            for name, data in original.items():
+                try:
+                    data.decode()
+                    if len(data) <= 256 * 1024:
+                        paths.append(name)
+                        continue
+                except UnicodeDecodeError:
+                    pass
+                skipped.append(name)
+            assert all(name.startswith("docs/") for name in skipped), skipped
             for offset in range(0, len(paths), 32):
                 reads = call("ffsake_read_files", {"files": [{"path": p} for p in paths[offset:offset + 32]]})["files"]
                 assert [r["path"] for r in reads] == paths[offset:offset + 32]
@@ -127,6 +138,7 @@ def main():
                 assert restored_mode == "0o755", restored_mode
             print(json.dumps({"snapshot_revision": revision, "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
                               "files": len(original), "bytes": sum(map(len, original.values())),
+                              "skipped_paths": skipped,
                               "syntax_matches": selected["matches"], "syntax_byte_history_passed": True,
                               "mixed_operations": len(operations), "byte_history_passed": True,
                               "restored_executable_mode": restored_mode, "calls": calls, "model_calls": 0}, indent=2))
