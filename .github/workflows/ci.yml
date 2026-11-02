@@ -41,6 +41,7 @@ jobs:
       - run: python3 -m unittest tests.test_worktree_rebind
       - run: python3 -m unittest tests.test_rc_benchmark
       - run: python3 -m unittest tests.test_sanitize_rc_results
+      - run: python3 -m unittest tests.test_mcp_timing_proxy
       - run: python3 scripts/worktree_mcp_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/workflow_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/git_write_smoke.py target/debug/ffsake-mcp
@@ -52,6 +53,7 @@ jobs:
       - run: python3 -m unittest tests.test_release_install
       - run: python3 scripts/update_notice_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/debug_protocol_smoke.py target/debug/ffsake-mcp
+      - run: python3 scripts/debug_wait_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/debug_attach_protocol_smoke.py target/debug/ffsake-mcp
       - run: python3 -m venv "$RUNNER_TEMP/ffsake-debugpy" && "$RUNNER_TEMP/ffsake-debugpy/bin/python" -m pip install debugpy==1.8.17
       - run: python3 scripts/debug_compat_smoke.py target/debug/ffsake-mcp --kind python --adapter "$RUNNER_TEMP/ffsake-debugpy/bin/python" --report "$RUNNER_TEMP/debugpy-report.json"

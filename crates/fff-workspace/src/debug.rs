@@ -13,6 +13,7 @@ use std::{
         mpsc,
     },
     thread::JoinHandle,
+    time::{Duration, Instant},
 };
 pub(crate) type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 #[derive(Clone, Deserialize)]
@@ -89,6 +90,11 @@ pub enum Action {
     Poll {
         session: u64,
     },
+    Wait {
+        session: u64,
+        until: WaitUntil,
+        timeout_ms: u64,
+    },
     Terminate {
         session: u64,
     },
@@ -148,11 +154,19 @@ pub enum Action {
 fn limit() -> usize {
     20
 }
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum WaitUntil {
+    Ready,
+    Stopped,
+    Cleaned,
+}
 impl Action {
     fn session(&self) -> Option<u64> {
         match self {
             Self::List => None,
             Self::Poll { session }
+            | Self::Wait { session, .. }
             | Self::Terminate { session }
             | Self::Breakpoints { session, .. }
             | Self::Threads { session }
@@ -208,6 +222,70 @@ struct Session {
     cancel: Arc<AtomicBool>,
     commands: mpsc::SyncSender<Action>,
     worker: Option<JoinHandle<()>>,
+    waiting: Arc<AtomicBool>,
+}
+
+/// A bounded wait owns no resident/workspace lock, so other MCP requests may run.
+pub struct Waiter {
+    id: u64,
+    state: Arc<Mutex<State>>,
+    cancel: Arc<AtomicBool>,
+    waiting: Arc<AtomicBool>,
+    access: Access,
+    until: WaitUntil,
+    timeout_ms: u64,
+}
+impl Drop for Waiter {
+    fn drop(&mut self) {
+        self.waiting.store(false, Ordering::SeqCst);
+    }
+}
+impl Waiter {
+    pub fn wait(self) -> Value {
+        let deadline = Instant::now() + Duration::from_millis(self.timeout_ms);
+        loop {
+            let state = self.state.lock().unwrap();
+            let ready = state.cleaned
+                || state.error.is_some()
+                || state.result.is_some()
+                || match self.until {
+                    WaitUntil::Ready => !state.busy,
+                    WaitUntil::Stopped => state.status == "stopped",
+                    WaitUntil::Cleaned => state.cleaned,
+                };
+            let cancelled =
+                self.cancel.load(Ordering::SeqCst) && !matches!(self.until, WaitUntil::Cleaned);
+            let timed_out = !ready && !cancelled && Instant::now() >= deadline;
+            if ready || cancelled || timed_out {
+                drop(state);
+                let mut result = snapshot(self.id, &self.state, &self.access);
+                result["wait_timed_out"] = json!(timed_out);
+                return result;
+            }
+            drop(state);
+            std::thread::sleep(
+                Duration::from_millis(10).min(deadline.saturating_duration_since(Instant::now())),
+            );
+        }
+    }
+}
+
+fn snapshot(id: u64, shared: &Arc<Mutex<State>>, access: &Access) -> Value {
+    let mut state = shared.lock().unwrap();
+    let result = state.result.take().map(|reply| {
+        let checked = (|| -> Result<()> {
+            access.refresh()?;
+            for path in &reply.paths {
+                access.authorize(path, false)?;
+            }
+            Ok(())
+        })();
+        match checked {
+            Ok(()) => reply.value,
+            Err(e) => json!({"ok":false,"error":e.to_string()}),
+        }
+    });
+    json!({"session":id,"status":state.status,"capabilities":state.capabilities,"stop":state.stop,"busy":state.busy,"result":result,"events":std::mem::take(&mut state.events),"output":std::mem::take(&mut state.output),"output_truncated":state.truncated,"error":state.error,"adapter_pid":state.adapter_pid,"cleaned":state.cleaned})
 }
 impl Drop for Session {
     fn drop(&mut self) {
@@ -275,9 +353,10 @@ impl Debugger {
             cancel,
             commands,
             worker: Some(worker),
+            waiting: Arc::new(AtomicBool::new(false)),
         });
         Ok(
-            json!({"session":self.next,"status":"starting","next":"poll until configuring, set breakpoints, then continue to finish configuration","executes_project_code":true,"filesystem_sandbox":false,"mode":if pid.is_some(){"attach"}else{"launch"},"target_pid":pid}),
+            json!({"session":self.next,"status":"starting","next":"wait until ready/configuring, set breakpoints, then continue to finish configuration","executes_project_code":true,"filesystem_sandbox":false,"mode":if pid.is_some(){"attach"}else{"launch"},"target_pid":pid}),
         )
     }
     pub fn execute(&mut self, action: Action, access: &Access) -> Result<Value> {
@@ -285,6 +364,16 @@ impl Debugger {
             return Ok(
                 json!({"configurations":self.configurations.configurations.keys().collect::<Vec<_>>(),"configuration_modes":self.configurations.configurations.iter().map(|(name,c)| (name, if c.attach.is_some() { "attach" } else { "launch" })).collect::<BTreeMap<_,_>>(),"execution_enabled":!self.configurations.configurations.is_empty(),"transport":"local stdio DAP","one_session":true}),
             );
+        }
+        if let Action::Wait {
+            session,
+            until,
+            timeout_ms,
+        } = action
+        {
+            return Ok(self
+                .prepare_wait(session, until, timeout_ms, access)?
+                .wait());
         }
         let session = self
             .session
@@ -294,27 +383,16 @@ impl Debugger {
         if matches!(action, Action::Terminate { .. }) {
             session.cancel.store(true, Ordering::SeqCst);
             return Ok(
-                json!({"session":session.id,"status":"terminating","next":"poll until cleaned=true"}),
+                json!({"session":session.id,"status":"terminating","next":"wait until cleaned=true"}),
             );
+        }
+        if session.waiting.load(Ordering::SeqCst) {
+            return Err("a debug wait is already pending".into());
         }
         let mut state = session.state.lock().unwrap();
         if matches!(action, Action::Poll { .. }) {
-            let result = state.result.take().map(|reply| {
-                let checked = (|| -> Result<()> {
-                    access.refresh()?;
-                    for path in &reply.paths {
-                        access.authorize(path, false)?;
-                    }
-                    Ok(())
-                })();
-                match checked {
-                    Ok(()) => reply.value,
-                    Err(e) => json!({"ok":false,"error":e.to_string()}),
-                }
-            });
-            return Ok(
-                json!({"session":session.id,"status":state.status,"capabilities":state.capabilities,"stop":state.stop,"busy":state.busy,"result":result,"events":std::mem::take(&mut state.events),"output":std::mem::take(&mut state.output),"output_truncated":state.truncated,"error":state.error,"adapter_pid":state.adapter_pid,"cleaned":state.cleaned}),
-            );
+            drop(state);
+            return Ok(snapshot(session.id, &session.state, access));
         }
         if state.cleaned {
             return Err("debug session ended".into());
@@ -327,8 +405,41 @@ impl Debugger {
         session.commands.try_send(action)?;
         state.busy = true;
         Ok(
-            json!({"session":session.id,"queued":true,"next":"poll; ordinary editing remains available"}),
+            json!({"session":session.id,"queued":true,"next":"wait until ready; ordinary editing remains available"}),
         )
+    }
+
+    pub fn prepare_wait(
+        &mut self,
+        id: u64,
+        until: WaitUntil,
+        timeout_ms: u64,
+        access: &Access,
+    ) -> Result<Waiter> {
+        if !(1..=1000).contains(&timeout_ms) {
+            return Err("debug wait timeout_ms must be 1..=1000".into());
+        }
+        let session = self
+            .session
+            .as_ref()
+            .filter(|s| s.id == id)
+            .ok_or("unknown or stale debug session")?;
+        if session
+            .waiting
+            .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+            .is_err()
+        {
+            return Err("a debug wait is already pending".into());
+        }
+        Ok(Waiter {
+            id,
+            state: session.state.clone(),
+            cancel: session.cancel.clone(),
+            waiting: session.waiting.clone(),
+            access: access.clone(),
+            until,
+            timeout_ms,
+        })
     }
 }
 

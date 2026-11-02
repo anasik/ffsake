@@ -385,6 +385,18 @@ impl Resident {
         self.debugger.configure(configurations);
     }
 
+    /// Obtain a wait handle without holding the resident lock while waiting.
+    pub fn prepare_debug_wait(
+        &mut self,
+        session: u64,
+        until: crate::debug::WaitUntil,
+        timeout_ms: u64,
+    ) -> Result<crate::debug::Waiter> {
+        self.index_dirty = true;
+        self.debugger
+            .prepare_wait(session, until, timeout_ms, &self.access())
+    }
+
     pub fn configure_tasks(&mut self, tasks: crate::workflow::Tasks) {
         self.tasks = tasks;
     }

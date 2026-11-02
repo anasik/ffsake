@@ -43,9 +43,17 @@ def main():
         full = catalog([])
         assert full == catalog(["--profile", "all"])
         core = catalog(["--profile", "core"])
+        editing = catalog(["--profile", "editing"])
+        editing_excluded = {'ffsake_debug_launch', 'ffsake_debug_attach', 'ffsake_debug',
+                            'ffsake_task_register', 'ffsake_run_task', 'ffsake_task_status',
+                            'ffsake_task_output', 'ffsake_task_cancel', 'ffsake_git_review',
+                            'ffsake_git_mutate', 'ffsake_git_branches', 'ffsake_git_operation_review',
+                            'ffsake_git_operation'}
+        editing_names = set(FFSAKE_CORE_TOOLS) - editing_excluded
         assert {tool["name"] for tool in full} == set(FFSAKE_TOOLS)
         assert {tool["name"] for tool in core} == set(FFSAKE_CORE_TOOLS)
         assert core == [tool for tool in full if tool["name"] in FFSAKE_CORE_TOOLS]
+        assert editing == [tool for tool in core if tool['name'] in editing_names]
         assert path.read_bytes() == source.encode() and not sentinel.exists()
         for arguments in (["--profile"], ["--profile", "unknown"], ["--profile", "core", "extra"], ["--other", "core"]):
             rejected = subprocess.run([str(binary), str(base / "missing-workspace"), *arguments],
@@ -101,9 +109,36 @@ def main():
             proc.stdout.close()
             proc.stderr.close()
         assert proc.returncode == 0
+        proc = subprocess.Popen([str(binary), str(root), "--profile", "editing"], stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+        request_id = 0
+        try:
+            for name in set(FFSAKE_TOOLS) - editing_names:
+                assert 'disabled by editing profile' in call(name, {}, ok=False)['error']
+            preview = call('ffsake_preview_edit', {'path':'main.rs','old_text':'Account',
+                'new_text':'Customer','expected_matches':1})
+            path.write_bytes((source + '// host edit\n').encode())
+            call('ffsake_apply', {'handle':preview['handle']}, ok=False)
+            assert path.read_bytes() == (source + '// host edit\n').encode()
+            path.write_bytes(source.encode())
+            preview = call('ffsake_preview_edit', {'path':'main.rs','old_text':'Account',
+                'new_text':'Customer','expected_matches':1})
+            transaction = call('ffsake_apply', {'handle':preview['handle']})['transaction']
+            call('ffsake_undo', {'transaction':transaction})
+            assert path.read_bytes() == source.encode()
+            call('ffsake_redo', {'transaction':transaction})
+            assert path.read_bytes() == source.replace('Account','Customer').encode()
+            call('ffsake_undo', {'transaction':transaction})
+        finally:
+            proc.stdin.close()
+            proc.wait(timeout=5)
+            proc.stdout.close()
+            proc.stderr.close()
+        assert proc.returncode == 0
     size = lambda items: len(json.dumps(items, ensure_ascii=False, separators=(",", ":")).encode())
     print(json.dumps({"all_tools": len(full), "all_catalog_bytes": size(full), "core_tools": len(core),
-                      "core_catalog_bytes": size(core), "disabled_dispatch_rejected": True,
+                      "core_catalog_bytes": size(core), "editing_tools":len(editing),
+                      "editing_catalog_bytes":size(editing), "disabled_dispatch_rejected": True,
                       "byte_history_passed": True, "agent_speed_measured": False}, indent=2))
 
 

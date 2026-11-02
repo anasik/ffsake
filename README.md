@@ -43,6 +43,8 @@ Source installation has been exercised on macOS and in Linux CI. Windows is not 
 
 Ask your agent to use FFSAKE to explore and edit your project. For example: “Find where requests are validated, propose the smallest fix, show me the diff, and run the project's test task.” The server can search, read ranges, preview changes, apply them with stale-content checks, and undo or redo complete transactions, including after reopening history; stale state rejects. Editor history does not reverse Git operations, task effects or debuggee side effects. A search returning no matches does not always prove absence: indexed search has hidden-file and ignore exclusions; [explicit directory search and archive browsing](docs/ARCHITECTURE.md#hidden-source-search-and-zipjar-inspection) cover bounded searches and ZIP/JAR source reads.
 
+For an editing-focused session, the optional `--profile editing` offers a smaller tool catalog with the same guarded file operations. It omits task execution, debugging, Git mutations and language intelligence; reconnect with `core` or `all` when those are needed. [Profile details](docs/CLI.md#mcp-tool-profiles).
+
 For a fork or subagent, verify the server's primary root before editing or running tasks. A shared connection does not automatically follow a child into another worktree. See [subagent and worktree setup](docs/SUBAGENTS.md).
 
 The project directory is the default file scope. To open an external file or folder, ask the agent to use the access tools; the host's normal approval policy applies. Grants can be read-only or read/write and persist until removed. A file grant does not open its parent directory. Explicit restrictive access exports remain authoritative. See [host access and its limits](docs/HOST_ACCESS.md).

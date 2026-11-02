@@ -73,6 +73,14 @@ def main():
                             assert not result['ok'] and 'EXTERNAL_SOURCE_SENTINEL' not in json.dumps(result)
                             c.action('scopes', ok=False, handle=frame['handle'])
                             c.call('open_access', path=str(source), kind='file', mode='read_only')
+                            # The asynchronous wait path also rechecks revocation before delivery.
+                            c.call('debug', request={'action':'source', 'session':c.session, 'handle':frame['source_handle']})
+                            time.sleep(.1)
+                            c.call('remove_access', path=str(source))
+                            waited = c.call('debug', request={'action':'wait', 'session':c.session,
+                                'until':'ready', 'timeout_ms':1000})['result']
+                            assert not waited['ok'] and 'EXTERNAL_SOURCE_SENTINEL' not in json.dumps(waited)
+                            c.call('open_access', path=str(source), kind='file', mode='read_only')
                             c.action('next', thread=1)
                             c.wait(lambda s: s['status'] == 'stopped')
                             assert 'stale' in c.action('scopes', ok=False, handle=frame['handle'])['error']
