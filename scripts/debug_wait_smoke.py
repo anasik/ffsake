@@ -4,6 +4,8 @@ import json
 import os
 from pathlib import Path
 import select
+import signal
+import subprocess
 import sys
 import tempfile
 import time
@@ -11,6 +13,19 @@ from debug_smoke import Client, ROOT, alive
 
 
 pending = b''
+
+def cleanup_fixture(pid):
+    if pid is None:
+        return
+    # Signal only the exact disposable fixture, never a process matched by name.
+    info = subprocess.run(['ps','-o','command=','-p',str(pid)], capture_output=True, text=True)
+    if str(ROOT/'tests/fixtures/dap_adapter.py') not in info.stdout:
+        return
+    try:
+        if os.getpgid(pid) == pid:
+            os.killpg(pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
 
 def read_reply(proc, timeout=3):
     global pending
@@ -36,6 +51,7 @@ def main():
             'argv':[sys.executable,str(ROOT/'tests/fixtures/dap_adapter.py'),'running',str(base)],
             'launch':{},'timeout_seconds':1,'session_seconds':30}}}))
         c = Client(binary, root, policy)
+        adapter_pid = None
         try:
             c.session = c.call('debug_launch', configuration='fake')['session']
             state = c.call('debug', request={'action':'wait','session':c.session,'until':'ready','timeout_ms':1000})
@@ -78,9 +94,12 @@ def main():
         finally:
             if c.p.poll() is None:
                 try: c.stop(); c.close()
-                except Exception: c.p.kill(); c.p.wait()
+                except Exception:
+                    c.p.kill(); c.p.wait()
+            cleanup_fixture(adapter_pid)
         # EOF during a pending wait remains bounded and cleans up the adapter.
         c = Client(binary, root, policy)
+        adapter_pid = None
         try:
             c.session = c.call('debug_launch', configuration='fake')['session']
             state = c.wait(lambda s:s['status']=='configuring')
@@ -96,6 +115,29 @@ def main():
         finally:
             if c.p.poll() is None:
                 c.p.kill(); c.p.wait()
+            cleanup_fixture(adapter_pid)
+        # A host that stops reading a large wait response must not prevent cleanup.
+        policy.write_text(json.dumps({'version':1,'configurations':{'fake':{
+            'argv':[sys.executable,str(ROOT/'tests/fixtures/dap_adapter.py'),'output',str(base)],
+            'launch':{},'timeout_seconds':1,'session_seconds':30}}}))
+        c = Client(binary, root, policy)
+        adapter_pid = None
+        try:
+            c.session = c.call('debug_launch', configuration='fake')['session']
+            state = c.wait(lambda s:s['status']=='configuring')
+            adapter_pid = state['adapter_pid']
+            c.call('debug', request={'action':'continue','session':c.session})
+            c.n += 1
+            c.p.stdin.write(json.dumps({'jsonrpc':'2.0','id':c.n,'method':'tools/call',
+                'params':{'name':'ffsake_debug','arguments':{'request':{'action':'wait',
+                'session':c.session,'until':'ready','timeout_ms':1000}}}})+'\n')
+            c.p.stdin.close()
+            c.p.wait(timeout=5)
+            assert c.p.returncode == 0 and not alive(adapter_pid), 'blocked output prevented adapter cleanup'
+        finally:
+            if c.p.poll() is None:
+                c.p.kill(); c.p.wait()
+            cleanup_fixture(adapter_pid)
     print(json.dumps({'bounded_timeout':True,'concurrent_read':True,'termination':True,'cleanup':True,'invalid_wait_rejected':True}))
 
 if __name__=='__main__': main()

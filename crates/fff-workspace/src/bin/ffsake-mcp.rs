@@ -277,8 +277,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    // A host may close input without draining output. Do not let an async reply
+    // blocked on a full stdout pipe prevent resident/debugger cleanup forever.
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
+    while pending_waits.iter().any(|thread| !thread.is_finished())
+        && std::time::Instant::now() < deadline
+    {
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
     for thread in pending_waits {
-        let _ = thread.join();
+        if thread.is_finished() {
+            let _ = thread.join();
+        }
     }
 
     Ok(())
