@@ -12,6 +12,12 @@ import rc_benchmark_fixtures as fixtures
 
 
 class FixtureTests(unittest.TestCase):
+    def test_condition_order_is_counterbalanced(self):
+        names = ('baseline', 'old', 'changed')
+        orders = [rc.rotate_conditions(names, n, 0) for n in range(1, 4)]
+        self.assertEqual({order[0] for order in orders}, set(names))
+        self.assertTrue(all(set(order) == set(names) for order in orders))
+
     def test_paired_worktrees_and_reference_fixes(self):
         for name in ('cross', 'build', 'git', 'debug'):
             with self.subTest(name=name), tempfile.TemporaryDirectory() as td:

@@ -33,6 +33,7 @@ CATALOG = 'core'
 COMPACT = False
 CONTEXT = False
 CONTEXT_MS = None
+SERVER_EDITING = False
 
 GUIDANCE = ('Use FFSAKE MCP for scoped repository reading, search, previews, edits, '
             'Git review and mutation, project tasks, and debugging. Native tools remain '
@@ -88,6 +89,8 @@ def codex(root, prompt, enabled, timeout, profile):
     if enabled:
         command = str(suite.FFSAKE_MCP)
         arguments = suite.mcp_arguments(root, profile)
+        if SERVER_EDITING:
+            arguments[arguments.index('--profile') + 1] = 'editing'
         if TIMING_FILE is not None:
             command = str(Path(__file__).with_name('mcp_timing_proxy.py'))
             arguments = ['--binary', str(suite.FFSAKE_MCP), '--log', str(TIMING_FILE), *(['--compact'] if COMPACT else []), *arguments]
@@ -134,6 +137,11 @@ def summarize(items):
             row[field] = stats([x['trace'].get(field) for x in valid])
         rows.append(row)
     return rows
+
+
+def rotate_conditions(names, repetition, task_index):
+    shift = (repetition - 1 + task_index) % len(names)
+    return names[shift:] + names[:shift]
 
 
 def validate_pair(first, second):
@@ -425,12 +433,15 @@ def main():
     p.add_argument('--catalog', choices=('core', 'editing'), default='core', help='diagnostic host-side tool selection')
     p.add_argument('--compact', action='store_true', help='diagnostic compact batch-read responses via proxy')
     p.add_argument('--diagnostic-matrix', action='store_true', help='counterbalance native, core, editing catalog, compact and startup snapshot')
+    p.add_argument('--baseline-binary', type=Path, help='counterbalance native, this core binary and --binary (editing for editing tasks, core for debug)')
     a = p.parse_args()
-    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS
+    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING
     CATALOG = a.catalog
     COMPACT = a.compact
     if a.diagnostic_matrix and (not a.instrument_dir or a.catalog != 'core' or a.compact or a.agents != 'codex'):
         p.error('--diagnostic-matrix requires Codex, --instrument-dir, and default catalog/compact options')
+    if a.baseline_binary and (a.diagnostic_matrix or not a.instrument_dir or a.catalog != 'core' or a.compact or a.agents != 'codex'):
+        p.error('--baseline-binary requires Codex, --instrument-dir and default diagnostic options')
     if COMPACT and not a.instrument_dir:
         p.error('--compact requires --instrument-dir')
     if a.instrument_dir:
@@ -446,6 +457,8 @@ def main():
     if not a.pilot and a.repetitions < 5:
         p.error('measured pairs require at least five repetitions')
     suite.FFSAKE_MCP = a.binary.resolve(strict=True)
+    changed_binary = suite.FFSAKE_MCP
+    baseline_binary = a.baseline_binary.resolve(strict=True) if a.baseline_binary else None
     for task in tasks:
         suite.TASKS[task]['prompt'] += ('\nWork only in this repository; do not write scratch files elsewhere. '
                                         'Do not use process-name-based termination or signal processes outside this task.')
@@ -470,16 +483,22 @@ def main():
     preflight = suite.preflight(agents, 'core')
     if not preflight['ok']:
         raise SystemExit('preflight failed; no model calls made')
+    if baseline_binary:
+        old_preflight = suite.mcp_profile_preflight('core', baseline_binary)
+        if not old_preflight['ok']:
+            raise SystemExit('baseline MCP preflight failed; no model calls made')
     report = {'kind': 'pilot' if a.pilot else 'measured', 'revision': suite.benchmark_provenance(),
               'driver_sha256': suite.file_sha256(Path(__file__)),
               'fixture_sha256': suite.file_sha256(Path(fixtures.__file__)), 'preflight': preflight,
               'agents': agents, 'tasks': tasks, 'repetitions': a.repetitions,
+              'baseline_binary_sha256': suite.file_sha256(baseline_binary) if baseline_binary else None,
               'settings': {'claude_model': 'sonnet (host alias)', 'claude_effort': 'low',
                            'codex_model': 'gpt-6-astra', 'codex_reasoning_effort': 'low',
                            'approval': 'intentional noninteractive auto allowance for the fixture',
                            'native_tools_available_in_both_arms': True,
                            'task_prompt_identical': True, 'ffsake_profile': 'core',
                            'host_catalog': a.catalog, 'mcp_proxy_instrumented': bool(a.instrument_dir), 'diagnostic_compact': a.compact, 'diagnostic_matrix': a.diagnostic_matrix,
+                           'build_comparison': bool(baseline_binary), 'changed_profile': 'editing for editing tasks; core for debug' if baseline_binary else None,
                            'ffsake_host_guidance': GUIDANCE,
                            'debug_python': str(a.debug_python) if a.debug_python else None,
                            'fixture_isolation': 'linked worktree per run from one frozen bare fixture',
@@ -504,8 +523,10 @@ def main():
                     baseline_first = (repetition + agents.index(agent) + tasks.index(task)) % 2 == 1
                     if a.diagnostic_matrix:
                         base_modes = ('baseline', 'core', 'editing', 'compact', 'context')
-                        shift = (repetition - 1 + tasks.index(task)) % len(base_modes)
-                        modes = base_modes[shift:] + base_modes[:shift]
+                        modes = rotate_conditions(base_modes, repetition, tasks.index(task))
+                    elif baseline_binary:
+                        base_modes = ('baseline', 'old', 'changed')
+                        modes = rotate_conditions(base_modes, repetition, tasks.index(task))
                     else:
                         modes = ('baseline', 'ffsake') if baseline_first else ('ffsake', 'baseline')
                     group_start = len(report['results'])
@@ -514,6 +535,8 @@ def main():
                         COMPACT = (mode == 'compact') if a.diagnostic_matrix else a.compact
                         CONTEXT = mode == 'context'
                         CONTEXT_MS = None
+                        suite.FFSAKE_MCP = baseline_binary if mode == 'old' else changed_binary
+                        SERVER_EDITING = bool(baseline_binary and mode == 'changed' and task in ('cross', 'maintenance', 'layout'))
                         suite_mode = 'baseline' if mode == 'baseline' else 'ffsake'
                         print(f'{agent} {task} {mode} {repetition}', flush=True)
                         # Keep a model's parent-directory discovery in an empty,
@@ -527,7 +550,7 @@ def main():
                                 tempfile.tempdir = run_base
                                 os.environ['TMPDIR'] = run_base
                                 result = suite.one(agent, task, suite_mode, a.timeout, None, 'core')
-                                if a.diagnostic_matrix:
+                                if a.diagnostic_matrix or baseline_binary:
                                     result['mode'] = mode
                             finally:
                                 tempfile.tempdir = previous_tempdir
@@ -536,6 +559,8 @@ def main():
                                 else:
                                     os.environ['TMPDIR'] = previous_tmpdir
                         result['repetition'] = repetition
+                        if baseline_binary:
+                            result['server_profile'] = ('editing' if SERVER_EDITING else 'core') if suite_mode == 'ffsake' else None
                         if CONTEXT:
                             result['startup_context'] = {'tool_calls': 3, 'elapsed_ms': CONTEXT_MS,
                                 'included_in_elapsed_ms': True, 'included_in_agent_tool_calls': False}
@@ -570,7 +595,20 @@ def main():
                         result['comparison_valid'] = not result['comparison_invalid_reasons']
                         report['results'].append(result)
                         if len(report['results']) > group_start + 1:
-                            validate_pair(report['results'][group_start], result)
+                            mismatch = validate_pair(report['results'][group_start], result)
+                            if mismatch:
+                                reason = 'paired_input_mismatch:' + ','.join(mismatch)
+                                for member in report['results'][group_start:]:
+                                    if reason not in member['comparison_invalid_reasons']:
+                                        member['comparison_invalid_reasons'].append(reason)
+                                    member['comparison_valid'] = False
+                            else:
+                                prior = [reason for member in report['results'][group_start:-1]
+                                         for reason in member['comparison_invalid_reasons']
+                                         if reason.startswith('paired_input_mismatch:')]
+                                if prior:
+                                    result['comparison_invalid_reasons'].append(prior[0])
+                                    result['comparison_valid'] = False
                         report['aggregate'] = summarize(report['results'])
                         suite.save_report(a.output, report)
                         print(json.dumps({'correct': result['correct'], 'valid': result['comparison_valid'],
