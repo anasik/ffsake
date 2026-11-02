@@ -23,6 +23,17 @@ import agent_benchmark_suite as suite
 import rc_benchmark_fixtures as fixtures
 
 suite.TASKS.update(fixtures.TASKS)
+TIMING_FILE = None
+EDITING_CATALOG = tuple(name for name in suite.FFSAKE_CORE_TOOLS if not (
+    name.startswith('ffsake_debug') or name in ('ffsake_task_register', 'ffsake_run_task',
+    'ffsake_task_status', 'ffsake_task_output', 'ffsake_task_cancel', 'ffsake_git_review',
+    'ffsake_git_mutate', 'ffsake_git_branches', 'ffsake_git_operation_review',
+    'ffsake_git_operation')))
+CATALOG = 'core'
+COMPACT = False
+CONTEXT = False
+CONTEXT_MS = None
+
 GUIDANCE = ('Use FFSAKE MCP for scoped repository reading, search, previews, edits, '
             'Git review and mutation, project tasks, and debugging. Native tools remain '
             'available for commands FFSAKE cannot perform; do not use them to evade access denial.')
@@ -43,20 +54,56 @@ def claude(root, prompt, enabled, timeout, profile):
     return suite.run_process(cmd, root, timeout)
 
 
+def initial_context(root, profile):
+    """Collect a labelled startup snapshot with the same read-only MCP tools."""
+    requests = [
+        {'jsonrpc': '2.0', 'id': 1, 'method': 'tools/call', 'params': {'name': 'ffsake_workspace_info', 'arguments': {}}},
+        {'jsonrpc': '2.0', 'id': 2, 'method': 'tools/call', 'params': {'name': 'ffsake_tasks', 'arguments': {}}},
+        {'jsonrpc': '2.0', 'id': 3, 'method': 'tools/call', 'params': {'name': 'ffsake_git', 'arguments': {'query': 'status'}}},
+    ]
+    started = time.perf_counter()
+    run = subprocess.run([str(suite.FFSAKE_MCP), *suite.mcp_arguments(root, profile)],
+        input=''.join(json.dumps(r) + '\n' for r in requests), text=True, capture_output=True, timeout=20, check=True)
+    responses = [json.loads(line) for line in run.stdout.splitlines()]
+    if len(responses) != 3:
+        raise RuntimeError('startup discovery returned incomplete responses')
+    bodies = [json.loads(x['result']['content'][0]['text']) for x in responses]
+    if any(x.get('ok') is not True for x in bodies):
+        raise RuntimeError('startup discovery failed')
+    return json.dumps(bodies, separators=(',', ':')), (time.perf_counter() - started) * 1000
+
+
 def codex(root, prompt, enabled, timeout, profile):
+    global CONTEXT_MS
     cmd = ['codex', 'exec', '--json', '--ignore-user-config', '--skip-git-repo-check',
            '--sandbox', 'workspace-write', '--model', 'gpt-6-astra',
            '-c', 'model_reasoning_effort="low"']
+    context_ms = 0
+    guidance = GUIDANCE
+    if enabled and CONTEXT:
+        context, context_ms = initial_context(root, profile)
+        CONTEXT_MS = context_ms
+        guidance += (' Startup snapshot from FFSAKE workspace_info, tasks and Git status follows. '
+                     'It may become stale; recheck when needed. In a child or fork still verify its root: ' + context)
     if enabled:
-        cmd += ['-c', 'mcp_servers.ffsake.command=' + json.dumps(str(suite.FFSAKE_MCP)),
-                '-c', 'mcp_servers.ffsake.args=' + json.dumps(suite.mcp_arguments(root, profile)),
-                '-c', 'developer_instructions=' + json.dumps(GUIDANCE)]
+        command = str(suite.FFSAKE_MCP)
+        arguments = suite.mcp_arguments(root, profile)
+        if TIMING_FILE is not None:
+            command = str(Path(__file__).with_name('mcp_timing_proxy.py'))
+            arguments = ['--binary', str(suite.FFSAKE_MCP), '--log', str(TIMING_FILE), *(['--compact'] if COMPACT else []), *arguments]
+        cmd += ['-c', 'mcp_servers.ffsake.command=' + json.dumps(command),
+                '-c', 'mcp_servers.ffsake.args=' + json.dumps(arguments),
+                '-c', 'developer_instructions=' + json.dumps(guidance)]
+        if CATALOG == 'editing':
+            cmd += ['-c', 'mcp_servers.ffsake.enabled_tools=' + json.dumps(list(EDITING_CATALOG))]
         for name in suite.profile_tools(profile):
             # Intentional noninteractive auto approval for this disposable test,
             # equally available to native repository commands in both arms.
             cmd += ['-c', f'mcp_servers.ffsake.tools.{name}.approval_mode="approve"']
     cmd.append(prompt)
-    return suite.run_process(cmd, root, timeout)
+    result = suite.run_process(cmd, root, timeout)
+    result['elapsed_ms'] += context_ms
+    return result
 
 
 def summarize(items):
@@ -374,7 +421,21 @@ def main():
     p.add_argument('--repetitions', type=int, default=5)
     p.add_argument('--timeout', type=int, default=300)
     p.add_argument('--pilot', action='store_true')
+    p.add_argument('--instrument-dir', type=Path, help='private directory for per-run content-free MCP timing logs')
+    p.add_argument('--catalog', choices=('core', 'editing'), default='core', help='diagnostic host-side tool selection')
+    p.add_argument('--compact', action='store_true', help='diagnostic compact batch-read responses via proxy')
+    p.add_argument('--diagnostic-matrix', action='store_true', help='counterbalance native, core, editing catalog, compact and startup snapshot')
     a = p.parse_args()
+    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS
+    CATALOG = a.catalog
+    COMPACT = a.compact
+    if a.diagnostic_matrix and (not a.instrument_dir or a.catalog != 'core' or a.compact or a.agents != 'codex'):
+        p.error('--diagnostic-matrix requires Codex, --instrument-dir, and default catalog/compact options')
+    if COMPACT and not a.instrument_dir:
+        p.error('--compact requires --instrument-dir')
+    if a.instrument_dir:
+        a.instrument_dir = a.instrument_dir.resolve()
+        a.instrument_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     agents, tasks = a.agents.split(','), a.tasks.split(',')
     if any(x not in ('claude', 'codex') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug') for x in tasks):
         p.error('unsupported agent or task')
@@ -418,6 +479,7 @@ def main():
                            'approval': 'intentional noninteractive auto allowance for the fixture',
                            'native_tools_available_in_both_arms': True,
                            'task_prompt_identical': True, 'ffsake_profile': 'core',
+                           'host_catalog': a.catalog, 'mcp_proxy_instrumented': bool(a.instrument_dir), 'diagnostic_compact': a.compact, 'diagnostic_matrix': a.diagnostic_matrix,
                            'ffsake_host_guidance': GUIDANCE,
                            'debug_python': str(a.debug_python) if a.debug_python else None,
                            'fixture_isolation': 'linked worktree per run from one frozen bare fixture',
@@ -440,8 +502,19 @@ def main():
             for task in tasks:
                 for repetition in range(1, a.repetitions + 1):
                     baseline_first = (repetition + agents.index(agent) + tasks.index(task)) % 2 == 1
-                    modes = ('baseline', 'ffsake') if baseline_first else ('ffsake', 'baseline')
+                    if a.diagnostic_matrix:
+                        base_modes = ('baseline', 'core', 'editing', 'compact', 'context')
+                        shift = (repetition - 1 + tasks.index(task)) % len(base_modes)
+                        modes = base_modes[shift:] + base_modes[:shift]
+                    else:
+                        modes = ('baseline', 'ffsake') if baseline_first else ('ffsake', 'baseline')
+                    group_start = len(report['results'])
                     for mode in modes:
+                        CATALOG = 'editing' if mode == 'editing' else a.catalog
+                        COMPACT = (mode == 'compact') if a.diagnostic_matrix else a.compact
+                        CONTEXT = mode == 'context'
+                        CONTEXT_MS = None
+                        suite_mode = 'baseline' if mode == 'baseline' else 'ffsake'
                         print(f'{agent} {task} {mode} {repetition}', flush=True)
                         # Keep a model's parent-directory discovery in an empty,
                         # disposable container rather than the user's shared tmp.
@@ -449,9 +522,13 @@ def main():
                             previous_tempdir = tempfile.tempdir
                             previous_tmpdir = os.environ.get('TMPDIR')
                             try:
+                                TIMING_FILE = (a.instrument_dir / (uuid.uuid4().hex + '.jsonl')
+                                               if a.instrument_dir and agent == 'codex' and suite_mode == 'ffsake' else None)
                                 tempfile.tempdir = run_base
                                 os.environ['TMPDIR'] = run_base
-                                result = suite.one(agent, task, mode, a.timeout, None, 'core')
+                                result = suite.one(agent, task, suite_mode, a.timeout, None, 'core')
+                                if a.diagnostic_matrix:
+                                    result['mode'] = mode
                             finally:
                                 tempfile.tempdir = previous_tempdir
                                 if previous_tmpdir is None:
@@ -459,6 +536,13 @@ def main():
                                 else:
                                     os.environ['TMPDIR'] = previous_tmpdir
                         result['repetition'] = repetition
+                        if CONTEXT:
+                            result['startup_context'] = {'tool_calls': 3, 'elapsed_ms': CONTEXT_MS,
+                                'included_in_elapsed_ms': True, 'included_in_agent_tool_calls': False}
+                        if TIMING_FILE is not None:
+                            result['mcp_timing_file'] = str(TIMING_FILE)
+                            result['mcp_timing_available'] = TIMING_FILE.exists()
+                        TIMING_FILE = None
                         events = suite.parse_jsonl(result['stdout'])
                         calls = tool_calls(agent, events)
                         evidence = workflow_evidence(agent, task, calls, tool_output_text(agent, events))
@@ -485,10 +569,8 @@ def main():
                         result['comparison_invalid_reasons'] = [x for x in result['comparison_invalid_reasons'] if x != 'tool_policy_violation']
                         result['comparison_valid'] = not result['comparison_invalid_reasons']
                         report['results'].append(result)
-                        if len(report['results']) >= 2:
-                            previous = report['results'][-2]
-                            if (previous['agent'], previous['task'], previous['repetition']) == (agent, task, repetition):
-                                validate_pair(previous, result)
+                        if len(report['results']) > group_start + 1:
+                            validate_pair(report['results'][group_start], result)
                         report['aggregate'] = summarize(report['results'])
                         suite.save_report(a.output, report)
                         print(json.dumps({'correct': result['correct'], 'valid': result['comparison_valid'],

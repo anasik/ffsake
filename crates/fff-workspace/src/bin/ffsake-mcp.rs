@@ -131,7 +131,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     while let Some(message) = read_message(&mut input)? {
         let response = match serde_json::from_slice::<Value>(&message) {
             Ok(message) => {
+                #[cfg(feature = "benchmark-timing")]
+                let benchmark_started = std::time::Instant::now();
                 let mut response = handle_message(&mut runtime, profile, message.clone());
+                #[cfg(feature = "benchmark-timing")]
+                if message["method"] == "tools/call" {
+                    eprintln!(
+                        "FFSAKE_BENCH_TIMING {}",
+                        json!({
+                            "tool": message.pointer("/params/name"),
+                            "execution_ms": benchmark_started.elapsed().as_secs_f64() * 1000.0
+                        })
+                    );
+                }
                 if message["method"] == "tools/call"
                     && let Some(updates) = &mut updates
                 {
