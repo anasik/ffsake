@@ -58,9 +58,20 @@ def main():
 
         try:
             paths = list(original)
-            for offset in range(0, len(paths), 32):
-                reads = call("ffsake_read_files", {"files": [{"path": p} for p in paths[offset:offset + 32]]})["files"]
-                assert [r["path"] for r in reads] == paths[offset:offset + 32]
+            batches, batch, batch_bytes = [], [], 0
+            for path in paths:
+                size = len(original[path])
+                assert size <= 512 * 1024, f"snapshot file too large for bounded read: {path}"
+                if batch and (len(batch) == 32 or batch_bytes + size > 512 * 1024):
+                    batches.append(batch)
+                    batch, batch_bytes = [], 0
+                batch.append(path)
+                batch_bytes += size
+            if batch:
+                batches.append(batch)
+            for batch in batches:
+                reads = call("ffsake_read_files", {"files": [{"path": p} for p in batch]})["files"]
+                assert [r["path"] for r in reads] == batch
                 for result in reads:
                     assert result["status"] == "ok"
                     assert result["read"]["text"] == "\n".join(original[result["path"]].decode().splitlines())
