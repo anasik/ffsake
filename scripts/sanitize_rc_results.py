@@ -100,6 +100,25 @@ def timing_events(path, directory):
     return result
 
 
+def debug_actions(text):
+    """Retain action names only, never debugger arguments or returned values."""
+    allowed = {'list', 'poll', 'wait', 'terminate', 'breakpoints', 'threads', 'stack',
+               'scopes', 'variables', 'source', 'continue', 'next', 'step_in', 'step_out', 'pause'}
+    result = []
+    for line in text.splitlines():
+        try:
+            event = json.loads(line)
+            item = event.get('item', {})
+            request = item.get('arguments', {}).get('request', {})
+            action = request.get('action')
+            if (event.get('type') == 'item.completed' and item.get('server') == 'ffsake'
+                    and item.get('tool') == 'ffsake_debug' and isinstance(action, str)):
+                result.append(action if action in allowed else 'other')
+        except (ValueError, TypeError, AttributeError):
+            continue
+    return result
+
+
 def sanitize(report, timing_dir=None, omit_events=False):
     results = []
     for run in report['results']:
@@ -126,6 +145,8 @@ def sanitize(report, timing_dir=None, omit_events=False):
             'input_tokens', 'total_input_tokens', 'uncached_input_tokens', 'output_tokens',
             'cache_read_input_tokens', 'cache_creation_input_tokens', 'total_cost_usd', 'retries')}
         row['trace']['tool_names'] = [tool_name(x) for x in trace.get('tool_names', [])]
+        if row['task'] == 'debug':
+            row['debug_actions'] = debug_actions(raw_stdout)
         passed = run.get('workflow_evidence', {}).get('passed')
         details = run.get('workflow_evidence', {}).get('details', {})
         allowed_details = ('ffsake_run_task', 'ffsake_output_polled', 'native_task_command',

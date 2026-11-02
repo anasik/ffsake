@@ -28,6 +28,15 @@ class SanitizeTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 sanitizer.sanitize(report, other, omit_events=True)
 
+    def test_debug_action_export_omits_arguments(self):
+        event = {'type':'item.completed','item':{'server':'ffsake','tool':'ffsake_debug',
+            'arguments':{'request':{'action':'wait','path':'/Users/private','secret':'SECRET'}}}}
+        result = sanitizer.sanitize({'results':[{'task':'debug','mode':'changed',
+            'stdout':json.dumps(event),'stderr':''}],'settings':{}}, omit_events=True)
+        self.assertEqual(result['results'][0]['debug_actions'], ['wait'])
+        self.assertNotIn('SECRET', json.dumps(result))
+        self.assertNotIn('/Users/private', json.dumps(result))
+
     def test_excludes_arbitrary_private_content_and_keeps_numeric_usage(self):
         secret = 'person@example.com /Users/person/private sk-ant-not-a-real-secret'
         event = {'type':'item.completed','item':{'type':'command_execution','command':secret,
