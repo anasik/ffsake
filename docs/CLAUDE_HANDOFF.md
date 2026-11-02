@@ -4,6 +4,14 @@
 >
 > State update: multi-file reads and their diagnostic are complete at 5e14596. The numbered steps below are historical context; do not reimplement them or duplicate completed benchmark runs. Read the current PLAN.md, source and local reports for the next action. The current next area is larger real-repository workflows, with further interface work driven by concrete findings.
 
+## Current handoff (2026-11-02, debugger auto-wait)
+
+Implementation `3b58885` is on `main`: control and inspection MCP debugger calls now return their completed result after a bounded wait, `continue`/step/pause wait for stopped, `terminate` waits for cleanup, and `wait until=stopped` no longer returns early on the continue response. `auto_wait=false` preserves explicit queue/poll/wait behavior. The change keeps the wait outside the resident lock, rechecks authorization before delivery, and preserves cancellation, stale-handle, deadline and owned-process cleanup guards.
+
+Local validation passed at that commit: 154 Rust tests, Clippy with warnings denied, formatting, the 15-case debug protocol smoke, the auto-wait/opt-out smoke, debugpy compatibility and attach protocol checks. A model-free auto-wait inspection sequence used 8 MCP calls with zero explicit polls or waits; the earlier corrected Codex traces used 41–44 calls. `scripts/debug_poll_probe.py` still shows the explicit wait path at 20 calls (11 waits) and old polling at 50–52 calls (41–43 polls) on the same fixture.
+
+Paid contemporaneous validation is blocked: the first Codex pilot failed before any tool call with “Your workspace is out of credits.” No new measured cell exists, so the 30% elapsed-time target is not claimed. When credits are available, run at least five counterbalanced old/changed/native repetitions for the debugger task with the same model/settings/verifier, add a second debugger fixture with a different bug, report invalid/timeout/native-fallback cases separately, sanitize durable evidence, and update `docs/BENCHMARK.md`. The private invalid report stays untracked; never publish raw transcripts or personal paths.
+
 You are taking over active development of `anasik/ffsake` on Anas's Mac. This is an instruction to continue the work, not a request for a plan. Read the repository's applicable instructions and current source, then execute the next task below.
 
 ## Authorization and working style
