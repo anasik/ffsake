@@ -28,7 +28,8 @@ def compact_read_response(data):
         changed = False
         for item in body['result']['files']:
             read = item.get('read')
-            if isinstance(read, dict) and read.get('path') == item.get('path') and 'path' in read:
+            if (isinstance(read, dict) and isinstance(item.get('path'), str)
+                    and read.get('path') == item['path']):
                 del read['path']
                 changed = True
         if not changed:
