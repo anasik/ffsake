@@ -19,6 +19,26 @@ class HostSetupTests(unittest.TestCase):
             host, str(root), "--binary", "/absolute/ffsake-mcp", *options],
             text=True, capture_output=True)
 
+    def test_editing_profile_is_selectable_without_broadening_approval(self):
+        self.assertEqual(len(suite.profile_tools('editing')), 25)
+        self.assertNotIn('ffsake_run_task', suite.profile_tools('editing'))
+        for host in ('claude', 'codex', 'opencode'):
+            with self.subTest(host=host), tempfile.TemporaryDirectory() as td:
+                result = self.generate(host, Path(td), '--tool-profile', 'editing')
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn('"--profile"', result.stdout)
+                self.assertIn('"editing"', result.stdout)
+                if host == 'claude':
+                    self.assertNotIn('mcp__ffsake__ffsake_open_access",', result.stdout)
+                elif host == 'codex':
+                    self.assertIn('[mcp_servers.ffsake.tools.ffsake_open_access]', result.stdout)
+                    self.assertIn('approval_mode = "prompt"', result.stdout)
+                else:
+                    self.assertIn('"ffsake_ffsake_open_access": "ask"', result.stdout)
+        with tempfile.TemporaryDirectory() as td:
+            result = self.generate('codex', Path(td), '--tool-profile', 'editing', '--debug', '/tmp/debug.json')
+            self.assertNotEqual(result.returncode, 0)
+
     def test_normal_and_allow_policies_and_no_overwrite(self):
         import tomllib
         for host in ("claude", "codex", "opencode"):

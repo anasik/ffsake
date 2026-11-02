@@ -545,7 +545,7 @@ def main():
     p=sub.add_parser('rollback');choice=p.add_mutually_exclusive_group(required=True);choice.add_argument('--version',help='Restore a previously installed alpha release');choice.add_argument('--revision',help='Restore a retained source revision')
     sub.add_parser('check-update')
     for name in ('configure','doctor'):
-        p=sub.add_parser(name);p.add_argument('--host', choices=('claude','codex','opencode'),required=True);p.add_argument('--project',type=Path,required=True);p.add_argument('--tool-profile',choices=('core','all'),default='core')
+        p=sub.add_parser(name);p.add_argument('--host', choices=('claude','codex','opencode'),required=True);p.add_argument('--project',type=Path,required=True);p.add_argument('--tool-profile',choices=('core','all','editing'),default='core')
         if name=='configure':
             p.add_argument('--apply',action='store_true',help='Apply the reviewed project configuration')
             p.add_argument('--guidance',action='store_true',help='Also review/add project guidance for this host')

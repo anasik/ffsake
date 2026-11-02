@@ -42,18 +42,28 @@ FFSAKE_CORE_TOOLS = FFSAKE_ACCESS_TOOLS + (
     "ffsake_preview_copy", "ffsake_preview_move", "ffsake_preview_delete",
 )
 
+FFSAKE_EDITING_TOOLS = FFSAKE_ACCESS_TOOLS + (
+    "ffsake_workspace_info", "ffsake_git", "ffsake_tasks", "ffsake_read", "ffsake_read_files",
+    "ffsake_archive", "ffsake_list", "ffsake_target", "ffsake_search", "ffsake_preview_matches",
+    "ffsake_preview_edit", "ffsake_preview_rename", "ffsake_apply", "ffsake_undo", "ffsake_redo",
+    "ffsake_release", "ffsake_refresh", "ffsake_preview_files", "ffsake_preview_create",
+    "ffsake_preview_copy", "ffsake_preview_move", "ffsake_preview_delete",
+)
+
 
 def profile_tools(tool_profile):
     if tool_profile == "all":
         return FFSAKE_TOOLS
     if tool_profile == "core":
         return FFSAKE_CORE_TOOLS
+    if tool_profile == "editing":
+        return FFSAKE_EDITING_TOOLS
     raise ValueError(f"unknown FFSAKE tool profile: {tool_profile}")
 
 
 def mcp_arguments(root, tool_profile):
     profile_tools(tool_profile)
-    return [str(root)] + (["--profile", "core"] if tool_profile == "core" else [])
+    return [str(root)] + (["--profile", tool_profile] if tool_profile in ("core", "editing") else [])
 
 
 def git_init(root: Path):
@@ -784,7 +794,7 @@ def permission_audit(agent, use_ffsake, metrics, tool_profile="all"):
         allowed.update((tool, "ffsake_" + tool, "mcp__ffsake__" + tool, "mcp__ffsake__" + short,
                         "ffsake." + tool, "ffsake." + short))
     profile_violations = ([name for name in names if is_ffsake_tool(name) and name.lower() not in allowed]
-                          if use_ffsake and tool_profile == "core" else [])
+                          if use_ffsake and tool_profile in ("core", "editing") else [])
     return {
         "requested_ffsake_only": use_ffsake,
         "ffsake_tool_profile": tool_profile if use_ffsake else None,
@@ -1206,7 +1216,7 @@ def preflight(agents, tool_profile="all"):
         except OSError as exc:
             check["error"] = str(exc)
         checks.append(check)
-    mcp_check = mcp_profile_preflight(tool_profile) if tool_profile == "core" else None
+    mcp_check = mcp_profile_preflight(tool_profile) if tool_profile in ("core", "editing") else None
     return {"checks": checks, "ok": all(c["ok"] for c in checks) and (mcp_check is None or mcp_check["ok"]),
             "mcp_profile": mcp_check, "model_calls": 0, "runtime_permission_isolation_verified": False}
 

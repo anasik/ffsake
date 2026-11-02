@@ -8,6 +8,8 @@ from agent_benchmark_suite import FFSAKE_MCP, FFSAKE_ACCESS_MUTATIONS, FFSAKE_AP
 
 
 def configurations(host, root, binary, profile='all', access_approval='ask', debug_policy=None, debug_approval='ask', task_approval='ask'):
+    if profile == 'editing' and debug_policy:
+        raise ValueError('editing profile does not expose debugging; use core or all')
     tools = profile_tools(profile)
     args = mcp_arguments(root, profile)
     if debug_policy:
@@ -50,7 +52,7 @@ def main():
     parser.add_argument('host', choices=('claude', 'codex', 'opencode'))
     parser.add_argument('workspace', type=Path)
     parser.add_argument('--binary', type=Path, default=FFSAKE_MCP)
-    parser.add_argument('--tool-profile', choices=('all', 'core'), default='all')
+    parser.add_argument('--tool-profile', choices=('all', 'core', 'editing'), default='all')
     parser.add_argument('--access-approval', choices=('ask', 'allow'), default='ask',
                         help='Normal host approval defaults, or deliberate automatic allowance')
     parser.add_argument('--debug', type=Path, help='Host-controlled adapter/launch configuration')
@@ -58,6 +60,8 @@ def main():
     parser.add_argument('--task-approval', choices=('ask', 'allow'), default='ask')
     parser.add_argument('--output-dir', type=Path, help='Write new setup files here; refuses existing files')
     args = parser.parse_args()
+    if args.tool_profile == 'editing' and args.debug:
+        parser.error('editing profile does not expose debugging; use core or all')
     root = args.workspace.expanduser().resolve()
     if not root.is_dir():
         parser.error('workspace must be an existing directory')
