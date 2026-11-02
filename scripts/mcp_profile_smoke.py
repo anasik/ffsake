@@ -115,6 +115,13 @@ def main():
         try:
             for name in set(FFSAKE_TOOLS) - editing_names:
                 assert 'disabled by editing profile' in call(name, {}, ok=False)['error']
+            outside = base/'outside.txt'
+            outside.write_text('PRIVATE_SENTINEL')
+            denied = call('ffsake_read', {'path':str(outside)}, ok=False)
+            assert 'PRIVATE_SENTINEL' not in json.dumps(denied)
+            (root/'outside-link').symlink_to(outside)
+            denied = call('ffsake_read', {'path':'outside-link'}, ok=False)
+            assert 'PRIVATE_SENTINEL' not in json.dumps(denied)
             preview = call('ffsake_preview_edit', {'path':'main.rs','old_text':'Account',
                 'new_text':'Customer','expected_matches':1})
             path.write_bytes((source + '// host edit\n').encode())
