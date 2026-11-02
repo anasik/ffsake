@@ -70,7 +70,37 @@ def events(text):
     return output
 
 
-def sanitize(report):
+def timing_events(path, directory):
+    """Export only whitelisted relative timing metadata from private relay logs."""
+    root = Path(directory).resolve(strict=True)
+    selected = Path(path).resolve(strict=True)
+    if not selected.is_relative_to(root) or not selected.is_file() or selected.stat().st_size > 5_000_000:
+        raise ValueError('timing file is outside the supplied directory or too large')
+    safe_methods = {'initialize', 'tools/list', 'tools/call', 'notifications/initialized',
+                    'notifications/roots/list_changed', 'roots/list', 'ping'}
+    allowed_directions = {'request', 'response', 'server_execution', 'request_invalid', 'response_invalid'}
+    result = []
+    for line in selected.read_text().splitlines():
+        value = json.loads(line)
+        direction = value.get('direction')
+        if direction not in allowed_directions:
+            continue
+        event = {'direction': direction}
+        for key in ('ms', 'bytes', 'original_bytes', 'sequence', 'roundtrip_ms', 'execution_ms'):
+            if key in value:
+                event[key] = numeric(value[key])
+        if 'method' in value:
+            method = value['method']
+            event['method'] = method if isinstance(method, str) and method in safe_methods else 'other'
+        if value.get('tool'):
+            event['tool'] = value['tool'] if value['tool'] in FFSAKE_TOOLS else 'other'
+        if isinstance(value.get('protocol_error'), bool):
+            event['protocol_error'] = value['protocol_error']
+        result.append(event)
+    return result
+
+
+def sanitize(report, timing_dir=None, omit_events=False):
     results = []
     for run in report['results']:
         trace = run.get('trace', {})
@@ -82,7 +112,12 @@ def sanitize(report):
                ('correct', 'artifact_correct', 'comparison_valid', 'timed_out')}
         row.update({key: numeric(run.get(key)) for key in ('repetition', 'elapsed_ms', 'exit_code')})
         row['task'] = run.get('task') if run.get('task') in {'cross', 'maintenance', 'layout', 'build', 'git', 'debug'} else 'other'
-        row['mode'] = run.get('mode') if run.get('mode') in {'baseline', 'ffsake'} else 'other'
+        row['mode'] = run.get('mode') if run.get('mode') in {'baseline', 'ffsake', 'core', 'editing', 'compact', 'context', 'old', 'changed'} else 'other'
+        if run.get('server_profile') in ('core', 'editing'):
+            row['server_profile'] = run['server_profile']
+        if isinstance(run.get('startup_context'), dict):
+            row['startup_context'] = {key:numeric(run['startup_context'].get(key))
+                                      for key in ('tool_calls', 'elapsed_ms')}
         row['provenance_hashes'] = {key: digest(provenance.get(key)) for key in (
             'prompt_sha256', 'fixture_manifest_sha256', 'initial_staged_diff_sha256',
             'initial_unstaged_diff_sha256')}
@@ -117,7 +152,10 @@ def sanitize(report):
                              if isinstance(verification.get('task_definition_preserved'), bool) else None}
         row['private_stdout_sha256'] = hashlib.sha256(raw_stdout.encode()).hexdigest()
         row['private_stderr_sha256'] = hashlib.sha256(raw_stderr.encode()).hexdigest()
-        row['events'] = events(raw_stdout)
+        if not omit_events:
+            row['events'] = events(raw_stdout)
+        if timing_dir and run.get('mcp_timing_file'):
+            row['mcp_timing'] = timing_events(run['mcp_timing_file'], timing_dir)
         results.append(row)
     revision = report.get('revision', {})
     settings = report.get('settings', {})
@@ -140,10 +178,12 @@ def main():
     parser.add_argument('input', type=Path)
     parser.add_argument('output', type=Path)
     parser.add_argument('--task', choices=('cross', 'maintenance', 'layout', 'build', 'git', 'debug'))
+    parser.add_argument('--timing-dir', type=Path, help='private directory containing content-free timing logs')
+    parser.add_argument('--omit-events', action='store_true', help='omit host event index; retain tool names and timing')
     args = parser.parse_args()
     if args.output.exists():
         raise SystemExit('output already exists')
-    result = sanitize(json.loads(args.input.read_text()))
+    result = sanitize(json.loads(args.input.read_text()), args.timing_dir, args.omit_events)
     if args.task:
         result['results'] = [row for row in result['results'] if row['task'] == args.task]
         result['tasks'] = [args.task]

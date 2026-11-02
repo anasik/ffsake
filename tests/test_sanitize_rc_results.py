@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -8,6 +9,25 @@ import sanitize_rc_results as sanitizer
 
 
 class SanitizeTests(unittest.TestCase):
+    def test_timing_export_never_includes_payload_or_external_paths(self):
+        with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as other:
+            root = Path(temporary)
+            path = root/'timing.jsonl'
+            path.write_text(json.dumps({'direction':'request','ms':1,'bytes':10,
+                'sequence':1,'method':'tools/call','tool':'ffsake_read',
+                'path':'/Users/private','payload':'secret'})+'\n')
+            report = {'results':[{'task':'cross','mode':'editing','mcp_timing_file':str(path),
+                                  'stdout':'','stderr':''}], 'settings':{}}
+            result = sanitizer.sanitize(report, root, omit_events=True)
+            row = result['results'][0]
+            self.assertEqual(row['mode'], 'editing')
+            self.assertNotIn('events', row)
+            self.assertEqual(row['mcp_timing'][0]['tool'], 'ffsake_read')
+            self.assertNotIn('secret', json.dumps(result))
+            self.assertNotIn('/Users/private', json.dumps(result))
+            with self.assertRaises(ValueError):
+                sanitizer.sanitize(report, other, omit_events=True)
+
     def test_excludes_arbitrary_private_content_and_keeps_numeric_usage(self):
         secret = 'person@example.com /Users/person/private sk-ant-not-a-real-secret'
         event = {'type':'item.completed','item':{'type':'command_execution','command':secret,
