@@ -14,12 +14,12 @@ from debug_smoke import Client, ROOT, alive
 
 pending = b''
 
-def cleanup_fixture(pid):
+def cleanup_fixture(pid, base):
     if pid is None:
         return
     # Signal only the exact disposable fixture, never a process matched by name.
     info = subprocess.run(['ps','-o','command=','-p',str(pid)], capture_output=True, text=True)
-    if str(ROOT/'tests/fixtures/dap_adapter.py') not in info.stdout:
+    if str(ROOT/'tests/fixtures/dap_adapter.py') not in info.stdout or str(base) not in info.stdout:
         return
     try:
         if os.getpgid(pid) == pid:
@@ -96,7 +96,7 @@ def main():
                 try: c.stop(); c.close()
                 except Exception:
                     c.p.kill(); c.p.wait()
-            cleanup_fixture(adapter_pid)
+            cleanup_fixture(adapter_pid, base)
         # EOF during a pending wait remains bounded and cleans up the adapter.
         c = Client(binary, root, policy)
         adapter_pid = None
@@ -115,7 +115,7 @@ def main():
         finally:
             if c.p.poll() is None:
                 c.p.kill(); c.p.wait()
-            cleanup_fixture(adapter_pid)
+            cleanup_fixture(adapter_pid, base)
         # A host that stops reading a large wait response must not prevent cleanup.
         policy.write_text(json.dumps({'version':1,'configurations':{'fake':{
             'argv':[sys.executable,str(ROOT/'tests/fixtures/dap_adapter.py'),'output',str(base)],
@@ -137,7 +137,7 @@ def main():
         finally:
             if c.p.poll() is None:
                 c.p.kill(); c.p.wait()
-            cleanup_fixture(adapter_pid)
+            cleanup_fixture(adapter_pid, base)
     print(json.dumps({'bounded_timeout':True,'concurrent_read':True,'termination':True,'cleanup':True,'invalid_wait_rejected':True}))
 
 if __name__=='__main__': main()
