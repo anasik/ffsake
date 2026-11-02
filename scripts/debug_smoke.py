@@ -57,7 +57,11 @@ class Client:
         raise AssertionError(('debug wait expired', value))
 
     def action(self, action, ok=True, **args):
-        self.call('debug', request={'action': action, 'session': self.session, **args})
+        response = self.call('debug', request={'action': action, 'session': self.session, **args})
+        if response.get('result') is not None:
+            body = response['result']
+            assert body['ok'] == ok, response
+            return body.get('result', body)
         value = self.wait(lambda s: s['result'] is not None, allow_error=not ok)
         assert value['result']['ok'] == ok, value
         return value['result'].get('result', value['result'])

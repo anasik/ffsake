@@ -8,6 +8,8 @@ FFSAKE gives coding agents repository tools through MCP: find and read files, re
 
 **Codex editing study (2026-11-02):** In five matched repetitions per arm, all cross-file and maintenance runs passed. The optional editing profile reduced median calls, total input and elapsed time versus the old core profile on both fixtures; native tools still used less input and time. For the cross-file task, medians were 7 calls / 171,496 input tokens / 46.8 s with editing, 10 / 214,112 / 62.5 s with old core, and 4 / 72,164 / 33.3 s native. Input includes cache reads, and the timing ranges overlap. These small samples are not a general performance claim. [Full results and limitations](docs/BENCHMARK.md#interaction-overhead-study-2026-11-02).
 
+**Debugger auto-wait candidate (2026-11-02):** Control and inspection calls now return their completed result after a bounded wait, and a stop wait no longer returns early on the continue response. A model-free sequence used eight MCP calls with no explicit polls or waits, versus 41–44 model-issued calls in the previous traces. Codex paid validation stopped before its first tool call because the workspace was out of credits; the elapsed-time target is not yet claimed. [Details and limits](docs/BENCHMARK.md#debugger-auto-wait-candidate-2026-11-02).
+
 **Quick setup:** from the project you want to use, give your agent the [repository URL](https://github.com/anasik/ffsake) and ask it to follow [the installation guide](docs/INSTALL.md). Or run the commands below. You need Git and Python 3.11+. Source builds additionally need Rust/Cargo and a C compiler. Release archives cover macOS ARM64 and Linux x86-64; before the first alpha is published use `install --source`.
 
 ```sh

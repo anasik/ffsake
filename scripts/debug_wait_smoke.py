@@ -138,6 +138,63 @@ def main():
             if c.p.poll() is None:
                 c.p.kill(); c.p.wait()
             cleanup_fixture(adapter_pid, base)
-    print(json.dumps({'bounded_timeout':True,'concurrent_read':True,'termination':True,'cleanup':True,'invalid_wait_rejected':True}))
+        # Control and inspection actions return completed results without a separate wait.
+        with tempfile.TemporaryDirectory(prefix='ffsake-debug-auto-wait-') as td:
+            base = Path(td).resolve(); root = base/'root'; root.mkdir()
+            (root/'local.txt').write_text('ok')
+            source = base/'outside.txt'; source.write_text('AUTO_SOURCE')
+            policy.write_text(json.dumps({'version':1,'configurations':{'fake':{
+                'argv':[sys.executable,str(ROOT/'tests/fixtures/dap_adapter.py'),'normal',str(base)],
+                'launch':{},'timeout_seconds':1,'session_seconds':30}}}))
+            c = Client(binary, root, policy)
+            adapter_pid = None
+            def body(snapshot):
+                assert snapshot.get('result') and snapshot['result']['ok'], snapshot
+                return snapshot['result'].get('result', snapshot['result'])
+            try:
+                configured = c.call('debug_launch', configuration='fake')
+                assert configured['status'] == 'configuring', configured
+                c.session = configured['session']; adapter_pid = configured['adapter_pid']
+                c.call('open_access', path=str(source), kind='file', mode='read_only')
+                bp = body(c.call('debug', request={'action':'breakpoints','session':c.session,
+                                                   'path':str(source),'lines':[1]}))
+                assert bp['breakpoints'][0]['verified'], bp
+                stopped = c.call('debug', request={'action':'continue','session':c.session})
+                assert stopped['status'] == 'stopped' and stopped['stop']['reason'] == 'breakpoint', stopped
+                assert stopped['result']['ok'], stopped
+                frame = body(c.call('debug', request={'action':'stack','session':c.session,
+                                                      'thread':1}))['frames'][0]
+                assert frame['source_authorized'] and frame['handle'], frame
+                scope = body(c.call('debug', request={'action':'scopes','session':c.session,
+                                                      'handle':frame['handle']}))['scopes'][0]
+                variables = body(c.call('debug', request={'action':'variables','session':c.session,
+                                                          'handle':scope['handle']}))
+                assert len(variables['variables']) == 20 and variables['truncated'], variables
+                cleaned = c.call('debug', request={'action':'terminate','session':c.session})
+                assert cleaned['cleaned'], cleaned
+                assert not alive(adapter_pid), 'owned adapter survived auto-waited cleanup'
+                auto_calls = len(c.trace)
+                assert auto_calls == 8, c.trace
+                assert not any(t['arguments'].get('request', {}).get('action') in ('poll', 'wait')
+                               for t in c.trace), c.trace
+                # Opting out preserves explicit queue/wait semantics.
+                configured = c.call('debug_launch', auto_wait=False, configuration='fake')
+                assert configured['status'] == 'starting', configured
+                c.session = configured['session']
+                ready = c.call('debug', request={'action':'wait','session':c.session,
+                                                 'until':'ready','timeout_ms':1000})
+                assert ready['status'] == 'configuring', ready
+                adapter_pid = ready['adapter_pid']
+                c.call('debug', request={'action':'terminate','session':c.session})
+                c.wait(lambda s:s['cleaned'], allow_error=True)
+                assert not alive(adapter_pid), 'owned adapter survived opt-out cleanup'
+            finally:
+                if c.p.poll() is None:
+                    c.session = c.session or None
+                    try: c.stop()
+                    except Exception: pass
+                    c.close()
+                cleanup_fixture(adapter_pid, base)
+    print(json.dumps({'bounded_timeout':True,'concurrent_read':True,'termination':True,'cleanup':True,'invalid_wait_rejected':True,'auto_wait_results':True,'auto_wait_calls':auto_calls,'auto_wait_opt_out':True}))
 
 if __name__=='__main__': main()

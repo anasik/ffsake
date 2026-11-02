@@ -230,6 +230,6 @@ MCP starts with primary-project access and provides persistent `ffsake_open_acce
 
 ## Debugging through existing adapters
 
-FFSAKE supports one bounded local DAP session with host-configured adapter argv and launch settings. C# netcoredbg is the first demonstrated adapter: source breakpoints, stop reason, stack/scopes/variables, stepping and continue. Debugging is disabled without `--debug /absolute/debug.json`; launch uses ordinary host approval and executes project code outside any filesystem sandbox.
+FFSAKE supports one bounded local DAP session with host-configured adapter argv and launch settings. C# netcoredbg is the first demonstrated adapter: source breakpoints, stop reason, stack/scopes/variables, stepping and continue. Debugging is disabled without `--debug /absolute/debug.json`; launch uses ordinary host approval and executes project code outside any filesystem sandbox. Control and inspection actions wait up to one second and return their completed result; `continue`, step and pause wait for stopped, and `terminate` waits for cleanup. Set `auto_wait=false` to queue an operation for `poll` or `wait`.
 
 See [debugger setup and tool workflow](DEBUGGING.md), [acceptance evidence](DEBUGGING_DEMO.md), and the reproducible `scripts/debug_smoke.py` check. No adapter is bundled or downloaded by FFSAKE. Ordinary editing remains available while a program runs or stops.

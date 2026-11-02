@@ -66,7 +66,7 @@ def main():
                             assert len(variables['variables'][0]['value']) == 2048
                             assert c.action('source', handle=frame['source_handle'])['content'] == 'EXTERNAL_SOURCE_SENTINEL'
                             # Queue source, revoke before consuming result: no cached disclosure.
-                            c.call('debug', request={'action': 'source', 'session': c.session, 'handle': frame['source_handle']})
+                            c.call('debug', auto_wait=False, request={'action': 'source', 'session': c.session, 'handle': frame['source_handle']})
                             time.sleep(.1)
                             c.call('remove_access', path=str(source))
                             result = c.wait(lambda s: s['result'] is not None)['result']
@@ -74,7 +74,7 @@ def main():
                             c.action('scopes', ok=False, handle=frame['handle'])
                             c.call('open_access', path=str(source), kind='file', mode='read_only')
                             # The asynchronous wait path also rechecks revocation before delivery.
-                            c.call('debug', request={'action':'source', 'session':c.session, 'handle':frame['source_handle']})
+                            c.call('debug', auto_wait=False, request={'action':'source', 'session':c.session, 'handle':frame['source_handle']})
                             time.sleep(.1)
                             c.call('remove_access', path=str(source))
                             waited = c.call('debug', request={'action':'wait', 'session':c.session,

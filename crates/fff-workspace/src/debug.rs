@@ -245,11 +245,15 @@ impl Waiter {
         let deadline = Instant::now() + Duration::from_millis(self.timeout_ms);
         loop {
             let state = self.state.lock().unwrap();
+            let failed = state
+                .result
+                .as_ref()
+                .is_some_and(|reply| reply.value.get("ok") == Some(&Value::Bool(false)));
             let ready = state.cleaned
                 || state.error.is_some()
-                || state.result.is_some()
+                || failed
                 || match self.until {
-                    WaitUntil::Ready => !state.busy,
+                    WaitUntil::Ready => !state.busy || state.result.is_some(),
                     WaitUntil::Stopped => state.status == "stopped",
                     WaitUntil::Cleaned => state.cleaned,
                 };
