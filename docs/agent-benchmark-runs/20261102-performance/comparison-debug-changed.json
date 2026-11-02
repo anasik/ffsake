@@ -1,0 +1,5631 @@
+{
+  "schema_version": 1,
+  "kind": "content-free redacted event index",
+  "limitations": "Commands, arguments, output and private content are omitted; retain the original report privately.",
+  "source_revision": "44b647f4ce5cd8064fde9482d71f06339d7c0d38",
+  "binary_sha256": "ed723305c428acb30e7bdad6e877532e3ccd10acbad566ea5a0aacb8415861a0",
+  "driver_sha256": "377c41f5af4bcfe221dc1bebf11f5961c34851d5fef1ab18b5798d724fc72943",
+  "fixture_sha256": "adb219bcb9d4d272084ba5ec8e9e9b7b9c9fa3ed30a8970d86b124239ef87839",
+  "agents": [
+    "codex"
+  ],
+  "tasks": [
+    "debug"
+  ],
+  "repetitions": 5,
+  "complete": true,
+  "platform": "arm64",
+  "results": [
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 1,
+      "elapsed_ms": 130646.212,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "changed",
+      "server_profile": "core",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 53,
+        "ffsake_tool_calls": 53,
+        "shell_tool_calls": 0,
+        "observed_tool_errors": 0,
+        "input_tokens": 608912,
+        "total_input_tokens": 608912,
+        "uncached_input_tokens": 26000,
+        "output_tokens": 2103,
+        "cache_read_input_tokens": 582912,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_preview_edit",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_apply",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug"
+        ]
+      },
+      "debug_actions": [
+        "list",
+        "wait",
+        "breakpoints",
+        "wait",
+        "continue",
+        "wait",
+        "wait",
+        "stack",
+        "wait",
+        "continue",
+        "wait",
+        "stack",
+        "wait",
+        "scopes",
+        "wait",
+        "variables",
+        "wait",
+        "breakpoints",
+        "wait",
+        "continue",
+        "wait",
+        "wait",
+        "continue",
+        "wait",
+        "stack",
+        "wait",
+        "scopes",
+        "wait",
+        "variables",
+        "wait",
+        "continue",
+        "wait",
+        "poll",
+        "terminate",
+        "wait",
+        "wait",
+        "continue",
+        "wait",
+        "wait",
+        "terminate",
+        "wait"
+      ],
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": true,
+          "ffsake_inspected_state": true,
+          "ffsake_resumed": true,
+          "ffsake_state_observed": true,
+          "native_debugger": false,
+          "native_state_observed": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "1125fc40febc20e6c0c3008c7a28fa5ccbb7218ee67e3d8a61580d3a59a1a3bb",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.459958,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 40.852291,
+          "bytes": 1371,
+          "original_bytes": 1371,
+          "sequence": 1,
+          "roundtrip_ms": 40.392333,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 41.071,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 41.173208,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 42.023125,
+          "bytes": 32177,
+          "original_bytes": 32177,
+          "sequence": 3,
+          "roundtrip_ms": 0.849917,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 17218.625583,
+          "bytes": 1230,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "response",
+          "ms": 17220.470166,
+          "bytes": 381,
+          "original_bytes": 381,
+          "sequence": 4,
+          "roundtrip_ms": 1.844583,
+          "protocol_error": false
+        },
+        {
+          "direction": "server_execution",
+          "ms": 17220.619083,
+          "execution_ms": 1.3309579999999999,
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "request",
+          "ms": 17224.194125,
+          "bytes": 1248,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 17224.808875,
+          "execution_ms": 0.431792,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 17224.832041,
+          "bytes": 280,
+          "original_bytes": 280,
+          "sequence": 5,
+          "roundtrip_ms": 0.637916,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 17227.335916,
+          "bytes": 1221,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 17228.22475,
+          "execution_ms": 0.736167,
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "response",
+          "ms": 17228.24725,
+          "bytes": 270,
+          "original_bytes": 270,
+          "sequence": 6,
+          "roundtrip_ms": 0.911334,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 17230.259791,
+          "bytes": 1235,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 17318.366791,
+          "execution_ms": 87.882792,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 17318.42975,
+          "bytes": 461,
+          "original_bytes": 461,
+          "sequence": 7,
+          "roundtrip_ms": 88.169959,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 23986.762,
+          "bytes": 1230,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 23987.851166,
+          "execution_ms": 0.682416,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 23987.899583,
+          "bytes": 279,
+          "original_bytes": 279,
+          "sequence": 8,
+          "roundtrip_ms": 1.137583,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 29631.594833,
+          "bytes": 1239,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 29632.372208,
+          "execution_ms": 0.362458,
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "response",
+          "ms": 29632.41875,
+          "bytes": 1243,
+          "original_bytes": 1243,
+          "sequence": 9,
+          "roundtrip_ms": 0.823917,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 29635.993833,
+          "bytes": 1238,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 29636.422125,
+          "execution_ms": 0.251958,
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "response",
+          "ms": 29636.455625,
+          "bytes": 251,
+          "original_bytes": 251,
+          "sequence": 10,
+          "roundtrip_ms": 0.461792,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 29639.729791,
+          "bytes": 1253,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 29640.338458,
+          "execution_ms": 0.327917,
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "response",
+          "ms": 29640.374916,
+          "bytes": 352,
+          "original_bytes": 352,
+          "sequence": 11,
+          "roundtrip_ms": 0.645125,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 33902.906375,
+          "bytes": 1295,
+          "sequence": 12,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 33904.185125,
+          "bytes": 1516,
+          "original_bytes": 1516,
+          "sequence": 12,
+          "roundtrip_ms": 1.27875,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 38532.961541,
+          "bytes": 1305,
+          "sequence": 13,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 38534.879333,
+          "execution_ms": 1.5045,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 38534.932458,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 13,
+          "roundtrip_ms": 1.970917,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 38539.647416,
+          "bytes": 1296,
+          "sequence": 14,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 38555.468291,
+          "bytes": 1502,
+          "original_bytes": 1502,
+          "sequence": 14,
+          "roundtrip_ms": 15.820875,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 43811.621833,
+          "bytes": 1266,
+          "sequence": 15,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 43812.185833,
+          "execution_ms": 0.132292,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 43812.23125,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 15,
+          "roundtrip_ms": 0.609417,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 43816.795458,
+          "bytes": 1298,
+          "sequence": 16,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 43817.304333,
+          "bytes": 1251,
+          "original_bytes": 1251,
+          "sequence": 16,
+          "roundtrip_ms": 0.508875,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 47765.86675,
+          "bytes": 1298,
+          "sequence": 17,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 47766.450625,
+          "bytes": 1235,
+          "original_bytes": 1235,
+          "sequence": 17,
+          "roundtrip_ms": 0.583875,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 47770.261,
+          "bytes": 1274,
+          "sequence": 18,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 47770.569291,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 18,
+          "roundtrip_ms": 0.308291,
+          "protocol_error": false
+        },
+        {
+          "direction": "server_execution",
+          "ms": 47770.663958,
+          "execution_ms": 0.045708,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "request",
+          "ms": 47773.478083,
+          "bytes": 1296,
+          "sequence": 19,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 47788.897041,
+          "bytes": 1642,
+          "original_bytes": 1642,
+          "sequence": 19,
+          "roundtrip_ms": 15.418958,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 55782.429708,
+          "bytes": 1277,
+          "sequence": 20,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 55782.788625,
+          "execution_ms": 0.043250000000000004,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 55782.833125,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 20,
+          "roundtrip_ms": 0.403417,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 55787.806958,
+          "bytes": 1298,
+          "sequence": 21,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 55788.385583,
+          "bytes": 1364,
+          "original_bytes": 1364,
+          "sequence": 21,
+          "roundtrip_ms": 0.578625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 60225.625833,
+          "bytes": 1274,
+          "sequence": 22,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 60225.846791,
+          "execution_ms": 0.024958,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 60225.883791,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 22,
+          "roundtrip_ms": 0.257958,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 60228.578916,
+          "bytes": 1296,
+          "sequence": 23,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 60243.991875,
+          "bytes": 2242,
+          "original_bytes": 2242,
+          "sequence": 23,
+          "roundtrip_ms": 15.412959,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 64228.744375,
+          "bytes": 1275,
+          "sequence": 24,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 64229.251,
+          "execution_ms": 0.052375,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 64229.312583,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 24,
+          "roundtrip_ms": 0.568208,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 64233.9205,
+          "bytes": 1296,
+          "sequence": 25,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 64234.483958,
+          "bytes": 1328,
+          "original_bytes": 1328,
+          "sequence": 25,
+          "roundtrip_ms": 0.563458,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72796.4975,
+          "bytes": 1279,
+          "sequence": 26,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 72796.956583,
+          "execution_ms": 0.053791,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72796.999166,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 26,
+          "roundtrip_ms": 0.501666,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72801.006458,
+          "bytes": 1296,
+          "sequence": 27,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72801.526875,
+          "bytes": 1575,
+          "original_bytes": 1575,
+          "sequence": 27,
+          "roundtrip_ms": 0.520417,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72804.741125,
+          "bytes": 1302,
+          "sequence": 28,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 72804.943666,
+          "execution_ms": 0.024042,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72804.974291,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 28,
+          "roundtrip_ms": 0.233166,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72807.85675,
+          "bytes": 1296,
+          "sequence": 29,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72822.957291,
+          "bytes": 1392,
+          "original_bytes": 1392,
+          "sequence": 29,
+          "roundtrip_ms": 15.100541,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72826.913,
+          "bytes": 1277,
+          "sequence": 30,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 72827.20725,
+          "execution_ms": 0.031084000000000004,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72827.249958,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 30,
+          "roundtrip_ms": 0.336958,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72830.965166,
+          "bytes": 1298,
+          "sequence": 31,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72831.294791,
+          "bytes": 1159,
+          "original_bytes": 1159,
+          "sequence": 31,
+          "roundtrip_ms": 0.329625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 82234.415083,
+          "bytes": 1296,
+          "sequence": 32,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 82235.221416,
+          "bytes": 1364,
+          "original_bytes": 1364,
+          "sequence": 32,
+          "roundtrip_ms": 0.806333,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 82239.206791,
+          "bytes": 1277,
+          "sequence": 33,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 82239.458291,
+          "execution_ms": 0.033791999999999996,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 82239.486166,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 33,
+          "roundtrip_ms": 0.279375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 82242.656833,
+          "bytes": 1296,
+          "sequence": 34,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 82257.390083,
+          "bytes": 1364,
+          "original_bytes": 1364,
+          "sequence": 34,
+          "roundtrip_ms": 14.73325,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 82260.815083,
+          "bytes": 1274,
+          "sequence": 35,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 82261.002583,
+          "execution_ms": 0.026041,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 82261.031291,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 35,
+          "roundtrip_ms": 0.216208,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 82264.058833,
+          "bytes": 1296,
+          "sequence": 36,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 82264.623791,
+          "bytes": 2249,
+          "original_bytes": 2249,
+          "sequence": 36,
+          "roundtrip_ms": 0.564958,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 88238.781625,
+          "bytes": 1276,
+          "sequence": 37,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 88239.19825,
+          "execution_ms": 0.046417,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 88239.242958,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 37,
+          "roundtrip_ms": 0.461333,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 88243.468125,
+          "bytes": 1296,
+          "sequence": 38,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 88259.207208,
+          "bytes": 1328,
+          "original_bytes": 1328,
+          "sequence": 38,
+          "roundtrip_ms": 15.739083,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 93179.616208,
+          "bytes": 1279,
+          "sequence": 39,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 93180.129125,
+          "execution_ms": 0.056459,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 93180.200166,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 39,
+          "roundtrip_ms": 0.583958,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 93184.283458,
+          "bytes": 1296,
+          "sequence": 40,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 93198.308083,
+          "bytes": 1580,
+          "original_bytes": 1580,
+          "sequence": 40,
+          "roundtrip_ms": 14.024625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 93202.975083,
+          "bytes": 1277,
+          "sequence": 41,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 93203.242375,
+          "execution_ms": 0.041041,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 93203.276625,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 41,
+          "roundtrip_ms": 0.301542,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 93206.747208,
+          "bytes": 1296,
+          "sequence": 42,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 93222.471791,
+          "bytes": 1286,
+          "original_bytes": 1286,
+          "sequence": 42,
+          "roundtrip_ms": 15.724583,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 100479.52175,
+          "bytes": 1461,
+          "sequence": 43,
+          "method": "tools/call",
+          "tool": "ffsake_preview_edit"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 100483.285416,
+          "execution_ms": 3.291417,
+          "tool": "ffsake_preview_edit"
+        },
+        {
+          "direction": "response",
+          "ms": 100483.325708,
+          "bytes": 591,
+          "original_bytes": 591,
+          "sequence": 43,
+          "roundtrip_ms": 3.803958,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 100487.254666,
+          "bytes": 1262,
+          "sequence": 44,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 100487.53275,
+          "execution_ms": 0.066,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 100487.569,
+          "bytes": 1282,
+          "original_bytes": 1282,
+          "sequence": 44,
+          "roundtrip_ms": 0.314334,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 108440.471458,
+          "bytes": 1267,
+          "sequence": 45,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 108440.974125,
+          "execution_ms": 0.059167,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 108441.023583,
+          "bytes": 195,
+          "original_bytes": 195,
+          "sequence": 45,
+          "roundtrip_ms": 0.552125,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 108444.937916,
+          "bytes": 1298,
+          "sequence": 46,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 108445.347583,
+          "bytes": 1076,
+          "original_bytes": 1076,
+          "sequence": 46,
+          "roundtrip_ms": 0.409667,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 108451.257083,
+          "bytes": 1233,
+          "sequence": 47,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 108455.107416,
+          "execution_ms": 3.668583,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 108455.138833,
+          "bytes": 188,
+          "original_bytes": 188,
+          "sequence": 47,
+          "roundtrip_ms": 3.88175,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 108457.713291,
+          "bytes": 1255,
+          "sequence": 48,
+          "method": "tools/call",
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 108458.155416,
+          "execution_ms": 0.254916,
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "response",
+          "ms": 108458.185791,
+          "bytes": 353,
+          "original_bytes": 353,
+          "sequence": 48,
+          "roundtrip_ms": 0.4725,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 113583.710041,
+          "bytes": 1296,
+          "sequence": 49,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 113583.98225,
+          "bytes": 1516,
+          "original_bytes": 1516,
+          "sequence": 49,
+          "roundtrip_ms": 0.272209,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 113586.326083,
+          "bytes": 1266,
+          "sequence": 50,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 113586.47675,
+          "execution_ms": 0.016667,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 113586.493458,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 50,
+          "roundtrip_ms": 0.167375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 113588.548375,
+          "bytes": 1296,
+          "sequence": 51,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 113599.635375,
+          "bytes": 1333,
+          "original_bytes": 1333,
+          "sequence": 51,
+          "roundtrip_ms": 11.087,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 122071.873,
+          "bytes": 1298,
+          "sequence": 52,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 122072.524666,
+          "bytes": 1307,
+          "original_bytes": 1307,
+          "sequence": 52,
+          "roundtrip_ms": 0.651666,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 122076.853833,
+          "bytes": 1237,
+          "sequence": 53,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 122190.973083,
+          "bytes": 528,
+          "original_bytes": 528,
+          "sequence": 53,
+          "roundtrip_ms": 114.11925,
+          "protocol_error": false
+        },
+        {
+          "direction": "server_execution",
+          "ms": 122191.064583,
+          "execution_ms": 113.911833,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "request",
+          "ms": 122194.120916,
+          "bytes": 1235,
+          "sequence": 54,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 122259.748625,
+          "execution_ms": 65.47758300000001,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 122259.807458,
+          "bytes": 851,
+          "original_bytes": 851,
+          "sequence": 54,
+          "roundtrip_ms": 65.686542,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 122262.497166,
+          "bytes": 1267,
+          "sequence": 55,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 122262.657125,
+          "execution_ms": 0.021333,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 122262.669791,
+          "bytes": 195,
+          "original_bytes": 195,
+          "sequence": 55,
+          "roundtrip_ms": 0.172625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 122264.333041,
+          "bytes": 1298,
+          "sequence": 56,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 122264.494041,
+          "bytes": 1076,
+          "original_bytes": 1076,
+          "sequence": 56,
+          "roundtrip_ms": 0.161,
+          "protocol_error": false
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 2,
+      "elapsed_ms": 129749.703,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "changed",
+      "server_profile": "core",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 42,
+        "ffsake_tool_calls": 42,
+        "shell_tool_calls": 0,
+        "observed_tool_errors": 0,
+        "input_tokens": 573474,
+        "total_input_tokens": 573474,
+        "uncached_input_tokens": 25890,
+        "output_tokens": 1677,
+        "cache_read_input_tokens": 547584,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_preview_edit",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_apply",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug"
+        ]
+      },
+      "debug_actions": [
+        "list",
+        "wait",
+        "breakpoints",
+        "wait",
+        "continue",
+        "wait",
+        "stack",
+        "wait",
+        "scopes",
+        "wait",
+        "variables",
+        "wait",
+        "continue",
+        "wait",
+        "stack",
+        "wait",
+        "scopes",
+        "wait",
+        "variables",
+        "wait",
+        "continue",
+        "wait",
+        "terminate",
+        "wait",
+        "wait",
+        "continue",
+        "wait",
+        "wait",
+        "terminate",
+        "wait"
+      ],
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": true,
+          "ffsake_inspected_state": true,
+          "ffsake_resumed": true,
+          "ffsake_state_observed": true,
+          "native_debugger": false,
+          "native_state_observed": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "0c471054dc59e8791f4c7dd3dcdcce7eb50992324423e163f897d2b1770001a3",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.478334,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 40.427834,
+          "bytes": 1371,
+          "original_bytes": 1371,
+          "sequence": 1,
+          "roundtrip_ms": 39.9495,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 40.64975,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 40.767917,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 41.648292,
+          "bytes": 32177,
+          "original_bytes": 32177,
+          "sequence": 3,
+          "roundtrip_ms": 0.880375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 13446.24925,
+          "bytes": 1230,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 13449.185292,
+          "execution_ms": 2.469209,
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "response",
+          "ms": 13449.239334,
+          "bytes": 381,
+          "original_bytes": 381,
+          "sequence": 4,
+          "roundtrip_ms": 2.990084,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 13452.92775,
+          "bytes": 1248,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 13453.649792,
+          "execution_ms": 0.551875,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 13453.68,
+          "bytes": 280,
+          "original_bytes": 280,
+          "sequence": 5,
+          "roundtrip_ms": 0.75225,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 13456.017125,
+          "bytes": 1221,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 13456.858542,
+          "execution_ms": 0.717791,
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "response",
+          "ms": 13456.876167,
+          "bytes": 270,
+          "original_bytes": 270,
+          "sequence": 6,
+          "roundtrip_ms": 0.859042,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 13458.984209,
+          "bytes": 1235,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 13549.791959,
+          "execution_ms": 90.665833,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 13549.852917,
+          "bytes": 461,
+          "original_bytes": 461,
+          "sequence": 7,
+          "roundtrip_ms": 90.868708,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 19674.411459,
+          "bytes": 1230,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 19675.612709,
+          "execution_ms": 0.712125,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 19675.674375,
+          "bytes": 279,
+          "original_bytes": 279,
+          "sequence": 8,
+          "roundtrip_ms": 1.262916,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 24585.408125,
+          "bytes": 1239,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 24586.293584,
+          "execution_ms": 0.467,
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "response",
+          "ms": 24586.356709,
+          "bytes": 1243,
+          "original_bytes": 1243,
+          "sequence": 9,
+          "roundtrip_ms": 0.948584,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 24591.003334,
+          "bytes": 1238,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 24591.574375,
+          "execution_ms": 0.317625,
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "response",
+          "ms": 24591.611417,
+          "bytes": 251,
+          "original_bytes": 251,
+          "sequence": 10,
+          "roundtrip_ms": 0.608083,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 24594.868709,
+          "bytes": 1253,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 24595.314584,
+          "execution_ms": 0.24537499999999998,
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "response",
+          "ms": 24595.348792,
+          "bytes": 352,
+          "original_bytes": 352,
+          "sequence": 11,
+          "roundtrip_ms": 0.480083,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 31695.329459,
+          "bytes": 1295,
+          "sequence": 12,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 31697.4555,
+          "bytes": 1516,
+          "original_bytes": 1516,
+          "sequence": 12,
+          "roundtrip_ms": 2.126041,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 31701.11525,
+          "bytes": 1302,
+          "sequence": 13,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 31701.453709,
+          "execution_ms": 0.18554199999999998,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 31701.490084,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 13,
+          "roundtrip_ms": 0.374834,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 37207.400125,
+          "bytes": 1296,
+          "sequence": 14,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 37208.293584,
+          "bytes": 1310,
+          "original_bytes": 1310,
+          "sequence": 14,
+          "roundtrip_ms": 0.893459,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 37212.415959,
+          "bytes": 1266,
+          "sequence": 15,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 37212.69025,
+          "execution_ms": 0.073542,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 37212.738959,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 15,
+          "roundtrip_ms": 0.323,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 44207.376625,
+          "bytes": 1298,
+          "sequence": 16,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 44208.06525,
+          "bytes": 1413,
+          "original_bytes": 1413,
+          "sequence": 16,
+          "roundtrip_ms": 0.688625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 44212.178292,
+          "bytes": 1274,
+          "sequence": 17,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 44212.446167,
+          "execution_ms": 0.028458999999999998,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 44212.495917,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 17,
+          "roundtrip_ms": 0.317625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 48337.419,
+          "bytes": 1296,
+          "sequence": 18,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 48338.4065,
+          "bytes": 2396,
+          "original_bytes": 2396,
+          "sequence": 18,
+          "roundtrip_ms": 0.9875,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 54432.987875,
+          "bytes": 1275,
+          "sequence": 19,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 54433.386834,
+          "execution_ms": 0.059958,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 54433.438959,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 19,
+          "roundtrip_ms": 0.451084,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 54437.733584,
+          "bytes": 1296,
+          "sequence": 20,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 54448.963084,
+          "bytes": 1327,
+          "original_bytes": 1327,
+          "sequence": 20,
+          "roundtrip_ms": 11.2295,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 59399.661167,
+          "bytes": 1278,
+          "sequence": 21,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 59400.098834,
+          "execution_ms": 0.06612499999999999,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 59400.157292,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 21,
+          "roundtrip_ms": 0.496125,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 59403.9585,
+          "bytes": 1296,
+          "sequence": 22,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 59416.096125,
+          "bytes": 1579,
+          "original_bytes": 1579,
+          "sequence": 22,
+          "roundtrip_ms": 12.137625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 65270.538125,
+          "bytes": 1277,
+          "sequence": 23,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 65271.068125,
+          "execution_ms": 0.065708,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 65271.114709,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 23,
+          "roundtrip_ms": 0.576584,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 65275.910792,
+          "bytes": 1298,
+          "sequence": 24,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 65276.560209,
+          "bytes": 1364,
+          "original_bytes": 1364,
+          "sequence": 24,
+          "roundtrip_ms": 0.649417,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 74336.408459,
+          "bytes": 1274,
+          "sequence": 25,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 74336.980209,
+          "execution_ms": 0.07025,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 74337.035334,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 25,
+          "roundtrip_ms": 0.626875,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 74341.060209,
+          "bytes": 1296,
+          "sequence": 26,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 74356.912875,
+          "bytes": 2249,
+          "original_bytes": 2249,
+          "sequence": 26,
+          "roundtrip_ms": 15.852666,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 82312.406334,
+          "bytes": 1276,
+          "sequence": 27,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 82312.931792,
+          "execution_ms": 0.06820799999999999,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 82312.978334,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 27,
+          "roundtrip_ms": 0.572,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 82317.091209,
+          "bytes": 1296,
+          "sequence": 28,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 82332.956834,
+          "bytes": 1328,
+          "original_bytes": 1328,
+          "sequence": 28,
+          "roundtrip_ms": 15.865625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 87730.579209,
+          "bytes": 1279,
+          "sequence": 29,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 87731.086959,
+          "execution_ms": 0.061583,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 87731.132375,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 29,
+          "roundtrip_ms": 0.553166,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 87735.411625,
+          "bytes": 1296,
+          "sequence": 30,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 87751.217167,
+          "bytes": 1580,
+          "original_bytes": 1580,
+          "sequence": 30,
+          "roundtrip_ms": 15.805542,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 87756.047292,
+          "bytes": 1277,
+          "sequence": 31,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 87756.291334,
+          "execution_ms": 0.034167,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 87756.327,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 31,
+          "roundtrip_ms": 0.279708,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 95795.4885,
+          "bytes": 1296,
+          "sequence": 32,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 95796.264875,
+          "bytes": 1520,
+          "original_bytes": 1520,
+          "sequence": 32,
+          "roundtrip_ms": 0.776375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 95800.044959,
+          "bytes": 1461,
+          "sequence": 33,
+          "method": "tools/call",
+          "tool": "ffsake_preview_edit"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 95802.241167,
+          "execution_ms": 1.991625,
+          "tool": "ffsake_preview_edit"
+        },
+        {
+          "direction": "response",
+          "ms": 95802.278209,
+          "bytes": 591,
+          "original_bytes": 591,
+          "sequence": 33,
+          "roundtrip_ms": 2.23325,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 101592.50025,
+          "bytes": 1267,
+          "sequence": 34,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 101593.028667,
+          "execution_ms": 0.058875000000000004,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 101593.084542,
+          "bytes": 195,
+          "original_bytes": 195,
+          "sequence": 34,
+          "roundtrip_ms": 0.584292,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 101597.115959,
+          "bytes": 1298,
+          "sequence": 35,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 101597.50475,
+          "bytes": 1076,
+          "original_bytes": 1076,
+          "sequence": 35,
+          "roundtrip_ms": 0.388791,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 101600.628042,
+          "bytes": 1233,
+          "sequence": 36,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 101605.618417,
+          "execution_ms": 4.778417,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 101605.681,
+          "bytes": 188,
+          "original_bytes": 188,
+          "sequence": 36,
+          "roundtrip_ms": 5.052958,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 101608.900709,
+          "bytes": 1255,
+          "sequence": 37,
+          "method": "tools/call",
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 101609.182875,
+          "execution_ms": 0.15475,
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "response",
+          "ms": 101609.203292,
+          "bytes": 353,
+          "original_bytes": 353,
+          "sequence": 37,
+          "roundtrip_ms": 0.302583,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 107818.926834,
+          "bytes": 1296,
+          "sequence": 38,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 107819.583042,
+          "bytes": 1516,
+          "original_bytes": 1516,
+          "sequence": 38,
+          "roundtrip_ms": 0.656208,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 107823.735625,
+          "bytes": 1266,
+          "sequence": 39,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 107823.9735,
+          "execution_ms": 0.031458,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 107824.015125,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 39,
+          "roundtrip_ms": 0.2795,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 107826.990625,
+          "bytes": 1298,
+          "sequence": 40,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 107842.410875,
+          "bytes": 1333,
+          "original_bytes": 1333,
+          "sequence": 40,
+          "roundtrip_ms": 15.42025,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 117216.442125,
+          "bytes": 1298,
+          "sequence": 41,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 117217.174792,
+          "bytes": 1307,
+          "original_bytes": 1307,
+          "sequence": 41,
+          "roundtrip_ms": 0.732667,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 117221.650167,
+          "bytes": 1235,
+          "sequence": 42,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 117321.218709,
+          "execution_ms": 99.31287499999999,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 117321.280709,
+          "bytes": 851,
+          "original_bytes": 851,
+          "sequence": 42,
+          "roundtrip_ms": 99.630542,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 117323.582042,
+          "bytes": 1237,
+          "sequence": 43,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 117386.139667,
+          "execution_ms": 62.406083,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 117386.201959,
+          "bytes": 528,
+          "original_bytes": 528,
+          "sequence": 43,
+          "roundtrip_ms": 62.619917,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 117388.859625,
+          "bytes": 1267,
+          "sequence": 44,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 117389.005209,
+          "execution_ms": 0.016416999999999998,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 117389.015125,
+          "bytes": 195,
+          "original_bytes": 195,
+          "sequence": 44,
+          "roundtrip_ms": 0.1555,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 117390.785167,
+          "bytes": 1298,
+          "sequence": 45,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 117390.963667,
+          "bytes": 1076,
+          "original_bytes": 1076,
+          "sequence": 45,
+          "roundtrip_ms": 0.1785,
+          "protocol_error": false
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 3,
+      "elapsed_ms": 145299.635,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "changed",
+      "server_profile": "core",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 45,
+        "ffsake_tool_calls": 45,
+        "shell_tool_calls": 0,
+        "observed_tool_errors": 0,
+        "input_tokens": 594853,
+        "total_input_tokens": 594853,
+        "uncached_input_tokens": 36773,
+        "output_tokens": 1781,
+        "cache_read_input_tokens": 558080,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_preview_edit",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_apply",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git"
+        ]
+      },
+      "debug_actions": [
+        "list",
+        "wait",
+        "breakpoints",
+        "wait",
+        "continue",
+        "wait",
+        "stack",
+        "wait",
+        "scopes",
+        "wait",
+        "variables",
+        "wait",
+        "continue",
+        "wait",
+        "stack",
+        "wait",
+        "scopes",
+        "wait",
+        "variables",
+        "wait",
+        "continue",
+        "wait",
+        "continue",
+        "wait",
+        "poll",
+        "terminate",
+        "wait",
+        "wait",
+        "continue",
+        "wait",
+        "poll",
+        "terminate",
+        "wait"
+      ],
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": true,
+          "ffsake_inspected_state": true,
+          "ffsake_resumed": true,
+          "ffsake_state_observed": true,
+          "native_debugger": false,
+          "native_state_observed": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "3e0fbc4f6054cb224df0151fedd3aeb6ed6878669a853ba487856da663b7111b",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.438625,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 40.474542,
+          "bytes": 1371,
+          "original_bytes": 1371,
+          "sequence": 1,
+          "roundtrip_ms": 40.035917,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 40.725375,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 40.821667,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 41.663208,
+          "bytes": 32177,
+          "original_bytes": 32177,
+          "sequence": 3,
+          "roundtrip_ms": 0.841541,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 19060.091042,
+          "bytes": 1248,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 19063.532958,
+          "execution_ms": 2.907041,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 19063.586542,
+          "bytes": 280,
+          "original_bytes": 280,
+          "sequence": 4,
+          "roundtrip_ms": 3.4955,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 19067.284292,
+          "bytes": 1230,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 19067.72525,
+          "execution_ms": 0.257959,
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "response",
+          "ms": 19067.762083,
+          "bytes": 381,
+          "original_bytes": 381,
+          "sequence": 5,
+          "roundtrip_ms": 0.477791,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 19070.204083,
+          "bytes": 1235,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 19162.559667,
+          "execution_ms": 92.20725,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 19162.6065,
+          "bytes": 461,
+          "original_bytes": 461,
+          "sequence": 6,
+          "roundtrip_ms": 92.402417,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 19164.876667,
+          "bytes": 1221,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 19165.415208,
+          "execution_ms": 0.423375,
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "response",
+          "ms": 19165.433292,
+          "bytes": 270,
+          "original_bytes": 270,
+          "sequence": 7,
+          "roundtrip_ms": 0.556625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 24805.862042,
+          "bytes": 1230,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 24806.859375,
+          "execution_ms": 0.6573749999999999,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 24806.906458,
+          "bytes": 279,
+          "original_bytes": 279,
+          "sequence": 8,
+          "roundtrip_ms": 1.044416,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 29118.133333,
+          "bytes": 1239,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 29118.780333,
+          "execution_ms": 0.363916,
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "response",
+          "ms": 29118.824083,
+          "bytes": 1243,
+          "original_bytes": 1243,
+          "sequence": 9,
+          "roundtrip_ms": 0.69075,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 29121.443833,
+          "bytes": 1238,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 29121.822875,
+          "execution_ms": 0.22229100000000002,
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "response",
+          "ms": 29121.870917,
+          "bytes": 251,
+          "original_bytes": 251,
+          "sequence": 10,
+          "roundtrip_ms": 0.427084,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 33578.285375,
+          "bytes": 1253,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 33578.746958,
+          "execution_ms": 0.229084,
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "response",
+          "ms": 33578.792375,
+          "bytes": 352,
+          "original_bytes": 352,
+          "sequence": 11,
+          "roundtrip_ms": 0.507,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 38922.058042,
+          "bytes": 1295,
+          "sequence": 12,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 38924.259417,
+          "bytes": 1516,
+          "original_bytes": 1516,
+          "sequence": 12,
+          "roundtrip_ms": 2.201375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 45965.023458,
+          "bytes": 1305,
+          "sequence": 13,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 45966.463417,
+          "execution_ms": 1.141333,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 45966.506833,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 13,
+          "roundtrip_ms": 1.483375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 52264.135917,
+          "bytes": 1296,
+          "sequence": 14,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 52264.525125,
+          "bytes": 1502,
+          "original_bytes": 1502,
+          "sequence": 14,
+          "roundtrip_ms": 0.389208,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 52266.764417,
+          "bytes": 1266,
+          "sequence": 15,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 52266.940958,
+          "execution_ms": 0.037917000000000006,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 52266.957542,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 15,
+          "roundtrip_ms": 0.193125,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 57823.849792,
+          "bytes": 1298,
+          "sequence": 16,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 57824.209292,
+          "bytes": 1413,
+          "original_bytes": 1413,
+          "sequence": 16,
+          "roundtrip_ms": 0.3595,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 65762.582792,
+          "bytes": 1274,
+          "sequence": 17,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 65762.9675,
+          "execution_ms": 0.044333,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 65763.012708,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 17,
+          "roundtrip_ms": 0.429916,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 65769.049125,
+          "bytes": 1296,
+          "sequence": 18,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 65784.575167,
+          "bytes": 2396,
+          "original_bytes": 2396,
+          "sequence": 18,
+          "roundtrip_ms": 15.526042,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 71483.098042,
+          "bytes": 1275,
+          "sequence": 19,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 71483.440875,
+          "execution_ms": 0.04025,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 71483.487708,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 19,
+          "roundtrip_ms": 0.389666,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 71487.202375,
+          "bytes": 1296,
+          "sequence": 20,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 71487.64225,
+          "bytes": 1327,
+          "original_bytes": 1327,
+          "sequence": 20,
+          "roundtrip_ms": 0.439875,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 80219.015667,
+          "bytes": 1278,
+          "sequence": 21,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 80219.511458,
+          "execution_ms": 0.06175,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 80219.559042,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 21,
+          "roundtrip_ms": 0.543375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 80222.952125,
+          "bytes": 1296,
+          "sequence": 22,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 80238.422292,
+          "bytes": 1579,
+          "original_bytes": 1579,
+          "sequence": 22,
+          "roundtrip_ms": 15.470167,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 80242.035292,
+          "bytes": 1277,
+          "sequence": 23,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 80242.194208,
+          "execution_ms": 0.02325,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 80242.226208,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 23,
+          "roundtrip_ms": 0.190916,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 88232.8925,
+          "bytes": 1298,
+          "sequence": 24,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 88233.813792,
+          "bytes": 1364,
+          "original_bytes": 1364,
+          "sequence": 24,
+          "roundtrip_ms": 0.921292,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 88238.472042,
+          "bytes": 1274,
+          "sequence": 25,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 88238.7635,
+          "execution_ms": 0.041749999999999995,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 88238.813,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 25,
+          "roundtrip_ms": 0.340958,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 88242.894917,
+          "bytes": 1296,
+          "sequence": 26,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 88243.543708,
+          "bytes": 2249,
+          "original_bytes": 2249,
+          "sequence": 26,
+          "roundtrip_ms": 0.648791,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 94554.58275,
+          "bytes": 1276,
+          "sequence": 27,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 94554.998333,
+          "execution_ms": 0.046625,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 94555.045792,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 27,
+          "roundtrip_ms": 0.463042,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 94558.918667,
+          "bytes": 1296,
+          "sequence": 28,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 94559.386833,
+          "bytes": 1328,
+          "original_bytes": 1328,
+          "sequence": 28,
+          "roundtrip_ms": 0.468166,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 94562.26025,
+          "bytes": 1279,
+          "sequence": 29,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 94562.408708,
+          "execution_ms": 0.021707999999999998,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 94562.439417,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 29,
+          "roundtrip_ms": 0.179167,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 94565.067708,
+          "bytes": 1296,
+          "sequence": 30,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 94580.502208,
+          "bytes": 1580,
+          "original_bytes": 1580,
+          "sequence": 30,
+          "roundtrip_ms": 15.4345,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 104267.471333,
+          "bytes": 1277,
+          "sequence": 31,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 104267.861167,
+          "execution_ms": 0.048042,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 104267.906583,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 31,
+          "roundtrip_ms": 0.43525,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 104271.197833,
+          "bytes": 1298,
+          "sequence": 32,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 104286.28825,
+          "bytes": 1364,
+          "original_bytes": 1364,
+          "sequence": 32,
+          "roundtrip_ms": 15.090417,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 104290.929917,
+          "bytes": 1277,
+          "sequence": 33,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 104291.194792,
+          "execution_ms": 0.035625,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 104291.230625,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 33,
+          "roundtrip_ms": 0.300708,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 104295.527417,
+          "bytes": 1296,
+          "sequence": 34,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 104310.802667,
+          "bytes": 1286,
+          "original_bytes": 1286,
+          "sequence": 34,
+          "roundtrip_ms": 15.27525,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 104316.079417,
+          "bytes": 1491,
+          "sequence": 35,
+          "method": "tools/call",
+          "tool": "ffsake_preview_edit"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 104318.142625,
+          "execution_ms": 1.840875,
+          "tool": "ffsake_preview_edit"
+        },
+        {
+          "direction": "response",
+          "ms": 104318.17775,
+          "bytes": 591,
+          "original_bytes": 591,
+          "sequence": 35,
+          "roundtrip_ms": 2.098333,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 110514.549875,
+          "bytes": 1262,
+          "sequence": 36,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 110515.071333,
+          "execution_ms": 0.08604200000000001,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 110515.120958,
+          "bytes": 1207,
+          "original_bytes": 1207,
+          "sequence": 36,
+          "roundtrip_ms": 0.571083,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 110519.499333,
+          "bytes": 1267,
+          "sequence": 37,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 110519.702208,
+          "execution_ms": 0.0245,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 110519.738583,
+          "bytes": 195,
+          "original_bytes": 195,
+          "sequence": 37,
+          "roundtrip_ms": 0.23925,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 110522.686417,
+          "bytes": 1298,
+          "sequence": 38,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 110522.999292,
+          "bytes": 1076,
+          "original_bytes": 1076,
+          "sequence": 38,
+          "roundtrip_ms": 0.312875,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 110526.064583,
+          "bytes": 1233,
+          "sequence": 39,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 110530.85875,
+          "execution_ms": 4.624792,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 110530.888125,
+          "bytes": 188,
+          "original_bytes": 188,
+          "sequence": 39,
+          "roundtrip_ms": 4.823542,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 116940.5035,
+          "bytes": 1255,
+          "sequence": 40,
+          "method": "tools/call",
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 116941.101667,
+          "execution_ms": 0.296333,
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "response",
+          "ms": 116941.135958,
+          "bytes": 353,
+          "original_bytes": 353,
+          "sequence": 40,
+          "roundtrip_ms": 0.632458,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 127861.526875,
+          "bytes": 1296,
+          "sequence": 41,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 127862.281,
+          "bytes": 1516,
+          "original_bytes": 1516,
+          "sequence": 41,
+          "roundtrip_ms": 0.754125,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 127865.9025,
+          "bytes": 1266,
+          "sequence": 42,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 127866.077292,
+          "execution_ms": 0.027667,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 127866.116333,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 42,
+          "roundtrip_ms": 0.213833,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 127868.787542,
+          "bytes": 1296,
+          "sequence": 43,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 127882.662583,
+          "bytes": 1333,
+          "original_bytes": 1333,
+          "sequence": 43,
+          "roundtrip_ms": 13.875041,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 133892.075208,
+          "bytes": 1262,
+          "sequence": 44,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 133892.609917,
+          "execution_ms": 0.09849999999999999,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 133892.65725,
+          "bytes": 1282,
+          "original_bytes": 1282,
+          "sequence": 44,
+          "roundtrip_ms": 0.582042,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 133896.909792,
+          "bytes": 1267,
+          "sequence": 45,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 133897.102875,
+          "bytes": 195,
+          "original_bytes": 195,
+          "sequence": 45,
+          "roundtrip_ms": 0.193083,
+          "protocol_error": false
+        },
+        {
+          "direction": "server_execution",
+          "ms": 133897.172958,
+          "execution_ms": 0.024166,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "request",
+          "ms": 133900.223167,
+          "bytes": 1298,
+          "sequence": 46,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 133900.564042,
+          "bytes": 1076,
+          "original_bytes": 1076,
+          "sequence": 46,
+          "roundtrip_ms": 0.340875,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 133903.090958,
+          "bytes": 1237,
+          "sequence": 47,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 133982.901417,
+          "execution_ms": 79.684458,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 133982.937125,
+          "bytes": 528,
+          "original_bytes": 528,
+          "sequence": 47,
+          "roundtrip_ms": 79.846167,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 133984.815042,
+          "bytes": 1235,
+          "sequence": 48,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 134049.687375,
+          "execution_ms": 64.734333,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 134049.759583,
+          "bytes": 851,
+          "original_bytes": 851,
+          "sequence": 48,
+          "roundtrip_ms": 64.944541,
+          "protocol_error": false
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 4,
+      "elapsed_ms": 145479.816,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "changed",
+      "server_profile": "core",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 44,
+        "ffsake_tool_calls": 44,
+        "shell_tool_calls": 0,
+        "observed_tool_errors": 0,
+        "input_tokens": 551040,
+        "total_input_tokens": 551040,
+        "uncached_input_tokens": 25984,
+        "output_tokens": 1666,
+        "cache_read_input_tokens": 525056,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_preview_edit",
+          "mcp__ffsake__ffsake_apply",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug"
+        ]
+      },
+      "debug_actions": [
+        "list",
+        "wait",
+        "breakpoints",
+        "wait",
+        "continue",
+        "wait",
+        "stack",
+        "wait",
+        "scopes",
+        "wait",
+        "variables",
+        "wait",
+        "continue",
+        "wait",
+        "wait",
+        "stack",
+        "wait",
+        "scopes",
+        "wait",
+        "variables",
+        "wait",
+        "continue",
+        "wait",
+        "poll",
+        "terminate",
+        "wait",
+        "wait",
+        "continue",
+        "wait",
+        "wait",
+        "terminate",
+        "wait"
+      ],
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": true,
+          "ffsake_inspected_state": true,
+          "ffsake_resumed": true,
+          "ffsake_state_observed": true,
+          "native_debugger": false,
+          "native_state_observed": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "a944c50f81a780ef1f2dcb17dee6a01cace6b7268dc136de08c916b67eebc525",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.438917,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 35.01775,
+          "bytes": 1371,
+          "original_bytes": 1371,
+          "sequence": 1,
+          "roundtrip_ms": 34.578833,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 35.294083,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 35.418458,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 36.111667,
+          "bytes": 32177,
+          "original_bytes": 32177,
+          "sequence": 3,
+          "roundtrip_ms": 0.693209,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 19067.862875,
+          "bytes": 1230,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 19068.476958,
+          "execution_ms": 0.271458,
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "response",
+          "ms": 19068.527333,
+          "bytes": 381,
+          "original_bytes": 381,
+          "sequence": 4,
+          "roundtrip_ms": 0.664458,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 19071.619708,
+          "bytes": 1235,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 19161.100542,
+          "execution_ms": 89.31483399999999,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 19161.146958,
+          "bytes": 461,
+          "original_bytes": 461,
+          "sequence": 5,
+          "roundtrip_ms": 89.52725,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 19162.971,
+          "bytes": 1221,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 19163.225917,
+          "execution_ms": 0.165083,
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "response",
+          "ms": 19163.246375,
+          "bytes": 270,
+          "original_bytes": 270,
+          "sequence": 6,
+          "roundtrip_ms": 0.275375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 19164.870292,
+          "bytes": 1248,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 19164.973292,
+          "execution_ms": 0.024749999999999998,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 19164.9935,
+          "bytes": 280,
+          "original_bytes": 280,
+          "sequence": 7,
+          "roundtrip_ms": 0.123208,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 24048.196167,
+          "bytes": 1230,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 24049.037792,
+          "execution_ms": 0.525208,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 24049.083458,
+          "bytes": 279,
+          "original_bytes": 279,
+          "sequence": 8,
+          "roundtrip_ms": 0.887291,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 28534.28475,
+          "bytes": 1238,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 28535.17175,
+          "execution_ms": 0.4535,
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "response",
+          "ms": 28535.220792,
+          "bytes": 251,
+          "original_bytes": 251,
+          "sequence": 9,
+          "roundtrip_ms": 0.936042,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 28538.946833,
+          "bytes": 1239,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 28539.44325,
+          "execution_ms": 0.293166,
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "response",
+          "ms": 28539.482958,
+          "bytes": 1243,
+          "original_bytes": 1243,
+          "sequence": 10,
+          "roundtrip_ms": 0.536125,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 28542.583292,
+          "bytes": 1253,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 28542.963042,
+          "execution_ms": 0.207125,
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "response",
+          "ms": 28543.005208,
+          "bytes": 352,
+          "original_bytes": 352,
+          "sequence": 11,
+          "roundtrip_ms": 0.421916,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 37664.1,
+          "bytes": 1295,
+          "sequence": 12,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 37664.602083,
+          "bytes": 1516,
+          "original_bytes": 1516,
+          "sequence": 12,
+          "roundtrip_ms": 0.502083,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 43935.465083,
+          "bytes": 1302,
+          "sequence": 13,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 43935.90925,
+          "execution_ms": 0.07354100000000001,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 43935.959708,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 13,
+          "roundtrip_ms": 0.494625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 43939.964333,
+          "bytes": 1296,
+          "sequence": 14,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 43952.216,
+          "bytes": 1310,
+          "original_bytes": 1310,
+          "sequence": 14,
+          "roundtrip_ms": 12.251667,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 43956.803958,
+          "bytes": 1266,
+          "sequence": 15,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 43957.125625,
+          "execution_ms": 0.053458000000000006,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 43957.171125,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 15,
+          "roundtrip_ms": 0.367167,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 52274.406708,
+          "bytes": 1298,
+          "sequence": 16,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 52275.009625,
+          "bytes": 1413,
+          "original_bytes": 1413,
+          "sequence": 16,
+          "roundtrip_ms": 0.602917,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 52278.580083,
+          "bytes": 1274,
+          "sequence": 17,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 52278.846875,
+          "execution_ms": 0.032,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 52278.89725,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 17,
+          "roundtrip_ms": 0.317167,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 52282.408875,
+          "bytes": 1296,
+          "sequence": 18,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 52298.06625,
+          "bytes": 2396,
+          "original_bytes": 2396,
+          "sequence": 18,
+          "roundtrip_ms": 15.657375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 64381.125125,
+          "bytes": 1275,
+          "sequence": 19,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 64381.549708,
+          "execution_ms": 0.052458,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 64381.599458,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 19,
+          "roundtrip_ms": 0.474333,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 64385.014833,
+          "bytes": 1296,
+          "sequence": 20,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 64400.460958,
+          "bytes": 1327,
+          "original_bytes": 1327,
+          "sequence": 20,
+          "roundtrip_ms": 15.446125,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72183.72875,
+          "bytes": 1278,
+          "sequence": 21,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 72184.141792,
+          "execution_ms": 0.052917,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72184.187125,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 21,
+          "roundtrip_ms": 0.458375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72187.901292,
+          "bytes": 1296,
+          "sequence": 22,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72203.408917,
+          "bytes": 1579,
+          "original_bytes": 1579,
+          "sequence": 22,
+          "roundtrip_ms": 15.507625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72206.964708,
+          "bytes": 1277,
+          "sequence": 23,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 72207.126083,
+          "execution_ms": 0.02075,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72207.159792,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 23,
+          "roundtrip_ms": 0.195084,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72209.858125,
+          "bytes": 1298,
+          "sequence": 24,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72210.073708,
+          "bytes": 1159,
+          "original_bytes": 1159,
+          "sequence": 24,
+          "roundtrip_ms": 0.215583,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 80180.014625,
+          "bytes": 1296,
+          "sequence": 25,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 80180.759417,
+          "bytes": 1364,
+          "original_bytes": 1364,
+          "sequence": 25,
+          "roundtrip_ms": 0.744792,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 80184.350875,
+          "bytes": 1274,
+          "sequence": 26,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 80184.526958,
+          "execution_ms": 0.029583,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 80184.563708,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 26,
+          "roundtrip_ms": 0.212833,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 80187.224417,
+          "bytes": 1296,
+          "sequence": 27,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 80202.670167,
+          "bytes": 2249,
+          "original_bytes": 2249,
+          "sequence": 27,
+          "roundtrip_ms": 15.44575,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 87057.265958,
+          "bytes": 1276,
+          "sequence": 28,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 87057.690125,
+          "execution_ms": 0.049542,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 87057.739333,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 28,
+          "roundtrip_ms": 0.473375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 87061.674125,
+          "bytes": 1296,
+          "sequence": 29,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 87062.125417,
+          "bytes": 1328,
+          "original_bytes": 1328,
+          "sequence": 29,
+          "roundtrip_ms": 0.451292,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 95316.566917,
+          "bytes": 1279,
+          "sequence": 30,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 95316.972708,
+          "execution_ms": 0.052084,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 95317.016958,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 30,
+          "roundtrip_ms": 0.450041,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 95320.885208,
+          "bytes": 1296,
+          "sequence": 31,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 95321.378333,
+          "bytes": 1580,
+          "original_bytes": 1580,
+          "sequence": 31,
+          "roundtrip_ms": 0.493125,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 95324.263458,
+          "bytes": 1277,
+          "sequence": 32,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 95324.437167,
+          "execution_ms": 0.022666,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 95324.467083,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 32,
+          "roundtrip_ms": 0.203625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 95326.993208,
+          "bytes": 1296,
+          "sequence": 33,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 95341.893625,
+          "bytes": 1286,
+          "original_bytes": 1286,
+          "sequence": 33,
+          "roundtrip_ms": 14.900417,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 104115.279792,
+          "bytes": 1262,
+          "sequence": 34,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 104115.70675,
+          "execution_ms": 0.066042,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 104115.7535,
+          "bytes": 1207,
+          "original_bytes": 1207,
+          "sequence": 34,
+          "roundtrip_ms": 0.473708,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 104118.96725,
+          "bytes": 1461,
+          "sequence": 35,
+          "method": "tools/call",
+          "tool": "ffsake_preview_edit"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 104119.917708,
+          "execution_ms": 0.815625,
+          "tool": "ffsake_preview_edit"
+        },
+        {
+          "direction": "response",
+          "ms": 104119.950083,
+          "bytes": 591,
+          "original_bytes": 591,
+          "sequence": 35,
+          "roundtrip_ms": 0.982833,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 111922.5125,
+          "bytes": 1233,
+          "sequence": 36,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 111926.27225,
+          "execution_ms": 3.3888339999999997,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 111926.318625,
+          "bytes": 188,
+          "original_bytes": 188,
+          "sequence": 36,
+          "roundtrip_ms": 3.806125,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 111929.738667,
+          "bytes": 1267,
+          "sequence": 37,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 111929.983583,
+          "execution_ms": 0.02875,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 111930.011292,
+          "bytes": 195,
+          "original_bytes": 195,
+          "sequence": 37,
+          "roundtrip_ms": 0.272625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 111932.58525,
+          "bytes": 1298,
+          "sequence": 38,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 111932.881125,
+          "bytes": 1076,
+          "original_bytes": 1076,
+          "sequence": 38,
+          "roundtrip_ms": 0.295875,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 111935.414208,
+          "bytes": 1255,
+          "sequence": 39,
+          "method": "tools/call",
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 111935.766667,
+          "execution_ms": 0.20341700000000001,
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "response",
+          "ms": 111935.788958,
+          "bytes": 353,
+          "original_bytes": 353,
+          "sequence": 39,
+          "roundtrip_ms": 0.37475,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 119599.9195,
+          "bytes": 1296,
+          "sequence": 40,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 119600.491,
+          "bytes": 1516,
+          "original_bytes": 1516,
+          "sequence": 40,
+          "roundtrip_ms": 0.5715,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 119604.04475,
+          "bytes": 1266,
+          "sequence": 41,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 119604.250708,
+          "execution_ms": 0.029,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 119604.285375,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 41,
+          "roundtrip_ms": 0.240625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 119607.275125,
+          "bytes": 1298,
+          "sequence": 42,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 119607.775792,
+          "bytes": 1251,
+          "original_bytes": 1251,
+          "sequence": 42,
+          "roundtrip_ms": 0.500667,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 126547.8585,
+          "bytes": 1298,
+          "sequence": 43,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 126548.421,
+          "bytes": 1389,
+          "original_bytes": 1389,
+          "sequence": 43,
+          "roundtrip_ms": 0.5625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 126555.207125,
+          "bytes": 1237,
+          "sequence": 44,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 126650.889125,
+          "execution_ms": 95.482792,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 126650.947667,
+          "bytes": 528,
+          "original_bytes": 528,
+          "sequence": 44,
+          "roundtrip_ms": 95.740542,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 126653.1695,
+          "bytes": 1235,
+          "sequence": 45,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 126737.864792,
+          "execution_ms": 84.55066599999999,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 126737.908417,
+          "bytes": 851,
+          "original_bytes": 851,
+          "sequence": 45,
+          "roundtrip_ms": 84.738917,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 133265.753958,
+          "bytes": 1267,
+          "sequence": 46,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 133266.227333,
+          "execution_ms": 0.049375,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 133266.2765,
+          "bytes": 195,
+          "original_bytes": 195,
+          "sequence": 46,
+          "roundtrip_ms": 0.522542,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 133270.547083,
+          "bytes": 1298,
+          "sequence": 47,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 133270.934125,
+          "bytes": 1076,
+          "original_bytes": 1076,
+          "sequence": 47,
+          "roundtrip_ms": 0.387042,
+          "protocol_error": false
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 5,
+      "elapsed_ms": 110821.523,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "changed",
+      "server_profile": "core",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 44,
+        "ffsake_tool_calls": 44,
+        "shell_tool_calls": 0,
+        "observed_tool_errors": 0,
+        "input_tokens": 477186,
+        "total_input_tokens": 477186,
+        "uncached_input_tokens": 42242,
+        "output_tokens": 1919,
+        "cache_read_input_tokens": 434944,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_read",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_preview_edit",
+          "mcp__ffsake__ffsake_apply",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug_launch",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_debug",
+          "mcp__ffsake__ffsake_debug"
+        ]
+      },
+      "debug_actions": [
+        "list",
+        "wait",
+        "breakpoints",
+        "wait",
+        "continue",
+        "wait",
+        "wait",
+        "stack",
+        "wait",
+        "scopes",
+        "wait",
+        "variables",
+        "wait",
+        "continue",
+        "wait",
+        "wait",
+        "wait",
+        "stack",
+        "wait",
+        "scopes",
+        "wait",
+        "variables",
+        "wait",
+        "continue",
+        "wait",
+        "terminate",
+        "wait",
+        "continue",
+        "wait",
+        "wait",
+        "terminate",
+        "wait"
+      ],
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": true,
+          "ffsake_inspected_state": true,
+          "ffsake_resumed": true,
+          "ffsake_state_observed": true,
+          "native_debugger": false,
+          "native_state_observed": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "6d092ffe685b08a47df3fa47a55f3a9cb643089391c7a7e4436760bd5715c842",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.45125,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 42.5335,
+          "bytes": 1371,
+          "original_bytes": 1371,
+          "sequence": 1,
+          "roundtrip_ms": 42.08225,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 42.776167,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 42.890833,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 43.8155,
+          "bytes": 32177,
+          "original_bytes": 32177,
+          "sequence": 3,
+          "roundtrip_ms": 0.924667,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 18397.398292,
+          "bytes": 1235,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 18476.638458,
+          "execution_ms": 78.70725,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 18476.702583,
+          "bytes": 461,
+          "original_bytes": 461,
+          "sequence": 4,
+          "roundtrip_ms": 79.304291,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 18479.166833,
+          "bytes": 1230,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 18479.477583,
+          "execution_ms": 0.200875,
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "response",
+          "ms": 18479.497167,
+          "bytes": 381,
+          "original_bytes": 381,
+          "sequence": 5,
+          "roundtrip_ms": 0.330334,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 18480.849792,
+          "bytes": 1248,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 18481.135333,
+          "execution_ms": 0.18854200000000002,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 18481.15,
+          "bytes": 280,
+          "original_bytes": 280,
+          "sequence": 6,
+          "roundtrip_ms": 0.300208,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 18482.331333,
+          "bytes": 1221,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 18482.768083,
+          "execution_ms": 0.364125,
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "response",
+          "ms": 18482.778958,
+          "bytes": 270,
+          "original_bytes": 270,
+          "sequence": 7,
+          "roundtrip_ms": 0.447625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 23523.846625,
+          "bytes": 1230,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 23526.769625,
+          "execution_ms": 2.415541,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 23526.830375,
+          "bytes": 279,
+          "original_bytes": 279,
+          "sequence": 8,
+          "roundtrip_ms": 2.98375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 28268.865667,
+          "bytes": 1239,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 28269.501792,
+          "execution_ms": 0.34683400000000003,
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "response",
+          "ms": 28269.547917,
+          "bytes": 1243,
+          "original_bytes": 1243,
+          "sequence": 9,
+          "roundtrip_ms": 0.68225,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 28273.298042,
+          "bytes": 1238,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 28273.699,
+          "execution_ms": 0.229875,
+          "tool": "ffsake_read"
+        },
+        {
+          "direction": "response",
+          "ms": 28273.744333,
+          "bytes": 251,
+          "original_bytes": 251,
+          "sequence": 10,
+          "roundtrip_ms": 0.446291,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 28276.915083,
+          "bytes": 1253,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 28277.917208,
+          "execution_ms": 0.830375,
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "response",
+          "ms": 28277.9465,
+          "bytes": 352,
+          "original_bytes": 352,
+          "sequence": 11,
+          "roundtrip_ms": 1.031417,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 32868.89625,
+          "bytes": 1295,
+          "sequence": 12,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 32870.41575,
+          "bytes": 1516,
+          "original_bytes": 1516,
+          "sequence": 12,
+          "roundtrip_ms": 1.5195,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 32873.895542,
+          "bytes": 1302,
+          "sequence": 13,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 32874.14275,
+          "execution_ms": 0.066625,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 32874.180375,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 13,
+          "roundtrip_ms": 0.284833,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 37643.081708,
+          "bytes": 1296,
+          "sequence": 14,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 37644.035792,
+          "bytes": 1310,
+          "original_bytes": 1310,
+          "sequence": 14,
+          "roundtrip_ms": 0.954084,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 37648.223917,
+          "bytes": 1266,
+          "sequence": 15,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 37648.444125,
+          "execution_ms": 0.065708,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 37648.503583,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 15,
+          "roundtrip_ms": 0.279666,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 37652.226208,
+          "bytes": 1298,
+          "sequence": 16,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 37652.636625,
+          "bytes": 1251,
+          "original_bytes": 1251,
+          "sequence": 16,
+          "roundtrip_ms": 0.410417,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 44663.666333,
+          "bytes": 1298,
+          "sequence": 17,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 44664.599292,
+          "bytes": 1235,
+          "original_bytes": 1235,
+          "sequence": 17,
+          "roundtrip_ms": 0.932959,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 44670.592583,
+          "bytes": 1274,
+          "sequence": 18,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 44670.908,
+          "execution_ms": 0.042624999999999996,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 44670.975958,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 18,
+          "roundtrip_ms": 0.383375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 44674.950833,
+          "bytes": 1296,
+          "sequence": 19,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 44687.765833,
+          "bytes": 2396,
+          "original_bytes": 2396,
+          "sequence": 19,
+          "roundtrip_ms": 12.815,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 48850.516,
+          "bytes": 1275,
+          "sequence": 20,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 48850.699458,
+          "execution_ms": 0.022125,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 48850.723833,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 20,
+          "roundtrip_ms": 0.207833,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 48852.827708,
+          "bytes": 1296,
+          "sequence": 21,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 48868.133625,
+          "bytes": 1327,
+          "original_bytes": 1327,
+          "sequence": 21,
+          "roundtrip_ms": 15.305917,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 54604.798292,
+          "bytes": 1278,
+          "sequence": 22,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 54605.06025,
+          "execution_ms": 0.029124999999999998,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 54605.111542,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 22,
+          "roundtrip_ms": 0.31325,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 54608.217958,
+          "bytes": 1296,
+          "sequence": 23,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 54620.1875,
+          "bytes": 1579,
+          "original_bytes": 1579,
+          "sequence": 23,
+          "roundtrip_ms": 11.969542,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 54622.787542,
+          "bytes": 1277,
+          "sequence": 24,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 54622.930083,
+          "execution_ms": 0.018958,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 54622.956542,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 24,
+          "roundtrip_ms": 0.169,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 54625.126375,
+          "bytes": 1298,
+          "sequence": 25,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 54625.323958,
+          "bytes": 1159,
+          "original_bytes": 1159,
+          "sequence": 25,
+          "roundtrip_ms": 0.197583,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 62691.392375,
+          "bytes": 1296,
+          "sequence": 26,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 62692.322917,
+          "bytes": 1364,
+          "original_bytes": 1364,
+          "sequence": 26,
+          "roundtrip_ms": 0.930542,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 62699.412167,
+          "bytes": 1298,
+          "sequence": 27,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 62699.788792,
+          "bytes": 1160,
+          "original_bytes": 1160,
+          "sequence": 27,
+          "roundtrip_ms": 0.376625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 62703.269417,
+          "bytes": 1274,
+          "sequence": 28,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 62703.499875,
+          "execution_ms": 0.027166,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 62703.535,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 28,
+          "roundtrip_ms": 0.265583,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 62706.362458,
+          "bytes": 1296,
+          "sequence": 29,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 62722.125833,
+          "bytes": 2249,
+          "original_bytes": 2249,
+          "sequence": 29,
+          "roundtrip_ms": 15.763375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72200.235458,
+          "bytes": 1276,
+          "sequence": 30,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 72200.429792,
+          "execution_ms": 0.021375,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72200.452625,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 30,
+          "roundtrip_ms": 0.217167,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72202.386833,
+          "bytes": 1296,
+          "sequence": 31,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72217.669667,
+          "bytes": 1328,
+          "original_bytes": 1328,
+          "sequence": 31,
+          "roundtrip_ms": 15.282834,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72219.658542,
+          "bytes": 1279,
+          "sequence": 32,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 72219.772292,
+          "execution_ms": 0.013833,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72219.793792,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 32,
+          "roundtrip_ms": 0.13525,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72221.3885,
+          "bytes": 1296,
+          "sequence": 33,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72235.62075,
+          "bytes": 1580,
+          "original_bytes": 1580,
+          "sequence": 33,
+          "roundtrip_ms": 14.23225,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 72237.512292,
+          "bytes": 1277,
+          "sequence": 34,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 72237.639,
+          "execution_ms": 0.015209,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 72237.67575,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 34,
+          "roundtrip_ms": 0.163458,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 81518.866083,
+          "bytes": 1296,
+          "sequence": 35,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 81519.62875,
+          "bytes": 1520,
+          "original_bytes": 1520,
+          "sequence": 35,
+          "roundtrip_ms": 0.762667,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 81523.116875,
+          "bytes": 1491,
+          "sequence": 36,
+          "method": "tools/call",
+          "tool": "ffsake_preview_edit"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 81525.15125,
+          "execution_ms": 1.8807909999999999,
+          "tool": "ffsake_preview_edit"
+        },
+        {
+          "direction": "response",
+          "ms": 81525.194375,
+          "bytes": 591,
+          "original_bytes": 591,
+          "sequence": 36,
+          "roundtrip_ms": 2.0775,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 87618.487708,
+          "bytes": 1233,
+          "sequence": 37,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 87623.514083,
+          "execution_ms": 4.595,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 87623.551917,
+          "bytes": 188,
+          "original_bytes": 188,
+          "sequence": 37,
+          "roundtrip_ms": 5.064209,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 87627.695292,
+          "bytes": 1267,
+          "sequence": 38,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 87627.92225,
+          "execution_ms": 0.030042000000000003,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 87627.950875,
+          "bytes": 195,
+          "original_bytes": 195,
+          "sequence": 38,
+          "roundtrip_ms": 0.255583,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 87632.901875,
+          "bytes": 1255,
+          "sequence": 39,
+          "method": "tools/call",
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 87633.448458,
+          "execution_ms": 0.255542,
+          "tool": "ffsake_debug_launch"
+        },
+        {
+          "direction": "response",
+          "ms": 87633.503417,
+          "bytes": 353,
+          "original_bytes": 353,
+          "sequence": 39,
+          "roundtrip_ms": 0.601542,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 93941.687667,
+          "bytes": 1296,
+          "sequence": 40,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 93942.367917,
+          "bytes": 1516,
+          "original_bytes": 1516,
+          "sequence": 40,
+          "roundtrip_ms": 0.68025,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 93947.591083,
+          "bytes": 1266,
+          "sequence": 41,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 93947.878667,
+          "execution_ms": 0.041708,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 93947.929583,
+          "bytes": 213,
+          "original_bytes": 213,
+          "sequence": 41,
+          "roundtrip_ms": 0.3385,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 93951.638,
+          "bytes": 1296,
+          "sequence": 42,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 93964.038292,
+          "bytes": 1333,
+          "original_bytes": 1333,
+          "sequence": 42,
+          "roundtrip_ms": 12.400292,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 100952.517792,
+          "bytes": 1298,
+          "sequence": 43,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 100952.799375,
+          "bytes": 1307,
+          "original_bytes": 1307,
+          "sequence": 43,
+          "roundtrip_ms": 0.281583,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 100955.18075,
+          "bytes": 1235,
+          "sequence": 44,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 101051.723292,
+          "execution_ms": 96.37725,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 101051.771917,
+          "bytes": 851,
+          "original_bytes": 851,
+          "sequence": 44,
+          "roundtrip_ms": 96.591167,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 101053.832083,
+          "bytes": 1237,
+          "sequence": 45,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 101114.249708,
+          "execution_ms": 60.279958,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 101114.306625,
+          "bytes": 528,
+          "original_bytes": 528,
+          "sequence": 45,
+          "roundtrip_ms": 60.474542,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 101116.950833,
+          "bytes": 1267,
+          "sequence": 46,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 101117.10375,
+          "execution_ms": 0.018291,
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 101117.134167,
+          "bytes": 195,
+          "original_bytes": 195,
+          "sequence": 46,
+          "roundtrip_ms": 0.183334,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 101119.209417,
+          "bytes": 1298,
+          "sequence": 47,
+          "method": "tools/call",
+          "tool": "ffsake_debug"
+        },
+        {
+          "direction": "response",
+          "ms": 101119.38825,
+          "bytes": 1076,
+          "original_bytes": 1076,
+          "sequence": 47,
+          "roundtrip_ms": 0.178833,
+          "protocol_error": false
+        }
+      ]
+    }
+  ]
+}

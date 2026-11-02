@@ -1,0 +1,340 @@
+{
+  "schema_version": 1,
+  "kind": "content-free redacted event index",
+  "limitations": "Commands, arguments, output and private content are omitted; retain the original report privately.",
+  "source_revision": "44b647f4ce5cd8064fde9482d71f06339d7c0d38",
+  "binary_sha256": "ed723305c428acb30e7bdad6e877532e3ccd10acbad566ea5a0aacb8415861a0",
+  "driver_sha256": "377c41f5af4bcfe221dc1bebf11f5961c34851d5fef1ab18b5798d724fc72943",
+  "fixture_sha256": "adb219bcb9d4d272084ba5ec8e9e9b7b9c9fa3ed30a8970d86b124239ef87839",
+  "agents": [
+    "codex"
+  ],
+  "tasks": [
+    "debug"
+  ],
+  "repetitions": 5,
+  "complete": true,
+  "platform": "arm64",
+  "results": [
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 1,
+      "elapsed_ms": 53014.123,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 5,
+        "observed_tool_errors": 1,
+        "input_tokens": 105844,
+        "total_input_tokens": 105844,
+        "uncached_input_tokens": 12276,
+        "output_tokens": 681,
+        "cache_read_input_tokens": 93568,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "file_change",
+          "command_execution"
+        ]
+      },
+      "debug_actions": [],
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": false,
+          "ffsake_inspected_state": false,
+          "ffsake_resumed": false,
+          "ffsake_state_observed": false,
+          "native_debugger": true,
+          "native_state_observed": true
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "41c1b16eb31997fac475e2bf182e4c194ea512370511a7cef9018bc38010aed4",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721"
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 2,
+      "elapsed_ms": 47029.958,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 7,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 6,
+        "observed_tool_errors": 1,
+        "input_tokens": 117092,
+        "total_input_tokens": 117092,
+        "uncached_input_tokens": 10084,
+        "output_tokens": 684,
+        "cache_read_input_tokens": 107008,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "file_change",
+          "command_execution",
+          "command_execution"
+        ]
+      },
+      "debug_actions": [],
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": false,
+          "ffsake_inspected_state": false,
+          "ffsake_resumed": false,
+          "ffsake_state_observed": false,
+          "native_debugger": true,
+          "native_state_observed": true
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "5b361aedcf438c0a55bac8eb228ebb13ffa090068e4e9c17114dd69278a429b8",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721"
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 3,
+      "elapsed_ms": 50394.119,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 5,
+        "observed_tool_errors": 1,
+        "input_tokens": 146652,
+        "total_input_tokens": 146652,
+        "uncached_input_tokens": 14940,
+        "output_tokens": 700,
+        "cache_read_input_tokens": 131712,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "file_change",
+          "command_execution",
+          "command_execution"
+        ]
+      },
+      "debug_actions": [],
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": false,
+          "ffsake_inspected_state": false,
+          "ffsake_resumed": false,
+          "ffsake_state_observed": false,
+          "native_debugger": true,
+          "native_state_observed": true
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "686ebcd5064983c6efcda56dc5820cb6a5faadf8a794ea4e39a11281a01bb591",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721"
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 4,
+      "elapsed_ms": 53652.099,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 5,
+        "observed_tool_errors": 0,
+        "input_tokens": 138898,
+        "total_input_tokens": 138898,
+        "uncached_input_tokens": 16402,
+        "output_tokens": 646,
+        "cache_read_input_tokens": 122496,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "file_change",
+          "command_execution",
+          "command_execution"
+        ]
+      },
+      "debug_actions": [],
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": false,
+          "ffsake_inspected_state": false,
+          "ffsake_resumed": false,
+          "ffsake_state_observed": false,
+          "native_debugger": true,
+          "native_state_observed": true
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "60f5c23d5fd551f1d60374457e91c6308b68fd9548ed1e26da4014d77efdb589",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721"
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 5,
+      "elapsed_ms": 50310.242,
+      "exit_code": 0,
+      "task": "debug",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 5,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 4,
+        "observed_tool_errors": 0,
+        "input_tokens": 116583,
+        "total_input_tokens": 116583,
+        "uncached_input_tokens": 17895,
+        "output_tokens": 741,
+        "cache_read_input_tokens": 98688,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "file_change",
+          "command_execution"
+        ]
+      },
+      "debug_actions": [],
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "ffsake_launch": false,
+          "ffsake_inspected_state": false,
+          "ffsake_resumed": false,
+          "ffsake_state_observed": false,
+          "native_debugger": true,
+          "native_state_observed": true
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 0,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "beac294b2f2b44310ba0e98ae71c7b0d625f067463c516968fc275c09db0b782",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721"
+    }
+  ]
+}

@@ -33,3 +33,7 @@ The [cross](20261101-codex/cross.json), [maintenance](20261101-codex/maintenance
 ## 2026-11-01 Cross-file optimization
 
 The [sanitized follow-up index](20261101-codex/cross-optimization.json) retains per-run metrics and content-free events. The [model-free debugger probe](20261101-codex/debug-poll-probe.json) contains only synthetic observations and timings. Full transcripts, verifier records and frozen binaries remain in local private storage. See the [audit and comparison](../BENCHMARK.md#cross-file-interaction-optimization-2026-11-01).
+
+## 2026-11-02 Interaction overhead
+
+The [diagnostic index](20261102-performance/diagnostic-cross.json) contains five runs per condition with numeric results and content-free MCP timings. The [cross-file](20261102-performance/comparison-cross.json), [maintenance](20261102-performance/comparison-maintenance.json) and [corrected debugger](20261102-performance/corrected-debug-changed.json) indexes preserve sanitized per-run evidence; the full table links each debugger arm. The [diagnostic freeze](20261102-performance/diagnostic-freeze.json) and [comparison freeze](20261102-performance/comparison-freeze.json) identify the inputs without publishing session transcripts. The [debugger probe](20261102-performance/debug-poll-vs-wait.json) contains synthetic observations and timings. Raw transcripts and binaries are retained in private local storage; public indexes omit prompts, tool arguments, outputs, paths and session IDs. See [methodology and results](../BENCHMARK.md#interaction-overhead-study-2026-11-02).

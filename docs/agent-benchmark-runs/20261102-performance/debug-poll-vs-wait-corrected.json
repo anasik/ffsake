@@ -1,0 +1,127 @@
+{
+  "repetitions": 5,
+  "model_calls": 0,
+  "scope": "one launch, breakpoint twice, inspect hours/base/adjustments, terminate",
+  "results": [
+    {
+      "repetition": 1,
+      "mode": "dap_poll",
+      "startup_ms": 374.20087499958754,
+      "through_inspection_ms": 619.0572080013226,
+      "total_ms": 897.94987499954,
+      "values_match": true,
+      "adapter_cleaned": true,
+      "mcp_calls": 46,
+      "poll_calls": 37,
+      "wait_calls": 0
+    },
+    {
+      "repetition": 1,
+      "mode": "dap_wait",
+      "startup_ms": 605.3579160015943,
+      "through_inspection_ms": 789.3358330002229,
+      "total_ms": 1057.226791001085,
+      "values_match": true,
+      "adapter_cleaned": true,
+      "mcp_calls": 20,
+      "poll_calls": 0,
+      "wait_calls": 11
+    },
+    {
+      "repetition": 2,
+      "mode": "dap_wait",
+      "startup_ms": 305.1414580004348,
+      "through_inspection_ms": 482.6487079990329,
+      "total_ms": 754.7585829997843,
+      "values_match": true,
+      "adapter_cleaned": true,
+      "mcp_calls": 20,
+      "poll_calls": 0,
+      "wait_calls": 11
+    },
+    {
+      "repetition": 2,
+      "mode": "dap_poll",
+      "startup_ms": 327.1837910015165,
+      "through_inspection_ms": 626.0275410004397,
+      "total_ms": 932.3995000013383,
+      "values_match": true,
+      "adapter_cleaned": true,
+      "mcp_calls": 47,
+      "poll_calls": 38,
+      "wait_calls": 0
+    },
+    {
+      "repetition": 3,
+      "mode": "dap_poll",
+      "startup_ms": 326.79812499918626,
+      "through_inspection_ms": 590.4498749987397,
+      "total_ms": 879.3927499991696,
+      "values_match": true,
+      "adapter_cleaned": true,
+      "mcp_calls": 45,
+      "poll_calls": 36,
+      "wait_calls": 0
+    },
+    {
+      "repetition": 3,
+      "mode": "dap_wait",
+      "startup_ms": 323.8419999997859,
+      "through_inspection_ms": 512.2152079984517,
+      "total_ms": 806.9102909994399,
+      "values_match": true,
+      "adapter_cleaned": true,
+      "mcp_calls": 20,
+      "poll_calls": 0,
+      "wait_calls": 11
+    },
+    {
+      "repetition": 4,
+      "mode": "dap_wait",
+      "startup_ms": 323.57108399992285,
+      "through_inspection_ms": 517.4879589994816,
+      "total_ms": 811.4437500007625,
+      "values_match": true,
+      "adapter_cleaned": true,
+      "mcp_calls": 20,
+      "poll_calls": 0,
+      "wait_calls": 11
+    },
+    {
+      "repetition": 4,
+      "mode": "dap_poll",
+      "startup_ms": 321.7870000007679,
+      "through_inspection_ms": 630.8737080016726,
+      "total_ms": 920.6541660005314,
+      "values_match": true,
+      "adapter_cleaned": true,
+      "mcp_calls": 47,
+      "poll_calls": 38,
+      "wait_calls": 0
+    },
+    {
+      "repetition": 5,
+      "mode": "dap_poll",
+      "startup_ms": 323.6240000005637,
+      "through_inspection_ms": 622.857207999914,
+      "total_ms": 906.999500000893,
+      "values_match": true,
+      "adapter_cleaned": true,
+      "mcp_calls": 47,
+      "poll_calls": 38,
+      "wait_calls": 0
+    },
+    {
+      "repetition": 5,
+      "mode": "dap_wait",
+      "startup_ms": 309.61070800003654,
+      "through_inspection_ms": 487.1094999998604,
+      "total_ms": 775.0995829992462,
+      "values_match": true,
+      "adapter_cleaned": true,
+      "mcp_calls": 20,
+      "poll_calls": 0,
+      "wait_calls": 11
+    }
+  ]
+}

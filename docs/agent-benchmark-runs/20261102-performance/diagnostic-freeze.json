@@ -1,0 +1,25 @@
+{
+  "baseline_source_commit": "d22a0dae2034427ed0a1147c2bcd07ccb37a9f93",
+  "baseline_binary_sha256": "04def25f18354b49c38495ef8167ba31f340489aa61f77c9907bdd453c9980cc",
+  "driver_sha256": "4bd95f6c8d74d9723cf1e7de680794d83ea1fbc753a04b8b194f3baf3a1a8e8a",
+  "proxy_sha256": "a544725a6f7c70fb4816cad4c6fe95860c64c27277c2abfbf991cb578facbf42",
+  "fixtures_sha256": "adb219bcb9d4d272084ba5ec8e9e9b7b9c9fa3ed30a8970d86b124239ef87839",
+  "suite_sha256": "3a1bd0deb1c21d5fc356a7f3e7d062350ceba6942c24a79ce3caf080a3bb2986",
+  "cross_provenance": {
+    "prompt_sha256": "bd2bc4505d341d2330eebcd2e1f88933716069d00533c281f5b13be8fba66e50",
+    "fixture_manifest_sha256": "3443a91a40dfc620a441db1da155b0b365e8170bba0dcbe1abf9eededc8f0b48",
+    "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "conditions": [
+    "baseline",
+    "core",
+    "editing",
+    "compact",
+    "context"
+  ],
+  "repetitions": 5,
+  "counterbalance": "cyclic rotation",
+  "status": "frozen before diagnostic measurements",
+  "pilot_complete": true
+}

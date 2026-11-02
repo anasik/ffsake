@@ -1,0 +1,27 @@
+{
+  "benchmark_commit": "aaef0cc124a504fcb3f447ea536d12007bb0eda7",
+  "corrected_product_commit": "fb16758",
+  "baseline_binary_sha256": "04def25f18354b49c38495ef8167ba31f340489aa61f77c9907bdd453c9980cc",
+  "corrected_binary_sha256": "1e3bab83c0c99ffa28308b89393d668dba082a0e39f6c8b925c4a841f0e4fa75",
+  "driver_sha256": "377c41f5af4bcfe221dc1bebf11f5961c34851d5fef1ab18b5798d724fc72943",
+  "proxy_sha256": "a544725a6f7c70fb4816cad4c6fe95860c64c27277c2abfbf991cb578facbf42",
+  "suite_sha256": "2d782b2e4cbea58bf1e179faf6b1adfef8e8f9c109f0e4d0b84b29895c19a494",
+  "fixture_sha256": "adb219bcb9d4d272084ba5ec8e9e9b7b9c9fa3ed30a8970d86b124239ef87839",
+  "task": {
+    "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+    "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+    "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "repetitions": 5,
+  "conditions": [
+    "baseline",
+    "old",
+    "changed"
+  ],
+  "order": "cyclic counterbalance",
+  "model_request": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "profile": "core",
+  "status": "frozen before corrected debugger comparison"
+}

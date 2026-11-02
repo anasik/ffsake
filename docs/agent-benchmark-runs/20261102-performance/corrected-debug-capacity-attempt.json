@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "kind": "content-free redacted event index",
+  "limitations": "Commands, arguments, output and private content are omitted; retain the original report privately.",
+  "source_revision": "aaef0cc124a504fcb3f447ea536d12007bb0eda7",
+  "binary_sha256": "1e3bab83c0c99ffa28308b89393d668dba082a0e39f6c8b925c4a841f0e4fa75",
+  "driver_sha256": "377c41f5af4bcfe221dc1bebf11f5961c34851d5fef1ab18b5798d724fc72943",
+  "fixture_sha256": "adb219bcb9d4d272084ba5ec8e9e9b7b9c9fa3ed30a8970d86b124239ef87839",
+  "agents": [
+    "codex"
+  ],
+  "tasks": [
+    "debug"
+  ],
+  "repetitions": 5,
+  "complete": false,
+  "platform": "arm64",
+  "results": [
+    {
+      "correct": false,
+      "artifact_correct": false,
+      "comparison_valid": false,
+      "timed_out": false,
+      "repetition": 1,
+      "elapsed_ms": 9123.102,
+      "exit_code": 1,
+      "task": "debug",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "4d17a9faa454e25da6795d223ed96bfc6680d7a198bb9603d8c3747e908b067d",
+        "fixture_manifest_sha256": "ace0185294ff7fa6fcf5b0c514498f4beb8ec53bcdac1329ee114c617eda0e20",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 0,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 0,
+        "observed_tool_errors": 0,
+        "input_tokens": null,
+        "total_input_tokens": null,
+        "uncached_input_tokens": null,
+        "output_tokens": null,
+        "cache_read_input_tokens": null,
+        "cache_creation_input_tokens": null,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": []
+      },
+      "debug_actions": [],
+      "workflow_evidence": {
+        "passed": false,
+        "details": {
+          "ffsake_launch": false,
+          "ffsake_inspected_state": false,
+          "ffsake_resumed": false,
+          "ffsake_state_observed": false,
+          "native_debugger": false,
+          "native_state_observed": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": 1,
+        "test_exit": null,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "72dd40c2d298ac8bee69c6b60a2d71b2cf0c8eb3e4e308e17b86031358110ea1",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721"
+    }
+  ]
+}

@@ -1,0 +1,3552 @@
+{
+  "schema_version": 1,
+  "kind": "content-free redacted event index",
+  "limitations": "Commands, arguments, output and private content are omitted; retain the original report privately.",
+  "source_revision": "44b647f4ce5cd8064fde9482d71f06339d7c0d38",
+  "binary_sha256": "ed723305c428acb30e7bdad6e877532e3ccd10acbad566ea5a0aacb8415861a0",
+  "driver_sha256": "377c41f5af4bcfe221dc1bebf11f5961c34851d5fef1ab18b5798d724fc72943",
+  "fixture_sha256": "adb219bcb9d4d272084ba5ec8e9e9b7b9c9fa3ed30a8970d86b124239ef87839",
+  "agents": [
+    "codex"
+  ],
+  "tasks": [
+    "maintenance"
+  ],
+  "repetitions": 5,
+  "complete": true,
+  "platform": "arm64",
+  "results": [
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 1,
+      "elapsed_ms": 59623.668,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "old",
+      "server_profile": "core",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 11,
+        "ffsake_tool_calls": 10,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "input_tokens": 192396,
+        "total_input_tokens": 192396,
+        "uncached_input_tokens": 20748,
+        "output_tokens": 1280,
+        "cache_read_input_tokens": 171648,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_preview_files",
+          "mcp__ffsake__ffsake_apply",
+          "command_execution",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_read_files"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "c15140012fce973595b19276d1f88444784664f6e246a534e5b8cea119e945c0",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.43375,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 35.66275,
+          "bytes": 1371,
+          "original_bytes": 1371,
+          "sequence": 1,
+          "roundtrip_ms": 35.229,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 35.893709,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 36.00375,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 36.98925,
+          "bytes": 31732,
+          "original_bytes": 31732,
+          "sequence": 3,
+          "roundtrip_ms": 0.9855,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 14911.691584,
+          "bytes": 1236,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 14914.795,
+          "execution_ms": 2.11025,
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "response",
+          "ms": 14914.839625,
+          "bytes": 387,
+          "original_bytes": 387,
+          "sequence": 4,
+          "roundtrip_ms": 3.148041,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 14918.764875,
+          "bytes": 1227,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 14920.057125,
+          "execution_ms": 1.0617079999999999,
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "response",
+          "ms": 14920.090209,
+          "bytes": 270,
+          "original_bytes": 270,
+          "sequence": 5,
+          "roundtrip_ms": 1.325334,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 14922.86525,
+          "bytes": 1241,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 15000.266959,
+          "execution_ms": 77.207583,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 15000.333167,
+          "bytes": 467,
+          "original_bytes": 467,
+          "sequence": 6,
+          "roundtrip_ms": 77.467917,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 20017.663334,
+          "bytes": 1507,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 20020.756667,
+          "execution_ms": 2.66375,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 20020.806292,
+          "bytes": 2168,
+          "original_bytes": 2168,
+          "sequence": 7,
+          "roundtrip_ms": 3.142958,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 20024.972084,
+          "bytes": 1236,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 20026.186375,
+          "execution_ms": 0.9794160000000001,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 20026.213542,
+          "bytes": 568,
+          "original_bytes": 568,
+          "sequence": 8,
+          "roundtrip_ms": 1.241458,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 28821.680459,
+          "bytes": 2447,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 28827.695667,
+          "execution_ms": 5.538375,
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "response",
+          "ms": 28827.74225,
+          "bytes": 3257,
+          "original_bytes": 3257,
+          "sequence": 9,
+          "roundtrip_ms": 6.061791,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 34427.876042,
+          "bytes": 1237,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 34438.768417,
+          "execution_ms": 10.486583000000001,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 34438.808,
+          "bytes": 187,
+          "original_bytes": 187,
+          "sequence": 10,
+          "roundtrip_ms": 10.931958,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 52790.949625,
+          "bytes": 1239,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 52892.489084,
+          "execution_ms": 101.344209,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 52892.531042,
+          "bytes": 2368,
+          "original_bytes": 2368,
+          "sequence": 11,
+          "roundtrip_ms": 101.581417,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 52895.189834,
+          "bytes": 1242,
+          "sequence": 12,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 52998.071417,
+          "execution_ms": 102.71920800000001,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 52998.116875,
+          "bytes": 1075,
+          "original_bytes": 1075,
+          "sequence": 12,
+          "roundtrip_ms": 102.927041,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 53002.101459,
+          "bytes": 1343,
+          "sequence": 13,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 53003.064584,
+          "execution_ms": 0.84375,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 53003.085,
+          "bytes": 826,
+          "original_bytes": 826,
+          "sequence": 13,
+          "roundtrip_ms": 0.983541,
+          "protocol_error": false
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 1,
+      "elapsed_ms": 73536.648,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "changed",
+      "server_profile": "editing",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 10,
+        "ffsake_tool_calls": 9,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "input_tokens": 153485,
+        "total_input_tokens": 153485,
+        "uncached_input_tokens": 18189,
+        "output_tokens": 1200,
+        "cache_read_input_tokens": 135296,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_preview_files",
+          "mcp__ffsake__ffsake_apply",
+          "command_execution",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_read_files"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "801b74e841f7de3663c4f95b186eee910c4c4a6004c6c051b51a1f9af5e6662d",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.470333,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 41.177167,
+          "bytes": 822,
+          "original_bytes": 822,
+          "sequence": 1,
+          "roundtrip_ms": 40.706834,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 41.424958,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 41.559667,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 42.362208,
+          "bytes": 18929,
+          "original_bytes": 18929,
+          "sequence": 3,
+          "roundtrip_ms": 0.802541,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 19927.46925,
+          "bytes": 1236,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 19931.522208,
+          "execution_ms": 3.54725,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 19931.5615,
+          "bytes": 568,
+          "original_bytes": 568,
+          "sequence": 4,
+          "roundtrip_ms": 4.09225,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 19935.166042,
+          "bytes": 1507,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 19938.215958,
+          "execution_ms": 2.879584,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 19938.247625,
+          "bytes": 2168,
+          "original_bytes": 2168,
+          "sequence": 5,
+          "roundtrip_ms": 3.081583,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 19941.104875,
+          "bytes": 1241,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 20050.576625,
+          "execution_ms": 109.321666,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 20050.614958,
+          "bytes": 467,
+          "original_bytes": 467,
+          "sequence": 6,
+          "roundtrip_ms": 109.510083,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 34428.686875,
+          "bytes": 1384,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 34429.675833,
+          "execution_ms": 0.556333,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 34429.730667,
+          "bytes": 406,
+          "original_bytes": 406,
+          "sequence": 7,
+          "roundtrip_ms": 1.043792,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 34434.095708,
+          "bytes": 2469,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 34438.879375,
+          "execution_ms": 4.545416,
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "response",
+          "ms": 34438.923708,
+          "bytes": 3279,
+          "original_bytes": 3279,
+          "sequence": 8,
+          "roundtrip_ms": 4.828,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 45322.320167,
+          "bytes": 1237,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 45333.749792,
+          "execution_ms": 10.999916,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 45333.792542,
+          "bytes": 187,
+          "original_bytes": 187,
+          "sequence": 9,
+          "roundtrip_ms": 11.472375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 65098.536542,
+          "bytes": 1239,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 65162.946958,
+          "execution_ms": 64.23841700000001,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 65162.986292,
+          "bytes": 2390,
+          "original_bytes": 2390,
+          "sequence": 10,
+          "roundtrip_ms": 64.44975,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 65165.095,
+          "bytes": 1241,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 65247.801708,
+          "execution_ms": 82.575917,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 65247.837042,
+          "bytes": 1074,
+          "original_bytes": 1074,
+          "sequence": 11,
+          "roundtrip_ms": 82.742042,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 65250.039375,
+          "bytes": 1342,
+          "sequence": 12,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 65251.022667,
+          "execution_ms": 0.885042,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 65251.043417,
+          "bytes": 826,
+          "original_bytes": 826,
+          "sequence": 12,
+          "roundtrip_ms": 1.004042,
+          "protocol_error": false
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 1,
+      "elapsed_ms": 45051.074,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 3,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "input_tokens": 74479,
+        "total_input_tokens": 74479,
+        "uncached_input_tokens": 12399,
+        "output_tokens": 1223,
+        "cache_read_input_tokens": 62080,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "9cce8cf1d9c51b2f7bc1fc3bf7c48bc6e1895e2c5b6d7bc3e352b9d0dc6a8716",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721"
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 2,
+      "elapsed_ms": 54162.735,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "changed",
+      "server_profile": "editing",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 9,
+        "ffsake_tool_calls": 8,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "input_tokens": 153034,
+        "total_input_tokens": 153034,
+        "uncached_input_tokens": 16970,
+        "output_tokens": 1137,
+        "cache_read_input_tokens": 136064,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_preview_files",
+          "mcp__ffsake__ffsake_apply",
+          "command_execution",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_git"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "9bbbb1440ca1537d97d6b25f4c14b903595c45d4b356f45bfafecab522954802",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.449916,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 41.231583,
+          "bytes": 822,
+          "original_bytes": 822,
+          "sequence": 1,
+          "roundtrip_ms": 40.781667,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 41.447875,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 41.556791,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 42.33575,
+          "bytes": 18929,
+          "original_bytes": 18929,
+          "sequence": 3,
+          "roundtrip_ms": 0.778959,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 15349.21925,
+          "bytes": 1236,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 15353.515916,
+          "execution_ms": 3.832583,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 15353.557041,
+          "bytes": 568,
+          "original_bytes": 568,
+          "sequence": 4,
+          "roundtrip_ms": 4.337791,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 15358.191166,
+          "bytes": 1507,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 15360.627208,
+          "execution_ms": 2.2247500000000002,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 15360.667333,
+          "bytes": 2168,
+          "original_bytes": 2168,
+          "sequence": 5,
+          "roundtrip_ms": 2.476167,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 15363.447083,
+          "bytes": 1241,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 15467.973208,
+          "execution_ms": 104.335333,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 15468.025458,
+          "bytes": 467,
+          "original_bytes": 467,
+          "sequence": 6,
+          "roundtrip_ms": 104.578375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 26258.819416,
+          "bytes": 2447,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "response",
+          "ms": 26264.922875,
+          "bytes": 3257,
+          "original_bytes": 3257,
+          "sequence": 7,
+          "roundtrip_ms": 6.103459,
+          "protocol_error": false
+        },
+        {
+          "direction": "server_execution",
+          "ms": 26265.09175,
+          "execution_ms": 5.6006659999999995,
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "request",
+          "ms": 29874.738125,
+          "bytes": 1237,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 29886.569541,
+          "execution_ms": 11.371541,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 29886.624458,
+          "bytes": 187,
+          "original_bytes": 187,
+          "sequence": 8,
+          "roundtrip_ms": 11.886333,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 45381.90925,
+          "bytes": 1239,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 45446.746916,
+          "execution_ms": 64.63075,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 45446.806208,
+          "bytes": 2368,
+          "original_bytes": 2368,
+          "sequence": 9,
+          "roundtrip_ms": 64.896958,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 45449.274166,
+          "bytes": 1341,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 45449.770208,
+          "execution_ms": 0.38033300000000003,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 45449.788916,
+          "bytes": 825,
+          "original_bytes": 825,
+          "sequence": 10,
+          "roundtrip_ms": 0.51475,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 45451.560583,
+          "bytes": 1241,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 45513.429958,
+          "execution_ms": 61.7365,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 45513.487625,
+          "bytes": 1074,
+          "original_bytes": 1074,
+          "sequence": 11,
+          "roundtrip_ms": 61.927042,
+          "protocol_error": false
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 2,
+      "elapsed_ms": 44445.287,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 3,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "input_tokens": 74728,
+        "total_input_tokens": 74728,
+        "uncached_input_tokens": 6888,
+        "output_tokens": 1186,
+        "cache_read_input_tokens": 67840,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "3ec2fab20cd1fcea059f71dad75d03f78c61596c21ac66e54d2167af2bf72edd",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721"
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 2,
+      "elapsed_ms": 64414.896,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "old",
+      "server_profile": "core",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 12,
+        "ffsake_tool_calls": 11,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "input_tokens": 192756,
+        "total_input_tokens": 192756,
+        "uncached_input_tokens": 19828,
+        "output_tokens": 1313,
+        "cache_read_input_tokens": 172928,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_preview_files",
+          "mcp__ffsake__ffsake_apply",
+          "command_execution",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_read_files"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "e58f55499a02b77413589a0b7647aeff40a88b1a53fd1003933bf55838086960",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.508458,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 45.917583,
+          "bytes": 1371,
+          "original_bytes": 1371,
+          "sequence": 1,
+          "roundtrip_ms": 45.409125,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 46.207083,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 46.329625,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 47.325458,
+          "bytes": 31732,
+          "original_bytes": 31732,
+          "sequence": 3,
+          "roundtrip_ms": 0.995833,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 17354.893041,
+          "bytes": 1236,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 17357.202,
+          "execution_ms": 1.781834,
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "response",
+          "ms": 17357.240291,
+          "bytes": 387,
+          "original_bytes": 387,
+          "sequence": 4,
+          "roundtrip_ms": 2.34725,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 17359.984916,
+          "bytes": 1227,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 17360.846166,
+          "execution_ms": 0.690792,
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "response",
+          "ms": 17360.870416,
+          "bytes": 270,
+          "original_bytes": 270,
+          "sequence": 5,
+          "roundtrip_ms": 0.8855,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 17363.844875,
+          "bytes": 1241,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 17469.26825,
+          "execution_ms": 105.22075,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 17469.316416,
+          "bytes": 467,
+          "original_bytes": 467,
+          "sequence": 6,
+          "roundtrip_ms": 105.471541,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 23345.56975,
+          "bytes": 1236,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 23347.235291,
+          "execution_ms": 1.453334,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 23347.2745,
+          "bytes": 568,
+          "original_bytes": 568,
+          "sequence": 7,
+          "roundtrip_ms": 1.70475,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 23350.055666,
+          "bytes": 1507,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 23351.422833,
+          "execution_ms": 1.1925,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 23351.4645,
+          "bytes": 2168,
+          "original_bytes": 2168,
+          "sequence": 8,
+          "roundtrip_ms": 1.408834,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 33477.996625,
+          "bytes": 1384,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 33478.756958,
+          "execution_ms": 0.459333,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 33478.813333,
+          "bytes": 406,
+          "original_bytes": 406,
+          "sequence": 9,
+          "roundtrip_ms": 0.816708,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 33483.26675,
+          "bytes": 2403,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 33488.005791,
+          "execution_ms": 4.433542,
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "response",
+          "ms": 33488.092208,
+          "bytes": 3213,
+          "original_bytes": 3213,
+          "sequence": 10,
+          "roundtrip_ms": 4.825458,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 38374.832416,
+          "bytes": 1237,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 38384.120083,
+          "execution_ms": 9.0305,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 38384.1585,
+          "bytes": 187,
+          "original_bytes": 187,
+          "sequence": 11,
+          "roundtrip_ms": 9.326084,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 56319.599541,
+          "bytes": 1240,
+          "sequence": 12,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 56383.789208,
+          "execution_ms": 64.008916,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 56383.846791,
+          "bytes": 2325,
+          "original_bytes": 2325,
+          "sequence": 12,
+          "roundtrip_ms": 64.24725,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 56386.343083,
+          "bytes": 1243,
+          "sequence": 13,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 56449.64,
+          "execution_ms": 63.156709000000006,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 56449.697791,
+          "bytes": 1075,
+          "original_bytes": 1075,
+          "sequence": 13,
+          "roundtrip_ms": 63.354708,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 56452.234875,
+          "bytes": 1343,
+          "sequence": 14,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 56452.770208,
+          "execution_ms": 0.420375,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 56452.791333,
+          "bytes": 826,
+          "original_bytes": 826,
+          "sequence": 14,
+          "roundtrip_ms": 0.556458,
+          "protocol_error": false
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 3,
+      "elapsed_ms": 50999.581,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 4,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 4,
+        "observed_tool_errors": 0,
+        "input_tokens": 93400,
+        "total_input_tokens": 93400,
+        "uncached_input_tokens": 13784,
+        "output_tokens": 1322,
+        "cache_read_input_tokens": 79616,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "command_execution"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "781d472974c9ab21492267ce728f91d9607f2309f5cbe58e4d5f3c925c21f6eb",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721"
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 3,
+      "elapsed_ms": 58475.2,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "old",
+      "server_profile": "core",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 12,
+        "ffsake_tool_calls": 11,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "input_tokens": 192931,
+        "total_input_tokens": 192931,
+        "uncached_input_tokens": 21155,
+        "output_tokens": 1311,
+        "cache_read_input_tokens": 171776,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_preview_files",
+          "mcp__ffsake__ffsake_apply",
+          "command_execution",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_read_files"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "5df26474564661c1f7f0b721b33ae1a281c05f91358454bdd1bdef34e72c14e9",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.505375,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 33.975709,
+          "bytes": 1371,
+          "original_bytes": 1371,
+          "sequence": 1,
+          "roundtrip_ms": 33.470334,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 34.337084,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 34.448167,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 35.18425,
+          "bytes": 31732,
+          "original_bytes": 31732,
+          "sequence": 3,
+          "roundtrip_ms": 0.736083,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 17186.354917,
+          "bytes": 1236,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "response",
+          "ms": 17187.398667,
+          "bytes": 387,
+          "original_bytes": 387,
+          "sequence": 4,
+          "roundtrip_ms": 1.04375,
+          "protocol_error": false
+        },
+        {
+          "direction": "server_execution",
+          "ms": 17187.601542,
+          "execution_ms": 0.42812500000000003,
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "request",
+          "ms": 17191.914625,
+          "bytes": 1241,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 17287.409584,
+          "execution_ms": 95.25675,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 17287.472167,
+          "bytes": 467,
+          "original_bytes": 467,
+          "sequence": 5,
+          "roundtrip_ms": 95.557542,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 17289.75475,
+          "bytes": 1227,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 17289.981834,
+          "execution_ms": 0.134959,
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "response",
+          "ms": 17290.00025,
+          "bytes": 270,
+          "original_bytes": 270,
+          "sequence": 6,
+          "roundtrip_ms": 0.2455,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 21550.756209,
+          "bytes": 1236,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 21551.963,
+          "execution_ms": 0.7822089999999999,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 21552.007959,
+          "bytes": 568,
+          "original_bytes": 568,
+          "sequence": 7,
+          "roundtrip_ms": 1.25175,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 21556.202,
+          "bytes": 1507,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 21557.780209,
+          "execution_ms": 1.372834,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 21557.827667,
+          "bytes": 2168,
+          "original_bytes": 2168,
+          "sequence": 8,
+          "roundtrip_ms": 1.625667,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 30705.654834,
+          "bytes": 1384,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 30706.68675,
+          "execution_ms": 0.587291,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 30706.731875,
+          "bytes": 406,
+          "original_bytes": 406,
+          "sequence": 9,
+          "roundtrip_ms": 1.077041,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 30710.954834,
+          "bytes": 2403,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 30713.219167,
+          "execution_ms": 2.041458,
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "response",
+          "ms": 30713.260917,
+          "bytes": 3213,
+          "original_bytes": 3213,
+          "sequence": 10,
+          "roundtrip_ms": 2.306083,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 34581.654709,
+          "bytes": 1237,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 34591.864917,
+          "execution_ms": 9.749625,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 34591.900125,
+          "bytes": 187,
+          "original_bytes": 187,
+          "sequence": 11,
+          "roundtrip_ms": 10.245416,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 50865.390667,
+          "bytes": 1240,
+          "sequence": 12,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 50928.982292,
+          "execution_ms": 63.358374999999995,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 50929.044917,
+          "bytes": 2325,
+          "original_bytes": 2325,
+          "sequence": 12,
+          "roundtrip_ms": 63.65425,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 50931.421792,
+          "bytes": 1243,
+          "sequence": 13,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 50992.34,
+          "execution_ms": 60.775957999999996,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 50992.40275,
+          "bytes": 1075,
+          "original_bytes": 1075,
+          "sequence": 13,
+          "roundtrip_ms": 60.980958,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 50994.885834,
+          "bytes": 1440,
+          "sequence": 14,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 50995.532125,
+          "execution_ms": 0.550458,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 50995.551917,
+          "bytes": 1479,
+          "original_bytes": 1479,
+          "sequence": 14,
+          "roundtrip_ms": 0.666083,
+          "protocol_error": false
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 3,
+      "elapsed_ms": 67337.57,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "changed",
+      "server_profile": "editing",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 10,
+        "ffsake_tool_calls": 9,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "input_tokens": 180037,
+        "total_input_tokens": 180037,
+        "uncached_input_tokens": 30405,
+        "output_tokens": 1291,
+        "cache_read_input_tokens": 149632,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_preview_files",
+          "mcp__ffsake__ffsake_apply",
+          "command_execution",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_read_files"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "0d82f9171c6d813aac104c18289da06b4057ac88f678f9dd69dd1327dd8d7e5f",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.389292,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 31.440958,
+          "bytes": 822,
+          "original_bytes": 822,
+          "sequence": 1,
+          "roundtrip_ms": 31.051666,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 31.711833,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 31.810292,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 32.4965,
+          "bytes": 18929,
+          "original_bytes": 18929,
+          "sequence": 3,
+          "roundtrip_ms": 0.686208,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 18208.353083,
+          "bytes": 1236,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 18209.6495,
+          "execution_ms": 0.794209,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 18209.698417,
+          "bytes": 568,
+          "original_bytes": 568,
+          "sequence": 4,
+          "roundtrip_ms": 1.345334,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 18215.083208,
+          "bytes": 1507,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 18217.353458,
+          "execution_ms": 1.9480000000000002,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 18217.432083,
+          "bytes": 2168,
+          "original_bytes": 2168,
+          "sequence": 5,
+          "roundtrip_ms": 2.348875,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 18222.256208,
+          "bytes": 1241,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 18303.307458,
+          "execution_ms": 80.82275,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 18303.369375,
+          "bytes": 467,
+          "original_bytes": 467,
+          "sequence": 6,
+          "roundtrip_ms": 81.113167,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 22644.624792,
+          "bytes": 1384,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 22645.183667,
+          "execution_ms": 0.295042,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 22645.242042,
+          "bytes": 406,
+          "original_bytes": 406,
+          "sequence": 7,
+          "roundtrip_ms": 0.61725,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 32608.384792,
+          "bytes": 2447,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 32611.386375,
+          "execution_ms": 2.6008329999999997,
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "response",
+          "ms": 32611.436417,
+          "bytes": 3257,
+          "original_bytes": 3257,
+          "sequence": 8,
+          "roundtrip_ms": 3.051625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 36837.890958,
+          "bytes": 1237,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 36843.544,
+          "execution_ms": 5.4584589999999995,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 36843.567708,
+          "bytes": 187,
+          "original_bytes": 187,
+          "sequence": 9,
+          "roundtrip_ms": 5.67675,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 56657.004625,
+          "bytes": 1239,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 56738.020208,
+          "execution_ms": 80.829667,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 56738.064,
+          "bytes": 2368,
+          "original_bytes": 2368,
+          "sequence": 10,
+          "roundtrip_ms": 81.059375,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 56740.248667,
+          "bytes": 1241,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 56815.729,
+          "execution_ms": 75.33283300000001,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 56815.786458,
+          "bytes": 1074,
+          "original_bytes": 1074,
+          "sequence": 11,
+          "roundtrip_ms": 75.537791,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 56818.344875,
+          "bytes": 1439,
+          "sequence": 12,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 56819.046333,
+          "execution_ms": 0.595542,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 56819.063958,
+          "bytes": 1479,
+          "original_bytes": 1479,
+          "sequence": 12,
+          "roundtrip_ms": 0.719083,
+          "protocol_error": false
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 4,
+      "elapsed_ms": 70144.861,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "old",
+      "server_profile": "core",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 11,
+        "ffsake_tool_calls": 10,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "input_tokens": 192762,
+        "total_input_tokens": 192762,
+        "uncached_input_tokens": 19578,
+        "output_tokens": 1449,
+        "cache_read_input_tokens": 173184,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_preview_files",
+          "mcp__ffsake__ffsake_apply",
+          "command_execution",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "6fcf333c369eb759c37d90aa434b91febb8b79f72a360bfd442cf7ad4e6c02b4",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.736792,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 43.365375,
+          "bytes": 1371,
+          "original_bytes": 1371,
+          "sequence": 1,
+          "roundtrip_ms": 42.628583,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 43.602208,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 43.706583,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 44.661875,
+          "bytes": 31732,
+          "original_bytes": 31732,
+          "sequence": 3,
+          "roundtrip_ms": 0.955292,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 14305.874542,
+          "bytes": 1237,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "response",
+          "ms": 14309.205917,
+          "bytes": 387,
+          "original_bytes": 387,
+          "sequence": 4,
+          "roundtrip_ms": 3.331375,
+          "protocol_error": false
+        },
+        {
+          "direction": "server_execution",
+          "ms": 14309.389125,
+          "execution_ms": 2.789292,
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "request",
+          "ms": 14313.773625,
+          "bytes": 1242,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 14396.016,
+          "execution_ms": 82.00491699999999,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 14396.070125,
+          "bytes": 467,
+          "original_bytes": 467,
+          "sequence": 5,
+          "roundtrip_ms": 82.2965,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 14398.582292,
+          "bytes": 1228,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 14398.963333,
+          "execution_ms": 0.26625,
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "response",
+          "ms": 14398.985083,
+          "bytes": 270,
+          "original_bytes": 270,
+          "sequence": 6,
+          "roundtrip_ms": 0.402791,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 20027.459958,
+          "bytes": 1237,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 20029.17,
+          "execution_ms": 1.496083,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 20029.212458,
+          "bytes": 568,
+          "original_bytes": 568,
+          "sequence": 7,
+          "roundtrip_ms": 1.7525,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 20032.261167,
+          "bytes": 1508,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 20033.584833,
+          "execution_ms": 1.1516250000000001,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 20033.628875,
+          "bytes": 2168,
+          "original_bytes": 2168,
+          "sequence": 8,
+          "roundtrip_ms": 1.367708,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 30106.381042,
+          "bytes": 1385,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 30107.519167,
+          "execution_ms": 0.6465000000000001,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 30107.561208,
+          "bytes": 406,
+          "original_bytes": 406,
+          "sequence": 9,
+          "roundtrip_ms": 1.180166,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 30112.021,
+          "bytes": 2404,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 30116.958125,
+          "execution_ms": 4.712708,
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "response",
+          "ms": 30117.01175,
+          "bytes": 3213,
+          "original_bytes": 3213,
+          "sequence": 10,
+          "roundtrip_ms": 4.99075,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 35019.936625,
+          "bytes": 1238,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 35028.338458,
+          "execution_ms": 8.156625,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 35028.370292,
+          "bytes": 187,
+          "original_bytes": 187,
+          "sequence": 11,
+          "roundtrip_ms": 8.433667,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 60665.906375,
+          "bytes": 1241,
+          "sequence": 12,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 60731.464583,
+          "execution_ms": 65.348084,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 60731.520958,
+          "bytes": 2325,
+          "original_bytes": 2325,
+          "sequence": 12,
+          "roundtrip_ms": 65.614583,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 60733.700875,
+          "bytes": 1244,
+          "sequence": 13,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 60797.709125,
+          "execution_ms": 63.865583,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 60797.76675,
+          "bytes": 1075,
+          "original_bytes": 1075,
+          "sequence": 13,
+          "roundtrip_ms": 64.065875,
+          "protocol_error": false
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 4,
+      "elapsed_ms": 51909.583,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "changed",
+      "server_profile": "editing",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 10,
+        "ffsake_tool_calls": 9,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "input_tokens": 179785,
+        "total_input_tokens": 179785,
+        "uncached_input_tokens": 33225,
+        "output_tokens": 1217,
+        "cache_read_input_tokens": 146560,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_preview_files",
+          "mcp__ffsake__ffsake_apply",
+          "command_execution",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_read_files"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "0b9bd3a41149d6f5a61a4ba6ce5683031e1bc113cf8942834094d129fcf527b1",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.467625,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 39.882667,
+          "bytes": 822,
+          "original_bytes": 822,
+          "sequence": 1,
+          "roundtrip_ms": 39.415042,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 40.11375,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 40.222667,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 41.030584,
+          "bytes": 18929,
+          "original_bytes": 18929,
+          "sequence": 3,
+          "roundtrip_ms": 0.807917,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 14232.244084,
+          "bytes": 1236,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 14236.43075,
+          "execution_ms": 3.79575,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 14236.468709,
+          "bytes": 568,
+          "original_bytes": 568,
+          "sequence": 4,
+          "roundtrip_ms": 4.224625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 14239.453792,
+          "bytes": 1507,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 14241.366917,
+          "execution_ms": 1.728792,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 14241.395709,
+          "bytes": 2168,
+          "original_bytes": 2168,
+          "sequence": 5,
+          "roundtrip_ms": 1.941917,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 14244.000667,
+          "bytes": 1241,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 14355.734584,
+          "execution_ms": 111.565917,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 14355.799292,
+          "bytes": 467,
+          "original_bytes": 467,
+          "sequence": 6,
+          "roundtrip_ms": 111.798625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 17787.295584,
+          "bytes": 1384,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 17787.917875,
+          "bytes": 406,
+          "original_bytes": 406,
+          "sequence": 7,
+          "roundtrip_ms": 0.622291,
+          "protocol_error": false
+        },
+        {
+          "direction": "server_execution",
+          "ms": 17787.998917,
+          "execution_ms": 0.354917,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "request",
+          "ms": 26311.517834,
+          "bytes": 2447,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 26314.631084,
+          "execution_ms": 2.865917,
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "response",
+          "ms": 26314.67775,
+          "bytes": 3257,
+          "original_bytes": 3257,
+          "sequence": 8,
+          "roundtrip_ms": 3.159916,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 29837.546167,
+          "bytes": 1237,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 29845.996167,
+          "execution_ms": 8.036209000000001,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 29846.035584,
+          "bytes": 187,
+          "original_bytes": 187,
+          "sequence": 9,
+          "roundtrip_ms": 8.489417,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 45528.558792,
+          "bytes": 1239,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 45638.590709,
+          "bytes": 2368,
+          "original_bytes": 2368,
+          "sequence": 10,
+          "roundtrip_ms": 110.031917,
+          "protocol_error": false
+        },
+        {
+          "direction": "server_execution",
+          "ms": 45638.730084,
+          "execution_ms": 109.846167,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "request",
+          "ms": 45642.640834,
+          "bytes": 1241,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 45723.426959,
+          "execution_ms": 80.620542,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 45723.480375,
+          "bytes": 1074,
+          "original_bytes": 1074,
+          "sequence": 11,
+          "roundtrip_ms": 80.839541,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 45726.88825,
+          "bytes": 1342,
+          "sequence": 12,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 45727.834667,
+          "execution_ms": 0.780875,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 45727.856459,
+          "bytes": 826,
+          "original_bytes": 826,
+          "sequence": 12,
+          "roundtrip_ms": 0.968209,
+          "protocol_error": false
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 4,
+      "elapsed_ms": 47500.228,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 3,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "input_tokens": 73752,
+        "total_input_tokens": 73752,
+        "uncached_input_tokens": 6680,
+        "output_tokens": 1272,
+        "cache_read_input_tokens": 67072,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "2dda60f370a22c32240ec29d2322e0be557f829c06e958078adde259b083229c",
+      "private_stderr_sha256": "3cf73e9ba82a47bf5875b3ee3f72f3f7a4687be159eea08f5f776b426237c35e"
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 5,
+      "elapsed_ms": 59024.235,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "changed",
+      "server_profile": "editing",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 9,
+        "ffsake_tool_calls": 8,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "input_tokens": 153072,
+        "total_input_tokens": 153072,
+        "uncached_input_tokens": 17008,
+        "output_tokens": 1105,
+        "cache_read_input_tokens": 136064,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_preview_files",
+          "mcp__ffsake__ffsake_apply",
+          "command_execution",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_read_files"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "11ad504e3453255a7a63982b391b36a677befc9edbb8ddc3bb65df50e1e7a998",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.430792,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 37.202125,
+          "bytes": 822,
+          "original_bytes": 822,
+          "sequence": 1,
+          "roundtrip_ms": 36.771333,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 37.448334,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 37.606834,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 38.512625,
+          "bytes": 18929,
+          "original_bytes": 18929,
+          "sequence": 3,
+          "roundtrip_ms": 0.905791,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 16324.112542,
+          "bytes": 1236,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 16327.583834,
+          "execution_ms": 2.821083,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 16327.627625,
+          "bytes": 568,
+          "original_bytes": 568,
+          "sequence": 4,
+          "roundtrip_ms": 3.515083,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 16331.282125,
+          "bytes": 1507,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 16333.807917,
+          "execution_ms": 2.357333,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 16333.837959,
+          "bytes": 2168,
+          "original_bytes": 2168,
+          "sequence": 5,
+          "roundtrip_ms": 2.555834,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 16336.240959,
+          "bytes": 1241,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 16444.676875,
+          "execution_ms": 108.262084,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 16444.716667,
+          "bytes": 467,
+          "original_bytes": 467,
+          "sequence": 6,
+          "roundtrip_ms": 108.475708,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 25807.823167,
+          "bytes": 2447,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 25812.332875,
+          "execution_ms": 4.145292,
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "response",
+          "ms": 25812.382625,
+          "bytes": 3257,
+          "original_bytes": 3257,
+          "sequence": 7,
+          "roundtrip_ms": 4.559458,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 30512.927167,
+          "bytes": 1237,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 30522.668334,
+          "execution_ms": 9.331584000000001,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 30522.73125,
+          "bytes": 187,
+          "original_bytes": 187,
+          "sequence": 8,
+          "roundtrip_ms": 9.804083,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 48876.489334,
+          "bytes": 1239,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 48957.59075,
+          "execution_ms": 80.903667,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 48957.644584,
+          "bytes": 2368,
+          "original_bytes": 2368,
+          "sequence": 9,
+          "roundtrip_ms": 81.15525,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 48960.010334,
+          "bytes": 1241,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 49041.767834,
+          "execution_ms": 81.608375,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 49041.834125,
+          "bytes": 1074,
+          "original_bytes": 1074,
+          "sequence": 10,
+          "roundtrip_ms": 81.823791,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 49044.292084,
+          "bytes": 1341,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 49044.789667,
+          "execution_ms": 0.359417,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 49044.817,
+          "bytes": 825,
+          "original_bytes": 825,
+          "sequence": 11,
+          "roundtrip_ms": 0.524916,
+          "protocol_error": false
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 5,
+      "elapsed_ms": 56495.906,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 5,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 5,
+        "observed_tool_errors": 1,
+        "input_tokens": 111358,
+        "total_input_tokens": 111358,
+        "uncached_input_tokens": 12926,
+        "output_tokens": 1372,
+        "cache_read_input_tokens": 98432,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "command_execution",
+          "command_execution"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "c49dc79f4d6cc1c104574557630ccc6892e5fffb13c50f4ff4a1f3940307696d",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721"
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 5,
+      "elapsed_ms": 65975.507,
+      "exit_code": 0,
+      "task": "maintenance",
+      "mode": "old",
+      "server_profile": "core",
+      "provenance_hashes": {
+        "prompt_sha256": "3efc1556320f7954b0a99048e6370e6b425e0df6fb99d792a72cda980f635168",
+        "fixture_manifest_sha256": "aa640952d54961716abda493e6dfc4f0e953b235a2d44829542e1ea55ce94f08",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 12,
+        "ffsake_tool_calls": 11,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "input_tokens": 193013,
+        "total_input_tokens": 193013,
+        "uncached_input_tokens": 19829,
+        "output_tokens": 1353,
+        "cache_read_input_tokens": 173184,
+        "cache_creation_input_tokens": 0,
+        "total_cost_usd": null,
+        "retries": null,
+        "tool_names": [
+          "mcp__ffsake__ffsake_workspace_info",
+          "mcp__ffsake__ffsake_tasks",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_list",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_read_files",
+          "mcp__ffsake__ffsake_preview_files",
+          "mcp__ffsake__ffsake_apply",
+          "command_execution",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_git",
+          "mcp__ffsake__ffsake_read_files"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": null,
+        "checks": 26,
+        "checks_passed": 26,
+        "failed_check_count": 0,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "c99732e6d2ae5f020a0141ae6f0fff02232a5d3a49797ac4c07d09e61da47d8e",
+      "private_stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+      "mcp_timing": [
+        {
+          "direction": "request",
+          "ms": 0.437917,
+          "bytes": 258,
+          "sequence": 1,
+          "method": "initialize"
+        },
+        {
+          "direction": "response",
+          "ms": 44.539792,
+          "bytes": 1371,
+          "original_bytes": 1371,
+          "sequence": 1,
+          "roundtrip_ms": 44.101875,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 44.78875,
+          "bytes": 55,
+          "sequence": 2,
+          "method": "notifications/initialized"
+        },
+        {
+          "direction": "request",
+          "ms": 44.909042,
+          "bytes": 86,
+          "sequence": 3,
+          "method": "tools/list"
+        },
+        {
+          "direction": "response",
+          "ms": 45.877,
+          "bytes": 31732,
+          "original_bytes": 31732,
+          "sequence": 3,
+          "roundtrip_ms": 0.967958,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 16812.4375,
+          "bytes": 1236,
+          "sequence": 4,
+          "method": "tools/call",
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 16815.425917,
+          "execution_ms": 2.000916,
+          "tool": "ffsake_workspace_info"
+        },
+        {
+          "direction": "response",
+          "ms": 16815.478292,
+          "bytes": 387,
+          "original_bytes": 387,
+          "sequence": 4,
+          "roundtrip_ms": 3.040792,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 16820.857959,
+          "bytes": 1227,
+          "sequence": 5,
+          "method": "tools/call",
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 16821.8105,
+          "execution_ms": 0.772667,
+          "tool": "ffsake_tasks"
+        },
+        {
+          "direction": "response",
+          "ms": 16821.84625,
+          "bytes": 270,
+          "original_bytes": 270,
+          "sequence": 5,
+          "roundtrip_ms": 0.988291,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 16825.043084,
+          "bytes": 1241,
+          "sequence": 6,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 16959.904542,
+          "execution_ms": 134.57975,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 16959.951167,
+          "bytes": 467,
+          "original_bytes": 467,
+          "sequence": 6,
+          "roundtrip_ms": 134.908083,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 25488.45025,
+          "bytes": 1236,
+          "sequence": 7,
+          "method": "tools/call",
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 25490.167917,
+          "execution_ms": 1.292667,
+          "tool": "ffsake_list"
+        },
+        {
+          "direction": "response",
+          "ms": 25490.214375,
+          "bytes": 568,
+          "original_bytes": 568,
+          "sequence": 7,
+          "roundtrip_ms": 1.764125,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 25494.52375,
+          "bytes": 1507,
+          "sequence": 8,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 25496.191167,
+          "execution_ms": 1.438541,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 25496.232625,
+          "bytes": 2168,
+          "original_bytes": 2168,
+          "sequence": 8,
+          "roundtrip_ms": 1.708875,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 35710.574167,
+          "bytes": 1384,
+          "sequence": 9,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 35711.441084,
+          "execution_ms": 0.48979199999999995,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 35711.476,
+          "bytes": 406,
+          "original_bytes": 406,
+          "sequence": 9,
+          "roundtrip_ms": 0.901833,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 35715.878042,
+          "bytes": 2447,
+          "sequence": 10,
+          "method": "tools/call",
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 35719.386584,
+          "execution_ms": 3.287792,
+          "tool": "ffsake_preview_files"
+        },
+        {
+          "direction": "response",
+          "ms": 35719.428167,
+          "bytes": 3257,
+          "original_bytes": 3257,
+          "sequence": 10,
+          "roundtrip_ms": 3.550125,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 40185.25825,
+          "bytes": 1237,
+          "sequence": 11,
+          "method": "tools/call",
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 40195.302167,
+          "execution_ms": 9.647915999999999,
+          "tool": "ffsake_apply"
+        },
+        {
+          "direction": "response",
+          "ms": 40195.34525,
+          "bytes": 187,
+          "original_bytes": 187,
+          "sequence": 11,
+          "roundtrip_ms": 10.087,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 56572.413042,
+          "bytes": 1240,
+          "sequence": 12,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 56642.444042,
+          "execution_ms": 69.852917,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 56642.503667,
+          "bytes": 2369,
+          "original_bytes": 2369,
+          "sequence": 12,
+          "roundtrip_ms": 70.090625,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 56644.907917,
+          "bytes": 1243,
+          "sequence": 13,
+          "method": "tools/call",
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 56707.943542,
+          "execution_ms": 62.898667,
+          "tool": "ffsake_git"
+        },
+        {
+          "direction": "response",
+          "ms": 56708.005042,
+          "bytes": 1075,
+          "original_bytes": 1075,
+          "sequence": 13,
+          "roundtrip_ms": 63.097125,
+          "protocol_error": false
+        },
+        {
+          "direction": "request",
+          "ms": 56710.697792,
+          "bytes": 1376,
+          "sequence": 14,
+          "method": "tools/call",
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "server_execution",
+          "ms": 56711.28125,
+          "execution_ms": 0.416,
+          "tool": "ffsake_read_files"
+        },
+        {
+          "direction": "response",
+          "ms": 56711.306667,
+          "bytes": 1046,
+          "original_bytes": 1046,
+          "sequence": 14,
+          "roundtrip_ms": 0.608875,
+          "protocol_error": false
+        }
+      ]
+    }
+  ]
+}
