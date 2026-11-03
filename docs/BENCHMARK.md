@@ -608,7 +608,20 @@ Codex paid validation was stopped by provider credits, not by a failed candidate
 
 Changed versus old: payroll elapsed −38.0%, calls −40.6%, total input −46.9%; shipping elapsed −0.3%, calls −25.0%, total input −24.0%; the two medians combined are −23.0% elapsed. Payroll improved substantially, but shipping did not, ranges overlap, and native remained faster in both fixtures. The 30% elapsed-time target is therefore **not met on both fixtures**, and these Claude results are not comparable to the earlier Codex target. One native payroll run failed the artifact and workflow checks; all FFSAKE runs in both fixtures passed both. Costs are provider-reported medians, not invoices, and include cache reads in total input.
 
-One changed shipping run exposed a result-readiness race: an auto-wait for a non-control operation could return before that operation’s result was available, leaving it queued; the next action then reported a previous-result error and required an extra `poll`. The server now supports an internal `WaitUntil::Result` and uses it for non-control, non-terminate auto-waits, so launch/attach, breakpoints, stack, scopes and variables wait for their own result rather than merely for an idle state. The fix build is `24e352305bff26cb8dca397e762c3c733891db55dddd1d68e56818be0f2505cf`. Model-free checks pass, including the default-wait assertion. A one-repetition both-fixture pilot on the fix used 35.8 s payroll changed versus 64.4 s old and 22.8 s shipping changed versus 29.4 s old with no poll error, but a complete post-fix 5×3 rerun stopped on a Claude provider error after four runs and is not pooled. The fix therefore has pilot and model-free coverage, not a complete repeated benchmark. The result-readiness fix and second fixture were pushed at `f7338ac`; exact-head CI run `41661357846` passed. Private reports and traces remain outside Git; no raw transcript or personal path is published here.
+One changed shipping run in the first comparison exposed a result-readiness race: an auto-wait for a non-control operation could return before that operation’s result was available, leaving it queued; the next action then reported a previous-result error and required an extra `poll`. The server now supports an internal `WaitUntil::Result` and uses it for non-control, non-terminate auto-waits, so launch/attach, breakpoints, stack, scopes and variables wait for their own result rather than merely for an idle state. The fix build is `24e352305bff26cb8dca397e762c3c733891db55dddd1d68e56818be0f2505cf`.
+
+The fix build was re-benchmarked with five attempts per cell. One changed payroll attempt was invalid because Claude Code called a nonexistent `mcp__ffsake__ffsake_tool_placeholder_unused` tool; the call failed, the run recovered and produced a correct artifact, but the harness classified the attempt as a tool-profile violation and excluded it. Four valid changed payroll runs remain; every other cell has five valid runs. The excluded attempt took 25.7 s and is not pooled.
+
+| Fixture / mode | Valid | Correct | Seconds | Calls | Total input | Reported cost/run |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Payroll native | 5/5 | 3/5 | 16.2 (13.9–19.2) | 7 (6–9) | 156,865 | $0.0826 |
+| Payroll old | 5/5 | 5/5 | 41.1 (38.7–60.1) | 28 (25–35) | 812,938 | $0.2027 |
+| Payroll changed | 4/5 | 5/5 | 32.6 (26.8–38.4) | 18.5 (17–21) | 477,644 | $0.1587 |
+| Shipping native | 5/5 | 5/5 | 14.0 (12.8–16.2) | 7 (6–7) | 156,012 | $0.0800 |
+| Shipping old | 5/5 | 5/5 | 29.3 (27.6–41.0) | 23 (16–32) | 567,424 | $0.1647 |
+| Shipping changed | 5/5 | 5/5 | 28.4 (22.2–31.2) | 22 (16–22) | 591,767 | $0.1777 |
+
+Changed versus old on the fix build: payroll elapsed −20.6%, calls −33.9%, total input −41.2%; shipping elapsed −2.8%, calls −4.3%, total input +4.3%; the two medians combined are −13.2% elapsed. The fix removed the earlier extra-poll failure, but it does not reproduce the first comparison’s −23.0% combined reduction, and the 30% elapsed-time target remains **not met on both fixtures**. Native remained faster in both. Ranges overlap, the payroll changed cell has four valid runs, and these Claude results are not comparable to the earlier Codex target. The result-readiness fix and second fixture were pushed at `f7338ac`; exact-head CI run `41661357846` passed. Private reports and traces remain outside Git; no raw transcript or personal path is published here.
 
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
@@ -621,6 +634,12 @@ python3 scripts/rc_benchmark.py --binary /private/path/to/changed-instrumented-m
   --output /private/path/to/comparison.json --agents codex --tasks cross,maintenance,debug \
   --repetitions 5 --debug-python /absolute/path/to/debugpy-venv/bin/python \
   --instrument-dir /private/path/to/comparison-timings
+python3 scripts/rc_benchmark.py --binary /private/path/to/changed-mcp \
+  --baseline-binary /private/path/to/old-mcp \
+  --output /private/path/to/claude-debug-comparison.json --agents claude \
+  --tasks debug,debug_shipping --repetitions 5 \
+  --debug-python /absolute/path/to/debugpy-venv/bin/python \
+  --instrument-dir /private/path/to/claude-comparison-timings
 python3 scripts/debug_poll_probe.py /private/path/to/corrected-instrumented-mcp \
   --baseline-binary /private/path/to/old-instrumented-mcp \
   --python /absolute/path/to/debugpy-venv/bin/python \
