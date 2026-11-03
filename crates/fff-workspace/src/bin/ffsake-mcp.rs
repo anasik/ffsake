@@ -268,7 +268,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 fff_workspace::debug::WaitUntil::Stopped
                             }
                             Some("terminate") => fff_workspace::debug::WaitUntil::Cleaned,
-                            _ => fff_workspace::debug::WaitUntil::Ready,
+                            _ => fff_workspace::debug::WaitUntil::Result,
                         };
                         if queued.get("ok") == Some(&Value::Bool(true))
                             && let Some(session) = session

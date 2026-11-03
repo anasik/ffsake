@@ -83,6 +83,9 @@ impl Configurations {
         Ok(value)
     }
 }
+fn default_wait_timeout_ms() -> u64 {
+    1000
+}
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Action {
@@ -93,6 +96,7 @@ pub enum Action {
     Wait {
         session: u64,
         until: WaitUntil,
+        #[serde(default = "default_wait_timeout_ms")]
         timeout_ms: u64,
     },
     Terminate {
@@ -160,6 +164,7 @@ pub enum WaitUntil {
     Ready,
     Stopped,
     Cleaned,
+    Result,
 }
 impl Action {
     fn session(&self) -> Option<u64> {
@@ -256,6 +261,7 @@ impl Waiter {
                     WaitUntil::Ready => !state.busy || state.result.is_some(),
                     WaitUntil::Stopped => state.status == "stopped",
                     WaitUntil::Cleaned => state.cleaned,
+                    WaitUntil::Result => state.result.is_some(),
                 };
             let cancelled =
                 self.cancel.load(Ordering::SeqCst) && !matches!(self.until, WaitUntil::Cleaned);

@@ -94,6 +94,18 @@ def debug_verify(root, state):
     return result.returncode == 0 and 'ada' in result.stdout and '1000' in result.stdout, {'exit_code': result.returncode, 'stdout': result.stdout}
 
 
+def debug_shipping_fixture(root):
+    source = (suite.ROOT / 'tests/fixtures/debug-python-shipping/shipping.py').read_text()
+    suite.write_files(root, {'shipping.py': source, 'README.md': '# Shipping\nRun shipping.py to reproduce the bug.\n'})
+    suite.git_init(root)
+    return {}
+
+
+def debug_shipping_verify(root, state):
+    result = command(root, sys.executable, '-B', 'shipping.py')
+    return result.returncode == 0 and 'ana' in result.stdout and '50.0' in result.stdout, {'exit_code': result.returncode, 'stdout': result.stdout}
+
+
 TASKS = {
     'cross': {'fixture': cross_fixture, 'verify': cross_verify,
               'prompt': 'Explore this pricing project and fix the discount calculation. Both checkout and the pricing function should accept discounts as percentages, and final prices must be correct. Keep tests and unrelated files unchanged. Finish when the existing tests pass.',
@@ -106,5 +118,10 @@ TASKS = {
             'allowed_changes': {'calculator.py'}},
     'debug': {'fixture': debug_fixture, 'verify': debug_verify,
               'prompt': 'Use a debugger to diagnose the payroll failure. Observe and report the relevant runtime state and its cause, make the smallest fix, and run the program to verify it. Preserve unrelated files.',
-              'allowed_changes': {'payroll.py'}},
+              'allowed_changes': {'payroll.py'}, 'debug_program': 'payroll.py',
+              'workflow_markers': ('adjustments', '50')},
+    'debug_shipping': {'fixture': debug_shipping_fixture, 'verify': debug_shipping_verify,
+                       'prompt': 'Use a debugger to diagnose the shipping threshold failure. Observe the subtotal and fee at runtime, make the smallest fix, and run the program to verify it. Preserve unrelated files.',
+                       'allowed_changes': {'shipping.py'}, 'debug_program': 'shipping.py',
+                       'workflow_markers': ('subtotal', '50')},
 }

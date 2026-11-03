@@ -302,15 +302,17 @@ def workflow_evidence(agent, task, calls, output):
         native_debugger = any(any(marker in command.lower() for marker in
                                   ('pdb', 'debugpy', 'lldb', 'gdb', 'dlv', '--inspect'))
                               for command in commands)
+        markers = suite.TASKS.get(task, {}).get('workflow_markers', ('adjustments', '50'))
         native_state = any(any(marker in c['text'].lower() for marker in ('pdb', 'debugpy', 'lldb', 'gdb', 'dlv', '--inspect'))
-                           and 'adjustments' in c.get('output', '').lower() and '50' in c.get('output', '')
+                           and all(marker in c.get('output', '').lower() for marker in markers)
                            for c in calls)
-        ffsake_state = any('ffsake_debug' in c['name'] and 'adjustments' in c.get('output', '').lower()
-                           and '50' in c.get('output', '') for c in calls)
+        ffsake_state = any('ffsake_debug' in c['name']
+                           and all(marker in c.get('output', '').lower() for marker in markers)
+                           for c in calls)
         details = {'ffsake_launch': ffsake_launch, 'debug_actions': sorted(actions),
                    'ffsake_inspected_state': ffsake_inspect, 'ffsake_resumed': ffsake_resume,
                    'native_debugger': native_debugger, 'native_state_observed': native_state,
-                   'ffsake_state_observed': ffsake_state}
+                   'ffsake_state_observed': ffsake_state, 'state_markers': markers}
         passed = (ffsake_launch and ffsake_inspect and ffsake_resume and ffsake_state) or (native_debugger and native_state)
     elif task == 'git':
         commit = next((i for i, c in enumerate(calls) if
@@ -333,7 +335,7 @@ def workflow_evidence(agent, task, calls, output):
     else:
         details = {'workflow_evidence_required': False}
         passed = True
-    return {'required': task in ('build', 'debug', 'git'), 'passed': passed, 'details': details}
+    return {'required': task in ('build', 'git') or task.startswith('debug'), 'passed': passed, 'details': details}
 
 
 def agent_provider_errors(agent, events):
@@ -373,7 +375,7 @@ def normalize_usage(agent, trace):
                                          and isinstance(cached, (int, float)) else None)
 
 
-def make_worktree_fixture(template, state, debug_python=None):
+def make_worktree_fixture(template, state, debug_python=None, debug_program='payroll.py'):
     """Create a linked worktree from one frozen commit and restore fixture modes."""
     def fixture(root):
         root.rmdir()  # suite supplies an empty, uniquely reserved directory
@@ -397,9 +399,9 @@ def make_worktree_fixture(template, state, debug_python=None):
         if debug_python:
             directory = root / '.ffsake'
             directory.mkdir()
-            policy = {'version': 1, 'configurations': {'payroll': {
+            policy = {'version': 1, 'configurations': {Path(debug_program).stem: {
                 'argv': [str(debug_python), '-m', 'debugpy.adapter'],
-                'launch': {'program': '${workspaceFolder}/payroll.py', 'python': [str(debug_python)],
+                'launch': {'program': '${workspaceFolder}/' + debug_program, 'python': [str(debug_python)],
                            'console': 'internalConsole', 'justMyCode': True, 'subProcess': False},
                 'timeout_seconds': 20, 'session_seconds': 120}}}
             (directory / 'rc-debug.json').write_text(json.dumps(policy))
@@ -440,19 +442,19 @@ def main():
     COMPACT = a.compact
     if a.diagnostic_matrix and (not a.instrument_dir or a.catalog != 'core' or a.compact or a.agents != 'codex'):
         p.error('--diagnostic-matrix requires Codex, --instrument-dir, and default catalog/compact options')
-    if a.baseline_binary and (a.diagnostic_matrix or not a.instrument_dir or a.catalog != 'core' or a.compact or a.agents != 'codex'):
-        p.error('--baseline-binary requires Codex, --instrument-dir and default diagnostic options')
+    if a.baseline_binary and (a.diagnostic_matrix or not a.instrument_dir or a.catalog != 'core' or a.compact):
+        p.error('--baseline-binary requires --instrument-dir and default diagnostic options')
     if COMPACT and not a.instrument_dir:
         p.error('--compact requires --instrument-dir')
     if a.instrument_dir:
         a.instrument_dir = a.instrument_dir.resolve()
         a.instrument_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     agents, tasks = a.agents.split(','), a.tasks.split(',')
-    if any(x not in ('claude', 'codex') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug') for x in tasks):
+    if any(x not in ('claude', 'codex') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping') for x in tasks):
         p.error('unsupported agent or task')
     if not a.pilot and 'codex' in agents and 'git' in tasks:
         p.error('Codex Git comparison unavailable: native workspace sandbox denies linked-worktree Git metadata while MCP can write it')
-    if 'debug' in tasks and (not a.debug_python or not a.debug_python.is_file()):
+    if any(task.startswith('debug') for task in tasks) and (not a.debug_python or not a.debug_python.is_file()):
         p.error('--debug-python must identify a Python with the validated debugpy adapter')
     if not a.pilot and a.repetitions < 5:
         p.error('measured pairs require at least five repetitions')
@@ -516,7 +518,9 @@ def main():
             template = Path(stack.enter_context(tempfile.TemporaryDirectory(prefix='ffsake-rc-template-'))).resolve()
             state = suite.TASKS[task]['fixture'](template)
             bare = bare_template(template)
-            suite.TASKS[task]['fixture'] = make_worktree_fixture(bare, state, a.debug_python if task == 'debug' else None)
+            suite.TASKS[task]['fixture'] = make_worktree_fixture(
+                bare, state, a.debug_python if task.startswith('debug') else None,
+                suite.TASKS[task].get('debug_program', 'payroll.py'))
         for agent in agents:
             for task in tasks:
                 for repetition in range(1, a.repetitions + 1):

@@ -177,6 +177,8 @@ def main():
                 assert auto_calls == 8, c.trace
                 assert not any(t['arguments'].get('request', {}).get('action') in ('poll', 'wait')
                                for t in c.trace), c.trace
+                default_wait = c.call('debug', request={'action':'wait','session':c.session,'until':'ready'})
+                assert default_wait['wait_timed_out'] is False, default_wait
                 # Opting out preserves explicit queue/wait semantics.
                 configured = c.call('debug_launch', auto_wait=False, configuration='fake')
                 assert configured['status'] == 'starting', configured
