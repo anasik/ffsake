@@ -88,6 +88,7 @@ Reconnect an existing MCP session after the update. To remove the managed binari
 - [MCP and resident CLI contracts](docs/CLI.md)
 - [Architecture and development reference](docs/ARCHITECTURE.md)
 - [Benchmark methodology and evidence](docs/BENCHMARK.md)
+- [Real-project testing checklist](docs/REAL_PROJECT_TESTING.md)
 - [Roadmap and development record](PLAN.md)
 
 FFSAKE uses [FFF](https://github.com/dmtrKovalenko/fff) as its search and indexing substrate.
