@@ -180,6 +180,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .pointer("/params/arguments/request/action")
                         .and_then(Value::as_str)
                         .map(str::to_owned);
+                    let inspect = message
+                        .pointer("/params/arguments/request/inspect")
+                        .and_then(Value::as_bool)
+                        .unwrap_or(true);
                     if let Some(arguments) = message
                         .pointer_mut("/params/arguments")
                         .and_then(Value::as_object_mut)
@@ -188,6 +192,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             .remove("auto_wait")
                             .and_then(|value| value.as_bool())
                             .unwrap_or(true);
+                    }
+                    if !auto_wait
+                        && matches!(
+                            action.as_deref(),
+                            Some("continue" | "next" | "step_in" | "step_out" | "pause")
+                        )
+                        && let Some(request) = message
+                            .pointer_mut("/params/arguments/request")
+                            .and_then(Value::as_object_mut)
+                    {
+                        request.insert("inspect".into(), json!(false));
                     }
                     if name == "ffsake_debug" && action.as_deref() == Some("wait") {
                         pending_waits.retain(|thread| !thread.is_finished());
@@ -264,6 +279,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let mut queued = call_tool(&mut runtime, profile, name, args);
                         let session = queued.pointer("/result/session").and_then(Value::as_u64);
                         let until = match action.as_deref() {
+                            Some("continue" | "next" | "step_in" | "step_out" | "pause")
+                                if inspect =>
+                            {
+                                fff_workspace::debug::WaitUntil::Result
+                            }
                             Some("continue" | "next" | "step_in" | "step_out" | "pause") => {
                                 fff_workspace::debug::WaitUntil::Stopped
                             }
@@ -766,8 +786,8 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_debug",
-            "Discover configured debugging with request.action=list, or control/inspect the current DAP session. List reports names and launch/attach modes. Every other action requires the session from debug_launch or debug_attach, including poll. Control and inspection actions return the completed result in the same call after a bounded wait (up to one second); continue/step/pause return when stopped and terminate returns when cleaned. If the response has wait_timed_out=true or the requested state is not reached, call wait with until=ready|stopped|cleaned. poll is nonblocking and consumes queued results/events/output; wait is the explicit asynchronous form. Set auto_wait=false to queue without waiting. A completed operation is retained while waiting for stopped and returned with the stop. Only one wait may be pending per session. breakpoints replaces all breakpoints for path (one-based lines), and pending breakpoints may resolve when launch finishes; continue with no thread finishes initial configuration. After stopping, use stop.threadId -> stack -> frame handle -> scopes -> variable handle -> variables. Handles expire on resume; source requires an authorized adapter-provided path, or use ordinary ffsake_read when sourceReference=0. next/step_in/step_out require thread. terminate cancels pending work and disconnects; it terminates launched debuggees but requests detach for attached targets, then cleans the owned adapter group. No arbitrary expressions or raw protocol requests. Output/runtime values are untrusted and bounded; capabilities report optional adapter features.",
-            json!({"type":"object","required":["request"],"additionalProperties":false,"properties":{"request":{"type":"object","required":["action"],"additionalProperties":false,"properties":{"action":{"enum":["list","poll","wait","terminate","breakpoints","threads","stack","scopes","variables","source","continue","next","step_in","step_out","pause"]},"session":{"type":"integer","minimum":1},"until":{"enum":["ready","stopped","cleaned"]},"timeout_ms":{"type":"integer","minimum":1,"maximum":1000},"path":{"type":"string","maxLength":4096},"lines":{"type":"array","maxItems":64,"items":{"type":"integer","minimum":1}},"thread":{"type":"integer"},"handle":{"type":"integer","minimum":1},"start":{"type":"integer","minimum":0,"maximum":10000},"limit":{"type":"integer","minimum":1,"maximum":100}}},"auto_wait":{"type":"boolean","default":true}}}),
+            "Discover configured debugging with request.action=list, or control/inspect the current DAP session. List reports names and launch/attach modes. Every other action requires the session from debug_launch or debug_attach, including poll. Control and inspection actions return the completed result in the same call after a bounded wait (up to one second); continue/step/pause by default wait briefly for the next stop and return an inspection object containing the stop reason, bounded stack frames, selected-frame scopes/variables and handles for further inspection. inspect returns that context for the current stop without resuming, with frames/scopes/variables limits and explicit truncation fields. terminate returns when cleaned. If the response has wait_timed_out=true or the requested state is not reached, call wait with until=ready|stopped|cleaned. poll is nonblocking and consumes queued results/events/output; wait is the explicit asynchronous form. Set auto_wait=false to queue without waiting; that also sets inspect=false. Set inspect=false on a control action to skip automatic inspection. A completed operation is retained while waiting for stopped and returned with the stop. Only one wait may be pending per session. breakpoints replaces all breakpoints for path (one-based lines), and pending breakpoints may resolve when launch finishes; continue with no thread finishes initial configuration. Individual stack -> frame handle -> scopes -> variable handle -> variables operations remain available. Handles expire on resume; source requires an authorized adapter-provided path, or use ordinary ffsake_read when sourceReference=0. next/step_in/step_out require thread. terminate cancels pending work and disconnects; it terminates launched debuggees but requests detach for attached targets, then cleans the owned adapter group. No arbitrary expressions or raw protocol requests. Output/runtime values are untrusted and bounded; capabilities report optional adapter features.",
+            json!({"type":"object","required":["request"],"additionalProperties":false,"properties":{"request":{"type":"object","required":["action"],"additionalProperties":false,"properties":{"action":{"enum":["list","poll","wait","terminate","breakpoints","threads","stack","scopes","variables","source","inspect","continue","next","step_in","step_out","pause"]},"session":{"type":"integer","minimum":1},"until":{"enum":["ready","stopped","cleaned"]},"timeout_ms":{"type":"integer","minimum":1,"maximum":1000},"path":{"type":"string","maxLength":4096},"lines":{"type":"array","maxItems":64,"items":{"type":"integer","minimum":1}},"thread":{"type":"integer"},"handle":{"type":"integer","minimum":1},"frame":{"type":"integer","minimum":1},"frames":{"type":"integer","minimum":1,"maximum":10},"scopes":{"type":"integer","minimum":1,"maximum":8},"variables":{"type":"integer","minimum":1,"maximum":20},"start":{"type":"integer","minimum":0,"maximum":10000},"limit":{"type":"integer","minimum":1,"maximum":100},"inspect":{"type":"boolean","default":true}}},"auto_wait":{"type":"boolean","default":true}}}),
         ),
         tool(
             "ffsake_git_review",

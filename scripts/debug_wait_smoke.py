@@ -59,7 +59,7 @@ def main():
                 state = c.wait(lambda s: s['status'] == 'configuring')
             assert state['status'] == 'configuring', state
             adapter_pid = state['adapter_pid']
-            c.action('continue')
+            c.action('continue', inspect=False)
             c.call('debug', ok=False, request={'action':'wait','session':c.session,'until':'stopped','timeout_ms':1001})
             c.call('debug', ok=False, request={'action':'wait','session':c.session+1,'until':'stopped','timeout_ms':100})
             # The read must return while a full-second wait remains pending.
@@ -104,7 +104,7 @@ def main():
             c.session = c.call('debug_launch', configuration='fake')['session']
             state = c.wait(lambda s:s['status']=='configuring')
             adapter_pid = state['adapter_pid']
-            c.action('continue')
+            c.action('continue', inspect=False)
             c.n += 1
             c.p.stdin.write(json.dumps({'jsonrpc':'2.0','id':c.n,'method':'tools/call',
                 'params':{'name':'ffsake_debug','arguments':{'request':{'action':'wait',
@@ -126,7 +126,7 @@ def main():
             c.session = c.call('debug_launch', configuration='fake')['session']
             state = c.wait(lambda s:s['status']=='configuring')
             adapter_pid = state['adapter_pid']
-            c.call('debug', request={'action':'continue','session':c.session})
+            c.call('debug', request={'action':'continue','session':c.session,'inspect':False})
             c.n += 1
             c.p.stdin.write(json.dumps({'jsonrpc':'2.0','id':c.n,'method':'tools/call',
                 'params':{'name':'ffsake_debug','arguments':{'request':{'action':'wait',
@@ -162,19 +162,20 @@ def main():
                 stopped = c.call('debug', request={'action':'continue','session':c.session})
                 assert stopped['status'] == 'stopped' and stopped['stop']['reason'] == 'breakpoint', stopped
                 assert stopped['result']['ok'], stopped
-                frame = body(c.call('debug', request={'action':'stack','session':c.session,
-                                                      'thread':1}))['frames'][0]
+                inspection = stopped['result']['result']['inspection']
+                assert inspection['ok'] and inspection['stop']['reason'] == 'breakpoint', inspection
+                assert inspection['limits'] == {'frames':5,'scopes':4,'variables':8,'value_chars':512}, inspection
+                frame = inspection['frames'][0]
                 assert frame['source_authorized'] and frame['handle'], frame
-                scope = body(c.call('debug', request={'action':'scopes','session':c.session,
-                                                      'handle':frame['handle']}))['scopes'][0]
-                variables = body(c.call('debug', request={'action':'variables','session':c.session,
-                                                          'handle':scope['handle']}))
-                assert len(variables['variables']) == 20 and variables['truncated'], variables
+                assert len(inspection['frames']) <= 5, inspection
+                scope = inspection['scopes'][0]
+                assert scope['handle'] and len(scope['variables']) <= 8, scope
+                assert scope['variables_truncated'] or len(scope['variables']) == 8, scope
                 cleaned = c.call('debug', request={'action':'terminate','session':c.session})
                 assert cleaned['cleaned'], cleaned
                 assert not alive(adapter_pid), 'owned adapter survived auto-waited cleanup'
                 auto_calls = len(c.trace)
-                assert auto_calls == 8, c.trace
+                assert auto_calls == 5, c.trace
                 assert not any(t['arguments'].get('request', {}).get('action') in ('poll', 'wait')
                                for t in c.trace), c.trace
                 default_wait = c.call('debug', request={'action':'wait','session':c.session,'until':'ready'})
@@ -187,6 +188,16 @@ def main():
                                                  'until':'ready','timeout_ms':1000})
                 assert ready['status'] == 'configuring', ready
                 adapter_pid = ready['adapter_pid']
+                body(c.call('debug', request={'action':'breakpoints','session':c.session,
+                                              'path':str(source),'lines':[1]}))
+                c.call('debug', request={'action':'continue','session':c.session})
+                stopped = c.call('debug', request={'action':'wait','session':c.session,
+                                                   'until':'stopped','timeout_ms':1000})
+                assert stopped['status'] == 'stopped', stopped
+                inspected = body(c.call('debug', request={'action':'inspect','session':c.session,
+                                                          'frames':1,'scopes':1,'variables':2}))
+                assert inspected['ok'] and inspected['limits'] == {'frames':1,'scopes':1,'variables':2,'value_chars':512}, inspected
+                assert inspected['scopes'][0]['variables_truncated'], inspected
                 c.call('debug', request={'action':'terminate','session':c.session})
                 c.wait(lambda s:s['cleaned'], allow_error=True)
                 assert not alive(adapter_pid), 'owned adapter survived opt-out cleanup'

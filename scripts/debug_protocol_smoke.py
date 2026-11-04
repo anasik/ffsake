@@ -41,7 +41,7 @@ def main():
                 else:
                     c.wait(lambda s: s['status'] == 'configuring')
                     if mode == 'running':
-                        c.action('continue')
+                        c.action('continue', inspect=False)
                         assert c.call('read', path='local.txt')['text'] == 'local'
                         # Even corrupted/revoked access exports cannot prevent cleanup.
                         (root / '.ffsake/native-access/grants.json').write_text('invalid')
@@ -50,7 +50,7 @@ def main():
                         ended = c.wait(lambda s: s['cleaned'], allow_error=True, seconds=8)
                         assert 'timed out' in ended['error'], ended
                     else:
-                        c.action('continue')
+                        c.action('continue', inspect=False)
                         c.wait(lambda s: s['status'] == 'stopped')
                         frame = c.action('stack', thread=1)['frames'][0]
                         assert frame['source_authorized'] is False and 'handle' not in frame
@@ -81,10 +81,10 @@ def main():
                                 'until':'ready', 'timeout_ms':1000})['result']
                             assert not waited['ok'] and 'EXTERNAL_SOURCE_SENTINEL' not in json.dumps(waited)
                             c.call('open_access', path=str(source), kind='file', mode='read_only')
-                            c.action('next', thread=1)
+                            c.action('next', thread=1, inspect=False)
                             c.wait(lambda s: s['status'] == 'stopped')
                             assert 'stale' in c.action('scopes', ok=False, handle=frame['handle'])['error']
-                            assert 'unsupported' in c.action('pause', ok=False, thread=1)['error']
+                            assert 'unsupported' in c.action('pause', ok=False, thread=1, inspect=False)['error']
                         if mode == 'output':
                             polls = [t['result']['result'] for t in c.trace
                                      if t['tool'] == 'debug' and t['arguments']['request']['action'] == 'poll']

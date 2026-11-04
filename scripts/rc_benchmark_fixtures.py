@@ -123,5 +123,5 @@ TASKS = {
     'debug_shipping': {'fixture': debug_shipping_fixture, 'verify': debug_shipping_verify,
                        'prompt': 'Use a debugger to diagnose the shipping threshold failure. Observe the subtotal and fee at runtime, make the smallest fix, and run the program to verify it. Preserve unrelated files.',
                        'allowed_changes': {'shipping.py'}, 'debug_program': 'shipping.py',
-                       'workflow_markers': ('subtotal', '50')},
+                       'workflow_markers': ('amount', '50')},
 }

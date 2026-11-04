@@ -100,10 +100,13 @@ def timing_events(path, directory):
     return result
 
 
+DEBUG_ACTIONS = {'list', 'poll', 'wait', 'terminate', 'breakpoints', 'threads', 'stack',
+                 'scopes', 'variables', 'source', 'inspect', 'continue', 'next', 'step_in',
+                 'step_out', 'pause'}
+
+
 def debug_actions(text):
     """Retain action names only, never debugger arguments or returned values."""
-    allowed = {'list', 'poll', 'wait', 'terminate', 'breakpoints', 'threads', 'stack',
-               'scopes', 'variables', 'source', 'continue', 'next', 'step_in', 'step_out', 'pause'}
     result = []
     for line in text.splitlines():
         try:
@@ -113,10 +116,64 @@ def debug_actions(text):
             action = request.get('action')
             if (event.get('type') == 'item.completed' and item.get('server') == 'ffsake'
                     and item.get('tool') == 'ffsake_debug' and isinstance(action, str)):
-                result.append(action if action in allowed else 'other')
+                result.append(action if action in DEBUG_ACTIONS else 'other')
         except (ValueError, TypeError, AttributeError):
             continue
     return result
+
+
+def claude_debug_actions(text):
+    """Retain Claude debug action names without prompts or tool arguments."""
+    result = []
+    for line in text.splitlines():
+        try:
+            event = json.loads(line)
+            if event.get('type') != 'assistant':
+                continue
+            for content in event.get('message', {}).get('content', []):
+                if content.get('type') != 'tool_use' or content.get('name') != 'mcp__ffsake__ffsake_debug':
+                    continue
+                action = content.get('input', {}).get('request', {}).get('action')
+                if isinstance(action, str):
+                    result.append(action if action in DEBUG_ACTIONS else 'other')
+        except (ValueError, TypeError, AttributeError):
+            continue
+    return result
+
+
+def claude_events(text):
+    """Export Claude stream event shapes and tool names, never content."""
+    output = []
+    for line in text.splitlines():
+        try:
+            event = json.loads(line)
+        except (ValueError, TypeError):
+            continue
+        if not isinstance(event, dict):
+            continue
+        kind = event.get('type')
+        if kind not in ('system', 'assistant', 'user', 'result'):
+            continue
+        entry = {'type': kind}
+        if kind == 'system' and event.get('subtype') in ('init', 'hook_started', 'hook_response', 'status'):
+            entry['subtype'] = event['subtype']
+        if kind == 'assistant':
+            contents = event.get('message', {}).get('content', [])
+            entry['content_types'] = [x.get('type') if x.get('type') in ('text', 'thinking', 'tool_use', 'tool_result') else 'other'
+                                      for x in contents if isinstance(x, dict)]
+            entry['tools'] = [tool_name(x.get('name')) for x in contents
+                              if isinstance(x, dict) and x.get('type') == 'tool_use']
+        if kind == 'user':
+            contents = event.get('message', {}).get('content', [])
+            entry['tool_results'] = [bool(x.get('is_error')) for x in contents
+                                     if isinstance(x, dict) and x.get('type') == 'tool_result']
+        if kind == 'result':
+            entry['is_error'] = event.get('is_error') if isinstance(event.get('is_error'), bool) else None
+            entry['num_turns'] = numeric(event.get('num_turns'))
+            if event.get('subtype') in ('success', 'error', 'error_max_turns', 'error_during_execution'):
+                entry['subtype'] = event['subtype']
+        output.append(entry)
+    return output
 
 
 def sanitize(report, timing_dir=None, omit_events=False):
@@ -129,8 +186,14 @@ def sanitize(report, timing_dir=None, omit_events=False):
         raw_stderr = run.get('stderr', '')
         row = {key: run.get(key) if isinstance(run.get(key), bool) else None for key in
                ('correct', 'artifact_correct', 'comparison_valid', 'timed_out')}
-        row.update({key: numeric(run.get(key)) for key in ('repetition', 'elapsed_ms', 'exit_code')})
-        row['task'] = run.get('task') if run.get('task') in {'cross', 'maintenance', 'layout', 'build', 'git', 'debug'} else 'other'
+        row.update({key: numeric(run.get(key)) for key in ('repetition', 'attempt', 'elapsed_ms', 'exit_code')})
+        row['task'] = run.get('task') if run.get('task') in {'cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping'} else 'other'
+        reasons = run.get('comparison_invalid_reasons')
+        row['comparison_invalid_reasons'] = [x for x in reasons if x in {'tool_profile_violation', 'provider_api_error'}] if isinstance(reasons, list) else []
+        provider_errors = run.get('provider_errors')
+        row['provider_error_count'] = len(provider_errors) if isinstance(provider_errors, list) else None
+        if isinstance(run.get('reported_model'), str) and SAFE_NAME.fullmatch(run['reported_model']):
+            row['reported_model'] = run['reported_model']
         row['mode'] = run.get('mode') if run.get('mode') in {'baseline', 'ffsake', 'core', 'editing', 'compact', 'context', 'old', 'changed'} else 'other'
         if run.get('server_profile') in ('core', 'editing'):
             row['server_profile'] = run['server_profile']
@@ -142,11 +205,13 @@ def sanitize(report, timing_dir=None, omit_events=False):
             'initial_unstaged_diff_sha256')}
         row['trace'] = {key: numeric(trace.get(key)) for key in (
             'tool_calls', 'ffsake_tool_calls', 'shell_tool_calls', 'observed_tool_errors',
+            'mcp_failed_tool_calls', 'mcp_approval_blocked_calls', 'events', 'num_turns',
             'input_tokens', 'total_input_tokens', 'uncached_input_tokens', 'output_tokens',
             'cache_read_input_tokens', 'cache_creation_input_tokens', 'total_cost_usd', 'retries')}
         row['trace']['tool_names'] = [tool_name(x) for x in trace.get('tool_names', [])]
-        if row['task'] == 'debug':
-            row['debug_actions'] = debug_actions(raw_stdout)
+        if row['task'].startswith('debug'):
+            row['debug_actions'] = (claude_debug_actions(raw_stdout) if run.get('agent') == 'claude'
+                                    else debug_actions(raw_stdout))
         passed = run.get('workflow_evidence', {}).get('passed')
         details = run.get('workflow_evidence', {}).get('details', {})
         allowed_details = ('ffsake_run_task', 'ffsake_output_polled', 'native_task_command',
@@ -174,7 +239,7 @@ def sanitize(report, timing_dir=None, omit_events=False):
         row['private_stdout_sha256'] = hashlib.sha256(raw_stdout.encode()).hexdigest()
         row['private_stderr_sha256'] = hashlib.sha256(raw_stderr.encode()).hexdigest()
         if not omit_events:
-            row['events'] = events(raw_stdout)
+            row['events'] = claude_events(raw_stdout) if run.get('agent') == 'claude' else events(raw_stdout)
         if timing_dir and run.get('mcp_timing_file'):
             row['mcp_timing'] = timing_events(run['mcp_timing_file'], timing_dir)
         results.append(row)
@@ -187,7 +252,7 @@ def sanitize(report, timing_dir=None, omit_events=False):
             'driver_sha256': digest(report.get('driver_sha256')),
             'fixture_sha256': digest(report.get('fixture_sha256')),
             'agents': [x if x in ('codex','claude','opencode') else 'other' for x in report.get('agents', [])],
-            'tasks': [x if x in ('cross','maintenance','layout','build','git','debug') else 'other' for x in report.get('tasks', [])],
+            'tasks': [x if x in ('cross','maintenance','layout','build','git','debug','debug_shipping') else 'other' for x in report.get('tasks', [])],
             'repetitions': numeric(report.get('repetitions')),
             'complete': report.get('complete') if isinstance(report.get('complete'), bool) else None,
             'platform': settings.get('machine') if settings.get('machine') in ('arm64', 'x86_64', 'aarch64') else None,
@@ -198,7 +263,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('input', type=Path)
     parser.add_argument('output', type=Path)
-    parser.add_argument('--task', choices=('cross', 'maintenance', 'layout', 'build', 'git', 'debug'))
+    parser.add_argument('--task', choices=('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping'))
     parser.add_argument('--timing-dir', type=Path, help='private directory containing content-free timing logs')
     parser.add_argument('--omit-events', action='store_true', help='omit host event index; retain tool names and timing')
     args = parser.parse_args()

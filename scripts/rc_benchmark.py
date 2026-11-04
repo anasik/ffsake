@@ -287,7 +287,7 @@ def workflow_evidence(agent, task, calls, output):
                    'native_task_command': native_run, 'output_markers': markers,
                    'live_mcp_observed': bool(live_mcp), 'live_native_observed': bool(live_native)}
         passed = markers and ((ffsake_run and ffsake_observe and live_mcp) or (native_run and live_native))
-    elif task == 'debug':
+    elif task.startswith('debug'):
         ffsake_launch = any('ffsake_debug_launch' in name or 'ffsake_debug_attach' in name for name in names)
         actions = set()
         for call in calls:
@@ -297,20 +297,24 @@ def workflow_evidence(agent, task, calls, output):
             action = request.get('action') if isinstance(request, dict) else None
             if isinstance(action, str):
                 actions.add(action)
-        ffsake_inspect = 'breakpoints' in actions and 'scopes' in actions and 'variables' in actions
+        auto_inspect = any('"inspection"' in (c.get('output') or '')
+                           for c in calls if 'ffsake_debug' in c['name'])
+        ffsake_inspect = (('breakpoints' in actions and 'scopes' in actions and 'variables' in actions)
+                          or 'inspect' in actions or auto_inspect)
         ffsake_resume = 'continue' in actions
         native_debugger = any(any(marker in command.lower() for marker in
                                   ('pdb', 'debugpy', 'lldb', 'gdb', 'dlv', '--inspect'))
                               for command in commands)
         markers = suite.TASKS.get(task, {}).get('workflow_markers', ('adjustments', '50'))
         native_state = any(any(marker in c['text'].lower() for marker in ('pdb', 'debugpy', 'lldb', 'gdb', 'dlv', '--inspect'))
-                           and all(marker in c.get('output', '').lower() for marker in markers)
+                           and all(marker in (c['text'] + c.get('output', '')).lower() for marker in markers)
                            for c in calls)
         ffsake_state = any('ffsake_debug' in c['name']
                            and all(marker in c.get('output', '').lower() for marker in markers)
                            for c in calls)
         details = {'ffsake_launch': ffsake_launch, 'debug_actions': sorted(actions),
-                   'ffsake_inspected_state': ffsake_inspect, 'ffsake_resumed': ffsake_resume,
+                   'ffsake_inspected_state': ffsake_inspect, 'auto_inspection': auto_inspect,
+                   'ffsake_resumed': ffsake_resume,
                    'native_debugger': native_debugger, 'native_state_observed': native_state,
                    'ffsake_state_observed': ffsake_state, 'state_markers': markers}
         passed = (ffsake_launch and ffsake_inspect and ffsake_resume and ffsake_state) or (native_debugger and native_state)

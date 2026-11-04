@@ -1,7 +1,9 @@
 //! Minimal standard DAP client. One background owner; no language-specific commands.
 use crate::{
     access::Access,
-    debug::{Action, Configuration, Reply, State},
+    debug::{
+        Action, Configuration, Reply, State, inspect_frames, inspect_scopes, inspect_variables,
+    },
     lsp_transport::read_frame,
     workflow_process::Guard,
 };
@@ -364,6 +366,131 @@ impl Client {
             Err("operation requires a stopped program".into())
         }
     }
+    fn inspect_value(
+        &mut self,
+        thread: i64,
+        frames_limit: usize,
+        scopes_limit: usize,
+        variables_limit: usize,
+        selected_frame: Option<u64>,
+        paths: &mut Vec<PathBuf>,
+    ) -> Result<Value> {
+        self.stopped()?;
+        if !(1..=10).contains(&frames_limit) {
+            return Err("inspect frames must be 1..=10".into());
+        }
+        if !(1..=8).contains(&scopes_limit) {
+            return Err("inspect scopes must be 1..=8".into());
+        }
+        if !(1..=20).contains(&variables_limit) {
+            return Err("inspect variables must be 1..=20".into());
+        }
+        if scopes_limit * variables_limit > 64 {
+            return Err("inspect scopes * variables must be <= 64".into());
+        }
+        let epoch = self.epoch;
+        let result = self.request(
+            "stackTrace",
+            json!({"threadId":thread,"startFrame":0,"levels":frames_limit}),
+        )?;
+        let frames = result["stackFrames"]
+            .as_array()
+            .ok_or("invalid stack response")?;
+        let total = result["totalFrames"]
+            .as_u64()
+            .unwrap_or(frames.len() as u64);
+        let mut entries = Vec::new();
+        let mut first = None;
+        for frame in frames.iter().take(frames_limit) {
+            let source = &frame["source"];
+            let mut entry = json!({"name":short(frame["name"].as_str().unwrap_or(""),1024),"line":frame["line"],"column":frame["column"],"source_path":source["path"],"source_authorized":false});
+            if let Some(path) = source["path"].as_str()
+                && let Ok(path) = self.authorize(Path::new(path))
+            {
+                paths.push(path.clone());
+                entry["source_authorized"] = json!(true);
+                let handle = self.handle(Handle::Frame(
+                    frame["id"].as_i64().ok_or("invalid frame id")?,
+                    path.clone(),
+                ))?;
+                entry["handle"] = json!(handle);
+                entry["source_handle"] = json!(self.handle(Handle::Source(
+                    source["sourceReference"].as_i64().unwrap_or(0),
+                    path
+                ))?);
+                if first.is_none() {
+                    first = Some(handle);
+                }
+            }
+            entries.push(entry);
+        }
+        let chosen = selected_frame.or(first);
+        let mut scopes = Vec::new();
+        let mut scopes_truncated = false;
+        let mut variables_truncated = false;
+        let mut scopes_error = None;
+        let mut remaining = 64usize;
+        if let Some(handle) = chosen {
+            match self.get(handle) {
+                Ok(Handle::Frame(id, path)) => {
+                    self.authorize(&path)?;
+                    paths.push(path.clone());
+                    let result = self.request("scopes", json!({"frameId":id}))?;
+                    let list = result["scopes"]
+                        .as_array()
+                        .ok_or("invalid scopes response")?;
+                    scopes_truncated = list.len() > scopes_limit;
+                    for scope in list.iter().take(scopes_limit) {
+                        let id = scope["variablesReference"].as_i64().unwrap_or(0);
+                        let mut entry = json!({"name":short(scope["name"].as_str().unwrap_or(""),512),"expensive":scope["expensive"],"handle":null,"variables":[]});
+                        if id > 0 {
+                            entry["handle"] =
+                                json!(self.handle(Handle::Variables(id, path.clone(), 0))?);
+                            let result = self.request(
+                                "variables",
+                                json!({"variablesReference":id,"start":0,"count":variables_limit}),
+                            )?;
+                            let vars = result["variables"]
+                                .as_array()
+                                .ok_or("invalid variables response")?;
+                            let take = variables_limit.min(remaining);
+                            let mut values = Vec::new();
+                            for var in vars.iter().take(take) {
+                                let id = var["variablesReference"].as_i64().unwrap_or(0);
+                                let value = var["value"].as_str().unwrap_or("");
+                                values.push(json!({"name":short(var["name"].as_str().unwrap_or(""),512),"value":short(value,512),"value_truncated":value.len()>512,"type":short(var["type"].as_str().unwrap_or(""),256),"handle":if id>0{Some(self.handle(Handle::Variables(id,path.clone(),1))?)}else{None}}));
+                            }
+                            entry["variables"] = json!(values);
+                            entry["variables_truncated"] = json!(vars.len() > take);
+                            variables_truncated |= vars.len() > take;
+                            remaining = remaining.saturating_sub(take);
+                        }
+                        scopes.push(entry);
+                        if remaining == 0 {
+                            if scopes.len() < list.len().min(scopes_limit) {
+                                scopes_truncated = true;
+                                variables_truncated = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+                Ok(_) => scopes_error = Some("expected frame handle".into()),
+                Err(error) => scopes_error = Some(error),
+            }
+        } else {
+            scopes_error = Some("selected frame source is not authorized".into());
+        }
+        if !self.stopped || epoch != self.epoch {
+            self.handles.clear();
+            return Err(
+                "execution changed during inspection; request fresh stopped-state handles".into(),
+            );
+        }
+        Ok(
+            json!({"ok":true,"stop":self.state.lock().unwrap().stop.clone(),"thread":thread,"frames":entries,"totalFrames":total,"frames_truncated":total > entries.len() as u64,"selected_frame":chosen,"scopes":scopes,"scopes_truncated":scopes_truncated,"variables_truncated":variables_truncated,"scopes_error":scopes_error,"limits":{"frames":frames_limit,"scopes":scopes_limit,"variables":variables_limit,"value_chars":512}}),
+        )
+    }
     fn perform(&mut self, action: Action) -> Result<Reply> {
         let epoch = self.epoch;
         let inspection = matches!(
@@ -372,9 +499,18 @@ impl Client {
                 | Action::Scopes { .. }
                 | Action::Variables { .. }
                 | Action::Source { .. }
+                | Action::Inspect { .. }
         );
+        let auto_inspect = match &action {
+            Action::Continue { inspect, .. }
+            | Action::Next { inspect, .. }
+            | Action::StepIn { inspect, .. }
+            | Action::StepOut { inspect, .. }
+            | Action::Pause { inspect, .. } => *inspect,
+            _ => false,
+        };
         let mut paths = Vec::new();
-        let value = match action {
+        let mut value = match action {
             Action::Breakpoints { path, lines, .. } => {
                 if lines.len() > 64 || lines.contains(&0) {
                     return Err("breakpoints require <=64 positive source lines".into());
@@ -497,6 +633,19 @@ impl Client {
                 }
                 json!({"content":content})
             }
+            Action::Inspect {
+                thread,
+                frames,
+                scopes,
+                variables,
+                frame,
+                ..
+            } => {
+                let thread = thread
+                    .or_else(|| self.state.lock().unwrap().stop["threadId"].as_i64())
+                    .ok_or("inspection requires a stopped thread")?;
+                self.inspect_value(thread, frames, scopes, variables, frame, &mut paths)?
+            }
             Action::Continue { thread, .. } if !self.configured => {
                 if !self.capability("supportsConfigurationDoneRequest") {
                     return Err(
@@ -533,6 +682,45 @@ impl Client {
             Action::Pause { thread, .. } => self.request("pause", json!({"threadId":thread}))?,
             _ => return Err("unsupported worker operation".into()),
         };
+        if auto_inspect && !self.stopped && !self.ended {
+            let until = Instant::now() + Duration::from_millis(900);
+            while !self.stopped && !self.ended && Instant::now() < until {
+                self.receive(Duration::from_millis(10))?;
+            }
+        }
+        if auto_inspect {
+            if self.stopped {
+                let thread = self.state.lock().unwrap().stop["threadId"]
+                    .as_i64()
+                    .unwrap_or(1);
+                let inspection = match self.inspect_value(
+                    thread,
+                    inspect_frames(),
+                    inspect_scopes(),
+                    inspect_variables(),
+                    None,
+                    &mut paths,
+                ) {
+                    Ok(value) => value,
+                    Err(error) => json!({"ok":false,"error":error}),
+                };
+                let compact = serde_json::to_vec(&inspection)
+                    .map(|data| data.len() <= 32768)
+                    .unwrap_or(false);
+                if let Some(object) = value.as_object_mut() {
+                    object.insert(
+                        "inspection".into(),
+                        if compact {
+                            inspection
+                        } else {
+                            json!({"ok":false,"error":"automatic inspection exceeded response budget"})
+                        },
+                    );
+                }
+            } else if let Some(object) = value.as_object_mut() {
+                object.insert("wait_timed_out".into(), json!(!self.ended));
+            }
+        }
         if inspection && (!self.stopped || epoch != self.epoch) {
             self.handles.clear();
             return Err(

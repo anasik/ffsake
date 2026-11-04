@@ -134,29 +134,64 @@ pub enum Action {
         session: u64,
         handle: u64,
     },
+    Inspect {
+        session: u64,
+        #[serde(default)]
+        thread: Option<i64>,
+        #[serde(default = "inspect_frames")]
+        frames: usize,
+        #[serde(default = "inspect_scopes")]
+        scopes: usize,
+        #[serde(default = "inspect_variables")]
+        variables: usize,
+        #[serde(default)]
+        frame: Option<u64>,
+    },
     Continue {
         session: u64,
         thread: Option<i64>,
+        #[serde(default = "default_inspect")]
+        inspect: bool,
     },
     Next {
         session: u64,
         thread: i64,
+        #[serde(default = "default_inspect")]
+        inspect: bool,
     },
     StepIn {
         session: u64,
         thread: i64,
+        #[serde(default = "default_inspect")]
+        inspect: bool,
     },
     StepOut {
         session: u64,
         thread: i64,
+        #[serde(default = "default_inspect")]
+        inspect: bool,
     },
     Pause {
         session: u64,
         thread: i64,
+        #[serde(default = "default_inspect")]
+        inspect: bool,
     },
 }
 fn limit() -> usize {
     20
+}
+fn default_inspect() -> bool {
+    true
+}
+pub(crate) fn inspect_frames() -> usize {
+    5
+}
+pub(crate) fn inspect_scopes() -> usize {
+    4
+}
+pub(crate) fn inspect_variables() -> usize {
+    8
 }
 #[derive(Clone, Copy, Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -179,6 +214,7 @@ impl Action {
             | Self::Scopes { session, .. }
             | Self::Variables { session, .. }
             | Self::Source { session, .. }
+            | Self::Inspect { session, .. }
             | Self::Continue { session, .. }
             | Self::Next { session, .. }
             | Self::StepIn { session, .. }
@@ -501,8 +537,43 @@ mod tests {
             json!({"action":"attach","pid":1,"session":1}),
             json!({"action":"continue","session":1,"argv":["/bin/sh"]}),
             json!({"action":"variables","session":1,"handle":1,"value":"changed"}),
+            json!({"action":"inspect","session":1,"expression":"run()"}),
         ] {
             assert!(serde_json::from_value::<Action>(value).is_err());
         }
+    }
+
+    #[test]
+    fn inspect_and_control_inspection_have_bounded_defaults() {
+        let action: Action =
+            serde_json::from_value(json!({"action":"inspect","session":1})).unwrap();
+        let Action::Inspect {
+            thread,
+            frames,
+            scopes,
+            variables,
+            frame,
+            ..
+        } = action
+        else {
+            panic!("unexpected action")
+        };
+        assert_eq!(
+            (thread, frames, scopes, variables, frame),
+            (None, 5, 4, 8, None)
+        );
+        let action: Action =
+            serde_json::from_value(json!({"action":"continue","session":1})).unwrap();
+        let Action::Continue { inspect, .. } = action else {
+            panic!("unexpected action")
+        };
+        assert!(inspect);
+        let action: Action =
+            serde_json::from_value(json!({"action":"next","session":1,"thread":2,"inspect":false}))
+                .unwrap();
+        let Action::Next { inspect, .. } = action else {
+            panic!("unexpected action")
+        };
+        assert!(!inspect);
     }
 }
