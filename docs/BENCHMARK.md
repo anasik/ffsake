@@ -706,7 +706,7 @@ Model-free checks pass: 157 Rust tests, Clippy, formatting, MCP/worktree smokes,
 
 ### Compact debug response metadata (2026-11-04)
 
-Every debug snapshot repeated the adapter's full boolean capability map, including stopped and terminated responses after the launch had already established it. Snapshots now include `capabilities` while starting/configuring; stopped, running and terminated snapshots omit it. `ffsake_debug` action `list` still reports the current session's capabilities, and a combined launch inserts the map into its returned stopped snapshot so the first call remains self-contained. No debug action or capability is removed.
+Every debug snapshot repeated the adapter's full boolean capability map, including stopped and terminated responses after the launch had already established it. Snapshots now include `capabilities` while starting/configuring or failed; stopped, running and terminated snapshots omit it. `ffsake_debug` action `list` still reports the current session's capabilities, and a combined launch inserts the map into its returned stopped snapshot so the first call remains self-contained. No debug action or capability is removed.
 
 The 17-case DAP protocol smoke checks that a combined start returns capabilities and a cleaned response omits them. This removes about 680 bytes per stopped/terminated debug response in the observed adapter; exact token impact is not measured without a paid run. This candidate follows workspace context and combined start, which are both model-free validated but unmeasured for adoption.
 

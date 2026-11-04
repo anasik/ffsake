@@ -332,7 +332,7 @@ fn snapshot(id: u64, shared: &Arc<Mutex<State>>, access: &Access) -> Value {
         }
     });
     let mut value = json!({"session":id,"status":state.status,"stop":state.stop,"busy":state.busy,"result":result,"events":std::mem::take(&mut state.events),"output":std::mem::take(&mut state.output),"output_truncated":state.truncated,"error":state.error,"adapter_pid":state.adapter_pid,"cleaned":state.cleaned});
-    if matches!(state.status.as_str(), "starting" | "configuring") {
+    if matches!(state.status.as_str(), "starting" | "configuring" | "failed") {
         value["capabilities"] = state.capabilities.clone();
     }
     value
