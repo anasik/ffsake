@@ -2,7 +2,7 @@
 use crate::{
     access::Access,
     debug::{
-        Action, Configuration, Reply, State, inspect_frames, inspect_scopes, inspect_variables,
+        Action, Configuration, Reply, State, auto_inspect_frames, inspect_scopes, inspect_variables,
     },
     lsp_transport::read_frame,
     workflow_process::Guard,
@@ -701,7 +701,7 @@ impl Client {
                     .unwrap_or(1);
                 let inspection = match self.inspect_value(
                     thread,
-                    inspect_frames(),
+                    auto_inspect_frames(),
                     inspect_scopes(),
                     inspect_variables(),
                     None,
