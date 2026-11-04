@@ -24,13 +24,15 @@ def combined_start_case(binary):
             c.session = launched['session']
             assert launched['status'] == 'stopped', launched
             assert launched['stop']['reason'] == 'breakpoint', launched
+            assert launched.get('capabilities'), launched
             stopped = c.wait(lambda s: s['status'] == 'stopped', allow_error=True)
             assert stopped['stop']['reason'] == 'breakpoint', stopped
             calls = [json.loads(line) for line in (base / 'calls.jsonl').read_text().splitlines()]
             commands = [call['command'] for call in calls]
             assert 'setBreakpoints' in commands and 'configurationDone' in commands
             assert 'continue' not in commands
-            c.stop()
+            cleaned = c.stop()
+            assert 'capabilities' not in cleaned, cleaned
         finally:
             if c.p.poll() is None:
                 if c.session:

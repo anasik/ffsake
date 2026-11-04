@@ -704,6 +704,12 @@ The corrected traces still used three turns to reach the first stop: launch, bre
 
 Model-free checks pass: 157 Rust tests, Clippy, formatting, MCP/worktree smokes, the 17-case DAP protocol smoke, and a real debugpy preflight that launches the exact generated policy with initial breakpoints, reaches line 18, observes `adjustments=[50.0]`, and cleans up. The combined path removes two model turns per debug session if adopted; no paid run has been taken for this candidate because no budget is approved. The next candidate is a compact debug response that omits repeated session metadata while preserving every action and inspection value.
 
+### Compact debug response metadata (2026-11-04)
+
+Every debug snapshot repeated the adapter's full boolean capability map, including stopped and terminated responses after the launch had already established it. Snapshots now include `capabilities` while starting/configuring; stopped, running and terminated snapshots omit it. `ffsake_debug` action `list` still reports the current session's capabilities, and a combined launch inserts the map into its returned stopped snapshot so the first call remains self-contained. No debug action or capability is removed.
+
+The 17-case DAP protocol smoke checks that a combined start returns capabilities and a cleaned response omits them. This removes about 680 bytes per stopped/terminated debug response in the observed adapter; exact token impact is not measured without a paid run. This candidate follows workspace context and combined start, which are both model-free validated but unmeasured for adoption.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

@@ -469,6 +469,11 @@ impl Resident {
                     map.insert(key.into(), value.clone());
                 }
             }
+            if !map.contains_key("capabilities")
+                && let Some(value) = self.debugger.capabilities(session)
+            {
+                map.insert("capabilities".into(), value);
+            }
         }
         Ok(snapshot)
     }

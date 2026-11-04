@@ -331,7 +331,11 @@ fn snapshot(id: u64, shared: &Arc<Mutex<State>>, access: &Access) -> Value {
             Err(e) => json!({"ok":false,"error":e.to_string()}),
         }
     });
-    json!({"session":id,"status":state.status,"capabilities":state.capabilities,"stop":state.stop,"busy":state.busy,"result":result,"events":std::mem::take(&mut state.events),"output":std::mem::take(&mut state.output),"output_truncated":state.truncated,"error":state.error,"adapter_pid":state.adapter_pid,"cleaned":state.cleaned})
+    let mut value = json!({"session":id,"status":state.status,"stop":state.stop,"busy":state.busy,"result":result,"events":std::mem::take(&mut state.events),"output":std::mem::take(&mut state.output),"output_truncated":state.truncated,"error":state.error,"adapter_pid":state.adapter_pid,"cleaned":state.cleaned});
+    if matches!(state.status.as_str(), "starting" | "configuring") {
+        value["capabilities"] = state.capabilities.clone();
+    }
+    value
 }
 impl Drop for Session {
     fn drop(&mut self) {
@@ -406,7 +410,19 @@ impl Debugger {
         )
     }
     pub fn summary(&self) -> Value {
-        json!({"configurations":self.configurations.configurations.keys().collect::<Vec<_>>(),"configuration_modes":self.configurations.configurations.iter().map(|(name,c)| (name, if c.attach.is_some() { "attach" } else { "launch" })).collect::<BTreeMap<_,_>>(),"execution_enabled":!self.configurations.configurations.is_empty(),"transport":"local stdio DAP","one_session":true})
+        let capabilities = self
+            .session
+            .as_ref()
+            .map(|session| session.state.lock().unwrap().capabilities.clone())
+            .unwrap_or_else(|| json!({}));
+        json!({"configurations":self.configurations.configurations.keys().collect::<Vec<_>>(),"configuration_modes":self.configurations.configurations.iter().map(|(name,c)| (name, if c.attach.is_some() { "attach" } else { "launch" })).collect::<BTreeMap<_,_>>(),"execution_enabled":!self.configurations.configurations.is_empty(),"capabilities":capabilities,"transport":"local stdio DAP","one_session":true})
+    }
+
+    pub fn capabilities(&self, session: u64) -> Option<Value> {
+        self.session
+            .as_ref()
+            .filter(|item| item.id == session)
+            .map(|item| item.state.lock().unwrap().capabilities.clone())
     }
 
     pub fn execute(&mut self, action: Action, access: &Access) -> Result<Value> {
