@@ -93,7 +93,7 @@ class FixtureTests(unittest.TestCase):
             'TEST STARTED\nTEST FINISHED')
         self.assertFalse(build_no_live['passed'])
         debug = rc.workflow_evidence('codex', 'debug', [
-            {'name':'command_execution','text':'python3 -m pdb payroll.py','input':{},
+            {'name':'command_execution','text':"printf 'b 15\\np adjustments\\nq\\n' | python3 -m pdb payroll.py",'input':{},
              'output':'(Pdb) b 15\nBreakpoint 1\n(Pdb) p adjustments\n[50.0]'}],
             '(Pdb) b 15\nBreakpoint 1\n(Pdb) p adjustments\n[50.0]')
         self.assertTrue(debug['passed'])
@@ -111,6 +111,46 @@ class FixtureTests(unittest.TestCase):
              'output':'calculator.py\n+ return left + right'},
             {'name':'mcp__ffsake__ffsake_git_mutate','text':'{}','input':{'action':'commit'}}], '')
         self.assertTrue(reviewed_commit['passed'])
+
+    def test_debugger_evidence_requires_runtime_values(self):
+        launch = {'name':'mcp__ffsake__ffsake_debug_launch','text':'{}','input':{}}
+        resume = {'name':'mcp__ffsake__ffsake_debug','text':'{"request":{"action":"continue"}}',
+                  'input':{'request':{'action':'continue'}},'output':''}
+        source_only = rc.workflow_evidence('claude', 'debug', [
+            launch,
+            {'name':'mcp__ffsake__ffsake_debug','text':'{"request":{"action":"inspect"}}',
+             'input':{'request':{'action':'inspect'}},
+             'output':'text\n{"ok":true,"result":{"status":"stopped","output":"adjustments = [50.0]"}}'},
+            resume], '')
+        self.assertFalse(source_only['passed'])
+        self.assertFalse(source_only['details']['ffsake_inspected_state'])
+        self.assertFalse(source_only['details']['ffsake_state_observed'])
+        observed = rc.workflow_evidence('claude', 'debug', [
+            launch,
+            {'name':'mcp__ffsake__ffsake_debug','text':'{"request":{"action":"inspect"}}',
+             'input':{'request':{'action':'inspect'}},
+             'output':'text\n{"ok":true,"result":{"status":"stopped","result":{"ok":true,"result":{"inspection":{"scopes":[{"variables":[{"name":"adjustments","value":"[50.0]"}]}]}}}}}'},
+            resume], '')
+        self.assertTrue(observed['passed'])
+        wrong_value = rc.workflow_evidence('claude', 'debug', [
+            launch,
+            {'name':'mcp__ffsake__ffsake_debug','text':'{"request":{"action":"inspect"}}',
+             'input':{'request':{'action':'inspect'}},
+             'output':'text\n{"ok":true,"result":{"status":"stopped","result":{"ok":true,"result":{"inspection":{"scopes":[{"variables":[{"name":"adjustments","value":"[25.0]"}]}]}}}}}'},
+            resume], '')
+        self.assertFalse(wrong_value['passed'])
+        native_source = rc.workflow_evidence('codex', 'debug', [
+            {'name':'command_execution','text':'python3 -m pdb payroll.py','input':{},
+             'output':'-> adjustments = [50.0]\n(Pdb) p adjustments\n*** NameError: name \'adjustments\' is not defined'}], '')
+        self.assertFalse(native_source['passed'])
+        native_command_only = rc.workflow_evidence('codex', 'debug', [
+            {'name':'command_execution','text':"printf 'p adjustments\\n' | python3 -m pdb payroll.py",'input':{},
+             'output':''}], '')
+        self.assertFalse(native_command_only['passed'])
+        native_source_list = rc.workflow_evidence('codex', 'debug', [
+            {'name':'command_execution','text':"printf 'p adjustments\\nl\\nq\\n' | python3 -m pdb payroll.py",'input':{},
+             'output':'(Pdb) l\n  7     adjustments = [50.0]'}], '')
+        self.assertFalse(native_source_list['passed'])
 
     def test_usage_totals_are_provider_normalized(self):
         claude = {'input_tokens':2,'cache_read_input_tokens':10,'cache_creation_input_tokens':3}

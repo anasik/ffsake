@@ -267,6 +267,122 @@ def tool_output_text(agent, events):
     return '\n'.join(chunks)
 
 
+_DEBUGGER_TOKENS = ('pdb', 'debugpy', 'lldb', 'gdb', 'dlv', '--inspect')
+_DEBUG_PROMPT = re.compile(r'^\((?:pdb|gdb|lldb)\)\s?(.*)$', re.I)
+_DEBUG_COMMAND = re.compile(r'^(?:p|pp|b|break|c|cont|continue|n|next|s|step|q|quit|w|where|up|down|l|list|cl|clear|disable|enable|ignore|run|restart|j|jump|until|u)\b')
+_VALUE_PREFIX = re.compile(r'^(?:\[|\(|\{|["\']|[-+]?\d|True\b|False\b|None\b|\$)', re.I)
+_ASSIGNED_VALUE = re.compile(r'^(?:\([\w ]+\)\s*)?\$?\d*\s*=\s*.+')
+
+
+def _embedded_json(text):
+    text = (text or '').strip()
+    if text.startswith('text\n'):
+        text = text[5:].strip()
+    try:
+        return json.loads(text)
+    except (TypeError, ValueError):
+        start = text.find('{')
+        if start < 0:
+            return None
+        try:
+            value, _ = json.JSONDecoder().raw_decode(text[start:])
+            return value
+        except ValueError:
+            return None
+
+
+def _nested_key(value, key):
+    if isinstance(value, dict):
+        if key in value:
+            return True
+        return any(_nested_key(child, key) for child in value.values())
+    if isinstance(value, list):
+        return any(_nested_key(child, key) for child in value)
+    return False
+
+
+def _debug_variables(payload):
+    found = []
+
+    def visit(value):
+        if isinstance(value, dict):
+            variables = value.get('variables')
+            if isinstance(variables, list):
+                for item in variables:
+                    if (isinstance(item, dict) and isinstance(item.get('name'), str)
+                            and item['name'] and isinstance(item.get('value'), str)
+                            and item['value']):
+                        found.append(item)
+            for child in value.values():
+                visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child)
+
+    visit(payload)
+    return found
+
+
+def _runtime_value_matches(value, marker):
+    text = str(value)
+    if re.fullmatch(r'\d+(?:\.\d+)?', marker):
+        number = re.escape(marker)
+        if '.' not in marker:
+            number += r'(?:\.0+)?'
+        return re.search(r'(?<![\d.])' + number + r'(?![\d.])', text) is not None
+    return re.search(r'(?<!\w)' + re.escape(marker) + r'(?!\w)', text, re.I) is not None
+
+
+def _debugger_print_mentions(command, name):
+    command = command.replace('\\n', '\n')
+    for expression in re.findall(r'\b(?:p|pp)\s+([^;\n\\]+)', command):
+        if re.search(r'\b' + re.escape(name) + r'\b', expression):
+            return True
+    return False
+
+
+def _looks_like_runtime_value(payload):
+    if '=' in payload and not _ASSIGNED_VALUE.match(payload):
+        return False
+    return bool(_VALUE_PREFIX.match(payload))
+
+
+def _debugger_response_values(text):
+    values = []
+    collecting = False
+    for line in (text or '').splitlines():
+        prompt = _DEBUG_PROMPT.match(line.strip())
+        if prompt:
+            payload = prompt.group(1).strip()
+            if not payload or _DEBUG_COMMAND.match(payload) or payload.startswith('***'):
+                collecting = True
+            else:
+                collecting = False
+                if _looks_like_runtime_value(payload):
+                    values.append(payload)
+            continue
+        if collecting:
+            payload = line.strip()
+            if (payload and not payload.startswith(('>', '->', '***'))
+                    and _looks_like_runtime_value(payload)):
+                values.append(payload)
+    return values
+
+
+def _native_debugger_state(calls, markers):
+    name, marker = markers
+    for call in calls:
+        command = call.get('text', '') or ''
+        if not any(token in command.lower() for token in _DEBUGGER_TOKENS):
+            continue
+        if not _debugger_print_mentions(command, name):
+            continue
+        if any(_runtime_value_matches(value, marker)
+               for value in _debugger_response_values(call.get('output', ''))):
+            return True
+    return False
+
+
 def workflow_evidence(agent, task, calls, output):
     """Check trace-visible workflow behavior that a final file verifier cannot prove."""
     names = [call['name'] for call in calls]
@@ -297,21 +413,30 @@ def workflow_evidence(agent, task, calls, output):
             action = request.get('action') if isinstance(request, dict) else None
             if isinstance(action, str):
                 actions.add(action)
-        auto_inspect = any('"inspection"' in (c.get('output') or '')
-                           for c in calls if 'ffsake_debug' in c['name'])
-        ffsake_inspect = (('breakpoints' in actions and 'scopes' in actions and 'variables' in actions)
-                          or 'inspect' in actions or auto_inspect)
-        ffsake_resume = 'continue' in actions
-        native_debugger = any(any(marker in command.lower() for marker in
-                                  ('pdb', 'debugpy', 'lldb', 'gdb', 'dlv', '--inspect'))
-                              for command in commands)
         markers = suite.TASKS.get(task, {}).get('workflow_markers', ('adjustments', '50'))
-        native_state = any(any(marker in c['text'].lower() for marker in ('pdb', 'debugpy', 'lldb', 'gdb', 'dlv', '--inspect'))
-                           and all(marker in (c['text'] + c.get('output', '')).lower() for marker in markers)
-                           for c in calls)
-        ffsake_state = any('ffsake_debug' in c['name']
-                           and all(marker in c.get('output', '').lower() for marker in markers)
-                           for c in calls)
+        ffsake_inspect = False
+        ffsake_state = False
+        auto_inspect = False
+        for call in calls:
+            if 'ffsake_debug' not in call['name']:
+                continue
+            payload = _embedded_json(call.get('output', ''))
+            variables = _debug_variables(payload) if payload is not None else []
+            if not variables:
+                continue
+            ffsake_inspect = True
+            request = call['input'].get('request', {}) if isinstance(call['input'], dict) else {}
+            action = request.get('action') if isinstance(request, dict) else None
+            if action == 'continue' and _nested_key(payload, 'inspection'):
+                auto_inspect = True
+            if any(variable['name'] == markers[0]
+                   and _runtime_value_matches(variable['value'], markers[1])
+                   for variable in variables):
+                ffsake_state = True
+        ffsake_resume = 'continue' in actions
+        native_debugger = any(any(token in command.lower() for token in _DEBUGGER_TOKENS)
+                              for command in commands)
+        native_state = _native_debugger_state(calls, markers)
         details = {'ffsake_launch': ffsake_launch, 'debug_actions': sorted(actions),
                    'ffsake_inspected_state': ffsake_inspect, 'auto_inspection': auto_inspect,
                    'ffsake_resumed': ffsake_resume,

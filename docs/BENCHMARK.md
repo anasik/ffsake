@@ -599,14 +599,14 @@ Codex paid validation was stopped by provider credits, not by a failed candidate
 
 | Fixture / mode | Correct | Seconds | Calls | Total input | Reported cost/run |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Payroll native | 4/5 | 17.6 (15.3–18.3) | 7 (6–7) | 181,920 | $0.0843 |
+| Payroll native | 5/5 | 17.6 (15.3–18.3) | 7 (6–7) | 181,920 | $0.0843 |
 | Payroll old | 5/5 | 44.5 (39.6–75.3) | 32 (25–38) | 899,808 | $0.2269 |
 | Payroll changed | 5/5 | 27.6 (26.9–43.6) | 19 (18–21) | 477,462 | $0.1577 |
 | Shipping native | 5/5 | 13.1 (12.4–15.3) | 7 (6–7) | 155,725 | $0.0789 |
 | Shipping old | 5/5 | 29.6 (28.0–44.8) | 24 (22–31) | 628,244 | $0.1738 |
-| Shipping changed | 5/5 | 29.5 (20.4–41.1) | 18 (12–25) | 477,492 | $0.1554 |
+| Shipping changed | 4/5 | 29.5 (20.4–41.1) | 18 (12–25) | 477,492 | $0.1554 |
 
-Changed versus old: payroll elapsed −38.0%, calls −40.6%, total input −46.9%; shipping elapsed −0.3%, calls −25.0%, total input −24.0%; the two medians combined are −23.0% elapsed. Payroll improved substantially, but shipping did not, ranges overlap, and native remained faster in both fixtures. The 30% elapsed-time target is therefore **not met on both fixtures**, and these Claude results are not comparable to the earlier Codex target. One native payroll run failed the artifact and workflow checks; all FFSAKE runs in both fixtures passed both. Costs are provider-reported medians, not invoices, and include cache reads in total input.
+Changed versus old: payroll elapsed −38.0%, calls −40.6%, total input −46.9%; shipping elapsed −0.3%, calls −25.0%, total input −24.0%; the two medians combined are −23.0% elapsed. Payroll improved substantially, but shipping did not, ranges overlap, and native remained faster in both fixtures. The 30% elapsed-time target is therefore **not met on both fixtures**, and these Claude results are not comparable to the earlier Codex target. The corrected runtime-value verification increased payroll native to 5/5 and reduced shipping changed to 4/5; the failed shipping run produced a correct artifact but did not expose the expected runtime value. All other cells passed both the artifact and workflow checks. Costs are provider-reported medians, not invoices, and include cache reads in total input.
 
 One changed shipping run in the first comparison exposed a result-readiness race: an auto-wait for a non-control operation could return before that operation’s result was available, leaving it queued; the next action then reported a previous-result error and required an extra `poll`. The server now supports an internal `WaitUntil::Result` and uses it for non-control, non-terminate auto-waits, so launch/attach, breakpoints, stack, scopes and variables wait for their own result rather than merely for an idle state. The fix build is `24e352305bff26cb8dca397e762c3c733891db55dddd1d68e56818be0f2505cf`.
 
@@ -614,11 +614,11 @@ The fix build was re-benchmarked with five attempts per cell. One changed payrol
 
 | Fixture / mode | Valid | Correct | Seconds | Calls | Total input | Reported cost/run |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Payroll native | 5/5 | 3/5 | 16.2 (13.9–19.2) | 7 (6–9) | 156,865 | $0.0826 |
+| Payroll native | 5/5 | 5/5 | 16.2 (13.9–19.2) | 7 (6–9) | 156,865 | $0.0826 |
 | Payroll old | 5/5 | 5/5 | 41.1 (38.7–60.1) | 28 (25–35) | 812,938 | $0.2027 |
 | Payroll changed | 4/5 | 5/5 | 32.6 (26.8–38.4) | 18.5 (17–21) | 477,644 | $0.1587 |
 | Shipping native | 5/5 | 5/5 | 14.0 (12.8–16.2) | 7 (6–7) | 156,012 | $0.0800 |
-| Shipping old | 5/5 | 5/5 | 29.3 (27.6–41.0) | 23 (16–32) | 567,424 | $0.1647 |
+| Shipping old | 5/5 | 3/5 | 29.3 (27.6–41.0) | 23 (16–32) | 567,424 | $0.1647 |
 | Shipping changed | 5/5 | 5/5 | 28.4 (22.2–31.2) | 22 (16–22) | 591,767 | $0.1777 |
 
 Changed versus old on the fix build: payroll elapsed −20.6%, calls −33.9%, total input −41.2%; shipping elapsed −2.8%, calls −4.3%, total input +4.3%; the two medians combined are −13.2% elapsed. The fix removed the earlier extra-poll failure, but it does not reproduce the first comparison’s −23.0% combined reduction, and the 30% elapsed-time target remains **not met on both fixtures**. Native remained faster in both. Ranges overlap, the payroll changed cell has four valid runs, and these Claude results are not comparable to the earlier Codex target. The result-readiness fix and second fixture were pushed at `f7338ac`; exact-head CI run `41661357846` passed. Private reports and traces remain outside Git; no raw transcript or personal path is published here.
@@ -637,16 +637,18 @@ The old payroll cell required a sixth attempt because attempt 5 failed at the pr
 
 | Fixture / mode | Attempts (valid) | Correct | Seconds | Calls | Total input (cached / uncached) | Output | Cost/run |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Payroll native | 5 (5) | 4/5 | 15.7 (12.7–18.2) | 8 (6–8) | 184,820 (170,851 / 14) | 1,279 | $0.0860 |
+| Payroll native | 5 (5) | 5/5 | 15.7 (12.7–18.2) | 8 (6–8) | 184,820 (170,851 / 14) | 1,279 | $0.0860 |
 | Payroll old | 6 (5) | 3/6 (3/5 valid) | 38.0 (32.7–47.8) | 25 (19–27) | 671,735 (648,656 / 44) | 2,863 | $0.1868 |
 | Payroll changed | 5 (5) | 4/5 | 28.5 (26.4–39.9) | 17 (15–20) | 460,672 (435,872 / 32) | 2,176 | $0.1645 |
 | Shipping native | 5 (5) | 5/5 | 13.2 (12.5–17.3) | 7 (7–8) | 156,057 (142,509 / 12) | 1,087 | $0.0847 |
 | Shipping old | 5 (5) | 5/5 | 32.1 (31.4–40.2) | 23 (22–28) | 697,456 (675,145 / 46) | 2,524 | $0.1819 |
 | Shipping changed | 5 (5) | 5/5 | 21.8 (16.9–25.0) | 14 (13–15) | 349,116 (326,504 / 26) | 1,791 | $0.1414 |
 
-Changed versus old on valid attempts: payroll elapsed −25.0%, calls −32.0%, total input −31.4%, cached input −32.8%, uncached input −27.3%, output −24.0%, reported cost −11.9%; shipping elapsed −32.1%, calls −39.1%, total input −49.9%, cached input −51.6%, uncached input −43.5%, output −29.0%, reported cost −22.3%. Combining both fixtures, median elapsed fell from 34.0 s to 25.7 s (−24.4%). Shipping met the 30% target; payroll did not, under either the valid-only median (−25.0%) or the all-attempt sensitivity (−28.0%). Native remained faster in both fixtures. Correctness did not regress: payroll changed was 4/5, above old’s 3/5 valid and equal to native; shipping was 5/5 in every mode. The payroll changed failures and native failure were workflow-evidence failures with correct artifacts, not runtime failures. **Verdict: the 30% target is not met on both fixtures.**
+Changed versus old on valid attempts: payroll elapsed −25.0%, calls −32.0%, total input −31.4%, cached input −32.8%, uncached input −27.3%, output −24.0%, reported cost −11.9%; shipping elapsed −32.1%, calls −39.1%, total input −49.9%, cached input −51.6%, uncached input −43.5%, output −29.0%, reported cost −22.3%. Combining both fixtures, median elapsed fell from 34.0 s to 25.7 s (−24.4%). Shipping met the 30% target; payroll did not, under either the valid-only median (−25.0%) or the all-attempt sensitivity (−28.0%). Native remained faster in both fixtures. Correctness: payroll changed was 4/5, above old’s 3/5 valid but below native 5/5; shipping was 5/5 in every mode. The payroll changed failure and the two valid old workflow failures produced correct artifacts but lacked verifiable runtime state; the separate old provider failure did not produce a correct artifact. **Verdict: the 30% target is not met on both fixtures.**
 
-The shipping verifier needed a correction before those results could be read. `debug_shipping` had not previously run workflow evidence, so it defaulted to pass; enabling evidence exposed a fixture-marker mismatch (`subtotal` was requested, but the runtime variable is `amount`). Markers now require `amount` and `50`, and native evidence reads both the final text and program output. Re-evaluating the same 15 runs produced 5/5 correct in every mode; no model run was repeated and no check was loosened. The raw shipping report therefore shows all evidence false, while the [verified per-run index](agent-benchmark-runs/20261104-inspection/inspection.json) records the corrected evidence. This correction is also why shipping correctness changed from the earlier unverified default.
+The shipping evidence path initially defaulted to pass because `debug_shipping` had not run workflow evidence. Enabling it exposed a fixture-marker mismatch (`subtotal` was requested, but the runtime variable is `amount`). A later audit found the state checks still searched commands and source text, so neither correction was retained as a keyword test. The verifier now requires actual runtime values: FFSAKE evidence is parsed from structured inspection/scopes/variables responses, and native evidence is parsed from debugger response values rather than command or source text. Re-evaluating the same 15 shipping runs still produced 5/5 correct in every mode; no model run was repeated and no check was loosened. The raw shipping report retains its earlier evidence, while the [verified per-run index](agent-benchmark-runs/20261104-inspection/inspection.json) records the runtime-value evidence.
+
+The same verifier change corrected the two earlier public indexes without rerunning models: in the prior-fix index, payroll native moved from 4/5 to 5/5 and shipping changed from 5/5 to 4/5; in the result-fix index, payroll native moved from 3/5 to 5/5 and shipping old from 5/5 to 3/5. The newly passing runs contained the expected value in native debugger output. The newly failing shipping runs performed debug actions but did not record a parsed runtime value. Timings, token totals and costs are unchanged.
 
 Only 6 of the 40 paid runs remain. No further paid run is planned unless a materially different second candidate is justified; the measured candidate already answers the target question for this pass. Public indexes contain per-run metrics and content-free event summaries only; raw transcripts, tool arguments, outputs, paths and session IDs remain in private local storage. CI run 41811475524 passed for `283952f`.
 
