@@ -44,14 +44,14 @@ def preflight(binary, debug_python, timeout=300):
         client = debug_smoke.Client(binary, root, policy_path)
         adapter_pid = None
         try:
-            client.session = client.call('debug_launch', configuration='payroll')['session']
-            configuring = client.wait(lambda state: state['status'] == 'configuring'
-                                      or state['cleaned'], allow_error=True)
-            assert not configuring['cleaned'], configuring
-            adapter_pid = configuring['adapter_pid']
-            client.action('breakpoints', path='payroll.py', lines=[18])
-            client.action('continue')
-            stopped = client.wait(lambda state: state['status'] == 'stopped', allow_error=True)
+            launched = client.call('debug_launch', configuration='payroll',
+                                   breakpoints=[{'path': 'payroll.py', 'lines': [18]}],
+                                   resume=True)
+            client.session = launched['session']
+            adapter_pid = launched.get('adapter_pid')
+            stopped = client.wait(lambda state: state['status'] == 'stopped'
+                                  or state['cleaned'], allow_error=True)
+            assert not stopped['cleaned'], stopped
             assert stopped['stop']['reason'] == 'breakpoint', stopped
             thread = stopped['stop']['threadId']
             frames = client.action('stack', thread=thread)['frames']

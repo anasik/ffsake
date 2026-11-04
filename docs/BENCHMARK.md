@@ -698,6 +698,12 @@ All five corrected changed-payroll runs called `ffsake_workspace_info`, then `ff
 
 This does not remove any tool or permission: `ffsake_list` and `ffsake_debug` remain available for subdirectories and full debug control. Model-free checks pass: 157 Rust tests, Clippy with warnings denied, formatting, MCP/worktree/debug protocol smokes, and a direct workspace-info check showing the debug configuration names and top-level entry without adapter arguments. It could remove two model turns per run if adopted; that adoption is not measured because no paid budget is approved. The next candidate is a combined debug start that applies initial breakpoints and reaches the first stop in the launch call.
 
+### Combined debug start (2026-11-04)
+
+The corrected traces still used three turns to reach the first stop: launch, breakpoints, and continue. `ffsake_debug_launch` now accepts up to 16 `{path, lines}` initial breakpoints and `resume:true`; the call applies those breakpoints after the adapter reaches configuring, sends the initial continue, waits for the first result, and returns the stopped inspection with the launch and session fields. Existing launch behavior is unchanged when the optional fields are absent; paths still go through normal authorization, one session is enforced, and terminate/cleanup remains the caller's responsibility.
+
+Model-free checks pass: 157 Rust tests, Clippy, formatting, MCP/worktree smokes, the 17-case DAP protocol smoke, and a real debugpy preflight that launches the exact generated policy with initial breakpoints, reaches line 18, observes `adjustments=[50.0]`, and cleans up. The combined path removes two model turns per debug session if adopted; no paid run has been taken for this candidate because no budget is approved. The next candidate is a compact debug response that omits repeated session metadata while preserving every action and inspection value.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

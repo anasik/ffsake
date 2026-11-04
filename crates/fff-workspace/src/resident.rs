@@ -43,6 +43,10 @@ pub enum Request {
     },
     DebugLaunch {
         configuration: String,
+        #[serde(default)]
+        breakpoints: Vec<DebugBreakpoint>,
+        #[serde(default)]
+        resume: bool,
     },
     Debug {
         request: crate::debug::Action,
@@ -343,6 +347,12 @@ struct CachedProposal {
     bytes: usize,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct DebugBreakpoint {
+    pub path: String,
+    pub lines: Vec<u32>,
+}
+
 pub struct Resident {
     project_jobs: crate::project_tasks::Jobs,
     git_reviews: crate::git_write::Reviews,
@@ -395,6 +405,72 @@ impl Resident {
         self.index_dirty = true;
         self.debugger
             .prepare_wait(session, until, timeout_ms, &self.access())
+    }
+
+    pub fn debug_start(
+        &mut self,
+        configuration: &str,
+        breakpoints: Vec<DebugBreakpoint>,
+        resume: bool,
+    ) -> Result<Value> {
+        let launched = self.debugger.launch(
+            configuration,
+            self.session.workspace().root(),
+            self.access(),
+        )?;
+        if breakpoints.is_empty() && !resume {
+            return Ok(launched);
+        }
+        let session = launched
+            .get("session")
+            .and_then(Value::as_u64)
+            .ok_or("debug launch did not return a session")?;
+        let access = self.access().clone();
+        let mut snapshot = self
+            .prepare_debug_wait(session, crate::debug::WaitUntil::Ready, 1000)?
+            .wait();
+        if !matches!(snapshot["status"].as_str(), Some("configuring" | "stopped")) {
+            return Ok(snapshot);
+        }
+        for point in breakpoints {
+            self.debugger.execute(
+                crate::debug::Action::Breakpoints {
+                    session,
+                    path: point.path,
+                    lines: point.lines,
+                },
+                &access,
+            )?;
+            snapshot = self
+                .prepare_debug_wait(session, crate::debug::WaitUntil::Result, 1000)?
+                .wait();
+        }
+        if resume {
+            self.debugger.execute(
+                crate::debug::Action::Continue {
+                    session,
+                    thread: None,
+                    inspect: true,
+                },
+                &access,
+            )?;
+            snapshot = self
+                .prepare_debug_wait(session, crate::debug::WaitUntil::Result, 1000)?
+                .wait();
+        }
+        if let Some(map) = snapshot.as_object_mut() {
+            for key in [
+                "executes_project_code",
+                "filesystem_sandbox",
+                "mode",
+                "target_pid",
+            ] {
+                if let Some(value) = launched.get(key) {
+                    map.insert(key.into(), value.clone());
+                }
+            }
+        }
+        Ok(snapshot)
     }
 
     pub fn configure_tasks(&mut self, tasks: crate::workflow::Tasks) {
@@ -557,13 +633,13 @@ impl Resident {
                     self.access(),
                 )
             }
-            Request::DebugLaunch { configuration } => {
+            Request::DebugLaunch {
+                configuration,
+                breakpoints,
+                resume,
+            } => {
                 self.index_dirty = true;
-                self.debugger.launch(
-                    &configuration,
-                    self.session.workspace().root(),
-                    self.access(),
-                )
+                self.debug_start(&configuration, breakpoints, resume)
             }
             Request::Debug { request } => {
                 self.index_dirty = true;

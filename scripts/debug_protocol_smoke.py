@@ -8,6 +8,38 @@ import time
 from debug_smoke import Client, ROOT, alive
 
 
+def combined_start_case(binary):
+    with tempfile.TemporaryDirectory(prefix='ffsake-dap-combined-') as td:
+        base = Path(td).resolve(); root = base / 'root'; root.mkdir()
+        (root / 'local.txt').write_text('local')
+        policy = base / 'debug.json'
+        policy.write_text(json.dumps({'version': 1, 'configurations': {'fake': {
+            'argv': [sys.executable, str(ROOT / 'tests/fixtures/dap_adapter.py'), 'normal', str(base)],
+            'launch': {}, 'timeout_seconds': 1, 'session_seconds': 30}}}))
+        c = Client(binary, root, policy)
+        try:
+            launched = c.call('debug_launch', configuration='fake',
+                              breakpoints=[{'path': 'local.txt', 'lines': [1]}],
+                              resume=True)
+            c.session = launched['session']
+            assert launched['status'] == 'stopped', launched
+            assert launched['stop']['reason'] == 'breakpoint', launched
+            stopped = c.wait(lambda s: s['status'] == 'stopped', allow_error=True)
+            assert stopped['stop']['reason'] == 'breakpoint', stopped
+            calls = [json.loads(line) for line in (base / 'calls.jsonl').read_text().splitlines()]
+            commands = [call['command'] for call in calls]
+            assert 'setBreakpoints' in commands and 'configurationDone' in commands
+            assert 'continue' not in commands
+            c.stop()
+        finally:
+            if c.p.poll() is None:
+                if c.session:
+                    try:
+                        c.stop()
+                    except Exception:
+                        pass
+                c.close()
+
 def main():
     binary = Path(sys.argv[1]).resolve()
     tested = []
@@ -117,6 +149,8 @@ def main():
                     if c.session:
                         c.stop()
                     c.close()
+    combined_start_case(binary)
+    tested.append('combined_start')
     print(json.dumps({'protocol_cases': tested, 'cleanup': True, 'authorization': True,
                       'stale_handles': True, 'nonblocking_editing': True}, indent=2))
 

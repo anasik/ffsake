@@ -173,6 +173,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     })
                     .map(str::to_owned);
                 let mut auto_wait = true;
+                let combined_start = message["method"] == "tools/call"
+                    && message.pointer("/params/name").and_then(Value::as_str)
+                        == Some("ffsake_debug_launch")
+                    && (message.pointer("/params/arguments/breakpoints").is_some()
+                        || message
+                            .pointer("/params/arguments/resume")
+                            .and_then(Value::as_bool)
+                            == Some(true));
                 if message["method"] == "tools/call"
                     && let Some(name) = &debug_name
                 {
@@ -270,7 +278,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     let waitable = name != "ffsake_debug"
                         || !matches!(action.as_deref(), Some("list" | "poll"));
-                    if auto_wait && waitable {
+                    if auto_wait && waitable && !combined_start {
                         let id = message.get("id").cloned().unwrap_or(Value::Null);
                         let args = message
                             .pointer("/params/arguments")
@@ -544,7 +552,7 @@ fn handle_message(runtime: &mut Resident, profile: ToolProfile, message: Value) 
                     "protocolVersion":"2025-11-25",
                     "capabilities":{"tools":{}},
                     "serverInfo":{"name":"ffsake","version":option_env!("FFSAKE_RELEASE_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"))},
-                    "instructions": if matches!(profile, ToolProfile::Editing) { "Prefer FFSAKE for scoped repository exploration and guarded editing when suitable. Read multiple known files with ffsake_read_files; use ffsake_preview_files for independent edits, review the complete diff, and apply its handle. Before edits in a child or fork, verify ffsake_workspace_info matches the host worktree. Host approval controls access and mutations; never use native fallback to evade access denial. The editing profile omits task execution, debugging, Git mutations and language intelligence: use approved native tools or reconnect with core/all when needed. If a result includes update_notice, relay it to the user; do not install automatically." } else { "Prefer FFSAKE for scoped repository exploration, guarded previews and edits when suitable. Read multiple known files together with ffsake_read_files. For independent edits in different files, use one ffsake_preview_files with op=edit entries; review the combined diff, then apply its handle once. Discover configured build/test jobs with ffsake_tasks; ffsake_workspace_info summarizes debug names and top-level entries, so use it before separate list or debug-list calls. Before edits or tasks in a child or fork, call ffsake_workspace_info and verify the returned root equals the host working directory; if it differs, stop and configure a separate server for that worktree. Git tools accept an optional repository selector for authorized added repository roots; use the same selector for review and execution. Host approval governs execution and mutations. Native host tools may be appropriate for unavailable capabilities, but never use fallback to evade access denial; obtain host authorization first. Tasks/debugging execute code and are not sandboxed or editor transactions. If a tool result includes update_notice, relay the available release and instructions to the user; do not install automatically." }
+                    "instructions": if matches!(profile, ToolProfile::Editing) { "Prefer FFSAKE for scoped repository exploration and guarded editing when suitable. Read multiple known files with ffsake_read_files; use ffsake_preview_files for independent edits, review the complete diff, and apply its handle. Before edits in a child or fork, verify ffsake_workspace_info matches the host worktree. Host approval controls access and mutations; never use native fallback to evade access denial. The editing profile omits task execution, debugging, Git mutations and language intelligence: use approved native tools or reconnect with core/all when needed. If a result includes update_notice, relay it to the user; do not install automatically." } else { "Prefer FFSAKE for scoped repository exploration, guarded previews and edits when suitable. Read multiple known files together with ffsake_read_files. For independent edits in different files, use one ffsake_preview_files with op=edit entries; review the combined diff, then apply its handle once. Discover configured build/test jobs with ffsake_tasks; ffsake_workspace_info summarizes debug names and top-level entries, so use it before separate list or debug-list calls. ffsake_debug_launch accepts initial breakpoints and resume to reach the first stop in one call when the target lines are known. Before edits or tasks in a child or fork, call ffsake_workspace_info and verify the returned root equals the host working directory; if it differs, stop and configure a separate server for that worktree. Git tools accept an optional repository selector for authorized added repository roots; use the same selector for review and execution. Host approval governs execution and mutations. Native host tools may be appropriate for unavailable capabilities, but never use fallback to evade access denial; obtain host authorization first. Tasks/debugging execute code and are not sandboxed or editor transactions. If a tool result includes update_notice, relay the available release and instructions to the user; do not install automatically." }
                 }
             })
         }
@@ -781,8 +789,8 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ffsake_debug_launch",
-            "Execute project code through one host-configured local DAP adapter. Ordinary host approval applies, including intentional allow/auto modes. Requires --debug configuration at startup; request cannot set executable, arguments, environment or launch settings. Returns after a bounded wait until configuring; if still starting, use ffsake_debug wait until ready. Set auto_wait=false to return immediately. Filesystem grants are NOT an execution sandbox. One owned session, bounded lifetime, no remote/evaluate/mutation. Terminate when done; it waits briefly for cleaned=true.",
-            json!({"type":"object","required":["configuration"],"additionalProperties":false,"properties":{"configuration":{"type":"string","maxLength":64},"auto_wait":{"type":"boolean","default":true}}}),
+            "Execute project code through one host-configured local DAP adapter. Ordinary host approval applies, including intentional allow/auto modes. Requires --debug configuration at startup; request cannot set executable, arguments, environment or launch settings. Optionally apply initial breakpoints and resume to the first stop in this same call, avoiding separate breakpoint and continue turns. Otherwise returns after a bounded wait until configuring; if still starting, use ffsake_debug wait until ready. Set auto_wait=false to return immediately. Filesystem grants are NOT an execution sandbox. One owned session, bounded lifetime, no remote/evaluate/mutation. Terminate when done; it waits briefly for cleaned=true.",
+            json!({"type":"object","required":["configuration"],"additionalProperties":false,"properties":{"configuration":{"type":"string","maxLength":64},"breakpoints":{"type":"array","maxItems":16,"items":{"type":"object","required":["path","lines"],"additionalProperties":false,"properties":{"path":{"type":"string","minLength":1,"maxLength":4096},"lines":{"type":"array","minItems":1,"maxItems":64,"items":{"type":"integer","minimum":1}}}}},"resume":{"type":"boolean","default":false},"auto_wait":{"type":"boolean","default":true}}}),
         ),
         tool(
             "ffsake_debug",
