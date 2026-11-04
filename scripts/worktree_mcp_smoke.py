@@ -30,8 +30,12 @@ def main():
         p = MCP(binary, parent, policy)
         c = MCP(binary, child, policy)
         try:
-            assert Path(p.call('ffsake_workspace_info', {})['root']) == parent
-            assert Path(c.call('ffsake_workspace_info', {})['root']) == child
+            parent_info = p.call('ffsake_workspace_info', {})
+            child_info = c.call('ffsake_workspace_info', {})
+            assert Path(parent_info['root']) == parent
+            assert Path(child_info['root']) == child
+            assert 'value.txt' in {entry['path'] for entry in child_info['entries']}
+            assert child_info['debug']['execution_enabled'] is False
             c.call('ffsake_read', {'path': 'value.txt'})
             preview = c.call('ffsake_preview_edit', {'path': 'value.txt', 'old_text': 'before', 'new_text': 'after', 'expected_matches': 1})
             c.call('ffsake_apply', {'handle': preview['handle']})

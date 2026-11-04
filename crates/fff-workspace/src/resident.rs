@@ -535,9 +535,19 @@ impl Resident {
             self.access().refresh()?;
         }
         match request {
-            Request::WorkspaceInfo {} => Ok(
-                json!({"root": self.session.workspace().root(), "scope": "primary project", "note": "Confirm this canonical root matches the host session worktree before editing or running tasks."}),
-            ),
+            Request::WorkspaceInfo {} => {
+                let mut entries = self.session.workspace().list_dir(".")?;
+                let entries_truncated = entries.len() > 100;
+                entries.truncate(100);
+                Ok(json!({
+                    "root": self.session.workspace().root(),
+                    "scope": "primary project",
+                    "note": "Confirm this canonical root matches the host session worktree before editing or running tasks.",
+                    "entries": entries,
+                    "entries_truncated": entries_truncated,
+                    "debug": self.debugger.summary()
+                }))
+            }
             Request::DebugAttach { configuration, pid } => {
                 self.index_dirty = true;
                 self.debugger.attach(

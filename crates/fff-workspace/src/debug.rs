@@ -405,11 +405,13 @@ impl Debugger {
             json!({"session":self.next,"status":"starting","next":"wait until ready/configuring, set breakpoints, then continue to finish configuration","executes_project_code":true,"filesystem_sandbox":false,"mode":if pid.is_some(){"attach"}else{"launch"},"target_pid":pid}),
         )
     }
+    pub fn summary(&self) -> Value {
+        json!({"configurations":self.configurations.configurations.keys().collect::<Vec<_>>(),"configuration_modes":self.configurations.configurations.iter().map(|(name,c)| (name, if c.attach.is_some() { "attach" } else { "launch" })).collect::<BTreeMap<_,_>>(),"execution_enabled":!self.configurations.configurations.is_empty(),"transport":"local stdio DAP","one_session":true})
+    }
+
     pub fn execute(&mut self, action: Action, access: &Access) -> Result<Value> {
         if matches!(action, Action::List) {
-            return Ok(
-                json!({"configurations":self.configurations.configurations.keys().collect::<Vec<_>>(),"configuration_modes":self.configurations.configurations.iter().map(|(name,c)| (name, if c.attach.is_some() { "attach" } else { "launch" })).collect::<BTreeMap<_,_>>(),"execution_enabled":!self.configurations.configurations.is_empty(),"transport":"local stdio DAP","one_session":true}),
-            );
+            return Ok(self.summary());
         }
         if let Action::Wait {
             session,
@@ -528,6 +530,22 @@ mod tests {
         assert!(Configurations::load(&path).is_err());
         fs::write(&path, vec![b' '; 65537]).unwrap();
         assert!(Configurations::load(&path).is_err());
+    }
+
+    #[test]
+    fn debug_summary_exposes_only_configuration_names_and_modes() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("debug.json");
+        let valid = json!({"version":1,"configurations":{"one":{"argv":["/adapter","--stdio"],"launch":{"program":"${workspaceFolder}/app"}},"two":{"argv":["/other-adapter"],"attach":{"pid_field":"processId"}}}});
+        fs::write(&path, valid.to_string()).unwrap();
+        let mut debugger = Debugger::default();
+        debugger.configure(Configurations::load(&path).unwrap());
+        let summary = debugger.summary();
+        assert_eq!(summary["configurations"], json!(["one", "two"]));
+        assert_eq!(summary["configuration_modes"]["one"], "launch");
+        assert_eq!(summary["configuration_modes"]["two"], "attach");
+        assert_eq!(summary["execution_enabled"], true);
+        assert!(!summary.to_string().contains("/adapter"));
     }
 
     #[test]
