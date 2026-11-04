@@ -61,7 +61,7 @@ def main():
             batches, batch, batch_bytes = [], [], 0
             for path in paths:
                 size = len(original[path])
-                assert size <= 512 * 1024, f"snapshot file too large for bounded read: {path}"
+                assert size <= 256 * 1024, f"snapshot file too large for bounded read: {path}"
                 if batch and (len(batch) == 32 or batch_bytes + size > 512 * 1024):
                     batches.append(batch)
                     batch, batch_bytes = [], 0
