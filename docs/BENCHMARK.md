@@ -710,6 +710,8 @@ Every debug snapshot repeated the adapter's full boolean capability map, includi
 
 The 17-case DAP protocol smoke checks that a combined start returns capabilities and a cleaned response omits them. This removes about 680 bytes per stopped/terminated debug response in the observed adapter; exact token impact is not measured without a paid run. This candidate follows workspace context and combined start, which are both model-free validated but unmeasured for adoption.
 
+Projection from the corrected traces: using workspace context/read removes three turns, and combined start replaces launch+breakpoints+first continue with one call, a net two-turn removal. The five corrected runs would move from 14, 14, 13, 14 and 18 calls to 9, 9, 8, 9 and 13, a median of 9 versus 14 (35.7% fewer). Output payload would also shed the omitted capabilities. This is a trace-derived call projection, not a measured time or token result; the 30% target remains undemonstrated until a paid budget is approved.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh
