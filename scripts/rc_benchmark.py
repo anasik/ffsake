@@ -504,8 +504,16 @@ def normalize_usage(agent, trace):
                                          and isinstance(cached, (int, float)) else None)
 
 
+def adapter_python(path):
+    """Make the adapter path absolute without resolving a virtualenv symlink."""
+    return Path(os.path.abspath(os.fspath(path)))
+
+
 def make_worktree_fixture(template, state, debug_python=None, debug_program='payroll.py'):
     """Create a linked worktree from one frozen commit and restore fixture modes."""
+    if debug_python is not None:
+        debug_python = adapter_python(debug_python)
+
     def fixture(root):
         root.rmdir()  # suite supplies an empty, uniquely reserved directory
         subprocess.run(['git', '-C', str(template), 'worktree', 'add', '-q',

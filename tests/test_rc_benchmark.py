@@ -1,4 +1,5 @@
 """The measured fixtures start identically and reject incomplete outcomes."""
+import os
 import sys
 import copy
 import tempfile
@@ -49,6 +50,20 @@ class FixtureTests(unittest.TestCase):
                         'def total_pay(hours, rate, adjustments=None):\n    if adjustments is None:\n        adjustments = []'))
                 self.assertTrue(task['verify'](left, state)[0], name)
                 self.assertFalse(task['verify'](right, state)[0])
+
+    def test_adapter_python_keeps_virtualenv_symlink_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            target = root / 'real-python'
+            target.write_text('#!/bin/sh\n')
+            target.chmod(0o755)
+            link = root / 'venv/bin/python'
+            link.parent.mkdir(parents=True)
+            link.symlink_to(target)
+            resolved = rc.adapter_python(link)
+            self.assertEqual(str(resolved), os.path.abspath(link))
+            self.assertNotEqual(resolved, target.resolve())
+            self.assertTrue(resolved.is_symlink())
 
     def test_stats_do_not_replace_missing_usage_with_zero(self):
         item = {'agent':'codex','task':'cross','mode':'baseline','correct':True,'comparison_valid':True,

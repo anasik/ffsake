@@ -675,7 +675,22 @@ A first bounded adoption check consumed five paid attempts but is invalid as fea
 
 There were zero `continue requires thread after configuration` errors, but that is not evidence: no attempt reached a post-configuration stop or issued a continue. Attempt 4 attempted a breakpoint before launch and received `missing field 'session'`; attempt 5 edited without a working debugger. No attempt produced runtime inspection evidence. The lower call counts reflect early abandonment after adapter failure, not reduced interaction overhead. Total reported cost was $0.4631 for 773,152 total input and 5,921 output tokens.
 
-The remaining paid budget is one attempt (39/40). It was not spent on a single corrected run because one sample cannot answer the overhead question and would consume the budget needed for a valid study. A corrected five-attempt changed-payroll check would require four more than the current cap and a new budget decision. Public indexes contain per-run metrics and content-free event summaries only; raw transcripts, tool arguments, outputs, paths and session IDs remain in private local storage. CI run 41820074918 passed at `71973a0`; the thread-inference commit passed run 41842540361 at `18cca2b`.
+The runner now converts the adapter to an absolute path without resolving the virtualenv symlink. A regression test covers that distinction. A model-free preflight creates the exact generated debug policy, launches that adapter, stops at line 18, inspects `adjustments=[50.0]`, and verifies cleanup before any paid attempt. The batch aborts immediately on a launch failure.
+
+After the preflight passed, five additional paid attempts ran. All five passed artifact and workflow checks and each observed `adjustments=[50.0]` at runtime. Every attempt completed a stop, inspection, edit, program run, and debugger cleanup.
+
+| Attempt | Correct | Calls | Total input (uncached) | Output | Seconds | Cost | Runtime evidence |
+| ---: | :---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 1 | Yes | 14 | 347,021 (24) | 1,755 | 23.7 | $0.1428 | `[50.0]` |
+| 2 | Yes | 14 | 312,646 (24) | 1,883 | 24.2 | $0.1345 | `[50.0]` |
+| 3 | Yes | 13 | 283,508 (20) | 1,748 | 23.0 | $0.1298 | `[50.0]` |
+| 4 | Yes | 14 | 345,888 (26) | 1,726 | 23.9 | $0.1368 | `[50.0]` |
+| 5 | Yes | 18 | 498,410 (34) | 2,506 | 30.7 | $0.1715 | `[50.0]` |
+| Median | 5/5 | 14 | 345,888 (24) | 1,755 | 23.9 | $0.1368 | |
+
+There were zero `continue requires thread after configuration` errors. However, the inference was not exercised in these five traces: the only continue without a thread was the initial configuration call, and every post-stop continue carried thread 1. The feature therefore cannot explain the call or time difference. Attempt 5 had one queued-result error after `auto_wait=false` and two Bash read-block rejections; attempts 1–4 each had one Bash read-block rejection. No debugger action failed in attempts 1–4.
+
+The corrected batch used the five additional attempts; the prior sixth remains unused as a reserve. Descriptively, the median was 14 calls and 23.9 s versus the retained changed-payroll median of 17 calls and 28.5 s, with 345,888 versus 460,672 total input. The model host also changed from `2.1.317` to `2.1.318`, the runs are not counterbalanced against a contemporaneous old arm, and the new inference was not used. This is not evidence that thread inference reduced interaction overhead. The [corrected index](agent-benchmark-runs/20261104-inspection/continue-thread-corrected.json) preserves per-run metrics; the [failed setup batch](agent-benchmark-runs/20261104-inspection/continue-thread-setup-failure.json) remains recorded separately. Public indexes contain per-run metrics and content-free event summaries only; raw transcripts, tool arguments, outputs, paths and session IDs remain in private local storage.
 
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
