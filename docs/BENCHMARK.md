@@ -712,11 +712,11 @@ The 17-case DAP protocol smoke checks that a combined start returns capabilities
 
 Projection from the corrected traces: using workspace context/read removes three turns, and combined start replaces launch+breakpoints+first continue with one call, a net two-turn removal. The five corrected runs would move from 14, 14, 13, 14 and 18 calls to 9, 9, 8, 9 and 13, a median of 9 versus 14 (35.7% fewer). Output payload would also shed the omitted capabilities. This is a trace-derived call projection, not a measured time or token result; the 30% target remains undemonstrated until a paid budget is approved.
 
-### Two-frame automatic inspection (2026-11-04)
+### Compact automatic inspection (2026-11-04)
 
-The corrected traces returned four stack frames on every automatic stop, including caller frames the model did not use; the frame block was about 853 bytes per stop. Automatic inspection now defaults to two frames. Explicit `inspect` and `stack` still default to five and can request up to ten, so the complete stack remains available on demand.
+The corrected traces returned four stack frames and all scopes on every automatic stop; the model used the selected frame and locals. Automatic inspection now defaults to two frames and the first local scope. Explicit `inspect`, `stack` and `scopes` remain available for five frames, ten frames and broader scope/variable inspection.
 
-Model-free response measurements using the exact debugpy policy dropped the combined launch response from 3,369 to 2,938 bytes and the second-stop response from 2,418 to 1,987 bytes, saving about 862 bytes per observed run. The 17-case DAP smoke, exact-adapter preflight (`adjustments=[50.0]`) and all prior smokes pass. No paid run has measured this candidate; no time or token claim is made.
+Model-free response measurements using the exact debugpy policy dropped the combined launch response from 3,369 to 2,592 bytes and the second-stop response from 2,418 to 1,634 bytes, saving about 1,561 bytes per observed run across both refinements. The 17-case DAP smoke, wait smoke, exact-adapter preflight (`adjustments=[50.0]`) and all prior smokes pass. No paid run has measured this candidate; no time or token claim is made.
 
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 

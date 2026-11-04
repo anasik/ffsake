@@ -190,6 +190,9 @@ pub(crate) fn inspect_frames() -> usize {
 pub(crate) fn auto_inspect_frames() -> usize {
     2
 }
+pub(crate) fn auto_inspect_scopes() -> usize {
+    1
+}
 pub(crate) fn inspect_scopes() -> usize {
     4
 }
@@ -600,6 +603,7 @@ mod tests {
             (None, 5, 4, 8, None)
         );
         assert_eq!(auto_inspect_frames(), 2);
+        assert_eq!(auto_inspect_scopes(), 1);
         let action: Action =
             serde_json::from_value(json!({"action":"continue","session":1})).unwrap();
         let Action::Continue { inspect, .. } = action else {

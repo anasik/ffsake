@@ -164,7 +164,7 @@ def main():
                 assert stopped['result']['ok'], stopped
                 inspection = stopped['result']['result']['inspection']
                 assert inspection['ok'] and inspection['stop']['reason'] == 'breakpoint', inspection
-                assert inspection['limits'] == {'frames':2,'scopes':4,'variables':8,'value_chars':512}, inspection
+                assert inspection['limits'] == {'frames':2,'scopes':1,'variables':8,'value_chars':512}, inspection
                 frame = inspection['frames'][0]
                 assert frame['source_authorized'] and frame['handle'], frame
                 assert len(inspection['frames']) <= 2, inspection
