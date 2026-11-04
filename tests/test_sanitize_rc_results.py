@@ -37,6 +37,14 @@ class SanitizeTests(unittest.TestCase):
         self.assertNotIn('SECRET', json.dumps(result))
         self.assertNotIn('/Users/private', json.dumps(result))
 
+    def test_benchmark_setup_error_is_exported(self):
+        run = {'task':'debug','mode':'changed','comparison_valid':False,
+               'comparison_invalid_reasons':['benchmark_setup_error','private_reason'],
+               'stdout':'','stderr':''}
+        result = sanitizer.sanitize({'results':[run],'settings':{}}, omit_events=True)
+        self.assertEqual(result['results'][0]['comparison_invalid_reasons'],
+                         ['benchmark_setup_error'])
+
     def test_excludes_arbitrary_private_content_and_keeps_numeric_usage(self):
         secret = 'person@example.com /Users/person/private sk-ant-not-a-real-secret'
         event = {'type':'item.completed','item':{'type':'command_execution','command':secret,

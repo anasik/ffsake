@@ -189,7 +189,7 @@ def sanitize(report, timing_dir=None, omit_events=False):
         row.update({key: numeric(run.get(key)) for key in ('repetition', 'attempt', 'elapsed_ms', 'exit_code')})
         row['task'] = run.get('task') if run.get('task') in {'cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping'} else 'other'
         reasons = run.get('comparison_invalid_reasons')
-        row['comparison_invalid_reasons'] = [x for x in reasons if x in {'tool_profile_violation', 'provider_api_error'}] if isinstance(reasons, list) else []
+        row['comparison_invalid_reasons'] = [x for x in reasons if x in {'tool_profile_violation', 'provider_api_error', 'benchmark_setup_error'}] if isinstance(reasons, list) else []
         provider_errors = run.get('provider_errors')
         row['provider_error_count'] = len(provider_errors) if isinstance(provider_errors, list) else None
         if isinstance(run.get('reported_model'), str) and SAFE_NAME.fullmatch(run['reported_model']):
