@@ -64,6 +64,12 @@ fn output(state: &Arc<Mutex<State>>, s: &str) {
     st.truncated |= s.len() > remaining;
     st.output.push_str(&short(s, remaining));
 }
+fn continue_thread(thread: Option<i64>, stop: &serde_json::Value) -> Result<i64> {
+    thread
+        .or_else(|| stop["threadId"].as_i64())
+        .ok_or_else(|| "continue requires thread after configuration".into())
+}
+
 impl Client {
     fn spawn(
         c: &Configuration,
@@ -661,7 +667,7 @@ impl Client {
             }
             Action::Continue { thread, .. } => {
                 self.stopped()?;
-                let thread = thread.ok_or("continue requires thread after configuration")?;
+                let thread = continue_thread(thread, &self.state.lock().unwrap().stop)?;
                 self.invalidate();
                 self.state.lock().unwrap().status = "running".into();
                 self.request("continue", json!({"threadId":thread,"singleThread":false}))?
@@ -915,5 +921,18 @@ pub(crate) fn run(
         }
     } else {
         s.status = "terminated".into();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn continue_uses_stopped_thread_when_omitted() {
+        let stop = json!({"threadId": 7});
+        assert_eq!(continue_thread(None, &stop).unwrap(), 7);
+        assert_eq!(continue_thread(Some(2), &stop).unwrap(), 2);
+        assert!(continue_thread(None, &json!({})).is_err());
     }
 }

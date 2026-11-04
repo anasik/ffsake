@@ -12,7 +12,7 @@ def main():
     binary = Path(sys.argv[1]).resolve()
     tested = []
     for mode in ('normal', 'output', 'resume_during_inspect', 'invalidate_during_inspect',
-                 'bad_correlation', 'malformed', 'crash',
+                 'bad_correlation', 'malformed', 'crash', 'continue_without_thread',
                  'timeout', 'no_read', 'unsupported', 'cancel', 'eof', 'lifetime', 'reverse', 'running'):
         with tempfile.TemporaryDirectory(prefix='ffsake-dap-protocol-') as td:
             base = Path(td).resolve(); root = base / 'root'; root.mkdir()
@@ -40,7 +40,17 @@ def main():
                     c.close()
                 else:
                     c.wait(lambda s: s['status'] == 'configuring')
-                    if mode == 'running':
+                    if mode == 'continue_without_thread':
+                        c.action('continue', inspect=False)
+                        c.wait(lambda s: s['status'] == 'stopped')
+                        c.action('continue', inspect=False)
+                        c.wait(lambda s: s['status'] == 'stopped')
+                        calls = [json.loads(line) for line in
+                                 (base / 'calls.jsonl').read_text().splitlines()]
+                        assert any(call['command'] == 'continue'
+                                   and call['arguments']['threadId'] == 1 for call in calls)
+                        c.stop()
+                    elif mode == 'running':
                         c.action('continue', inspect=False)
                         assert c.call('read', path='local.txt')['text'] == 'local'
                         # Even corrupted/revoked access exports cannot prevent cleanup.
