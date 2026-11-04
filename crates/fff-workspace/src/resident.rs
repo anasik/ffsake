@@ -36,7 +36,10 @@ pub struct ReadFile {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
-    WorkspaceInfo {},
+    WorkspaceInfo {
+        #[serde(default)]
+        files: Vec<ReadFile>,
+    },
     DebugAttach {
         configuration: String,
         pid: u32,
@@ -610,24 +613,65 @@ impl Resident {
         self.session.workspace().access.clone()
     }
 
+    fn read_file_batch(&self, files: Vec<ReadFile>) -> Result<Vec<Value>> {
+        if files.is_empty() || files.len() > 32 {
+            return Err("files must contain 1..=32 entries".into());
+        }
+        for file in &files {
+            self.access()
+                .authorize(std::path::Path::new(&file.path), false)?;
+        }
+        let mut results = Vec::new();
+        let mut remaining = 1024 * 1024;
+        for file in files {
+            if file.path.len() > 4096
+                || file.start == Some(0)
+                || file.end == Some(0)
+                || matches!((file.start, file.end), (Some(start), Some(end)) if start > end)
+            {
+                return Err("invalid batch read path or line range".into());
+            }
+            match self.session.workspace().read_text_bounded(
+                std::path::Path::new(&file.path),
+                file.start,
+                file.end,
+                256 * 1024,
+            )? {
+                Some(read) => {
+                    if read.text.len() > remaining {
+                        return Err("batch read output exceeds 1 MiB text limit".into());
+                    }
+                    remaining -= read.text.len();
+                    results.push(json!({"path":file.path,"status":"ok","read":read}));
+                }
+                None => results.push(json!({"path":file.path,"status":"missing"})),
+            }
+        }
+        Ok(results)
+    }
+
     pub fn execute(&mut self, request: Request) -> Result<Value> {
         // Cancellation must work even after a host export becomes invalid.
         if !matches!(&request, Request::Debug { .. } | Request::TaskCancel { .. }) {
             self.access().refresh()?;
         }
         match request {
-            Request::WorkspaceInfo {} => {
+            Request::WorkspaceInfo { files } => {
                 let mut entries = self.session.workspace().list_dir(".")?;
                 let entries_truncated = entries.len() > 100;
                 entries.truncate(100);
-                Ok(json!({
+                let mut value = json!({
                     "root": self.session.workspace().root(),
                     "scope": "primary project",
                     "note": "Confirm this canonical root matches the host session worktree before editing or running tasks.",
                     "entries": entries,
                     "entries_truncated": entries_truncated,
                     "debug": self.debugger.summary()
-                }))
+                });
+                if !files.is_empty() {
+                    value["reads"] = json!(self.read_file_batch(files)?);
+                }
+                Ok(value)
             }
             Request::DebugAttach { configuration, pid } => {
                 self.index_dirty = true;
@@ -653,42 +697,7 @@ impl Resident {
             Request::Read { path, start, end } => Ok(serde_json::to_value(
                 self.session.workspace().read_text(path, start, end)?,
             )?),
-            Request::ReadFiles { files } => {
-                if files.is_empty() || files.len() > 32 {
-                    return Err("files must contain 1..=32 entries".into());
-                }
-                for file in &files {
-                    self.access()
-                        .authorize(std::path::Path::new(&file.path), false)?;
-                }
-                let mut results = Vec::new();
-                let mut remaining = 1024 * 1024;
-                for file in files {
-                    if file.path.len() > 4096
-                        || file.start == Some(0)
-                        || file.end == Some(0)
-                        || matches!((file.start, file.end), (Some(start), Some(end)) if start > end)
-                    {
-                        return Err("invalid batch read path or line range".into());
-                    }
-                    match self.session.workspace().read_text_bounded(
-                        std::path::Path::new(&file.path),
-                        file.start,
-                        file.end,
-                        256 * 1024,
-                    )? {
-                        Some(read) => {
-                            if read.text.len() > remaining {
-                                return Err("batch read output exceeds 1 MiB text limit".into());
-                            }
-                            remaining -= read.text.len();
-                            results.push(json!({"path":file.path,"status":"ok","read":read}));
-                        }
-                        None => results.push(json!({"path":file.path,"status":"missing"})),
-                    }
-                }
-                Ok(json!({"files":results}))
-            }
+            Request::ReadFiles { files } => Ok(json!({"files": self.read_file_batch(files)?})),
             Request::List { path } => Ok(serde_json::to_value(
                 self.session.workspace().list_dir(path)?,
             )?),
