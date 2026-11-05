@@ -765,6 +765,27 @@ Against the retained frozen-old medians, payroll is **−33.8% elapsed and −49
 
 The [sanitized probe index](agent-benchmark-runs/20261105-efficiency/probe-lines.json) preserves per-run metrics. This closes the performance target while retaining a 5/5 correctness result.
 
+### Unfamiliar debugger generalization (2026-11-05)
+
+Candidate `3e9a9c8cc89d65bb090da590caea4bea1b9aea504e9d293c0ef5173b0889fcca` from `2b78219` was frozen before scoring. Three previously unused fixtures were added: `debug_inventory` (larger multi-module boundary bug), `debug_intervals` (adjacent interval boundary), and `debug_cache` (missing-key exception). Each has a program/test verifier and a runtime-marker workflow check; prompts contain neither fixes nor expected answers. Model-free setup preflights passed before any scored attempt.
+
+Thirty paid attempts ran, five native and five FFSAKE per fixture, counterbalanced. All were valid and none timed out. Artifact correctness was **5/5 in both arms on every fixture**. Harness completion, which also requires observed debugger runtime evidence, was mixed.
+
+| Fixture / arm | Artifact | Harness correct | Calls | Seconds | Total input | Cached / uncached | Output | Cost/run |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Inventory native | 5/5 | 2/5 | 6 | 13.9 | 154,935 | 141,494 / 12 | 1,053 | $0.0834 |
+| Inventory FFSAKE | 5/5 | 0/5 | 9 | 17.5 | 232,570 | 214,984 / 18 | 1,240 | $0.1044 |
+| Intervals native | 5/5 | 1/5 | 7 | 13.8 | 154,743 | 139,841 / 12 | 1,104 | $0.0841 |
+| Intervals FFSAKE | 5/5 | 5/5 | 8 | 16.2 | 203,987 | 185,880 / 16 | 1,100 | $0.1057 |
+| Cache native | 5/5 | 3/5 | 8 | 18.5 | 185,347 | 170,962 / 14 | 1,327 | $0.0868 |
+| Cache FFSAKE | 5/5 | 2/5 | 10 | 16.6 | 208,402 | 189,171 / 16 | 1,297 | $0.1049 |
+
+Overall FFSAKE used **7/15** harness-correct runs versus native **6/15**, but artifact completion was **15/15** in both arms. FFSAKE had lower harness completion on inventory (0/5 vs 2/5) and cache (2/5 vs 3/5), and higher on intervals (5/5 vs 1/5). Every FFSAKE run used at least one native Bash/Read/Edit fallback, as permitted by the task prompt.
+
+The overall median paired ratios were **elapsed 1.067** and **input 1.282**; the input target was ≤1.10 and elapsed target ≤1.0. Total cost was $1.3017 for native and $1.5822 for FFSAKE. The [sanitized per-run index](agent-benchmark-runs/20261105-generalization/debug.json) contains per-run metrics and content-free event shapes.
+
+**Verdict: partially met.** Artifact correctness generalized across all three unfamiliar fixtures with no regression, and safeguards remained intact. The efficiency and harness-completion criteria did not: FFSAKE was slower and used more input overall, and failed to produce observed debugger runtime evidence on more inventory and cache runs than native. No candidate, fixture or verifier changes were made during scoring, and no attempts were rerun.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

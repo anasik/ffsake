@@ -51,3 +51,7 @@ The [debug-source A/B index](20261105-efficiency/ab-debug-source.json) preserves
 The [one-shot probe index](20261105-efficiency/probe-step.json) records the 20-attempt native-versus-probe comparison. Probe changed was 5/5 correct on both fixtures, payroll 16.9 s versus native 16.5 s, shipping 13.3 s versus native 14.2 s; input remained about 28–32% above native.
 
 The [near-native probe index](20261105-efficiency/probe-lines.json) records the final 20-attempt native-versus-probe comparison. Changed was 5/5 correct on both fixtures; payroll measured 16.9 s versus native 17.2 s and shipping 12.1 s versus native 13.6 s.
+
+## 2026-11-05 Generalization debug
+
+The [generalization index](20261105-generalization/debug.json) records 30 counterbalanced paid attempts on three previously unused debug fixtures. Artifact correctness was 5/5 in both arms on every fixture. Harness completion was 7/15 for FFSAKE versus 6/15 native; overall median paired ratios were 1.067 elapsed and 1.282 input, so the efficiency criteria were not met.
