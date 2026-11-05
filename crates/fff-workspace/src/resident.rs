@@ -53,6 +53,10 @@ pub enum Request {
         #[serde(default)]
         terminate_after_stop: bool,
     },
+    DebugProbe {
+        configuration: String,
+        breakpoints: Vec<DebugBreakpoint>,
+    },
     Debug {
         request: crate::debug::Action,
     },
@@ -708,6 +712,13 @@ impl Resident {
             } => {
                 self.index_dirty = true;
                 self.debug_start(&configuration, breakpoints, resume, terminate_after_stop)
+            }
+            Request::DebugProbe {
+                configuration,
+                breakpoints,
+            } => {
+                self.index_dirty = true;
+                self.debug_start(&configuration, breakpoints, true, true)
             }
             Request::Debug { request } => {
                 self.index_dirty = true;
