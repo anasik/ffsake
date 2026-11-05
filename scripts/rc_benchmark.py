@@ -417,6 +417,7 @@ def workflow_evidence(agent, task, calls, output):
         ffsake_inspect = False
         ffsake_state = False
         auto_inspect = False
+        combined_start = False
         for call in calls:
             if 'ffsake_debug' not in call['name']:
                 continue
@@ -429,11 +430,16 @@ def workflow_evidence(agent, task, calls, output):
             action = request.get('action') if isinstance(request, dict) else None
             if action == 'continue' and _nested_key(payload, 'inspection'):
                 auto_inspect = True
+            if (call['name'].endswith('ffsake_debug_launch')
+                    and call['input'].get('resume') is True
+                    and _nested_key(payload, 'inspection')):
+                combined_start = True
+                auto_inspect = True
             if any(variable['name'] == markers[0]
                    and _runtime_value_matches(variable['value'], markers[1])
                    for variable in variables):
                 ffsake_state = True
-        ffsake_resume = 'continue' in actions
+        ffsake_resume = 'continue' in actions or combined_start
         native_debugger = any(any(token in command.lower() for token in _DEBUGGER_TOKENS)
                               for command in commands)
         native_state = _native_debugger_state(calls, markers)

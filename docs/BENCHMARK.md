@@ -718,6 +718,23 @@ The corrected traces returned four stack frames and all scopes on every automati
 
 Model-free response measurements using the exact debugpy policy dropped the combined launch response from 3,369 to 2,592 bytes and the second-stop response from 2,418 to 1,634 bytes, saving about 1,561 bytes per observed run across both refinements. The 17-case DAP smoke, wait smoke, exact-adapter preflight (`adjustments=[50.0]`) and all prior smokes pass. No paid run has measured this candidate; no time or token claim is made.
 
+### Efficiency A/B measurement (2026-11-05)
+
+A five-repetition, counterbalanced old-versus-changed comparison was run on both debugger fixtures with current Claude Code. The frozen old binary was `e57a33cc28ac414cf142437bbce53005280c2ae665700e4e1a343f3eec2af814` from `6899b6a`; the changed binary was `454a33945bb9b6869458b09d63f6a54e35caf112a3c8777adc4dbfdc4212efc0` from `61e96d8`. Thirty paid attempts were made (native, old and changed for each fixture). The old shipping cell had one invalid tool-profile attempt; its correctness is retained and its timing excluded. Total reported cost was $3.4137.
+
+| Fixture / mode | Correct | Valid | Calls | Seconds | Total input | Output | Cost/run |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Payroll native | 5/5 | 5/5 | 6 | 13.8 | 156,521 | 1,108 | $0.0802 |
+| Payroll old | 4/5 | 5/5 | 13 | 25.6 | 342,105 | 1,922 | $0.1399 |
+| Payroll changed | 5/5 | 5/5 | 11 | 20.5 | 334,274 | 1,563 | $0.1240 |
+| Shipping native | 5/5 | 5/5 | 7 | 13.7 | 156,012 | 1,068 | $0.0791 |
+| Shipping old | 5/5 | 4/5 | 12.5 | 18.2 | 305,127 | 1,494 | $0.1256 |
+| Shipping changed | 5/5 | 5/5 | 10 | 18.1 | 274,671 | 1,193 | $0.1139 |
+
+Changed versus old: payroll elapsed **−19.9%**, input **−2.3%**, calls **−15.4%**; shipping elapsed **−0.8%**, input **−10.0%**, calls **−20.0%**. Changed correctness was 5/5 on both fixtures, so there was no correctness regression. The 30% elapsed and input target is **not met on either fixture**. Native remained faster on both: payroll 13.8 s / 156,521 input and shipping 13.7 s / 156,012.
+
+The 14→9 call projection was not realised: changed payroll median was 11 calls and shipping 10. Traces still contain extra searches, duplicate launches, and explicit breakpoint/continue turns in several repetitions. The verifier now recognizes a combined launch with `resume` and returned inspection as launch/resume/automatic inspection; that correction raises payroll changed from 4/5 to 5/5 and shipping changed from 2/5 to 5/5 without a rerun. The [sanitized A/B index](agent-benchmark-runs/20261105-efficiency/ab.json) preserves per-run metrics.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

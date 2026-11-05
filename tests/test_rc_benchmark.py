@@ -162,6 +162,15 @@ class FixtureTests(unittest.TestCase):
             {'name':'command_execution','text':"printf 'p adjustments\\n' | python3 -m pdb payroll.py",'input':{},
              'output':''}], '')
         self.assertFalse(native_command_only['passed'])
+        combined = rc.workflow_evidence('claude', 'debug', [
+            {'name':'mcp__ffsake__ffsake_debug_launch',
+             'text':'{"configuration":"payroll","resume":true}',
+             'input':{'configuration':'payroll','breakpoints':[{'path':'payroll.py','lines':[18]}],
+                      'resume':True},
+             'output':'text\n{"ok":true,"result":{"status":"stopped","result":{"ok":true,"result":{"inspection":{"scopes":[{"variables":[{"name":"adjustments","value":"[50.0]"}]}]}}}}}'}], '')
+        self.assertTrue(combined['passed'])
+        self.assertTrue(combined['details']['ffsake_resumed'])
+        self.assertTrue(combined['details']['auto_inspection'])
         native_source_list = rc.workflow_evidence('codex', 'debug', [
             {'name':'command_execution','text':"printf 'p adjustments\\nl\\nq\\n' | python3 -m pdb payroll.py",'input':{},
              'output':'(Pdb) l\n  7     adjustments = [50.0]'}], '')
