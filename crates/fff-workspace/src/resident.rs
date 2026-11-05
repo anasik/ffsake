@@ -423,6 +423,7 @@ impl Resident {
         breakpoints: Vec<DebugBreakpoint>,
         resume: bool,
         terminate_after_stop: bool,
+        step_once: bool,
     ) -> Result<Value> {
         let launched = self.debugger.launch(
             configuration,
@@ -484,6 +485,27 @@ impl Resident {
                 && let Some(value) = self.debugger.capabilities(session)
             {
                 map.insert("capabilities".into(), value);
+            }
+        }
+        if step_once
+            && snapshot["status"].as_str() == Some("stopped")
+            && let Some(thread) = snapshot["stop"]["threadId"].as_i64()
+        {
+            self.debugger.execute(
+                crate::debug::Action::Next {
+                    session,
+                    thread,
+                    inspect: true,
+                },
+                &access,
+            )?;
+            let next = self
+                .prepare_debug_wait(session, crate::debug::WaitUntil::Result, 1000)?
+                .wait();
+            if let Some(inspection) = next.pointer("/result/result/inspection").cloned()
+                && let Some(map) = snapshot.as_object_mut()
+            {
+                map.insert("next_inspection".into(), inspection);
             }
         }
         if terminate_after_stop && snapshot["status"].as_str() == Some("stopped") {
@@ -711,14 +733,20 @@ impl Resident {
                 terminate_after_stop,
             } => {
                 self.index_dirty = true;
-                self.debug_start(&configuration, breakpoints, resume, terminate_after_stop)
+                self.debug_start(
+                    &configuration,
+                    breakpoints,
+                    resume,
+                    terminate_after_stop,
+                    false,
+                )
             }
             Request::DebugProbe {
                 configuration,
                 breakpoints,
             } => {
                 self.index_dirty = true;
-                self.debug_start(&configuration, breakpoints, true, true)
+                self.debug_start(&configuration, breakpoints, true, true, true)
             }
             Request::Debug { request } => {
                 self.index_dirty = true;

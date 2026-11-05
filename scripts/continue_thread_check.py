@@ -46,18 +46,22 @@ def preflight(binary, debug_python, timeout=300):
         result = {}
         try:
             launched = client.call('debug_probe', configuration='payroll',
-                                   breakpoints=[{'path': 'payroll.py', 'lines': 18}])
+                                   breakpoints=[{'path': 'payroll.py', 'lines': 17}])
             client.session = launched['session']
             adapter_pid = launched.get('adapter_pid')
             assert launched['stop']['reason'] == 'breakpoint', launched
             assert launched.get('cleaned') is True, launched
             inspection = launched['result']['result']['inspection']
+            next_inspection = launched.get('next_inspection', {})
             variables = [item for scope in inspection.get('scopes', [])
                          for item in scope.get('variables', [])]
+            next_variables = [item for scope in next_inspection.get('scopes', [])
+                              for item in scope.get('variables', [])]
             assert any(item['name'] == 'adjustments' and item['value'] == '[50.0]'
-                       for item in variables), variables
+                       for item in next_variables), (variables, next_variables)
             result = {'ok': True, 'adapter_path': str(debug_python),
                       'adapter_pid': adapter_pid, 'variables': variables,
+                      'next_variables': next_variables,
                       'stop': launched['stop'], 'cleaned': True}
         finally:
             if client.p.poll() is None:
