@@ -433,6 +433,38 @@ impl Debugger {
             json!({"session":self.next,"status":"starting","next":"wait until ready/configuring, set breakpoints, then continue to finish configuration","executes_project_code":true,"filesystem_sandbox":false,"mode":if pid.is_some(){"attach"}else{"launch"},"target_pid":pid}),
         )
     }
+    pub fn launch_programs(&self, root: &Path) -> Vec<(String, PathBuf)> {
+        let root_text = root.to_string_lossy();
+        let mut found = Vec::new();
+        for (name, configuration) in &self.configurations.configurations {
+            let Some(program) = configuration
+                .launch
+                .as_ref()
+                .and_then(|value| value.get("program"))
+                .and_then(Value::as_str)
+            else {
+                continue;
+            };
+            let program = program.replace("${workspaceFolder}", &root_text);
+            let path = PathBuf::from(program);
+            let path = if path.is_absolute() {
+                path
+            } else {
+                root.join(path)
+            };
+            if path.starts_with(root)
+                && path.is_file()
+                && !found.iter().any(|(_, item)| item == &path)
+            {
+                found.push((name.clone(), path));
+                if found.len() == 2 {
+                    break;
+                }
+            }
+        }
+        found
+    }
+
     pub fn summary(&self) -> Value {
         let capabilities = self
             .session

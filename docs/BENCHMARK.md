@@ -739,6 +739,12 @@ The 14→9 call projection was not realised: changed payroll median was 11 calls
 
 The A/B traces exposed a concrete retry: payroll changed attempt 1 sent `lines:17` and shipping changed attempt 4 sent `lines:20`; both received `invalid type: integer, expected a sequence` and retried with an array. `breakpoints.lines` now accepts either one line number or an array, preserving the same line bounds and path authorization. The protocol smoke exercises the scalar form and the Rust parser test covers both forms. This removes one avoidable turn when an agent uses the scalar shape; it has not been paid-measured.
 
+### Debug-program source in workspace context (2026-11-05)
+
+The A/B changed traces repeatedly called `ffsake_workspace_info`, then `ffsake_read_files` or native `Read` for the debug program before launch. When no explicit files are supplied, `ffsake_workspace_info` now includes bounded source for up to two configured debug launch programs that lie inside the workspace, at no more than 64 KiB each. Explicit `files` takes precedence, and `ffsake_read_files`/native reads remain available.
+
+Model-free exact-policy output is 1,680 bytes including the 897-byte payroll source, replacing the separate workspace-info/read round trip. The exact-adapter preflight checks the returned `debug_source` before launching, then still verifies line-18 `adjustments=[50.0]` and cleanup. No paid run has measured this candidate; no time or token claim is made.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh
