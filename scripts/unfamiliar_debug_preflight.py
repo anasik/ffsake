@@ -51,7 +51,7 @@ def main():
             policy = root / '.ffsake/rc-debug.json'
             configured = json.loads(policy.read_text())['configurations'][Path(task['debug_program']).stem]
             assert configured['argv'][0] == str(debug_python), configured
-            client = debug_smoke.Client(binary, root, policy)
+            client = debug_smoke.Client(binary, root, policy, profile='core')
             session = None
             launched = {}
             try:

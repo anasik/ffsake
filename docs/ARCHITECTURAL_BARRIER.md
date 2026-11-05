@@ -63,22 +63,31 @@ Projected totals become **130 calls versus 113** (edit 50 vs 44, ledger 45 vs
 The MCP server ships its tool schemas and instructions into the host context.
 Measured from `tools/list` and `initialize`:
 
-| Profile | Tools | Tool bytes before | Tool bytes after | Instructions before | Instructions after |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| core | 39 | 35,826 | 30,927 | 1,772 | 885 |
-| editing | 25 | 19,578 | 17,121 | 660 | 538 |
-| all | 55 | 65,749 | 57,719 | 1,772 | 885 |
+| Profile | Tools before → after | Context before | After trim | After curation |
+| --- | ---: | ---: | ---: | ---: |
+| core | 39 → 28 | 37,598 | 31,812 | **21,814** |
+| editing | 25 → 20 | 20,238 | 17,659 | **15,206** |
+| all | 55 → 50 | 67,521 | 58,604 | **56,151** |
 
-The 2026-11-05 trim rewrote 52 descriptions and both instruction blocks,
-removing 15.4% of core context and 12.9% of editing context while preserving
-every tool, parameter, authorization rule and cleanup path. At roughly four
-bytes per token this is about 1,450 fewer core tokens per request.
+The description trim rewrote 52 descriptions and both instruction blocks. The
+curation step then removed catalog entries without removing dispatch:
 
-This is real but secondary: per-call input was already equal to native, so
-catalog size cannot explain the 37% total-input gap. Its plausible role is
-indirect: a 31 KB, 39-tool catalog may cause the host to defer MCP tools behind
-`ToolSearch`. That hypothesis is consistent with the 17 `ToolSearch` turns but
-has not been isolated experimentally.
+- The five single-operation preview wrappers (`preview_create`, `copy`, `move`,
+  `delete`, `edit`) are no longer advertised in any profile because
+  `ffsake_preview_files` covers them. The aliases remain callable, so existing
+  clients and tests keep working.
+- `core` additionally omits archive browsing, sticky target, explicit refresh,
+  textual rename and advanced Git branch/fetch/push. Those remain advertised in
+  `all` and mostly in `editing`. Core is now 28 tools and **20.9 KB of tools +
+  0.9 KB of instructions = 21.8 KB**, against the 20 KB target.
+
+At roughly four bytes per token, core context fell from about 9,400 to 5,450
+tokens per request (-42%). Default `all` context fell 16.8% and editing 24.9%.
+Per-call input was already equal to native, so catalog size cannot explain the
+37% total-input gap by itself. Its plausible role is indirect: a 31 KB,
+39-tool catalog may cause the host to defer MCP tools behind `ToolSearch`.
+That hypothesis is consistent with the 17 `ToolSearch` turns but has not been
+isolated experimentally; the next paid batch must measure it.
 
 ## Server latency is not the bottleneck
 
@@ -124,18 +133,22 @@ must be frozen before scoring and reported separately.
 
 ## Concrete redesign
 
-### R1. Catalog diet and consolidation (partially implemented)
+### R1. Catalog diet and consolidation (implemented for core)
 
-- Done: 52 descriptions rewritten, instruction blocks halved; core context
-  down 15.4%.
-- Next: consolidate the ten `ffsake_rust_*` snapshot tools into
-  `ffsake_semantic` or move them behind an opt-in `lang` profile. Those tools
-  cost about 7 KB of the 31 KB core catalog and are unused by non-Rust tasks.
-- Target: core catalog at or below 20 KB, with all capabilities still available
-  through an explicit profile or the consolidated semantic tool.
-- Test: if the host stops issuing `ToolSearch` for a smaller catalog, the turn
-  projection reaches 113 vs 113 and parity is plausible. If it does not, R3 is
-  required.
+- Done: 52 descriptions rewritten and instructions halved; core tools drop from
+  39 to 28 and core context from 37,598 to 21,814 bytes (-42%). Default `all`
+  context drops 16.8%.
+- Done: the five redundant single-operation preview wrappers are hidden from all
+  catalogs while remaining dispatchable; `ffsake_preview_files` is the advertised
+  path. Core also omits archive, sticky target, explicit refresh, textual rename
+  and remote Git operations, which stay in `all`.
+- Remaining: the twelve `ffsake_rust_*` snapshot tools still cost about 7 KB of
+  the 56 KB `all` catalog. Consolidating them into `ffsake_semantic` or a `lang`
+  profile would reduce the default catalog further, but they are not in core and
+  do not affect the 20.9 KB core target.
+- Test: if the host stops issuing `ToolSearch` for the 21.8 KB core context, the
+  turn projection reaches 113 vs 113 and parity is plausible. If it does not,
+  R3 is required.
 
 ### R2. Composite guarded operations
 
@@ -176,8 +189,8 @@ catalog and the discovery turn entirely, matching native's tool loop.
 ## Remaining gap and decision
 
 After the implemented consolidations, projected calls are 130 vs 113, with all
-17 remaining extra turns attributable to `ToolSearch`. Catalog trimming reduced
-fixed context by 15.4% but cannot remove those turns by itself. The next
-decision is whether to fund a bounded validation of the trimmed multi-stop
-candidate, or to proceed directly to R1's Rust-tool consolidation and R3's CLI
-shim, which are the only changes with a credible path to turn parity.
+17 remaining extra turns attributable to `ToolSearch`. Core context is now
+21.8 KB, under the 20 KB tool target, so the next measurement is whether a lean
+core catalog reduces `ToolSearch` turns. If it does not, R3's CLI shim is the
+only remaining change with a credible path to turn parity; R1's Rust-tool
+consolidation would shrink the default `all` catalog but not core turns.

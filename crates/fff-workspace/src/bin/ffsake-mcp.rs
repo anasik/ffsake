@@ -16,6 +16,23 @@ enum ToolProfile {
 }
 
 impl ToolProfile {
+    /// Tools advertised in tools/list. Dispatch (`allows`) keeps deprecated
+    /// aliases callable without paying their catalog cost.
+    fn advertises(self, name: &str) -> bool {
+        if !self.allows(name) {
+            return false;
+        }
+        let preview_alias = matches!(
+            name,
+            "ffsake_preview_create"
+                | "ffsake_preview_copy"
+                | "ffsake_preview_move"
+                | "ffsake_preview_delete"
+                | "ffsake_preview_edit"
+        );
+        !preview_alias
+    }
+
     fn allows(self, name: &str) -> bool {
         match self {
             Self::All => true,
@@ -52,8 +69,6 @@ impl ToolProfile {
                     | "ffsake_git_review"
                     | "ffsake_git_mutate"
                     | "ffsake_git_branches"
-                    | "ffsake_git_operation_review"
-                    | "ffsake_git_operation"
                     | "ffsake_debug_probe"
                     | "ffsake_debug_launch"
                     | "ffsake_debug_attach"
@@ -66,17 +81,13 @@ impl ToolProfile {
                     | "ffsake_task_cancel"
                     | "ffsake_read_files"
                     | "ffsake_list"
-                    | "ffsake_target"
                     | "ffsake_search"
-                    | "ffsake_archive"
-                    | "ffsake_preview_matches"
                     | "ffsake_preview_edit"
-                    | "ffsake_preview_rename"
+                    | "ffsake_preview_matches"
                     | "ffsake_apply"
                     | "ffsake_undo"
                     | "ffsake_redo"
                     | "ffsake_release"
-                    | "ffsake_refresh"
                     | "ffsake_preview_files"
                     | "ffsake_preview_create"
                     | "ffsake_preview_copy"
@@ -684,7 +695,7 @@ fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments
 fn catalog(runtime: &Resident, profile: ToolProfile) -> Vec<Value> {
     let mut catalog = tools()
         .into_iter()
-        .filter(|t| t["name"].as_str().is_some_and(|n| profile.allows(n)))
+        .filter(|t| t["name"].as_str().is_some_and(|n| profile.advertises(n)))
         .collect::<Vec<_>>();
     if runtime.access().is_persistent() {
         for (name, description, schema, approval) in [
@@ -1267,5 +1278,21 @@ mod tests {
         assert!(ToolProfile::Editing.allows("ffsake_read_files"));
         assert!(!ToolProfile::Editing.allows("ffsake_run_task"));
         assert!(!ToolProfile::Editing.allows("ffsake_future_execution"));
+    }
+
+    #[test]
+    fn deprecated_preview_aliases_stay_dispatchable_without_catalog_cost() {
+        for profile in [ToolProfile::All, ToolProfile::Core, ToolProfile::Editing] {
+            assert!(profile.allows("ffsake_preview_edit"));
+            assert!(!profile.advertises("ffsake_preview_edit"));
+        }
+        assert!(ToolProfile::All.advertises("ffsake_preview_rename"));
+        assert!(!ToolProfile::Core.allows("ffsake_preview_rename"));
+        assert!(!ToolProfile::Core.advertises("ffsake_preview_rename"));
+        assert!(!ToolProfile::Core.allows("ffsake_git_operation"));
+        assert!(!ToolProfile::Core.allows("ffsake_archive"));
+        assert!(!ToolProfile::Core.allows("ffsake_target"));
+        assert!(ToolProfile::Editing.allows("ffsake_archive"));
+        assert!(ToolProfile::Editing.advertises("ffsake_archive"));
     }
 }

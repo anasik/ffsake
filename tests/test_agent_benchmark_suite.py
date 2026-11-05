@@ -20,7 +20,7 @@ class HostSetupTests(unittest.TestCase):
             text=True, capture_output=True)
 
     def test_editing_profile_is_selectable_without_broadening_approval(self):
-        self.assertEqual(len(suite.profile_tools('editing')), 25)
+        self.assertEqual(len(suite.profile_tools('editing')), 20)
         self.assertNotIn('ffsake_run_task', suite.profile_tools('editing'))
         for host in ('claude', 'codex', 'opencode'):
             with self.subTest(host=host), tempfile.TemporaryDirectory() as td:

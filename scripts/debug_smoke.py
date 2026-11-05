@@ -14,8 +14,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Client:
-    def __init__(self, binary, root, policy):
-        self.p = subprocess.Popen([str(binary), str(root), '--debug', str(policy)],
+    def __init__(self, binary, root, policy, profile=None):
+        arguments = [str(binary), str(root), '--debug', str(policy)]
+        if profile:
+            arguments += ['--profile', profile]
+        self.p = subprocess.Popen(arguments,
                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE, text=True)
         self.n = 0

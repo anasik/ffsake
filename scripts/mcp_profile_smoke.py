@@ -8,7 +8,7 @@ import subprocess
 import sys
 import tempfile
 
-from agent_benchmark_suite import FFSAKE_CORE_TOOLS, FFSAKE_TOOLS
+from agent_benchmark_suite import FFSAKE_CORE_TOOLS, FFSAKE_EDITING_TOOLS, FFSAKE_TOOLS
 
 
 def main():
@@ -44,16 +44,12 @@ def main():
         assert full == catalog(["--profile", "all"])
         core = catalog(["--profile", "core"])
         editing = catalog(["--profile", "editing"])
-        editing_excluded = {'ffsake_debug_probe', 'ffsake_debug_launch', 'ffsake_debug_attach', 'ffsake_debug',
-                            'ffsake_task_register', 'ffsake_run_task', 'ffsake_task_status',
-                            'ffsake_task_output', 'ffsake_task_cancel', 'ffsake_git_review',
-                            'ffsake_git_mutate', 'ffsake_git_branches', 'ffsake_git_operation_review',
-                            'ffsake_git_operation'}
-        editing_names = set(FFSAKE_CORE_TOOLS) - editing_excluded
+        editing_names = set(FFSAKE_EDITING_TOOLS)
         assert {tool["name"] for tool in full} == set(FFSAKE_TOOLS)
         assert {tool["name"] for tool in core} == set(FFSAKE_CORE_TOOLS)
+        assert {tool["name"] for tool in editing} == editing_names
         assert core == [tool for tool in full if tool["name"] in FFSAKE_CORE_TOOLS]
-        assert editing == [tool for tool in core if tool['name'] in editing_names]
+        assert editing == [tool for tool in full if tool["name"] in editing_names]
         assert path.read_bytes() == source.encode() and not sentinel.exists()
         for arguments in (["--profile"], ["--profile", "unknown"], ["--profile", "core", "extra"], ["--other", "core"]):
             rejected = subprocess.run([str(binary), str(base / "missing-workspace"), *arguments],

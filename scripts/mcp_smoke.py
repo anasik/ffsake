@@ -50,7 +50,7 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         listed = send(proc, {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
         names = {tool["name"] for tool in listed["result"]["tools"]}
         assert names == set(FFSAKE_TOOLS), (names, FFSAKE_TOOLS)
-        assert {"ffsake_search", "ffsake_preview_matches", "ffsake_preview_edit", "ffsake_apply", "ffsake_undo"} <= names
+        assert {"ffsake_search", "ffsake_preview_matches", "ffsake_preview_files", "ffsake_apply", "ffsake_undo"} <= names
 
         found = send(proc, {
             "jsonrpc": "2.0",
@@ -406,9 +406,10 @@ with tempfile.TemporaryDirectory(prefix="ffsake-mcp-") as temp:
         print("MCP multiline preview/edit/apply/undo/redo and stale-content guards PASS")
         # File operations share the preview/apply/history flow. Destinations
         # must be absent; source and destination state are frozen at preview.
-        names_expected = {"ffsake_preview_create", "ffsake_preview_copy",
-                          "ffsake_preview_move", "ffsake_preview_delete"}
-        assert names_expected <= names
+        # The batch preview tool is advertised; the single-operation preview
+        # aliases remain dispatchable for backward compatibility but are no
+        # longer catalog entries.
+        assert "ffsake_preview_files" in names
         created_path = root / "nested" / "created.txt"
         create = call("ffsake_preview_create", {"path": "nested/created.txt", "content": "new café\n"})
         assert not created_path.exists()
