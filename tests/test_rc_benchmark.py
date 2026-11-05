@@ -20,7 +20,7 @@ class FixtureTests(unittest.TestCase):
         self.assertTrue(all(set(order) == set(names) for order in orders))
 
     def test_paired_worktrees_and_reference_fixes(self):
-        for name in ('cross', 'build', 'git', 'debug'):
+        for name in ('cross', 'build', 'git', 'debug', 'debug_inventory', 'debug_intervals', 'debug_cache'):
             with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
                 base = Path(td).resolve()
                 template, left, right = base / 'template', base / 'left', base / 'right'
@@ -44,10 +44,15 @@ class FixtureTests(unittest.TestCase):
                     if name == 'git':
                         run = fixtures.command(left, 'git', 'commit', '--only', '-m', 'Fix total calculation', 'calculator.py')
                         self.assertEqual(run.returncode, 0, run.stderr)
-                else:
+                elif name == 'debug':
                     path = left / 'payroll.py'
                     path.write_text(path.read_text().replace('def total_pay(hours, rate, adjustments=[]):',
                         'def total_pay(hours, rate, adjustments=None):\n    if adjustments is None:\n        adjustments = []'))
+                else:
+                    for path, content in state['reference'].items():
+                        target = left / path
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        target.write_text(content)
                 self.assertTrue(task['verify'](left, state)[0], name)
                 self.assertFalse(task['verify'](right, state)[0])
 

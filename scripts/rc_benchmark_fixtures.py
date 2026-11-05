@@ -106,6 +106,85 @@ def debug_shipping_verify(root, state):
     return result.returncode == 0 and 'ana' in result.stdout and '50.0' in result.stdout, {'exit_code': result.returncode, 'stdout': result.stdout}
 
 
+def debug_inventory_fixture(root):
+    files = {
+        'inventory/__init__.py': '"""Small inventory package."""\n',
+        'inventory/catalog.py': "UNIT_PRICES = {'widget': 10.0, 'gadget': 25.0, 'cable': 2.5}\n",
+        'inventory/pricing.py': 'def subtotal(quantity, unit_price):\n    return round(quantity * unit_price, 2)\n',
+        'inventory/discounts.py': 'def volume_rate(quantity):\n    if quantity > 10:\n        return 0.10\n    return 0.0\n',
+        'inventory/orders.py': 'from .discounts import volume_rate\nfrom .pricing import subtotal\n\ndef calculate_order(order, prices):\n    amount = subtotal(order["quantity"], prices[order["sku"]])\n    return round(amount * (1.0 - volume_rate(order["quantity"])), 2)\n',
+        'inventory/reports.py': 'def describe(order):\n    return f"{order[\'quantity\']} x {order[\'sku\']}"\n',
+        'inventory/validation.py': 'def valid_order(order):\n    return order.get("quantity", 0) > 0 and "sku" in order\n',
+        'main.py': 'from inventory.catalog import UNIT_PRICES\nfrom inventory.orders import calculate_order\n\norder = {"sku": "widget", "quantity": 10}\nactual = calculate_order(order, UNIT_PRICES)\nexpected = 90.0\nprint(f"actual={actual:.2f}")\nprint(f"expected={expected:.2f}")\nraise SystemExit(0 if actual == expected else 1)\n',
+        'tests/__init__.py': '',
+        'tests/test_orders.py': 'import unittest\nfrom inventory.catalog import UNIT_PRICES\nfrom inventory.orders import calculate_order\n\nclass Orders(unittest.TestCase):\n    def test_volume_boundary(self):\n        self.assertEqual(calculate_order({"sku": "widget", "quantity": 10}, UNIT_PRICES), 90.0)\n',
+        'README.md': '# Inventory\nRun main.py to reproduce the order failure.\n',
+        'sentinel.txt': 'unrelated inventory notes\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['inventory/discounts.py'] = 'def volume_rate(quantity):\n    if quantity >= 10:\n        return 0.10\n    return 0.0\n'
+    return {'reference': reference}
+
+
+def debug_inventory_verify(root, state):
+    program = command(root, sys.executable, '-B', 'main.py')
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    return (program.returncode == 0 and 'actual=90.00' in program.stdout
+            and 'expected=90.00' in program.stdout and tests.returncode == 0,
+            {'program_exit': program.returncode, 'stdout': program.stdout,
+             'test_exit': tests.returncode, 'test_stderr': tests.stderr})
+
+
+def debug_intervals_fixture(root):
+    files = {
+        'intervals.py': 'def merge(intervals):\n    result = []\n    for start, end in sorted(intervals):\n        if not result or start >= result[-1][1]:\n            result.append((start, end))\n        else:\n            result[-1] = (result[-1][0], max(result[-1][1], end))\n    return result\n',
+        'main.py': 'from intervals import merge\n\nactual = merge([(1, 3), (3, 5), (8, 9)])\nexpected = [(1, 5), (8, 9)]\nprint(f"actual={actual}")\nprint(f"expected={expected}")\nraise SystemExit(0 if actual == expected else 1)\n',
+        'tests/test_intervals.py': 'import unittest\nfrom intervals import merge\n\nclass Intervals(unittest.TestCase):\n    def test_adjacent(self):\n        self.assertEqual(merge([(1, 3), (3, 5)]), [(1, 5)])\n',
+        'README.md': '# Intervals\nRun main.py to reproduce the merge failure.\n',
+        'notes.txt': 'Schedule windows are inclusive at both ends.\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['intervals.py'] = 'def merge(intervals):\n    result = []\n    for start, end in sorted(intervals):\n        if not result or start > result[-1][1]:\n            result.append((start, end))\n        else:\n            result[-1] = (result[-1][0], max(result[-1][1], end))\n    return result\n'
+    return {'reference': reference}
+
+
+def debug_intervals_verify(root, state):
+    program = command(root, sys.executable, '-B', 'main.py')
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    return (program.returncode == 0 and 'actual=[(1, 5), (8, 9)]' in program.stdout
+            and tests.returncode == 0,
+            {'program_exit': program.returncode, 'stdout': program.stdout,
+             'test_exit': tests.returncode, 'test_stderr': tests.stderr})
+
+
+def debug_cache_fixture(root):
+    files = {
+        'cache.py': 'class Cache:\n    def __init__(self):\n        self.data = {}\n\n    def put(self, key, value):\n        self.data[key] = value\n\n    def get(self, key, default=None):\n        return self.data[key]\n',
+        'config.py': 'DEFAULT_TTL = 30\nDEFAULT_NAMESPACE = "primary"\n',
+        'main.py': 'from cache import Cache\n\ncache = Cache()\ncache.put("alpha", 1)\nactual = cache.get("beta", 0)\nexpected = 0\nprint(f"actual={actual}")\nprint(f"expected={expected}")\nraise SystemExit(0 if actual == expected else 1)\n',
+        'tests/test_cache.py': 'import unittest\nfrom cache import Cache\n\nclass CacheTests(unittest.TestCase):\n    def test_missing_default(self):\n        self.assertEqual(Cache().get("missing", 0), 0)\n',
+        'README.md': '# Cache\nRun main.py to reproduce the missing-key failure.\n',
+        'notes.txt': 'Missing keys should return the caller default.\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['cache.py'] = 'class Cache:\n    def __init__(self):\n        self.data = {}\n\n    def put(self, key, value):\n        self.data[key] = value\n\n    def get(self, key, default=None):\n        return self.data.get(key, default)\n'
+    return {'reference': reference}
+
+
+def debug_cache_verify(root, state):
+    program = command(root, sys.executable, '-B', 'main.py')
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    return (program.returncode == 0 and 'actual=0' in program.stdout
+            and 'expected=0' in program.stdout and tests.returncode == 0,
+            {'program_exit': program.returncode, 'stdout': program.stdout,
+             'test_exit': tests.returncode, 'test_stderr': tests.stderr})
+
 TASKS = {
     'cross': {'fixture': cross_fixture, 'verify': cross_verify,
               'prompt': 'Explore this pricing project and fix the discount calculation. Both checkout and the pricing function should accept discounts as percentages, and final prices must be correct. Keep tests and unrelated files unchanged. Finish when the existing tests pass.',
@@ -124,4 +203,16 @@ TASKS = {
                        'prompt': 'Use a debugger to diagnose the shipping threshold failure. Observe the subtotal and fee at runtime, make the smallest fix, and run the program to verify it. Preserve unrelated files.',
                        'allowed_changes': {'shipping.py'}, 'debug_program': 'shipping.py',
                        'workflow_markers': ('amount', '50')},
+    'debug_inventory': {'fixture': debug_inventory_fixture, 'verify': debug_inventory_verify,
+                        'prompt': 'Run the failing inventory order in main.py. Use a debugger to observe the runtime values that determine the order total, identify the smallest cause, fix it, and verify the order and tests. Preserve unrelated files.',
+                        'allowed_changes': {'inventory/discounts.py'}, 'debug_program': 'main.py',
+                        'workflow_markers': ('quantity', '10')},
+    'debug_intervals': {'fixture': debug_intervals_fixture, 'verify': debug_intervals_verify,
+                        'prompt': 'The interval merge program reports an incorrect merged schedule. Use a debugger to observe the boundary values, make the smallest fix, and verify the program and tests. Preserve unrelated files.',
+                        'allowed_changes': {'intervals.py'}, 'debug_program': 'main.py',
+                        'workflow_markers': ('end', '3')},
+    'debug_cache': {'fixture': debug_cache_fixture, 'verify': debug_cache_verify,
+                    'prompt': 'The cache program fails when reading a missing key. Use a debugger to observe the failing key and call path, fix the fallback behavior, and verify the program and tests. Preserve unrelated files.',
+                    'allowed_changes': {'cache.py'}, 'debug_program': 'main.py',
+                    'workflow_markers': ('key', 'beta')},
 }
