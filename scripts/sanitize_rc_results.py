@@ -187,7 +187,7 @@ def sanitize(report, timing_dir=None, omit_events=False):
         row = {key: run.get(key) if isinstance(run.get(key), bool) else None for key in
                ('correct', 'artifact_correct', 'comparison_valid', 'timed_out')}
         row.update({key: numeric(run.get(key)) for key in ('repetition', 'attempt', 'elapsed_ms', 'exit_code')})
-        row['task'] = run.get('task') if run.get('task') in {'cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache'} else 'other'
+        row['task'] = run.get('task') if run.get('task') in {'cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested'} else 'other'
         reasons = run.get('comparison_invalid_reasons')
         row['comparison_invalid_reasons'] = [x for x in reasons if x in {'tool_profile_violation', 'provider_api_error', 'benchmark_setup_error'}] if isinstance(reasons, list) else []
         provider_errors = run.get('provider_errors')
@@ -252,7 +252,7 @@ def sanitize(report, timing_dir=None, omit_events=False):
             'driver_sha256': digest(report.get('driver_sha256')),
             'fixture_sha256': digest(report.get('fixture_sha256')),
             'agents': [x if x in ('codex','claude','opencode') else 'other' for x in report.get('agents', [])],
-            'tasks': [x if x in ('cross','maintenance','layout','build','git','debug','debug_shipping','debug_inventory','debug_intervals','debug_cache') else 'other' for x in report.get('tasks', [])],
+            'tasks': [x if x in ('cross','maintenance','layout','build','git','debug','debug_shipping','debug_inventory','debug_intervals','debug_cache','edit_batch','debug_ledger','debug_nested') else 'other' for x in report.get('tasks', [])],
             'repetitions': numeric(report.get('repetitions')),
             'complete': report.get('complete') if isinstance(report.get('complete'), bool) else None,
             'platform': settings.get('machine') if settings.get('machine') in ('arm64', 'x86_64', 'aarch64') else None,
@@ -263,7 +263,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('input', type=Path)
     parser.add_argument('output', type=Path)
-    parser.add_argument('--task', choices=('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache'))
+    parser.add_argument('--task', choices=('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested'))
     parser.add_argument('--timing-dir', type=Path, help='private directory containing content-free timing logs')
     parser.add_argument('--omit-events', action='store_true', help='omit host event index; retain tool names and timing')
     args = parser.parse_args()

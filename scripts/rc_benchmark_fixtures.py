@@ -185,6 +185,76 @@ def debug_cache_verify(root, state):
             {'program_exit': program.returncode, 'stdout': program.stdout,
              'test_exit': tests.returncode, 'test_stderr': tests.stderr})
 
+def edit_batch_fixture(root):
+    files = {
+        'retail.py': 'def total(price, percent):\n    return round(price - percent, 2)\n',
+        'wholesale.py': 'def total(price, percent):\n    return round(price - percent, 2)\n',
+        'member.py': 'def total(price, percent):\n    return round(price - percent, 2)\n',
+        'tests/__init__.py': '',
+        'tests/test_pricing.py': 'import unittest\nfrom retail import total as retail\nfrom wholesale import total as wholesale\nfrom member import total as member\n\nclass Pricing(unittest.TestCase):\n    def test_percentages(self):\n        self.assertEqual(retail(80, 25), 60.0)\n        self.assertEqual(wholesale(40, 50), 20.0)\n        self.assertEqual(member(100, 10), 90.0)\n',
+        'README.md': '# Checkout\nPercentage discounts are applied in three customer modules.\n',
+        'sentinel.txt': 'unrelated checkout notes\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    for path in ('retail.py', 'wholesale.py', 'member.py'):
+        reference[path] = 'def total(price, percent):\n    return round(price * (1 - percent / 100), 2)\n'
+    return {'reference': reference}
+
+
+def edit_batch_verify(root, state):
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    return tests.returncode == 0, {'test_exit': tests.returncode, 'test_stderr': tests.stderr}
+
+
+def debug_ledger_fixture(root):
+    files = {
+        'ledger.py': 'def net_total(entries, fee):\n    total = sum(entries)\n    for index in range(len(entries) - 1):\n        total -= fee\n    return total\n',
+        'main.py': 'from ledger import net_total\n\nactual = net_total([100, 50, 25], 5)\nexpected = 160\nprint(f"actual={actual}")\nprint(f"expected={expected}")\nraise SystemExit(0 if actual == expected else 1)\n',
+        'tests/test_ledger.py': 'import unittest\nfrom ledger import net_total\n\nclass Ledger(unittest.TestCase):\n    def test_all_entries(self):\n        self.assertEqual(net_total([100, 50, 25], 5), 160)\n',
+        'README.md': '# Ledger\nRun main.py to reproduce the fee failure.\n',
+        'notes.txt': 'Every entry should receive the fee.\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['ledger.py'] = 'def net_total(entries, fee):\n    total = sum(entries)\n    for index in range(len(entries)):\n        total -= fee\n    return total\n'
+    return {'reference': reference}
+
+
+def debug_ledger_verify(root, state):
+    program = command(root, sys.executable, '-B', 'main.py')
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    return (program.returncode == 0 and 'actual=160' in program.stdout
+            and 'expected=160' in program.stdout and tests.returncode == 0,
+            {'program_exit': program.returncode, 'stdout': program.stdout,
+             'test_exit': tests.returncode, 'test_stderr': tests.stderr})
+
+
+def debug_nested_fixture(root):
+    files = {
+        'settings.py': 'DEFAULTS = {"limits": {"burst": 4, "rate": 2}}\n\ndef merge(base, override):\n    merged = dict(base)\n    for key, value in override.items():\n        merged[key] = value\n    return merged\n',
+        'main.py': 'from settings import DEFAULTS, merge\n\nsettings = merge(DEFAULTS, {"limits": {"rate": 5}})\nactual = settings["limits"]["burst"]\nexpected = 4\nprint(f"actual={actual}")\nprint(f"expected={expected}")\nraise SystemExit(0 if actual == expected else 1)\n',
+        'tests/test_settings.py': 'import unittest\nfrom settings import DEFAULTS, merge\n\nclass Settings(unittest.TestCase):\n    def test_nested_default(self):\n        self.assertEqual(merge(DEFAULTS, {"limits": {"rate": 5}})["limits"]["burst"], 4)\n',
+        'README.md': '# Settings\nRun main.py to reproduce the nested merge failure.\n',
+        'notes.txt': 'Nested defaults should survive partial overrides.\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['settings.py'] = 'DEFAULTS = {"limits": {"burst": 4, "rate": 2}}\n\ndef merge(base, override):\n    merged = {key: dict(value) if isinstance(value, dict) else value for key, value in base.items()}\n    for key, value in override.items():\n        if isinstance(value, dict) and isinstance(merged.get(key), dict):\n            merged[key].update(value)\n        else:\n            merged[key] = value\n    return merged\n'
+    return {'reference': reference}
+
+
+def debug_nested_verify(root, state):
+    program = command(root, sys.executable, '-B', 'main.py')
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    return (program.returncode == 0 and 'actual=4' in program.stdout
+            and 'expected=4' in program.stdout and tests.returncode == 0,
+            {'program_exit': program.returncode, 'stdout': program.stdout,
+             'test_exit': tests.returncode, 'test_stderr': tests.stderr})
+
 TASKS = {
     'cross': {'fixture': cross_fixture, 'verify': cross_verify,
               'prompt': 'Explore this pricing project and fix the discount calculation. Both checkout and the pricing function should accept discounts as percentages, and final prices must be correct. Keep tests and unrelated files unchanged. Finish when the existing tests pass.',
@@ -215,4 +285,15 @@ TASKS = {
                     'prompt': 'The cache program fails when reading a missing key. Use a debugger to observe the failing key and call path, fix the fallback behavior, and verify the program and tests. Preserve unrelated files.',
                     'allowed_changes': {'cache.py'}, 'debug_program': 'main.py',
                     'workflow_markers': ('key', 'beta')},
+    'edit_batch': {'fixture': edit_batch_fixture, 'verify': edit_batch_verify,
+                   'prompt': 'This checkout package applies percentage discounts incorrectly in three customer modules. Fix all affected modules, keep tests unchanged, and run the test suite. Preserve unrelated files.',
+                   'allowed_changes': {'retail.py', 'wholesale.py', 'member.py'}},
+    'debug_ledger': {'fixture': debug_ledger_fixture, 'verify': debug_ledger_verify,
+                     'prompt': 'Run main.py to reproduce the ledger failure. Use a debugger to observe at least two loop iterations and the runtime values, make the smallest fix, and verify the program and tests. Preserve unrelated files.',
+                     'allowed_changes': {'ledger.py'}, 'debug_program': 'main.py',
+                     'workflow_markers': ('index', '0')},
+    'debug_nested': {'fixture': debug_nested_fixture, 'verify': debug_nested_verify,
+                     'prompt': 'Run main.py to reproduce the nested settings failure. Use a debugger to inspect the nested runtime values, make the smallest fix, and verify the program and tests. Preserve unrelated files.',
+                     'allowed_changes': {'settings.py'}, 'debug_program': 'main.py',
+                     'workflow_markers': ('key', 'limits')},
 }
