@@ -45,6 +45,10 @@ def preflight(binary, debug_python, timeout=300):
         adapter_pid = None
         result = {}
         try:
+            info = client.call('workspace_info')
+            assert any(item.get('configuration') == 'payroll'
+                       and 'adjustments' in item.get('read', {}).get('text', '')
+                       for item in info.get('debug_source', [])), info
             launched = client.call('debug_probe', configuration='payroll',
                                    breakpoints=[{'path': 'payroll.py', 'lines': 17}])
             client.session = launched['session']
