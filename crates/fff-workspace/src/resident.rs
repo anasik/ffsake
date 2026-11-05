@@ -50,6 +50,8 @@ pub enum Request {
         breakpoints: Vec<DebugBreakpoint>,
         #[serde(default)]
         resume: bool,
+        #[serde(default)]
+        terminate_after_stop: bool,
     },
     Debug {
         request: crate::debug::Action,
@@ -416,6 +418,7 @@ impl Resident {
         configuration: &str,
         breakpoints: Vec<DebugBreakpoint>,
         resume: bool,
+        terminate_after_stop: bool,
     ) -> Result<Value> {
         let launched = self.debugger.launch(
             configuration,
@@ -477,6 +480,20 @@ impl Resident {
                 && let Some(value) = self.debugger.capabilities(session)
             {
                 map.insert("capabilities".into(), value);
+            }
+        }
+        if terminate_after_stop && snapshot["status"].as_str() == Some("stopped") {
+            self.debugger
+                .execute(crate::debug::Action::Terminate { session }, &access)?;
+            let cleaned = self
+                .prepare_debug_wait(session, crate::debug::WaitUntil::Cleaned, 1000)?
+                .wait();
+            if let Some(map) = snapshot.as_object_mut() {
+                map.insert("terminated_after_stop".into(), json!(true));
+                map.insert(
+                    "cleaned".into(),
+                    json!(cleaned["cleaned"].as_bool().unwrap_or(false)),
+                );
             }
         }
         Ok(snapshot)
@@ -687,9 +704,10 @@ impl Resident {
                 configuration,
                 breakpoints,
                 resume,
+                terminate_after_stop,
             } => {
                 self.index_dirty = true;
-                self.debug_start(&configuration, breakpoints, resume)
+                self.debug_start(&configuration, breakpoints, resume, terminate_after_stop)
             }
             Request::Debug { request } => {
                 self.index_dirty = true;

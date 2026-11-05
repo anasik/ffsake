@@ -8,7 +8,7 @@ import time
 from debug_smoke import Client, ROOT, alive
 
 
-def combined_start_case(binary):
+def combined_start_case(binary, terminate_after_stop=False):
     with tempfile.TemporaryDirectory(prefix='ffsake-dap-combined-') as td:
         base = Path(td).resolve(); root = base / 'root'; root.mkdir()
         (root / 'local.txt').write_text('local')
@@ -20,19 +20,23 @@ def combined_start_case(binary):
         try:
             launched = c.call('debug_launch', configuration='fake',
                               breakpoints=[{'path': 'local.txt', 'lines': 1}],
-                              resume=True)
+                              resume=True, terminate_after_stop=terminate_after_stop)
             c.session = launched['session']
             assert launched['status'] == 'stopped', launched
             assert launched['stop']['reason'] == 'breakpoint', launched
             assert launched.get('capabilities'), launched
-            stopped = c.wait(lambda s: s['status'] == 'stopped', allow_error=True)
-            assert stopped['stop']['reason'] == 'breakpoint', stopped
             calls = [json.loads(line) for line in (base / 'calls.jsonl').read_text().splitlines()]
             commands = [call['command'] for call in calls]
             assert 'setBreakpoints' in commands and 'configurationDone' in commands
             assert 'continue' not in commands
-            cleaned = c.stop()
-            assert 'capabilities' not in cleaned, cleaned
+            if terminate_after_stop:
+                assert launched.get('cleaned') is True, launched
+                assert launched.get('terminated_after_stop') is True, launched
+            else:
+                stopped = c.wait(lambda s: s['status'] == 'stopped', allow_error=True)
+                assert stopped['stop']['reason'] == 'breakpoint', stopped
+                cleaned = c.stop()
+                assert 'capabilities' not in cleaned, cleaned
         finally:
             if c.p.poll() is None:
                 if c.session:
@@ -153,6 +157,8 @@ def main():
                     c.close()
     combined_start_case(binary)
     tested.append('combined_start')
+    combined_start_case(binary, terminate_after_stop=True)
+    tested.append('one_shot_start')
     print(json.dumps({'protocol_cases': tested, 'cleanup': True, 'authorization': True,
                       'stale_handles': True, 'nonblocking_editing': True}, indent=2))
 

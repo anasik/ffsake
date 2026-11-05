@@ -743,6 +743,12 @@ The A/B traces exposed a concrete retry: payroll changed attempt 1 sent `lines:1
 
 A second five-repetition A/B added automatic debug-program source to `ffsake_workspace_info`. It reduced input descriptively but regressed correctness and did not improve elapsed time: payroll changed was 3/5 correct with median 25.7 s and 10 calls versus old 23.1 s and 14 calls; shipping was 4/5 correct with 19.0 s and 8 calls versus old 17.6 s and 13 calls. Artifacts were 5/5 on both, but the agents chose pre-mutation breakpoints and failed to observe the required runtime value. The candidate was reverted at `da5a07c`; the [sanitized index](agent-benchmark-runs/20261105-efficiency/ab-debug-source.json) preserves the negative result. No target progress is claimed.
 
+### One-shot debug probe (2026-11-05)
+
+The changed A/B traces repeatedly launched a debug session, inspected a stop, then issued a separate terminate. `ffsake_debug_launch` now accepts `terminate_after_stop:true` with initial breakpoints and `resume`; after returning the stopped inspection it waits for owned-session cleanup and marks the result `terminated_after_stop`/`cleaned`. The normal session path remains available and unchanged.
+
+The 18-case DAP protocol smoke now tests both combined start and one-shot start, including no extra explicit terminate and cleanup. The exact debugpy preflight uses one-shot mode and verifies `adjustments=[50.0]` and `cleaned=true`. No paid run has measured this candidate; no time or token claim is made.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

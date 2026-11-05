@@ -43,34 +43,26 @@ def preflight(binary, debug_python, timeout=300):
 
         client = debug_smoke.Client(binary, root, policy_path)
         adapter_pid = None
+        result = {}
         try:
             launched = client.call('debug_launch', configuration='payroll',
-                                   breakpoints=[{'path': 'payroll.py', 'lines': [18]}],
-                                   resume=True)
+                                   breakpoints=[{'path': 'payroll.py', 'lines': 18}],
+                                   resume=True, terminate_after_stop=True)
             client.session = launched['session']
             adapter_pid = launched.get('adapter_pid')
-            stopped = client.wait(lambda state: state['status'] == 'stopped'
-                                  or state['cleaned'], allow_error=True)
-            assert not stopped['cleaned'], stopped
-            assert stopped['stop']['reason'] == 'breakpoint', stopped
-            thread = stopped['stop']['threadId']
-            frames = client.action('stack', thread=thread)['frames']
-            frame = next((item for item in frames
-                          if item.get('handle') and item['source_path'].endswith('payroll.py')), None)
-            assert frame is not None, frames
-            scopes = client.action('scopes', handle=frame['handle'])['scopes']
-            variables = []
-            for scope in scopes:
-                if scope.get('handle'):
-                    variables += client.action('variables', handle=scope['handle'])['variables']
+            assert launched['stop']['reason'] == 'breakpoint', launched
+            assert launched.get('cleaned') is True, launched
+            inspection = launched['result']['result']['inspection']
+            variables = [item for scope in inspection.get('scopes', [])
+                         for item in scope.get('variables', [])]
             assert any(item['name'] == 'adjustments' and item['value'] == '[50.0]'
                        for item in variables), variables
             result = {'ok': True, 'adapter_path': str(debug_python),
                       'adapter_pid': adapter_pid, 'variables': variables,
-                      'stop': stopped['stop']}
+                      'stop': launched['stop'], 'cleaned': True}
         finally:
             if client.p.poll() is None:
-                if client.session:
+                if client.session and not result.get('cleaned'):
                     try:
                         client.stop()
                     except Exception:
