@@ -18,7 +18,7 @@ Performance is again the active goal. Current changed payroll traces contain fou
 
 ## Generalization goal (2026-11-05)
 
-Freeze the current candidate before scoring. Use three previously unused debug fixtures: `debug_inventory` (larger multi-module boundary bug), `debug_intervals` (adjacent-interval boundary bug), and `debug_cache` (missing-key exception path). Their observable verifiers run the program and tests; workflow evidence requires a runtime marker observed from the debugger. Prompts do not contain fixes or expected values.
+Freeze the current candidate before scoring. Candidate binary `3e9a9c8cc89d65bb090da590caea4bea1b9aea504e9d293c0ef5173b0889fcca` from `ddbfc68`; model-free preflight passed for all three fixtures before scoring. Use three previously unused debug fixtures: `debug_inventory` (larger multi-module boundary bug), `debug_intervals` (adjacent-interval boundary bug), and `debug_cache` (missing-key exception path). Their observable verifiers run the program and tests; workflow evidence requires a runtime marker observed from the debugger. Prompts do not contain fixes or expected values.
 
 Compare FFSAKE against native with Claude, identical task prompts, permissions and starting state, counterbalanced order, five attempts per arm per fixture. Budget: **maximum 30 paid attempts** (3 fixtures × 2 arms × 5), subject to available credits. Run `scripts/unfamiliar_debug_preflight.py` with the exact candidate and debugpy before scoring; abort on setup failure.
 
