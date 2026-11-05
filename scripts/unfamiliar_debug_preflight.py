@@ -15,7 +15,7 @@ CASES = {
     'debug_intervals': {'path': 'intervals.py', 'line': 4,
                         'marker': ('end', '3')},
     'debug_cache': {'path': 'cache.py', 'line': 9,
-                    'marker': ('key', 'beta')},
+                    'marker': ('key', 'beta'), 'stops': 4},
     'debug_ledger': {'path': 'ledger.py', 'line': 4,
                      'marker': ('index', '1'), 'stops': 2},
     'debug_nested': {'path': 'settings.py', 'line': 5,
