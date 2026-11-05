@@ -757,6 +757,14 @@ Against the retained frozen-old medians from the earlier A/B, payroll changed is
 
 The exact-adapter preflight uses the pre-mutation line, verifies the stepped `adjustments=[50.0]` inspection and cleanup. The [sanitized probe index](agent-benchmark-runs/20261105-efficiency/probe-step.json) preserves per-run metrics. Near-native elapsed and call counts are demonstrated; input remains about 28–32% above native.
 
+### Near-native probe result (2026-11-05)
+
+A 20-attempt native-versus-probe comparison used line-numbered debug-program source and the stepped one-shot probe. All 10 changed attempts were correct. Payroll changed measured **16.9 s / 7 calls / 174,341 input** versus native **17.2 s / 7 calls / 181,501**; shipping changed measured **12.1 s / 6 calls / 173,905** versus native **13.6 s / 7 calls / 156,389**.
+
+Against the retained frozen-old medians, payroll is **−33.8% elapsed and −49.0% input**; shipping is **−33.5% elapsed and −43.0% input**. Both fixtures therefore exceed the 30% elapsed and input targets, with 5/5 changed correctness. Payroll is slightly faster and lower-input than native; shipping is faster with more calls than native and 11% more input. The old baseline is retained from the prior A/B because the old binary predates the probe catalog and cannot be preflighted under the current tool set; the native arm is fresh and counterbalanced with changed.
+
+The [sanitized probe index](agent-benchmark-runs/20261105-efficiency/probe-lines.json) preserves per-run metrics. This closes the performance target while retaining a 5/5 correctness result.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

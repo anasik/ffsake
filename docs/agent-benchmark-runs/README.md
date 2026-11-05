@@ -49,3 +49,5 @@ The [efficiency A/B index](20261105-efficiency/ab.json) records the 30-attempt c
 The [debug-source A/B index](20261105-efficiency/ab-debug-source.json) preserves the rejected follow-up candidate. It reduced input but caused changed correctness to fall to 3/5 payroll and 4/5 shipping, so the candidate was reverted.
 
 The [one-shot probe index](20261105-efficiency/probe-step.json) records the 20-attempt native-versus-probe comparison. Probe changed was 5/5 correct on both fixtures, payroll 16.9 s versus native 16.5 s, shipping 13.3 s versus native 14.2 s; input remained about 28–32% above native.
+
+The [near-native probe index](20261105-efficiency/probe-lines.json) records the final 20-attempt native-versus-probe comparison. Changed was 5/5 correct on both fixtures; payroll measured 16.9 s versus native 17.2 s and shipping 12.1 s versus native 13.6 s.
