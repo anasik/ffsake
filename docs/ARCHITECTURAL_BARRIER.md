@@ -164,21 +164,35 @@ must be frozen before scoring and reported separately.
   `workspace_info` with `files`; encourage it over separate `read` calls in
   guidance and measure adoption.
 
-### R3. CLI shim for high-frequency operations
+### R3. CLI shim for high-frequency operations (implemented)
 
-If catalog reduction does not remove `ToolSearch`, expose the same guarded
-operations as a `ffsake` subcommand executed through the host's existing Bash
-tool (`ffsake read`, `ffsake apply`, `ffsake probe`, ...). This removes the MCP
-catalog and the discovery turn entirely, matching native's tool loop.
+`ffsake` is restored and extended. It exposes the same `Resident` request
+surface through the host's existing Bash tool, with no MCP catalog.
 
-- Preserve safeguards: the CLI loads the same access policy, stale-state checks
-  and journal; preview handles persist under `.ffsake/` with TTL and are bound to
-  the file hash; undo/redo and cleanup stay identical.
-- Preserve approval: host approval moves to per-command execution (as with any
-  Bash call), and the access policy still denies unauthorized paths.
-- Cost: a new entry point and cross-process handle store; not a harness rewrite.
-- Expected effect: turns drop to native parity by construction; per-call time is
-  a short process spawn plus the same work.
+- One-shot: `ffsake WORKSPACE --request JSON` executes any stateless or
+  one-shot request (read, read_files, list, search, git, debug_probe, undo,
+  redo). Preview requests print a diff and store a private token; `--apply
+  TOKEN` replays the request against current files, rechecks hashes/counts,
+  applies, and deletes the token. Preview and apply remain separate reviewed
+  steps.
+- Persistent: `ffsake serve WORKSPACE` preserves the original JSONL resident
+  mode and its in-process handles for MatchSets, previews, debug sessions and
+  tasks.
+- Safeguards: same access policy, stale-state checks, journal undo/redo,
+  owned-adapter cleanup and internal-path guards. Tokens live under
+  `.ffsake/cli/` with `0700`/`0600`, canonical-root binding, one-hour TTL,
+  traversal rejection and a 16 MiB cap.
+- Model-free evidence: zero MCP catalog bytes; `read_files` 581 vs 560 bytes,
+  `preview_files` 967 vs 919, `apply` 109 vs 66 versus MCP. The `serve` protocol
+  measured 85 ms median per round trip versus 209 ms for an equivalent shell
+  pipeline, with 46 ms startup.
+- Projected turns: `edit_batch` 4 versus 10 MCP, `debug_ledger` 5 versus 9,
+  `debug_nested` 5 versus 7, if the agent uses one command per step.
+- Limits: persistent debug sessions, task jobs, Git review/mutate handles and
+  match-set replacements require `serve` or MCP because handles are
+  process-local. The one-shot mode is not a new permission authority.
+- Remaining cost: the host must be told the CLI exists. That guidance and
+  adoption are what the next paid batch must measure.
 
 ### R4. Honest measurement
 
@@ -192,10 +206,10 @@ catalog and the discovery turn entirely, matching native's tool loop.
 
 ## Remaining gap and decision
 
-After the implemented consolidations, projected calls are 130 vs 113, with all
-17 remaining extra turns attributable to `ToolSearch`. Core context is 21.8 KB
-and the default `all` catalog is 37.9 KB. The next measurement is whether a lean
-core catalog reduces `ToolSearch` turns. If it does not, R3's CLI shim is the
-only remaining change with a credible path to turn parity; the Rust
-consolidation improves the default catalog and response size but is not in the
-measured core profile.
+After the implemented consolidations, projected MCP calls are 130 vs 113, with
+all 17 remaining extra turns attributable to `ToolSearch`. Core context is
+21.8 KB and default `all` is 37.9 KB. R3 is now implemented: the CLI projects
+4-5 turns per task with zero catalog, below native's observed 6-10. The
+remaining question is adoption, not capability: can the host guidance make an
+agent choose the CLI? That is the next paid measurement, alongside whether the
+lean core catalog removes `ToolSearch`.

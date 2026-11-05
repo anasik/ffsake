@@ -1,6 +1,6 @@
 # Resident agent interface
 
-Build with `cargo build --bin ffsake`, then start `target/debug/ffsake serve /absolute/workspace` once. Keep its stdin/stdout pipes open across tool requests. The explicit root is trusted startup configuration; request paths remain workspace-relative. EOF terminates the process. No TCP listener or implicit shell/job execution is included. Optional semantic requests use installed language servers. Named project tasks require host approval; an explicit startup policy restricts execution to its fixed jobs.
+Build with `cargo build --bin ffsake`. For hosts that can run one command per turn, use the one-shot `--request` / `--apply` mode in [CLI_SHIM.md](CLI_SHIM.md). To keep handles across requests, start `target/debug/ffsake serve /absolute/workspace` once. Keep its stdin/stdout pipes open across tool requests. The explicit root is trusted startup configuration; request paths remain workspace-relative. EOF terminates the process. No TCP listener or implicit shell/job execution is included. Optional semantic requests use installed language servers. Named project tasks require host approval; an explicit startup policy restricts execution to its fixed jobs.
 
 Requests and responses are newline-delimited JSON. Each request produces one flushed response, in order: `{"ok":true,"result":...}` or `{"ok":false,"error":"..."}`. Errors do not terminate the session. Startup failures exit nonzero. Requests exceeding 1 MiB are drained and rejected. Diagnostics use stderr. Use JSON serialization, not shell string interpolation.
 
