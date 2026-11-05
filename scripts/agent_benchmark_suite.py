@@ -26,8 +26,8 @@ FFSAKE_ACCESS_MUTATIONS = ("ffsake_open_access", "ffsake_remove_access")
 FFSAKE_APPROVAL_TOOLS = FFSAKE_ACCESS_MUTATIONS + ("ffsake_debug_probe", "ffsake_debug_launch", "ffsake_debug_attach", "ffsake_task_register", "ffsake_run_task", "ffsake_git_mutate", "ffsake_git_operation")
 FFSAKE_TOOLS = FFSAKE_ACCESS_TOOLS + (
     "ffsake_workspace_info", "ffsake_git", "ffsake_git_review", "ffsake_git_mutate", "ffsake_git_branches", "ffsake_git_operation_review", "ffsake_git_operation", "ffsake_tasks", "ffsake_run_task", "ffsake_task_register", "ffsake_task_status", "ffsake_task_output", "ffsake_task_cancel", "ffsake_debug_probe", "ffsake_debug_launch", "ffsake_debug_attach", "ffsake_debug",
-    "ffsake_semantic", "ffsake_preview_semantic_rename",
-    "ffsake_read", "ffsake_read_files", "ffsake_archive", "ffsake_list", "ffsake_target", "ffsake_search", "ffsake_select_rust_identifiers", "ffsake_rust_references", "ffsake_rust_definition", "ffsake_rust_inspect", "ffsake_rust_context_from_manifests", "ffsake_rust_symbols", "ffsake_rust_implementation", "ffsake_rust_hover", "ffsake_rust_diagnostics", "ffsake_rust_workspace_diagnostics", "ffsake_rust_code_actions", "ffsake_preview_rust_action", "ffsake_rust_rename_proposal", "ffsake_preview_rust_rename",
+    "ffsake_semantic", "ffsake_preview_semantic_rename", "ffsake_rust",
+    "ffsake_read", "ffsake_read_files", "ffsake_archive", "ffsake_list", "ffsake_target", "ffsake_search", "ffsake_preview_rust_action", "ffsake_preview_rust_rename",
     "ffsake_preview_matches", "ffsake_preview_rename", "ffsake_apply", "ffsake_undo", "ffsake_redo",
     "ffsake_release", "ffsake_refresh",
     "ffsake_preview_files",

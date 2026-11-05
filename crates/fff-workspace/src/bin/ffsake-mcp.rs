@@ -30,7 +30,22 @@ impl ToolProfile {
                 | "ffsake_preview_delete"
                 | "ffsake_preview_edit"
         );
-        !preview_alias
+        let legacy_rust = matches!(
+            name,
+            "ffsake_rust_references"
+                | "ffsake_rust_definition"
+                | "ffsake_rust_implementation"
+                | "ffsake_rust_hover"
+                | "ffsake_rust_symbols"
+                | "ffsake_rust_inspect"
+                | "ffsake_rust_workspace_diagnostics"
+                | "ffsake_rust_diagnostics"
+                | "ffsake_rust_context_from_manifests"
+                | "ffsake_rust_rename_proposal"
+                | "ffsake_rust_code_actions"
+                | "ffsake_select_rust_identifiers"
+        );
+        !preview_alias && !legacy_rust
     }
 
     fn allows(self, name: &str) -> bool {
@@ -603,67 +618,111 @@ fn handle_message(runtime: &mut Resident, profile: ToolProfile, message: Value) 
     })
 }
 
-fn call_tool(runtime: &mut Resident, profile: ToolProfile, name: &str, arguments: Value) -> Value {
+fn rust_action_op(action: &str) -> Option<&'static str> {
+    Some(match action {
+        "definition" => "rust_definition",
+        "references" => "rust_references",
+        "implementation" => "rust_implementation",
+        "hover" => "rust_hover",
+        "symbols" => "rust_symbols",
+        "inspect" => "rust_inspect",
+        "workspace_diagnostics" => "rust_workspace_diagnostics",
+        "diagnostics" => "rust_diagnostics",
+        "context_from_manifests" => "rust_context_from_manifests",
+        "rename_proposal" => "rust_rename_proposal",
+        "code_actions" => "rust_code_actions",
+        "select_identifiers" => "select_rust_identifiers",
+        _ => return None,
+    })
+}
+
+fn call_tool(
+    runtime: &mut Resident,
+    profile: ToolProfile,
+    name: &str,
+    mut arguments: Value,
+) -> Value {
     if matches!(
         name,
         "ffsake_open_access" | "ffsake_list_access" | "ffsake_remove_access"
     ) {
         return access_tool(runtime, name, arguments);
     }
-    let op = match name {
-        "ffsake_read" => "read",
-        "ffsake_workspace_info" => "workspace_info",
-        "ffsake_git" => "git",
-        "ffsake_git_review" => "git_review",
-        "ffsake_git_mutate" => "git_mutate",
-        "ffsake_git_branches" => "git_branches",
-        "ffsake_git_operation_review" => "git_operation_review",
-        "ffsake_git_operation" => "git_operation",
-        "ffsake_debug_probe" => "debug_probe",
-        "ffsake_debug_launch" => "debug_launch",
-        "ffsake_debug_attach" => "debug_attach",
-        "ffsake_debug" => "debug",
-        "ffsake_tasks" => "tasks",
-        "ffsake_run_task" => "run_task",
-        "ffsake_task_register" => "task_register",
-        "ffsake_task_status" => "task_status",
-        "ffsake_task_output" => "task_output",
-        "ffsake_task_cancel" => "task_cancel",
-        "ffsake_read_files" => "read_files",
-        "ffsake_list" => "list",
-        "ffsake_target" => "target",
-        "ffsake_search" => "search",
-        "ffsake_archive" => "archive",
-        "ffsake_rust_symbols" => "rust_symbols",
-        "ffsake_rust_workspace_diagnostics" => "rust_workspace_diagnostics",
-        "ffsake_rust_diagnostics" => "rust_diagnostics",
-        "ffsake_preview_rust_rename" => "preview_rust_rename",
-        "ffsake_rust_rename_proposal" => "rust_rename_proposal",
-        "ffsake_rust_code_actions" => "rust_code_actions",
-        "ffsake_rust_implementation" => "rust_implementation",
-        "ffsake_rust_hover" => "rust_hover",
-        "ffsake_rust_inspect" => "rust_inspect",
-        "ffsake_semantic" => "semantic",
-        "ffsake_preview_semantic_rename" => "preview_rust_rename",
-        "ffsake_rust_context_from_manifests" => "rust_context_from_manifests",
-        "ffsake_rust_definition" => "rust_definition",
-        "ffsake_rust_references" => "rust_references",
-        "ffsake_select_rust_identifiers" => "select_rust_identifiers",
-        "ffsake_preview_matches" => "preview_matches",
-        "ffsake_preview_rust_action" => "preview_rust_action",
-        "ffsake_preview_edit" => "preview_edit",
-        "ffsake_preview_rename" => "preview_rename",
-        "ffsake_preview_create" => "preview_create",
-        "ffsake_preview_files" => "preview_files",
-        "ffsake_preview_copy" => "preview_copy",
-        "ffsake_preview_move" => "preview_move",
-        "ffsake_preview_delete" => "preview_delete",
-        "ffsake_apply" => "apply",
-        "ffsake_undo" => "undo",
-        "ffsake_redo" => "redo",
-        "ffsake_release" => "release",
-        "ffsake_refresh" => "refresh",
-        _ => return json!({"ok":false,"error":format!("unknown tool: {name}")}),
+    let op = if name == "ffsake_rust" {
+        if !profile.allows(name) {
+            let active = match profile {
+                ToolProfile::Editing => "editing",
+                ToolProfile::Core => "core",
+                ToolProfile::All => "all",
+            };
+            return json!({"ok":false,"error":format!("tool disabled by {active} profile: {name}")});
+        }
+        let Some(action) = arguments.get("action").and_then(Value::as_str) else {
+            return json!({"ok":false,"error":"ffsake_rust requires a string action"});
+        };
+        let Some(op) = rust_action_op(action) else {
+            return json!({"ok":false,"error":format!("unknown ffsake_rust action: {action}")});
+        };
+        if let Some(map) = arguments.as_object_mut() {
+            map.remove("action");
+        }
+        op
+    } else {
+        match name {
+            "ffsake_read" => "read",
+            "ffsake_workspace_info" => "workspace_info",
+            "ffsake_git" => "git",
+            "ffsake_git_review" => "git_review",
+            "ffsake_git_mutate" => "git_mutate",
+            "ffsake_git_branches" => "git_branches",
+            "ffsake_git_operation_review" => "git_operation_review",
+            "ffsake_git_operation" => "git_operation",
+            "ffsake_debug_probe" => "debug_probe",
+            "ffsake_debug_launch" => "debug_launch",
+            "ffsake_debug_attach" => "debug_attach",
+            "ffsake_debug" => "debug",
+            "ffsake_tasks" => "tasks",
+            "ffsake_run_task" => "run_task",
+            "ffsake_task_register" => "task_register",
+            "ffsake_task_status" => "task_status",
+            "ffsake_task_output" => "task_output",
+            "ffsake_task_cancel" => "task_cancel",
+            "ffsake_read_files" => "read_files",
+            "ffsake_list" => "list",
+            "ffsake_target" => "target",
+            "ffsake_search" => "search",
+            "ffsake_archive" => "archive",
+            "ffsake_rust_symbols" => "rust_symbols",
+            "ffsake_rust_workspace_diagnostics" => "rust_workspace_diagnostics",
+            "ffsake_rust_diagnostics" => "rust_diagnostics",
+            "ffsake_preview_rust_rename" => "preview_rust_rename",
+            "ffsake_rust_rename_proposal" => "rust_rename_proposal",
+            "ffsake_rust_code_actions" => "rust_code_actions",
+            "ffsake_rust_implementation" => "rust_implementation",
+            "ffsake_rust_hover" => "rust_hover",
+            "ffsake_rust_inspect" => "rust_inspect",
+            "ffsake_semantic" => "semantic",
+            "ffsake_preview_semantic_rename" => "preview_rust_rename",
+            "ffsake_rust_context_from_manifests" => "rust_context_from_manifests",
+            "ffsake_rust_definition" => "rust_definition",
+            "ffsake_rust_references" => "rust_references",
+            "ffsake_select_rust_identifiers" => "select_rust_identifiers",
+            "ffsake_preview_matches" => "preview_matches",
+            "ffsake_preview_rust_action" => "preview_rust_action",
+            "ffsake_preview_edit" => "preview_edit",
+            "ffsake_preview_rename" => "preview_rename",
+            "ffsake_preview_create" => "preview_create",
+            "ffsake_preview_files" => "preview_files",
+            "ffsake_preview_copy" => "preview_copy",
+            "ffsake_preview_move" => "preview_move",
+            "ffsake_preview_delete" => "preview_delete",
+            "ffsake_apply" => "apply",
+            "ffsake_undo" => "undo",
+            "ffsake_redo" => "redo",
+            "ffsake_release" => "release",
+            "ffsake_refresh" => "refresh",
+            _ => return json!({"ok":false,"error":format!("unknown tool: {name}")}),
+        }
     };
 
     if !profile.allows(name) {
@@ -930,6 +989,11 @@ fn tools() -> Vec<Value> {
             }),
         ),
         tool(
+            "ffsake_rust",
+            "Read-only Rust snapshot analysis. Pick action=definition, references, implementation, hover, symbols, inspect, workspace_diagnostics, diagnostics, context_from_manifests, rename_proposal, code_actions or select_identifiers. Supply explicit .rs files (1..=64, <=256 KiB each, <=8 MiB total); edition is required where applicable and crate_root/path must be supplied files. Positions use 1-based line and 0-based Unicode column. Optional explicit local crate edges/features/cfg only; no Cargo discovery, sysroot, build scripts, procedural macros or feature expansion. 30s budget, complete=false, original hashes rechecked; invalid, unsafe, changed or overflow input rejects without partial results. rename_proposal/code_actions return handles for separate guarded previews; select_identifiers returns a MatchSet for preview_matches.",
+            rust_consolidated_schema(),
+        ),
+        tool(
             "ffsake_rust_context_from_manifests",
             "Import explicit Rust analysis arguments from 1..=16 supplied Cargo.toml files (64 KiB each) and 1..=64 supplied .rs files (256 KiB each, 8 MiB total). Supports library/binary targets, editions and unconditional non-optional supplied local path dependencies. No Cargo/analyzer execution, discovery, builds or downloads. Returns frozen analysis_arguments, hashes and omissions; complete=false, compiler_checked=false. Features, cfg, external/conditional/dev/build dependencies and procedural macros are omitted. Re-import after manifest changes.",
             json!({"type":"object","additionalProperties":false,"required":["manifests","files","crate_root"],"properties":{
@@ -1180,6 +1244,43 @@ fn tool(name: &str, description: &str, input_schema: Value) -> Value {
     json!({"name":name,"description":description,"inputSchema":input_schema})
 }
 
+fn rust_consolidated_schema() -> Value {
+    let mut schema = rust_navigation_schema(true);
+    schema["required"] = json!(["action"]);
+    let position = schema["properties"]["position"].clone();
+    let properties = schema["properties"].as_object_mut().unwrap();
+    properties.insert(
+        "action".into(),
+        json!({"type":"string","enum":["definition","references","implementation","hover","symbols","inspect","workspace_diagnostics","diagnostics","context_from_manifests","rename_proposal","code_actions","select_identifiers"]}),
+    );
+    properties.insert(
+        "max_bytes".into(),
+        json!({"type":"integer","minimum":1,"maximum":65536}),
+    );
+    properties.insert(
+        "manifests".into(),
+        json!({"type":"array","minItems":1,"maxItems":16,"items":{"type":"string","minLength":1,"maxLength":4096}}),
+    );
+    properties.insert(
+        "new_name".into(),
+        json!({"type":"string","minLength":1,"maxLength":256}),
+    );
+    properties.insert(
+        "range".into(),
+        json!({"type":"object","required":["start","end"],"additionalProperties":false,
+            "properties":{"start":position.clone(),"end":position}}),
+    );
+    properties.insert(
+        "paths".into(),
+        json!({"type":"array","minItems":1,"maxItems":64,"uniqueItems":true,"items":{"type":"string","maxLength":4096}}),
+    );
+    properties.insert(
+        "identifier".into(),
+        json!({"type":"string","minLength":1,"maxLength":256}),
+    );
+    schema
+}
+
 fn rust_navigation_schema(position: bool) -> Value {
     let mut schema = json!({"type":"object","required":["files","crate_root","path","position","edition","limit"],"properties":{
         "files":{"type":"array","minItems":1,"maxItems":64,"items":{"type":"string","maxLength":4096}},
@@ -1268,7 +1369,7 @@ fn rust_workspace_diagnostics_schema() -> Value {
 
 #[cfg(test)]
 mod tests {
-    use super::ToolProfile;
+    use super::{ToolProfile, rust_action_op};
 
     #[test]
     fn core_profile_does_not_implicitly_enable_future_tools() {
@@ -1278,6 +1379,41 @@ mod tests {
         assert!(ToolProfile::Editing.allows("ffsake_read_files"));
         assert!(!ToolProfile::Editing.allows("ffsake_run_task"));
         assert!(!ToolProfile::Editing.allows("ffsake_future_execution"));
+    }
+
+    #[test]
+    fn rust_actions_map_to_existing_operations() {
+        for action in [
+            "definition",
+            "references",
+            "implementation",
+            "hover",
+            "symbols",
+            "inspect",
+            "workspace_diagnostics",
+            "diagnostics",
+            "context_from_manifests",
+            "rename_proposal",
+            "code_actions",
+            "select_identifiers",
+        ] {
+            assert!(rust_action_op(action).is_some(), "{action}");
+        }
+        assert_eq!(rust_action_op("references"), Some("rust_references"));
+        assert_eq!(
+            rust_action_op("select_identifiers"),
+            Some("select_rust_identifiers")
+        );
+        assert_eq!(rust_action_op("bogus"), None);
+    }
+
+    #[test]
+    fn all_advertises_consolidated_rust_and_keeps_legacy_dispatch() {
+        assert!(ToolProfile::All.advertises("ffsake_rust"));
+        assert!(ToolProfile::All.allows("ffsake_rust_references"));
+        assert!(!ToolProfile::All.advertises("ffsake_rust_references"));
+        assert!(!ToolProfile::Core.advertises("ffsake_rust"));
+        assert!(!ToolProfile::Core.allows("ffsake_rust"));
     }
 
     #[test]

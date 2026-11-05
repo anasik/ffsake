@@ -63,11 +63,11 @@ Projected totals become **130 calls versus 113** (edit 50 vs 44, ledger 45 vs
 The MCP server ships its tool schemas and instructions into the host context.
 Measured from `tools/list` and `initialize`:
 
-| Profile | Tools before → after | Context before | After trim | After curation |
+| Profile | Tools before → after | Context before | After trim | After curation/consolidation |
 | --- | ---: | ---: | ---: | ---: |
 | core | 39 → 28 | 37,598 | 31,812 | **21,814** |
 | editing | 25 → 20 | 20,238 | 17,659 | **15,206** |
-| all | 55 → 50 | 67,521 | 58,604 | **56,151** |
+| all | 55 → 39 | 67,521 | 58,604 | **37,909** |
 
 The description trim rewrote 52 descriptions and both instruction blocks. The
 curation step then removed catalog entries without removing dispatch:
@@ -142,10 +142,14 @@ must be frozen before scoring and reported separately.
   catalogs while remaining dispatchable; `ffsake_preview_files` is the advertised
   path. Core also omits archive, sticky target, explicit refresh, textual rename
   and remote Git operations, which stay in `all`.
-- Remaining: the twelve `ffsake_rust_*` snapshot tools still cost about 7 KB of
-  the 56 KB `all` catalog. Consolidating them into `ffsake_semantic` or a `lang`
-  profile would reduce the default catalog further, but they are not in core and
-  do not affect the 20.9 KB core target.
+- Done: the twelve explicit-snapshot Rust tools are consolidated into one
+  `ffsake_rust` action tool. The legacy names stay dispatchable but are hidden
+  from every catalog. This removes repeated `crates`/position schemas and cuts
+  the default `all` catalog from 56,151 to **37,909 bytes (-44% from the start,
+  39 tools)**. `ffsake_rust` covers definition, references, implementation,
+  hover, symbols, inspect, workspace/diagnostics, manifest context, rename
+  proposal, code actions and identifier selection; preview/apply handles remain
+  separate guarded steps.
 - Test: if the host stops issuing `ToolSearch` for the 21.8 KB core context, the
   turn projection reaches 113 vs 113 and parity is plausible. If it does not,
   R3 is required.
@@ -189,8 +193,9 @@ catalog and the discovery turn entirely, matching native's tool loop.
 ## Remaining gap and decision
 
 After the implemented consolidations, projected calls are 130 vs 113, with all
-17 remaining extra turns attributable to `ToolSearch`. Core context is now
-21.8 KB, under the 20 KB tool target, so the next measurement is whether a lean
+17 remaining extra turns attributable to `ToolSearch`. Core context is 21.8 KB
+and the default `all` catalog is 37.9 KB. The next measurement is whether a lean
 core catalog reduces `ToolSearch` turns. If it does not, R3's CLI shim is the
-only remaining change with a credible path to turn parity; R1's Rust-tool
-consolidation would shrink the default `all` catalog but not core turns.
+only remaining change with a credible path to turn parity; the Rust
+consolidation improves the default catalog and response size but is not in the
+measured core profile.
