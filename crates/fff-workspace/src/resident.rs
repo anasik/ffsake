@@ -769,7 +769,16 @@ impl Resident {
                                 .workspace()
                                 .read_text_bounded(Path::new(relative.as_ref()), None, None, 65536)
                                 .ok()??;
-                            Some(json!({"configuration":configuration,"path":relative,"read":read}))
+                            let text = read
+                                .text
+                                .lines()
+                                .enumerate()
+                                .map(|(index, line)| format!("{}: {line}", read.start_line + index))
+                                .collect::<Vec<_>>()
+                                .join("\n");
+                            Some(json!({"configuration":configuration,"path":relative,
+                                "start_line":read.start_line,"end_line":read.end_line,
+                                "total_lines":read.total_lines,"text":text}))
                         })
                         .collect();
                     if !debug_source.is_empty() {
