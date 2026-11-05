@@ -44,10 +44,6 @@ def preflight(binary, debug_python, timeout=300):
         client = debug_smoke.Client(binary, root, policy_path)
         adapter_pid = None
         try:
-            info = client.call('workspace_info')
-            assert any(item.get('configuration') == 'payroll'
-                       and 'adjustments' in item.get('read', {}).get('text', '')
-                       for item in info.get('debug_source', [])), info
             launched = client.call('debug_launch', configuration='payroll',
                                    breakpoints=[{'path': 'payroll.py', 'lines': [18]}],
                                    resume=True)

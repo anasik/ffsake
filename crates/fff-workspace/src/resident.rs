@@ -8,7 +8,6 @@ use crate::{FileSelector, PathSelector, ReplaceMode, Workspace};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
-use std::path::Path;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 const MAX_HANDLES: usize = 128;
@@ -672,24 +671,6 @@ impl Resident {
                 });
                 if !files.is_empty() {
                     value["reads"] = json!(self.read_file_batch(files)?);
-                } else if let Ok(root) = self.session.workspace().root().canonicalize() {
-                    let debug_source: Vec<Value> = self
-                        .debugger
-                        .launch_programs(&root)
-                        .into_iter()
-                        .filter_map(|(configuration, path)| {
-                            let relative = path.strip_prefix(&root).ok()?.to_string_lossy();
-                            let read = self
-                                .session
-                                .workspace()
-                                .read_text_bounded(Path::new(relative.as_ref()), None, None, 65536)
-                                .ok()??;
-                            Some(json!({"configuration":configuration,"path":relative,"read":read}))
-                        })
-                        .collect();
-                    if !debug_source.is_empty() {
-                        value["debug_source"] = json!(debug_source);
-                    }
                 }
                 Ok(value)
             }
