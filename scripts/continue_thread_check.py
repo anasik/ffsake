@@ -50,22 +50,25 @@ def preflight(binary, debug_python, timeout=300):
                        and 'adjustments' in item.get('read', {}).get('text', '')
                        for item in info.get('debug_source', [])), info
             launched = client.call('debug_probe', configuration='payroll',
-                                   breakpoints=[{'path': 'payroll.py', 'lines': 17}])
+                                   breakpoints=[{'path': 'payroll.py', 'lines': 16}])
             client.session = launched['session']
             adapter_pid = launched.get('adapter_pid')
             assert launched['stop']['reason'] == 'breakpoint', launched
             assert launched.get('cleaned') is True, launched
             inspection = launched['result']['result']['inspection']
             next_inspection = launched.get('next_inspection', {})
+            next2_inspection = launched.get('next2_inspection', {})
             variables = [item for scope in inspection.get('scopes', [])
                          for item in scope.get('variables', [])]
             next_variables = [item for scope in next_inspection.get('scopes', [])
                               for item in scope.get('variables', [])]
+            next2_variables = [item for scope in next2_inspection.get('scopes', [])
+                               for item in scope.get('variables', [])]
             assert any(item['name'] == 'adjustments' and item['value'] == '[50.0]'
-                       for item in next_variables), (variables, next_variables)
+                       for item in next2_variables), (variables, next_variables, next2_variables)
             result = {'ok': True, 'adapter_path': str(debug_python),
                       'adapter_pid': adapter_pid, 'variables': variables,
-                      'next_variables': next_variables,
+                      'next_variables': next_variables, 'next2_variables': next2_variables,
                       'stop': launched['stop'], 'cleaned': True}
         finally:
             if client.p.poll() is None:

@@ -745,7 +745,7 @@ A second five-repetition A/B added automatic debug-program source to `ffsake_wor
 
 ### One-shot debug probe (2026-11-05)
 
-The changed A/B traces repeatedly launched a debug session, inspected a stop, then issued a separate terminate. A dedicated `ffsake_debug_probe` tool now applies initial breakpoints, reaches the first stop, steps over one line, returns both bounded inspections, and cleans up the owned launch in one call. `ffsake_debug_launch` also accepts `terminate_after_stop:true` for callers using the persistent API. The normal multi-stop session path remains available.
+The changed A/B traces repeatedly launched a debug session, inspected a stop, then issued a separate terminate. A dedicated `ffsake_debug_probe` tool now applies initial breakpoints, reaches the first stop, steps over up to two lines, returns the resulting bounded inspections, and cleans up the owned launch in one call. `ffsake_debug_launch` also accepts `terminate_after_stop:true` for callers using the persistent API. The normal multi-stop session path remains available.
 
 The 18-case DAP protocol smoke tests combined start and one-shot probe, including no extra explicit terminate and cleanup. The exact debugpy preflight uses `ffsake_debug_probe` at the pre-mutation line, verifies the stepped inspection contains `adjustments=[50.0]` and `cleaned=true`, and the benchmark guidance names the probe for one-shot diagnosis. No paid run has measured this candidate; no time or token claim is made.
 

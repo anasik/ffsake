@@ -424,7 +424,7 @@ impl Resident {
         breakpoints: Vec<DebugBreakpoint>,
         resume: bool,
         terminate_after_stop: bool,
-        step_once: bool,
+        steps: usize,
     ) -> Result<Value> {
         let launched = self.debugger.launch(
             configuration,
@@ -488,25 +488,40 @@ impl Resident {
                 map.insert("capabilities".into(), value);
             }
         }
-        if step_once
-            && snapshot["status"].as_str() == Some("stopped")
-            && let Some(thread) = snapshot["stop"]["threadId"].as_i64()
-        {
-            self.debugger.execute(
-                crate::debug::Action::Next {
-                    session,
-                    thread,
-                    inspect: true,
-                },
-                &access,
-            )?;
-            let next = self
-                .prepare_debug_wait(session, crate::debug::WaitUntil::Result, 1000)?
-                .wait();
-            if let Some(inspection) = next.pointer("/result/result/inspection").cloned()
-                && let Some(map) = snapshot.as_object_mut()
-            {
-                map.insert("next_inspection".into(), inspection);
+        if steps > 0 && snapshot["status"].as_str() == Some("stopped") {
+            for index in 0..steps {
+                let thread = if index == 0 {
+                    snapshot["stop"]["threadId"].as_i64()
+                } else {
+                    snapshot
+                        .get("next2_inspection")
+                        .or_else(|| snapshot.get("next_inspection"))
+                        .and_then(|value| value["stop"]["threadId"].as_i64())
+                        .or_else(|| snapshot["stop"]["threadId"].as_i64())
+                };
+                let Some(thread) = thread else { break };
+                self.debugger.execute(
+                    crate::debug::Action::Next {
+                        session,
+                        thread,
+                        inspect: true,
+                    },
+                    &access,
+                )?;
+                let next = self
+                    .prepare_debug_wait(session, crate::debug::WaitUntil::Result, 1000)?
+                    .wait();
+                let Some(inspection) = next.pointer("/result/result/inspection").cloned() else {
+                    break;
+                };
+                if let Some(map) = snapshot.as_object_mut() {
+                    let key = if index == 0 {
+                        "next_inspection"
+                    } else {
+                        "next2_inspection"
+                    };
+                    map.insert(key.into(), inspection);
+                }
             }
         }
         if terminate_after_stop && snapshot["status"].as_str() == Some("stopped") {
@@ -752,20 +767,14 @@ impl Resident {
                 terminate_after_stop,
             } => {
                 self.index_dirty = true;
-                self.debug_start(
-                    &configuration,
-                    breakpoints,
-                    resume,
-                    terminate_after_stop,
-                    false,
-                )
+                self.debug_start(&configuration, breakpoints, resume, terminate_after_stop, 0)
             }
             Request::DebugProbe {
                 configuration,
                 breakpoints,
             } => {
                 self.index_dirty = true;
-                self.debug_start(&configuration, breakpoints, true, true, true)
+                self.debug_start(&configuration, breakpoints, true, true, 2)
             }
             Request::Debug { request } => {
                 self.index_dirty = true;

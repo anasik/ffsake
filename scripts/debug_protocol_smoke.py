@@ -37,6 +37,7 @@ def combined_start_case(binary, terminate_after_stop=False):
                 assert launched.get('cleaned') is True, launched
                 assert launched.get('terminated_after_stop') is True, launched
                 assert launched.get('next_inspection'), launched
+                assert launched.get('next2_inspection'), launched
             else:
                 stopped = c.wait(lambda s: s['status'] == 'stopped', allow_error=True)
                 assert stopped['stop']['reason'] == 'breakpoint', stopped
