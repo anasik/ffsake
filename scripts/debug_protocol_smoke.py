@@ -18,9 +18,13 @@ def combined_start_case(binary, terminate_after_stop=False):
             'launch': {}, 'timeout_seconds': 1, 'session_seconds': 30}}}))
         c = Client(binary, root, policy)
         try:
-            launched = c.call('debug_launch', configuration='fake',
-                              breakpoints=[{'path': 'local.txt', 'lines': 1}],
-                              resume=True, terminate_after_stop=terminate_after_stop)
+            if terminate_after_stop:
+                launched = c.call('debug_probe', configuration='fake',
+                                  breakpoints=[{'path': 'local.txt', 'lines': 1}])
+            else:
+                launched = c.call('debug_launch', configuration='fake',
+                                  breakpoints=[{'path': 'local.txt', 'lines': 1}],
+                                  resume=True)
             c.session = launched['session']
             assert launched['status'] == 'stopped', launched
             assert launched['stop']['reason'] == 'breakpoint', launched
