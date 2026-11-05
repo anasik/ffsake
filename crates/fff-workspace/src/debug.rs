@@ -1,6 +1,6 @@
 //! Host-configured local DAP sessions. No adapter-specific code or implicit execution.
 use crate::{access::Access, dap};
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use serde_json::{Value, json};
 use std::{
     collections::BTreeMap,
@@ -86,6 +86,23 @@ impl Configurations {
 fn default_wait_timeout_ms() -> u64 {
     1000
 }
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum Lines {
+    One(u32),
+    Many(Vec<u32>),
+}
+
+pub(crate) fn deserialize_lines<'de, D>(deserializer: D) -> std::result::Result<Vec<u32>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    Ok(match Lines::deserialize(deserializer)? {
+        Lines::One(line) => vec![line],
+        Lines::Many(lines) => lines,
+    })
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Action {
@@ -105,6 +122,7 @@ pub enum Action {
     Breakpoints {
         session: u64,
         path: String,
+        #[serde(deserialize_with = "deserialize_lines")]
         lines: Vec<u32>,
     },
     Threads {
@@ -568,6 +586,26 @@ mod tests {
         assert_eq!(summary["configuration_modes"]["two"], "attach");
         assert_eq!(summary["execution_enabled"], true);
         assert!(!summary.to_string().contains("/adapter"));
+    }
+
+    #[test]
+    fn breakpoint_lines_accept_one_or_many() {
+        let one: Action = serde_json::from_value(
+            json!({"action":"breakpoints","session":1,"path":"x","lines":17}),
+        )
+        .unwrap();
+        let Action::Breakpoints { lines, .. } = one else {
+            panic!("unexpected action")
+        };
+        assert_eq!(lines, vec![17]);
+        let many: Action = serde_json::from_value(
+            json!({"action":"breakpoints","session":1,"path":"x","lines":[3,17]}),
+        )
+        .unwrap();
+        let Action::Breakpoints { lines, .. } = many else {
+            panic!("unexpected action")
+        };
+        assert_eq!(lines, vec![3, 17]);
     }
 
     #[test]

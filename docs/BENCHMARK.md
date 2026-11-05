@@ -735,6 +735,10 @@ Changed versus old: payroll elapsed **−19.9%**, input **−2.3%**, calls **−
 
 The 14→9 call projection was not realised: changed payroll median was 11 calls and shipping 10. Traces still contain extra searches, duplicate launches, and explicit breakpoint/continue turns in several repetitions. The verifier now recognizes a combined launch with `resume` and returned inspection as launch/resume/automatic inspection; that correction raises payroll changed from 4/5 to 5/5 and shipping changed from 2/5 to 5/5 without a rerun. The [sanitized A/B index](agent-benchmark-runs/20261105-efficiency/ab.json) preserves per-run metrics.
 
+### Single-line breakpoint input (2026-11-05)
+
+The A/B traces exposed a concrete retry: payroll changed attempt 1 sent `lines:17` and shipping changed attempt 4 sent `lines:20`; both received `invalid type: integer, expected a sequence` and retried with an array. `breakpoints.lines` now accepts either one line number or an array, preserving the same line bounds and path authorization. The protocol smoke exercises the scalar form and the Rust parser test covers both forms. This removes one avoidable turn when an agent uses the scalar shape; it has not been paid-measured.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

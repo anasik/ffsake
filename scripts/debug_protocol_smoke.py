@@ -19,7 +19,7 @@ def combined_start_case(binary):
         c = Client(binary, root, policy)
         try:
             launched = c.call('debug_launch', configuration='fake',
-                              breakpoints=[{'path': 'local.txt', 'lines': [1]}],
+                              breakpoints=[{'path': 'local.txt', 'lines': 1}],
                               resume=True)
             c.session = launched['session']
             assert launched['status'] == 'stopped', launched

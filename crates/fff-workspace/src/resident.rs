@@ -353,6 +353,7 @@ struct CachedProposal {
 #[derive(Debug, Deserialize)]
 pub struct DebugBreakpoint {
     pub path: String,
+    #[serde(deserialize_with = "crate::debug::deserialize_lines")]
     pub lines: Vec<u32>,
 }
 
