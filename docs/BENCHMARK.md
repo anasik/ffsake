@@ -813,6 +813,12 @@ Model-free measurement on the retained `debug_ledger` fixture: the previous prob
 
 Projecting those two changes onto the retained final traces (remove `ffsake_tasks`, collapse debug workaround turns into one probe) gives median calls of **10 vs 10** for `edit_batch`, **9 vs 7** for `debug_ledger`, and **7 vs 7** for `debug_nested`. This is a projection, not a measured result. The remaining ledger difference is one native-source read and an extra verification command, and overall input overhead still includes the fixed MCP catalog. No paid run has measured this candidate.
 
+### Catalog and interaction-cost analysis (2026-11-05)
+
+The final held-out traces show FFSAKE used 157 tool calls versus native 113, while input per call was **22,090 versus 22,353** and seconds per call **1.69 versus 1.87**. The efficiency gap is therefore turn count, not per-turn payload or server latency. Model-free server timings are sub-millisecond for `workspace_info`/`read_files` and 7.7 ms for search; a real debugpy `stops=2` probe takes about 970 ms of actual stepping.
+
+The implemented consolidations remove 27 of the 44 extra turns in a projection: 14 `ffsake_tasks` turns are replaced by the workspace task summary, and 13 probe/launch/continue/terminate turns collapse into one multi-stop probe. Projected calls are **130 versus 113**; the remaining difference is exactly the 17 `ToolSearch` turns. A conservative description and instruction rewrite reduced core context from **37,598 to 31,812 bytes** (-15.4%) and editing context from **20,238 to 17,659 bytes** (-12.7%) while preserving every tool and parameter. The full analysis and redesign proposal are in [ARCHITECTURAL_BARRIER.md](ARCHITECTURAL_BARRIER.md).
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh
