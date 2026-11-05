@@ -44,7 +44,7 @@ def main():
         assert full == catalog(["--profile", "all"])
         core = catalog(["--profile", "core"])
         editing = catalog(["--profile", "editing"])
-        editing_excluded = {'ffsake_debug_probe', 'ffsake_debug_launch', 'ffsake_debug_attach', 'ffsake_debug',
+        editing_excluded = {'ffsake_debug_launch', 'ffsake_debug_attach', 'ffsake_debug',
                             'ffsake_task_register', 'ffsake_run_task', 'ffsake_task_status',
                             'ffsake_task_output', 'ffsake_task_cancel', 'ffsake_git_review',
                             'ffsake_git_mutate', 'ffsake_git_branches', 'ffsake_git_operation_review',

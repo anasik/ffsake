@@ -45,8 +45,9 @@ def preflight(binary, debug_python, timeout=300):
         adapter_pid = None
         result = {}
         try:
-            launched = client.call('debug_probe', configuration='payroll',
-                                   breakpoints=[{'path': 'payroll.py', 'lines': 18}])
+            launched = client.call('debug_launch', configuration='payroll',
+                                   breakpoints=[{'path': 'payroll.py', 'lines': 18}],
+                                   resume=True, terminate_after_stop=True)
             client.session = launched['session']
             adapter_pid = launched.get('adapter_pid')
             assert launched['stop']['reason'] == 'breakpoint', launched
