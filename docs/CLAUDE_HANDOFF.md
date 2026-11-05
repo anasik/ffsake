@@ -4,6 +4,22 @@
 >
 > State update: performance is the active goal. The numbered steps below are historical context; do not reimplement them or duplicate completed benchmark runs. Read current traces, source and PLAN.md, implement the smallest justified interaction-cost reduction, validate model-free, and request a bounded paid budget before measuring it.
 
+## Competitive unfamiliar-task goal (2026-11-05, candidate pending validation)
+
+Active goal: make FFSAKE reliably competitive with native tools on unfamiliar editing and debugging while preserving capabilities and safeguards.
+
+Baseline (final held-out, 30 attempts, $2.8672, candidate `3e9a9c8` from `2b78219`): artifact correctness 15/15 in both arms; harness completion 10/15 FFSAKE versus 12/15 native; median paired elapsed ratio 1.268 and input ratio 1.127. FFSAKE was slower mainly on `debug_ledger` (13 calls / 349,547 input versus native 7 / 154,137) and missed workflow evidence on `debug_nested` (0/5 versus 2/5).
+
+Diagnosis from retained traces: ledger runs used a one-shot probe and then a separate `debug_launch`/`continue`/`terminate` sequence to observe a second loop iteration; every FFSAKE run called `ffsake_tasks` before its real work; nested runs set the breakpoint at the `main.py` call site, so the exact `key=limits` local-name marker never appeared even though the nested dicts were observed; the remaining overhead includes the fixed MCP catalog and extra native verification commands.
+
+Candidate (tested model-free, not paid-measured), release binary `12abd297370c8bb10bc74c399e319eaa52a409dc3e5b4cdc2f03b01a0917d445`: `ffsake_debug_probe` accepts `stops` 1-4 and returns `stop_inspection_2`...`stop_inspection_4` before cleanup; `ffsake_workspace_info` returns a compact task summary. On the retained ledger fixture the old 4-call probe/launch/continue/terminate path returned 8,409 bytes; one `stops=2` probe returns 5,062 bytes in 1 call with `index=0` then `index=1`. Projected median calls: `edit_batch` 10 versus 10, `debug_ledger` 9 versus 7, `debug_nested` 7 versus 7. Rust tests, Clippy, formatting, DAP multi-stop smoke, MCP/profile/worktree/wait/repository smokes and the exact-debugpy preflight pass.
+
+Budget: the previous 60 paid attempts ($5.7511 total reported) are exhausted. Requested validation budget: **30 attempts, $6 ceiling** - 20 for counterbalanced candidate-versus-native screening on two new unseen tasks (one multi-file edit, one debug requiring at least two stops or expansion), 10 reserved for one final confirmation on a third unseen task. No reruns for favorable results; count pilots, failures and retries.
+
+Next action after approval: freeze the candidate binary at the tested commit, preflight exact adapters and policies, then run the screening batch and publish sanitized per-run evidence. Before scoring, replace the pilot's exact-name workflow marker with a disclosed general check that requires a debugger-observed runtime value whose name or value contains the target, and report it separately from artifact completion.
+
+Stop when success is demonstrated on held-out tasks, the budget is exhausted, three materially different candidates fail to improve the bottleneck, or progress needs a safeguard/dependency change. Do not start unrelated features, a new harness or fine-tuning.
+
 ## Current handoff (2026-11-04, performance follow-up)
 
 Implementation `936a70a` combines stop inspection with debugger control actions. `continue`, `next`, `step_in`, `step_out` and `pause` now wait up to 900 ms for the next stop, then return a bounded inspection in the same response; explicit `inspect` inspects the current stop without resuming. Defaults are 5 frames, 4 scopes, 8 variables per scope, at most 64 variable entries, 512 characters per value and a 32 KiB automatic-inspection budget. `inspect=false` opts out, and `auto_wait=false` implies it. No evaluation, raw DAP, resume or extra launch was added. Handles, authorization, stale-state clearing and owned-process cleanup remain guarded; if no stop arrives, the control result succeeds and reports `wait_timed_out`.

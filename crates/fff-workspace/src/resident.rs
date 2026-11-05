@@ -33,6 +33,9 @@ const MAX_HANDLES: usize = 128;
 fn task_timeout() -> u64 {
     60
 }
+fn default_probe_stops() -> usize {
+    1
+}
 fn task_output_limit() -> usize {
     65536
 }
@@ -75,6 +78,8 @@ pub enum Request {
     DebugProbe {
         configuration: String,
         breakpoints: Vec<DebugBreakpoint>,
+        #[serde(default = "default_probe_stops")]
+        stops: usize,
     },
     Debug {
         request: crate::debug::Action,
@@ -436,6 +441,45 @@ impl Resident {
             .prepare_wait(session, until, timeout_ms, &self.access())
     }
 
+    /// Compact task summary so discovery does not need a separate tasks turn.
+    fn task_summary(&self) -> Value {
+        let value = if self.tasks.restricted() {
+            self.tasks.list()
+        } else {
+            match crate::project_tasks::list(self.session.workspace()) {
+                Ok(value) => value,
+                Err(error) => return json!({"available": false, "error": error.to_string()}),
+            }
+        };
+        let enabled = value["execution_enabled"].as_bool().unwrap_or(false);
+        let mode = value["mode"].as_str().unwrap_or("startup_policy");
+        let mut rows = Vec::new();
+        if let Some(tasks) = value["tasks"].as_object() {
+            for (name, task) in tasks.iter().take(8) {
+                rows.push(json!({"name": name, "argv": task["argv"], "cwd": task["cwd"]}));
+            }
+        } else if let Some(tasks) = value["tasks"].as_array() {
+            for task in tasks.iter().take(8) {
+                let row = json!({
+                    "label": task["definition"]["label"],
+                    "group": task["definition"]["group"],
+                    "command": task["definition"]["command"],
+                    "args": task["definition"]["args"],
+                    "authorized": task["authorized"],
+                    "unsupported": task["unsupported"],
+                });
+                rows.push(row);
+            }
+        }
+        let total = value["tasks"]
+            .as_object()
+            .map(|tasks| tasks.len())
+            .or_else(|| value["tasks"].as_array().map(|tasks| tasks.len()))
+            .unwrap_or(0);
+        json!({"execution_enabled": enabled, "mode": mode, "total": total,
+               "truncated": total > rows.len(), "entries": rows})
+    }
+
     pub fn debug_start(
         &mut self,
         configuration: &str,
@@ -443,6 +487,7 @@ impl Resident {
         resume: bool,
         terminate_after_stop: bool,
         steps: usize,
+        breakpoint_stops: usize,
     ) -> Result<Value> {
         let launched = self.debugger.launch(
             configuration,
@@ -549,6 +594,40 @@ impl Resident {
                     break;
                 }
                 previous_values = current_values;
+            }
+        }
+        if breakpoint_stops > 1 && snapshot["status"].as_str() == Some("stopped") {
+            let mut collected = 1;
+            let mut thread = snapshot["stop"]["threadId"].as_i64();
+            for index in 1..breakpoint_stops {
+                let Some(current) = thread else { break };
+                self.debugger.execute(
+                    crate::debug::Action::Continue {
+                        session,
+                        thread: Some(current),
+                        inspect: true,
+                    },
+                    &access,
+                )?;
+                let next = self
+                    .prepare_debug_wait(session, crate::debug::WaitUntil::Result, 1000)?
+                    .wait();
+                let Some(inspection) = next.pointer("/result/result/inspection").cloned() else {
+                    break;
+                };
+                if next["status"].as_str() != Some("stopped") {
+                    break;
+                }
+                collected += 1;
+                thread = inspection["stop"]["threadId"].as_i64().or(thread);
+                if let Some(map) = snapshot.as_object_mut() {
+                    map.insert(format!("stop_inspection_{}", index + 1), inspection);
+                }
+            }
+            if collected > 1
+                && let Some(map) = snapshot.as_object_mut()
+            {
+                map.insert("breakpoint_stops_collected".into(), json!(collected));
             }
         }
         if terminate_after_stop && snapshot["status"].as_str() == Some("stopped") {
@@ -755,6 +834,7 @@ impl Resident {
                     "entries_truncated": entries_truncated,
                     "debug": self.debugger.summary()
                 });
+                value["tasks"] = self.task_summary();
                 if !files.is_empty() {
                     value["reads"] = json!(self.read_file_batch(files)?);
                 } else if let Ok(root) = self.session.workspace().root().canonicalize() {
@@ -803,14 +883,29 @@ impl Resident {
                 terminate_after_stop,
             } => {
                 self.index_dirty = true;
-                self.debug_start(&configuration, breakpoints, resume, terminate_after_stop, 0)
+                self.debug_start(
+                    &configuration,
+                    breakpoints,
+                    resume,
+                    terminate_after_stop,
+                    0,
+                    1,
+                )
             }
             Request::DebugProbe {
                 configuration,
                 breakpoints,
+                stops,
             } => {
                 self.index_dirty = true;
-                self.debug_start(&configuration, breakpoints, true, true, 2)
+                self.debug_start(
+                    &configuration,
+                    breakpoints,
+                    true,
+                    true,
+                    2,
+                    stops.clamp(1, 4),
+                )
             }
             Request::Debug { request } => {
                 self.index_dirty = true;

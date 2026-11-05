@@ -17,7 +17,7 @@ CASES = {
     'debug_cache': {'path': 'cache.py', 'line': 9,
                     'marker': ('key', 'beta')},
     'debug_ledger': {'path': 'ledger.py', 'line': 4,
-                     'marker': ('index', '0')},
+                     'marker': ('index', '1'), 'stops': 2},
     'debug_nested': {'path': 'settings.py', 'line': 5,
                      'marker': ('key', 'limits')},
 }
@@ -55,12 +55,17 @@ def main():
             session = None
             launched = {}
             try:
-                launched = client.call('debug_probe', configuration=Path(task['debug_program']).stem,
-                                       breakpoints=[{'path': case['path'], 'lines': case['line']}])
+                arguments = {'configuration': Path(task['debug_program']).stem,
+                             'breakpoints': [{'path': case['path'], 'lines': case['line']}]}
+                if 'stops' in case:
+                    arguments['stops'] = case['stops']
+                launched = client.call('debug_probe', **arguments)
                 session = launched['session']
                 assert launched.get('cleaned') is True, launched
                 inspections = [launched.get('result', {}).get('result', {}).get('inspection', {}),
                                launched.get('next_inspection', {}), launched.get('next2_inspection', {})]
+                inspections.extend(value for key, value in launched.items()
+                                   if key.startswith('stop_inspection_'))
                 assert any(marker_seen(item, case['marker']) for item in inspections), (
                     task_name, case['marker'], inspections)
             finally:

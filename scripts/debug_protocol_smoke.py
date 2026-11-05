@@ -52,6 +52,40 @@ def combined_start_case(binary, terminate_after_stop=False):
                         pass
                 c.close()
 
+def multi_stop_case(binary):
+    with tempfile.TemporaryDirectory(prefix='ffsake-dap-multi-stop-') as td:
+        base = Path(td).resolve(); root = base / 'root'; root.mkdir()
+        (root / 'local.txt').write_text('local')
+        policy = base / 'debug.json'
+        policy.write_text(json.dumps({'version': 1, 'configurations': {'fake': {
+            'argv': [sys.executable, str(ROOT / 'tests/fixtures/dap_adapter.py'), 'normal', str(base)],
+            'launch': {}, 'timeout_seconds': 1, 'session_seconds': 30}}}))
+        c = Client(binary, root, policy)
+        try:
+            launched = c.call('debug_probe', configuration='fake',
+                              breakpoints=[{'path': 'local.txt', 'lines': 1}],
+                              stops=2)
+            c.session = launched['session']
+            assert launched['status'] == 'stopped', launched
+            assert launched.get('cleaned') is True, launched
+            assert launched.get('terminated_after_stop') is True, launched
+            assert launched.get('stop_inspection_2'), launched
+            assert launched.get('breakpoint_stops_collected') == 2, launched
+            calls = [json.loads(line) for line in (base / 'calls.jsonl').read_text().splitlines()]
+            commands = [call['command'] for call in calls]
+            assert commands.count('continue') == 1, commands
+            assert 'configurationDone' in commands
+            assert 'disconnect' in commands, commands
+        finally:
+            if c.p.poll() is None:
+                if c.session:
+                    try:
+                        c.stop()
+                    except Exception:
+                        pass
+                c.close()
+
+
 def main():
     binary = Path(sys.argv[1]).resolve()
     tested = []
@@ -165,6 +199,8 @@ def main():
     tested.append('combined_start')
     combined_start_case(binary, terminate_after_stop=True)
     tested.append('one_shot_start')
+    multi_stop_case(binary)
+    tested.append('multi_stop_probe')
     print(json.dumps({'protocol_cases': tested, 'cleanup': True, 'authorization': True,
                       'stale_handles': True, 'nonblocking_editing': True}, indent=2))
 

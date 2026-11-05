@@ -805,6 +805,14 @@ Overall median paired ratios were **elapsed 1.268** and **input 1.127**, above t
 
 **Verdict: not met.** Artifact correctness generalized with no regression, and safeguards remained intact, but FFSAKE failed the harness-completion and efficiency criteria. The 60-attempt allowance is exhausted; no probe or retry was run.
 
+### Multi-stop probe and task-summary candidate (2026-11-05)
+
+The final held-out ledger traces showed FFSAKE using a one-shot probe and then a separate `debug_launch`/`continue`/`terminate` sequence to observe a second loop iteration. `ffsake_debug_probe` now accepts `stops` (1-4, default 1): after the value-sensitive step-over it continues to further breakpoint stops and returns each bounded inspection as `stop_inspection_2`...`stop_inspection_4` before cleanup. `ffsake_workspace_info` now also returns a compact task summary (`total`, `truncated`, up to eight label/group/command/args/authorized entries), removing the common separate `ffsake_tasks` discovery turn.
+
+Model-free measurement on the retained `debug_ledger` fixture: the previous probe plus launch/continue/terminate path returned **8,409 bytes across 4 tool calls**; one `debug_probe` with `stops=2` returned **5,062 bytes in 1 call** with the first stop `index=0` and the second `index=1`. Workspace context with the task summary is **1,127 bytes** and replaces a separate 143-byte `ffsake_tasks` response plus its model turn. The DAP protocol smoke now includes a multi-stop case and asserts one extra `continue`, two collected stops and cleanup; the exact-debugpy preflight uses `stops=2` on the ledger fixture.
+
+Projecting those two changes onto the retained final traces (remove `ffsake_tasks`, collapse debug workaround turns into one probe) gives median calls of **10 vs 10** for `edit_batch`, **9 vs 7** for `debug_ledger`, and **7 vs 7** for `debug_nested`. This is a projection, not a measured result. The remaining ledger difference is one native-source read and an extra verification command, and overall input overhead still includes the fixed MCP catalog. No paid run has measured this candidate.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh
