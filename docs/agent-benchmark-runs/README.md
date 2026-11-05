@@ -55,3 +55,7 @@ The [near-native probe index](20261105-efficiency/probe-lines.json) records the 
 ## 2026-11-05 Generalization debug
 
 The [generalization index](20261105-generalization/debug.json) records 30 counterbalanced paid attempts on three previously unused debug fixtures. Artifact correctness was 5/5 in both arms on every fixture. Harness completion was 7/15 for FFSAKE versus 6/15 native; overall median paired ratios were 1.067 elapsed and 1.282 input, so the efficiency criteria were not met.
+
+## 2026-11-05 Final held-out generalization
+
+The [final index](20261105-generalization/final.json) records the 30-attempt held-out comparison on `edit_batch`, `debug_ledger` and `debug_nested`. Artifact completion was 15/15 in both arms, but harness completion was 10/15 FFSAKE versus 12/15 native and median paired ratios were 1.268 elapsed and 1.127 input. The goal was not met; the pilot remains separate and is not pooled.

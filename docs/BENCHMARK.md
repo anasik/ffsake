@@ -786,6 +786,25 @@ The overall median paired ratios were **elapsed 1.067** and **input 1.282**; the
 
 **Verdict: partially met.** Artifact correctness generalized across all three unfamiliar fixtures with no regression, and safeguards remained intact. The efficiency and harness-completion criteria did not: FFSAKE was slower and used more input overall, and failed to produce observed debugger runtime evidence on more inventory and cache runs than native. No candidate, fixture or verifier changes were made during scoring, and no attempts were rerun.
 
+### Final held-out generalization (2026-11-05)
+
+The pilot's exact-name runtime markers caused false completion failures on valid dict/nested inspections, so the pilot was preserved and not pooled. Three new held-out tasks were frozen with independent program/test verifiers: `edit_batch` (three-file percentage-discount edit), `debug_ledger` (multi-iteration loop boundary), and `debug_nested` (nested settings merge). Candidate, prompts and verifiers were unchanged during the final 30 attempts.
+
+| Fixture / arm | Artifact | Harness correct | Calls | Seconds | Total input | Cached / uncached | Output | Cost/run |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Edit batch native | 5/5 | 5/5 | 10 | 15.8 | 154,403 | 140,567 / 12 | 1,582 | $0.0853 |
+| Edit batch FFSAKE | 5/5 | 5/5 | 11 | 16.5 | 172,915 | 155,382 / 14 | 1,389 | $0.0979 |
+| Ledger native | 5/5 | 5/5 | 7 | 12.9 | 154,137 | 141,096 / 12 | 1,027 | $0.0791 |
+| Ledger FFSAKE | 5/5 | 5/5 | 13 | 23.1 | 349,547 | 327,193 / 24 | 1,728 | $0.1377 |
+| Nested native | 5/5 | 2/5 | 7 | 13.7 | 180,824 | 167,613 / 14 | 991 | $0.0793 |
+| Nested FFSAKE | 5/5 | 0/5 | 8 | 13.0 | 172,850 | 155,846 / 14 | 1,122 | $0.0954 |
+
+Artifact completion was **15/15 in both arms**. Harness completion was **FFSAKE 10/15 vs native 12/15**; FFSAKE was lower on nested settings (0/5 vs 2/5). All 30 attempts were valid, with no timeouts. All 15 FFSAKE runs used at least one native Bash/Read/Edit fallback. Total cost was native $1.2203 and FFSAKE $1.6468.
+
+Overall median paired ratios were **elapsed 1.268** and **input 1.127**, above the ≤1.0 and ≤1.10 criteria. The [final sanitized index](agent-benchmark-runs/20261105-generalization/final.json) preserves per-run metrics. The pilot remains at [debug.json](agent-benchmark-runs/20261105-generalization/debug.json) and is not pooled.
+
+**Verdict: not met.** Artifact correctness generalized with no regression, and safeguards remained intact, but FFSAKE failed the harness-completion and efficiency criteria. The 60-attempt allowance is exhausted; no probe or retry was run.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh
