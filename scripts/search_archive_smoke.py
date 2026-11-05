@@ -14,7 +14,7 @@ import zipfile
 
 class MCP:
     def __init__(self, binary, root):
-        self.proc = subprocess.Popen([str(binary), str(root), '--profile', 'core'], stdin=subprocess.PIPE,
+        self.proc = subprocess.Popen([str(binary), str(root), '--profile', 'all'], stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         self.number = 0
     def call(self, name, arguments, ok=True):

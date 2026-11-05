@@ -26,11 +26,11 @@ def main():
   primary_state=(git(primary,'status','--porcelain=v1'),git(primary,'rev-parse','HEAD'),(primary/'.git/index').read_bytes())
   (one/'tracked.txt').write_text('one change\n');(one/'unrelated.txt').write_text('staged other\n');git(one,'add','unrelated.txt');(one/'unrelated.txt').write_text('working other\n')
   (two/'tracked.txt').write_text('two change\n');(linked/'tracked.txt').write_text('linked change\n')
-  listing=subprocess.run([str(binary),str(primary),'--profile','core'],input=json.dumps({'jsonrpc':'2.0','id':1,'method':'tools/list'})+'\n',capture_output=True,text=True,check=True,timeout=10)
+  listing=subprocess.run([str(binary),str(primary),'--profile','all'],input=json.dumps({'jsonrpc':'2.0','id':1,'method':'tools/list'})+'\n',capture_output=True,text=True,check=True,timeout=10)
   tools={x['name']:x for x in json.loads(listing.stdout)['result']['tools']}
   for name in ('ffsake_git','ffsake_git_review','ffsake_git_mutate','ffsake_git_branches','ffsake_git_operation_review','ffsake_git_operation'):
    schema=tools[name]['inputSchema'];assert 'repository' in schema['properties'] and 'repository' not in schema.get('required',[])
-  m=MCP(binary,primary)
+  m=MCP(binary,primary,profile='all')
   try:
    def call(tool,repo=None,ok=True,**kw):
     if repo is not None:kw['repository']=str(repo)

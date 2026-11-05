@@ -5,8 +5,8 @@ from pathlib import Path
 from semantic_smoke import MCP as BaseMCP
 from agent_benchmark_suite import git_init
 class MCP(BaseMCP):
-    def __init__(self,binary,root,policy=None,env=None):
-        args=[str(binary),str(root),'--profile','core']
+    def __init__(self,binary,root,policy=None,env=None,profile='core'):
+        args=[str(binary),str(root),'--profile',profile]
         if policy:args+=['--tasks',str(policy)]
         self.proc=subprocess.Popen(args,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,env=env);self.number=0
 

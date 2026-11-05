@@ -18,7 +18,7 @@ def main():
         (root/'tracked.txt').write_text('base\n');(root/'other.txt').write_text('base\n');(root/'staged.txt').write_text('base\n')
         git(root,'add','.');git(root,'commit','-qm','initial');git(root,'remote','add','origin',str(bare))
         (root/'other.txt').write_text('unrelated unstaged\n');(root/'staged.txt').write_text('unrelated staged\n');git(root,'add','staged.txt')
-        m=MCP(binary,root)
+        m=MCP(binary,root,profile='all')
         def review(op):return m.call('ffsake_git_operation_review',{'operation':op})
         def apply(op,r=None,ok=True):
             r=r or review(op);args={'review':r['review'],'operation':op}
@@ -98,7 +98,7 @@ def main():
         protected=base/'protected';protected.mkdir();git(protected,'init','-q','-b','main');git(protected,'config','user.name','Fixture');git(protected,'config','user.email','fixture@example.invalid')
         (protected/'ordinary').write_text('base\n');git(protected,'add','ordinary');git(protected,'commit','-qm','base');git(protected,'switch','-qc','unsafe')
         (protected/'.ffsake').mkdir();(protected/'.ffsake/guard').write_text('must stay protected');git(protected,'add','-f','.ffsake/guard');git(protected,'commit','-qm','protected path');git(protected,'switch','-q','main')
-        m=MCP(binary,protected)
+        m=MCP(binary,protected,profile='all')
         try:
             error=m.call('ffsake_git_operation_review',{'operation':{'action':'switch','branch':'unsafe'}},False)
             assert '.ffsake' in str(error) and not (protected/'.ffsake/guard').exists()
@@ -106,7 +106,7 @@ def main():
         ignored=base/'ignored';ignored.mkdir();git(ignored,'init','-q','-b','main');git(ignored,'config','user.name','Fixture');git(ignored,'config','user.email','fixture@example.invalid')
         (ignored/'.gitignore').write_text('local.bin\n');(ignored/'ordinary').write_text('base\n');git(ignored,'add','.');git(ignored,'commit','-qm','base');git(ignored,'switch','-qc','target')
         (ignored/'local.bin').write_text('tracked target\n');git(ignored,'add','-f','local.bin');git(ignored,'commit','-qm','target');git(ignored,'switch','-q','main');(ignored/'local.bin').write_text('preserve ignored user file\n')
-        m=MCP(binary,ignored)
+        m=MCP(binary,ignored,profile='all')
         try:
             op={'action':'switch','branch':'target'};r=m.call('ffsake_git_operation_review',{'operation':op})
             m.call('ffsake_git_operation',{'review':r['review'],'operation':op},False)
@@ -115,12 +115,12 @@ def main():
         sym=base/'symlink';sym.mkdir();git(sym,'init','-q','-b','main');git(sym,'config','user.name','Fixture');git(sym,'config','user.email','fixture@example.invalid')
         (sym/'ordinary').write_text('base\n');git(sym,'add','ordinary');git(sym,'commit','-qm','base');git(sym,'switch','-qc','unsafe')
         (sym/'link').symlink_to(base);git(sym,'add','link');git(sym,'commit','-qm','symlink');git(sym,'switch','-q','main')
-        m=MCP(binary,sym)
+        m=MCP(binary,sym,profile='all')
         try:
             error=m.call('ffsake_git_operation_review',{'operation':{'action':'switch','branch':'unsafe'}},False)
             assert 'symlink' in str(error) and not (sym/'link').is_symlink()
         finally:m.close()
-        linked=base/'linked';git(root,'worktree','add','-qb','linked',str(linked),'main');m=MCP(binary,linked)
+        linked=base/'linked';git(root,'worktree','add','-qb','linked',str(linked),'main');m=MCP(binary,linked,profile='all')
         try:
             assert m.call('ffsake_git_branches',{})['current']=='linked'
             op={'action':'create','branch':'linked-child'};r=m.call('ffsake_git_operation_review',{'operation':op});m.call('ffsake_git_operation',{'review':r['review'],'operation':op})
