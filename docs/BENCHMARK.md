@@ -833,7 +833,31 @@ Projected turns if the agent uses one command per step are **4 versus 10** for `
 
 Two fresh unseen tasks are frozen for the validation: `edit_multi` (three-file billing validation/serialization/handler fix) and `debug_expand` (tier-boundary bug requiring at least two loop iterations; a `stops=2` probe observes `index=1`). Both initial verifiers fail and both reference fixes pass.
 
-The dry-run preflight (`--dry-run`) validates the CLI binary, the 20,929-byte/28-tool core catalog, the Claude CLI, a guarded CLI read, the 30-attempt plan and the exact CLI guidance without model calls. No paid run has been made for this batch.
+The dry-run preflight (`--dry-run`) validates the CLI binary, the 20,929-byte/28-tool core catalog, the Claude CLI, a guarded CLI read, the 30-attempt plan and the exact CLI guidance without model calls. That batch has since been measured (see below): the CLI was not adopted for `edit_multi` and did not reduce turns for `debug_expand`.
+
+### Three-arm CLI validation (2026-11-05)
+
+The 30-attempt validation compared native, curated core MCP and the no-MCP CLI on two previously unused tasks: `edit_multi` (three-file billing fix) and `debug_expand` (tier boundary requiring two loop iterations). Five attempts per arm per task, counterbalanced. All 30 attempts were valid, all five artifacts passed in every arm, and workflow evidence passed 5/5 in every arm. Total reported cost was **$2.9466**.
+
+| Task / arm | Correct | Calls | Seconds | Total input | Cached | Output | Cost/run | ToolSearch | CLI adopted |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Edit native | 5/5 | 7 | 18.1 | 155,698 | 141,863 | 1,453 | $0.080 | 0 | 0/5 |
+| Edit MCP | 5/5 | 8 | 17.8 | 195,919 | 179,679 | 1,492 | $0.100 | 4/5 runs | 0/5 |
+| Edit CLI | 5/5 | 7 | 17.3 | 158,212 | 144,580 | 1,402 | $0.090 | 0 | 0/5 |
+| Debug native | 5/5 | 7 | 16.1 | 186,880 | 171,009 | 1,063 | $0.080 | 0 | 0/5 |
+| Debug MCP | 5/5 | 10 | 22.2 | 274,364 | 253,106 | 1,370 | $0.120 | 5/5 runs | 0/5 |
+| Debug CLI | 5/5 | 11 | 24.4 | 248,492 | 233,479 | 1,890 | $0.110 | 0 | **5/5** |
+
+Overall median paired ratios versus native:
+
+| Arm | Elapsed | Input |
+| --- | ---: | ---: |
+| Curated core MCP | **1.092** | **1.394** |
+| CLI | **1.190** | **1.268** |
+
+The CLI was not adopted for `edit_multi` at all: the agent used native Bash heredocs and `Write` despite explicit guidance. On `debug_expand` it was adopted in all five runs, but the agent still mixed in native `Read`, `pdb`, and repeated test commands, ending with more turns and slower elapsed time than native. The MCP arm paid one `ToolSearch` per debug run and additional `workspace_info`/read turns. No arm met the competitiveness criteria; native remained fastest and lowest-input overall.
+
+The [sanitized three-arm index](20261105-cli-arm/three-arm.json) preserves per-run metrics. This result supersedes the model-free CLI projections for decision purposes: zero catalog cost did not produce turn parity because tool choice and verification behavior dominate. The remaining gap is host/model behavior, not server latency, catalog size or a missing FFSAKE capability.
 
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 

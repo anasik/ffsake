@@ -91,6 +91,10 @@ Projected turns if an agent uses one command per step:
 | `debug_ledger` | 6–8 | 9 | **5** (read, probe, preview, apply, verify) |
 | `debug_nested` | 6–9 | 7 | **5** (read, probe, preview, apply, verify) |
 
-These are projections, not paid measurements. They assume the agent chooses the
-CLI and one combined read; adoption is the variable the next paid batch must
-measure.
+These were projections. The 30-attempt three-arm validation later measured
+**0/5 CLI adoption on `edit_multi`** (the agent used native heredocs/Write) and
+**5/5 adoption on `debug_expand`**, where the CLI still mixed native reads,
+`pdb` and repeated verification and ended slower than native. Median paired
+ratios versus native were 1.190 elapsed / 1.268 input for the CLI and 1.092 /
+1.394 for MCP. Native remained fastest and lowest-input; see
+[BENCHMARK.md](BENCHMARK.md#three-arm-cli-validation-2026-11-05).

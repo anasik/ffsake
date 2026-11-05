@@ -121,6 +121,41 @@ general check: a debugger-observed runtime value whose variable name or rendered
 value contains the target token. Artifact completion stays independent. This
 must be frozen before scoring and reported separately.
 
+## Three-arm measurement (2026-11-05)
+
+The 30-attempt validation compared native, curated core MCP and the no-MCP CLI
+on two previously unused tasks: `edit_multi` and `debug_expand`. Five attempts
+per arm per task, counterbalanced, $2.9466 total. All 30 attempts were valid;
+all five artifacts passed and workflow evidence passed in every arm.
+
+| Task / arm | Calls | Seconds | Total input | ToolSearch | CLI adopted |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Edit native | 7 | 18.1 | 155,698 | 0 | 0/5 |
+| Edit MCP | 8 | 17.8 | 195,919 | 4/5 runs | 0/5 |
+| Edit CLI | 7 | 17.3 | 158,212 | 0 | 0/5 |
+| Debug native | 7 | 16.1 | 186,880 | 0 | 0/5 |
+| Debug MCP | 10 | 22.2 | 274,364 | 5/5 runs | 0/5 |
+| Debug CLI | 11 | 24.4 | 248,492 | 0 | 5/5 |
+
+Median paired ratios versus native: MCP **1.092 elapsed / 1.394 input**; CLI
+**1.190 elapsed / 1.268 input**. Native remained fastest and lowest-input
+overall.
+
+The CLI result is decisive against the last product-only hypothesis:
+
+- On `edit_multi` the agent did not use the CLI at all. It used native Bash
+  heredocs and `Write` despite explicit CLI guidance. The edit arm therefore
+  measures prompt overhead, not CLI behavior.
+- On `debug_expand` the agent adopted the CLI in all five runs, but still mixed
+  native `Read`, `pdb` and repeated test commands. The CLI probe did not replace
+  exploration or verification turns.
+- The MCP arm paid one `ToolSearch` per debug run plus extra workspace/read
+  turns.
+
+Zero catalog cost did not produce turn parity. The dominant variable is host and
+model tool choice, not FFSAKE's server latency, schema size or missing
+capability.
+
 ## Why this is architectural, not a tuning miss
 
 - FFSAKE's per-turn cost is already at or below native.
@@ -186,8 +221,10 @@ surface through the host's existing Bash tool, with no MCP catalog.
   `preview_files` 967 vs 919, `apply` 109 vs 66 versus MCP. The `serve` protocol
   measured 85 ms median per round trip versus 209 ms for an equivalent shell
   pipeline, with 46 ms startup.
-- Projected turns: `edit_batch` 4 versus 10 MCP, `debug_ledger` 5 versus 9,
-  `debug_nested` 5 versus 7, if the agent uses one command per step.
+- Projected turns were 4-5 per task, but the measured three-arm run showed the
+  CLI was not adopted for `edit_multi` (0/5) and, when adopted for
+  `debug_expand` (5/5), did not reduce total turns or elapsed time because the
+  agent still mixed native reads, `pdb` and repeated verification.
 - Limits: persistent debug sessions, task jobs, Git review/mutate handles and
   match-set replacements require `serve` or MCP because handles are
   process-local. The one-shot mode is not a new permission authority.
@@ -216,11 +253,17 @@ surface through the host's existing Bash tool, with no MCP catalog.
 
 ## Remaining gap and decision
 
-After the implemented consolidations, projected MCP calls are 130 vs 113, with
-all 17 remaining extra turns attributable to `ToolSearch`. Core context is
-21.8 KB and default `all` is 37.9 KB. R3 is implemented: the CLI projects
-4-5 turns per task with zero catalog, below native's observed 6-10. The harness
-now has the three-arm path and two fresh fixtures; the dry run passes. The
-remaining question is adoption, not capability: can the host guidance make an
-agent choose the CLI? That is the next paid measurement, alongside whether the
-lean core catalog removes `ToolSearch`.
+The measured three-arm result closes the product-only redesign path. The
+consolidations reduced catalog and response size, and the CLI removed catalog
+cost entirely, but neither reduced the turns an agent chose to spend. The
+remaining gap is host/model tool choice: agents fall back to native reads,
+writes, `pdb` and repeated verification even when a guarded one-call path is
+available.
+
+A further product-only change would have to force a tool choice or collapse
+diagnosis, edit and verification into one opaque command. The first requires
+host policy (for example, removing native read/write tools for repository files
+in the evaluated arm); the second would weaken reviewed edits and stale-state
+separation, which this work will not do. The goal therefore remains **not met**
+on the measured criteria, and the blocker is a host-behavior decision plus a
+new paid budget, not an unimplemented FFSAKE capability.

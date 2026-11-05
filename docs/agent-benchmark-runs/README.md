@@ -59,3 +59,7 @@ The [generalization index](20261105-generalization/debug.json) records 30 counte
 ## 2026-11-05 Final held-out generalization
 
 The [final index](20261105-generalization/final.json) records the 30-attempt held-out comparison on `edit_batch`, `debug_ledger` and `debug_nested`. Artifact completion was 15/15 in both arms, but harness completion was 10/15 FFSAKE versus 12/15 native and median paired ratios were 1.268 elapsed and 1.127 input. The goal was not met; the pilot remains separate and is not pooled.
+
+## 2026-11-05 Three-arm CLI validation
+
+The [three-arm index](20261105-cli-arm/three-arm.json) records 30 counterbalanced paid attempts on `edit_multi` and `debug_expand` across native, core MCP and CLI. All arms were 5/5 correct; median paired ratios were 1.092 elapsed/1.394 input for MCP and 1.190/1.268 for CLI. The CLI was not adopted for the edit task and was slower when adopted for the debug task.
