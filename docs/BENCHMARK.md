@@ -749,6 +749,14 @@ The changed A/B traces repeatedly launched a debug session, inspected a stop, th
 
 The 18-case DAP protocol smoke tests combined start and one-shot probe, including no extra explicit terminate and cleanup. The exact debugpy preflight uses `ffsake_debug_probe` at the pre-mutation line, verifies the stepped inspection contains `adjustments=[50.0]` and `cleaned=true`, and the benchmark guidance names the probe for one-shot diagnosis. No paid run has measured this candidate; no time or token claim is made.
 
+### One-shot probe A/B (2026-11-05)
+
+A 20-attempt native-versus-probe comparison ran on both fixtures after `ffsake_debug_probe` began applying initial breakpoints, stepping once, returning both inspections and cleaning up in one call. Changed correctness was 5/5 on both fixtures. Payroll changed measured **16.9 s / 8 calls / 206,079 input** versus native **16.5 s / 6 calls / 155,556**; shipping changed measured **13.3 s / 7 calls / 199,355** versus native **14.2 s / 7 calls / 155,817**.
+
+Against the retained frozen-old medians from the earlier A/B, payroll changed is **−34.0% elapsed, −39.8% input, −38.5% calls** and shipping is **−27.0% elapsed, −34.7% input, −44.0% calls**. Thus payroll meets the 30% target on both elapsed and input, and shipping meets it on input but is 3 points short on elapsed; shipping changed is nevertheless faster than native in this sample. The old baseline is retained rather than rerun because the old binary predates the probe tool and cannot be preflighted under the current catalog. These comparisons are descriptive, not a contemporaneous counterbalanced old arm.
+
+The exact-adapter preflight uses the pre-mutation line, verifies the stepped `adjustments=[50.0]` inspection and cleanup. The [sanitized probe index](agent-benchmark-runs/20261105-efficiency/probe-step.json) preserves per-run metrics. Near-native elapsed and call counts are demonstrated; input remains about 28–32% above native.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

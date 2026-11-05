@@ -47,3 +47,5 @@ The [inspection index](20261104-inspection/inspection.json) contains 31 per-run 
 The [efficiency A/B index](20261105-efficiency/ab.json) records the 30-attempt counterbalanced native/old/changed comparison on payroll and shipping. Changed was 5/5 correct on both fixtures; payroll changed reduced elapsed by 19.9% and input by 2.3%, shipping by 0.8% and 10.0%, so the 30% target was not met.
 
 The [debug-source A/B index](20261105-efficiency/ab-debug-source.json) preserves the rejected follow-up candidate. It reduced input but caused changed correctness to fall to 3/5 payroll and 4/5 shipping, so the candidate was reverted.
+
+The [one-shot probe index](20261105-efficiency/probe-step.json) records the 20-attempt native-versus-probe comparison. Probe changed was 5/5 correct on both fixtures, payroll 16.9 s versus native 16.5 s, shipping 13.3 s versus native 14.2 s; input remained about 28–32% above native.

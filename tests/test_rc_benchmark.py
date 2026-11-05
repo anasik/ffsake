@@ -171,6 +171,12 @@ class FixtureTests(unittest.TestCase):
         self.assertTrue(combined['passed'])
         self.assertTrue(combined['details']['ffsake_resumed'])
         self.assertTrue(combined['details']['auto_inspection'])
+        probe = rc.workflow_evidence('claude', 'debug', [
+            {'name':'mcp__ffsake__ffsake_debug_probe','text':'{"configuration":"payroll"}',
+             'input':{'configuration':'payroll','breakpoints':[{'path':'payroll.py','lines':17}]},
+             'output':'text\n{"ok":true,"result":{"status":"stopped","result":{"ok":true,"result":{"inspection":{"scopes":[{"variables":[]}]}}},"next_inspection":{"scopes":[{"variables":[{"name":"adjustments","value":"[50.0]"}]}]}}}}'}], '')
+        self.assertTrue(probe['passed'])
+        self.assertTrue(probe['details']['ffsake_state_observed'])
         native_source_list = rc.workflow_evidence('codex', 'debug', [
             {'name':'command_execution','text':"printf 'p adjustments\\nl\\nq\\n' | python3 -m pdb payroll.py",'input':{},
              'output':'(Pdb) l\n  7     adjustments = [50.0]'}], '')

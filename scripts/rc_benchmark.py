@@ -404,7 +404,7 @@ def workflow_evidence(agent, task, calls, output):
                    'live_mcp_observed': bool(live_mcp), 'live_native_observed': bool(live_native)}
         passed = markers and ((ffsake_run and ffsake_observe and live_mcp) or (native_run and live_native))
     elif task.startswith('debug'):
-        ffsake_launch = any('ffsake_debug_launch' in name or 'ffsake_debug_attach' in name for name in names)
+        ffsake_launch = any('ffsake_debug_probe' in name or 'ffsake_debug_launch' in name or 'ffsake_debug_attach' in name for name in names)
         actions = set()
         for call in calls:
             if 'ffsake_debug' not in call['name']:
@@ -430,8 +430,8 @@ def workflow_evidence(agent, task, calls, output):
             action = request.get('action') if isinstance(request, dict) else None
             if action == 'continue' and _nested_key(payload, 'inspection'):
                 auto_inspect = True
-            if (call['name'].endswith('ffsake_debug_launch')
-                    and call['input'].get('resume') is True
+            if ((call['name'].endswith('ffsake_debug_launch') and call['input'].get('resume') is True
+                     or call['name'].endswith('ffsake_debug_probe'))
                     and _nested_key(payload, 'inspection')):
                 combined_start = True
                 auto_inspect = True
