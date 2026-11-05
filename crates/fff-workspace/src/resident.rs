@@ -10,6 +10,24 @@ use serde_json::{Value, json};
 use std::collections::BTreeMap;
 use std::path::Path;
 
+fn inspection_values(inspection: &Value) -> String {
+    let mut values = Vec::new();
+    if let Some(scopes) = inspection["scopes"].as_array() {
+        for scope in scopes {
+            if let Some(variables) = scope["variables"].as_array() {
+                for variable in variables {
+                    values.push(format!(
+                        "{}={}",
+                        variable["name"].as_str().unwrap_or(""),
+                        variable["value"].as_str().unwrap_or("")
+                    ));
+                }
+            }
+        }
+    }
+    values.join("\n")
+}
+
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 const MAX_HANDLES: usize = 128;
 fn task_timeout() -> u64 {
@@ -489,6 +507,10 @@ impl Resident {
             }
         }
         if steps > 0 && snapshot["status"].as_str() == Some("stopped") {
+            let mut previous_values = snapshot
+                .pointer("/result/result/inspection")
+                .map(inspection_values)
+                .unwrap_or_default();
             for index in 0..steps {
                 let thread = if index == 0 {
                     snapshot["stop"]["threadId"].as_i64()
@@ -514,6 +536,7 @@ impl Resident {
                 let Some(inspection) = next.pointer("/result/result/inspection").cloned() else {
                     break;
                 };
+                let current_values = inspection_values(&inspection);
                 if let Some(map) = snapshot.as_object_mut() {
                     let key = if index == 0 {
                         "next_inspection"
@@ -522,6 +545,10 @@ impl Resident {
                     };
                     map.insert(key.into(), inspection);
                 }
+                if current_values != previous_values {
+                    break;
+                }
+                previous_values = current_values;
             }
         }
         if terminate_after_stop && snapshot["status"].as_str() == Some("stopped") {
