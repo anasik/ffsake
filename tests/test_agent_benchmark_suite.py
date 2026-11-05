@@ -1492,5 +1492,53 @@ class LayoutTaskTests(unittest.TestCase):
             self.assertIn("exact_directories", details["failed_checks"])
 
 
+class CliArmIntegrationTests(unittest.TestCase):
+    def test_one_cli_mode_uses_cli_and_verifies_fixture(self):
+        import json
+        import subprocess
+        from unittest.mock import patch
+
+        import sys as _sys
+        _sys.path.insert(0, str(suite.ROOT / "scripts"))
+        import rc_benchmark_fixtures
+        suite.TASKS.update(rc_benchmark_fixtures.TASKS)
+
+        binary = suite.ROOT / "target/debug/ffsake"
+        self.assertTrue(binary.is_file(), binary)
+        operations = [
+            {"op": "edit", "path": "billing/validation.py",
+             "old_text": "quantity > 0 or quantity < 100",
+             "new_text": "quantity > 0 and quantity < 100", "expected_matches": 1},
+            {"op": "edit", "path": "billing/serialization.py",
+             "old_text": 'return {"sku": order["sku"]}',
+             "new_text": 'return {"sku": order["sku"], "quantity": order["quantity"]}',
+             "expected_matches": 1},
+            {"op": "edit", "path": "billing/handlers.py",
+             "old_text": 'from .totals import total\n\ndef handle(order, prices):\n    return total(order, prices[order["sku"]])',
+             "new_text": 'from .totals import total\nfrom .validation import valid_quantity\n\ndef handle(order, prices):\n    if not valid_quantity(order["quantity"]):\n        raise ValueError("invalid quantity")\n    return total(order, prices[order["sku"]])',
+             "expected_matches": 1},
+        ]
+
+        def fake_claude(root, prompt, use_ffsake, timeout, profile, mode):
+            self.assertEqual(mode, "cli")
+            self.assertFalse(use_ffsake)
+            preview = subprocess.run(
+                [str(binary), str(root), "--request",
+                 json.dumps({"op": "preview_files", "operations": operations})],
+                cwd=root, capture_output=True, text=True, timeout=30)
+            value = json.loads(preview.stdout)
+            self.assertTrue(value["ok"], value)
+            applied = subprocess.run(
+                [str(binary), str(root), "--apply", value["token"]],
+                cwd=root, capture_output=True, text=True, timeout=30)
+            self.assertTrue(json.loads(applied.stdout)["ok"], applied.stdout)
+            return {"stdout": "", "stderr": "", "exit_code": 0, "elapsed_ms": 0, "timed_out": False}
+
+        with patch.object(suite, "claude_run", side_effect=fake_claude):
+            result = suite.one("claude", "edit_multi", "cli", 10, None, "core")
+        self.assertTrue(result["correct"], result)
+        self.assertEqual(result["mode"], "cli")
+
+
 if __name__ == "__main__":
     unittest.main()

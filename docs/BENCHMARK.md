@@ -827,6 +827,14 @@ Model-free comparison: the CLI adds **zero** MCP catalog bytes. Responses are cl
 
 Projected turns if the agent uses one command per step are **4 versus 10** for `edit_batch`, **5 versus 9** for `debug_ledger`, and **5 versus 7** for `debug_nested` against the curated MCP projection. These are projections: adoption and paid timing are unmeasured. Details are in [CLI_SHIM.md](CLI_SHIM.md) and [ARCHITECTURAL_BARRIER.md](ARCHITECTURAL_BARRIER.md).
 
+### CLI arm harness and unseen tasks (2026-11-05)
+
+`rc_benchmark.py --cli-binary <ffsake>` now runs a counterbalanced three-arm comparison: native, curated core MCP and the no-MCP CLI, five attempts per arm per task. Per-run traces record `toolsearch_calls`, `mcp_calls`, `cli_calls` and `cli_adopted`; CLI debug evidence is recognized from `debug_probe` output (`cli_probe`, `cli_cleanup`) while artifact verification stays independent.
+
+Two fresh unseen tasks are frozen for the validation: `edit_multi` (three-file billing validation/serialization/handler fix) and `debug_expand` (tier-boundary bug requiring at least two loop iterations; a `stops=2` probe observes `index=1`). Both initial verifiers fail and both reference fixes pass.
+
+The dry-run preflight (`--dry-run`) validates the CLI binary, the 20,929-byte/28-tool core catalog, the Claude CLI, a guarded CLI read, the 30-attempt plan and the exact CLI guidance without model calls. No paid run has been made for this batch.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

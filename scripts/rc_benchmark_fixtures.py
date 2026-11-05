@@ -255,6 +255,60 @@ def debug_nested_verify(root, state):
             {'program_exit': program.returncode, 'stdout': program.stdout,
              'test_exit': tests.returncode, 'test_stderr': tests.stderr})
 
+def edit_multi_fixture(root):
+    files = {
+        'billing/__init__.py': '',
+        'billing/validation.py': 'def valid_quantity(quantity):\n    return quantity > 0 or quantity < 100\n',
+        'billing/serialization.py': 'def serialize(order):\n    return {"sku": order["sku"]}\n',
+        'billing/totals.py': 'def total(order, price):\n    return round(price * order["quantity"], 2)\n',
+        'billing/handlers.py': 'from .totals import total\n\ndef handle(order, prices):\n    return total(order, prices[order["sku"]])\n',
+        'main.py': 'from billing.handlers import handle\n\nactual = handle({"sku": "widget", "quantity": 2}, {"widget": 10})\nexpected = 20\nprint(f"actual={actual}")\nprint(f"expected={expected}")\nraise SystemExit(0 if actual == expected else 1)\n',
+        'tests/__init__.py': '',
+        'tests/test_billing.py': 'import unittest\nfrom billing.validation import valid_quantity\nfrom billing.serialization import serialize\nfrom billing.handlers import handle\n\nclass Billing(unittest.TestCase):\n    def test_upper_bound(self):\n        self.assertFalse(valid_quantity(100))\n    def test_serialization(self):\n        self.assertEqual(serialize({"sku": "x", "quantity": 2}), {"sku": "x", "quantity": 2})\n    def test_handler_rejects(self):\n        with self.assertRaises(ValueError):\n            handle({"sku": "x", "quantity": 0}, {"x": 10})\n    def test_handler_total(self):\n        self.assertEqual(handle({"sku": "x", "quantity": 2}, {"x": 10}), 20)\n',
+        'README.md': '# Billing\nRun main.py and the test suite.\n',
+        'sentinel.txt': 'unrelated billing notes\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['billing/validation.py'] = 'def valid_quantity(quantity):\n    return quantity > 0 and quantity < 100\n'
+    reference['billing/serialization.py'] = 'def serialize(order):\n    return {"sku": order["sku"], "quantity": order["quantity"]}\n'
+    reference['billing/handlers.py'] = 'from .totals import total\nfrom .validation import valid_quantity\n\ndef handle(order, prices):\n    if not valid_quantity(order["quantity"]):\n        raise ValueError("invalid quantity")\n    return total(order, prices[order["sku"]])\n'
+    return {'reference': reference}
+
+
+def edit_multi_verify(root, state):
+    program = command(root, sys.executable, '-B', 'main.py')
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    return (program.returncode == 0 and tests.returncode == 0,
+            {'program_exit': program.returncode, 'stdout': program.stdout,
+             'test_exit': tests.returncode, 'test_stderr': tests.stderr})
+
+
+def debug_expand_fixture(root):
+    files = {
+        'tiers.py': 'TIERS = [\n    {"name": "basic", "limit": 10, "rate": 1.0},\n    {"name": "pro", "limit": 20, "rate": 0.9},\n    {"name": "enterprise", "limit": 100, "rate": 0.8},\n]\n\ndef rate_for(quantity):\n    for index, tier in enumerate(TIERS):\n        if quantity < tier["limit"]:\n            return tier["rate"]\n    return 1.0\n',
+        'main.py': 'from tiers import rate_for\n\nactual = rate_for(20)\nexpected = 0.9\nprint(f"actual={actual}")\nprint(f"expected={expected}")\nraise SystemExit(0 if actual == expected else 1)\n',
+        'tests/test_tiers.py': 'import unittest\nfrom tiers import rate_for\n\nclass Tiers(unittest.TestCase):\n    def test_boundaries(self):\n        self.assertEqual(rate_for(10), 1.0)\n        self.assertEqual(rate_for(20), 0.9)\n        self.assertEqual(rate_for(100), 0.8)\n',
+        'README.md': '# Tiers\nRun main.py to reproduce the tier boundary failure.\n',
+        'notes.txt': 'Tier limits are inclusive at the upper bound.\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['tiers.py'] = 'TIERS = [\n    {"name": "basic", "limit": 10, "rate": 1.0},\n    {"name": "pro", "limit": 20, "rate": 0.9},\n    {"name": "enterprise", "limit": 100, "rate": 0.8},\n]\n\ndef rate_for(quantity):\n    for index, tier in enumerate(TIERS):\n        if quantity <= tier["limit"]:\n            return tier["rate"]\n    return 1.0\n'
+    return {'reference': reference}
+
+
+def debug_expand_verify(root, state):
+    program = command(root, sys.executable, '-B', 'main.py')
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    return (program.returncode == 0 and 'actual=0.9' in program.stdout
+            and tests.returncode == 0,
+            {'program_exit': program.returncode, 'stdout': program.stdout,
+             'test_exit': tests.returncode, 'test_stderr': tests.stderr})
+
+
 TASKS = {
     'cross': {'fixture': cross_fixture, 'verify': cross_verify,
               'prompt': 'Explore this pricing project and fix the discount calculation. Both checkout and the pricing function should accept discounts as percentages, and final prices must be correct. Keep tests and unrelated files unchanged. Finish when the existing tests pass.',
@@ -296,4 +350,11 @@ TASKS = {
                      'prompt': 'Run main.py to reproduce the nested settings failure. Use a debugger to inspect the nested runtime values, make the smallest fix, and verify the program and tests. Preserve unrelated files.',
                      'allowed_changes': {'settings.py'}, 'debug_program': 'main.py',
                      'workflow_markers': ('key', 'limits')},
+    'edit_multi': {'fixture': edit_multi_fixture, 'verify': edit_multi_verify,
+                   'prompt': 'The billing package fails its validation, serialization and handler tests. Fix all affected modules, keep tests unchanged, and run the test suite. Preserve unrelated files.',
+                   'allowed_changes': {'billing/validation.py', 'billing/serialization.py', 'billing/handlers.py'}},
+    'debug_expand': {'fixture': debug_expand_fixture, 'verify': debug_expand_verify,
+                     'prompt': 'Run main.py to reproduce the tier boundary failure. Use a debugger to observe at least two loop iterations and the runtime tier values, make the smallest fix, and verify the program and tests. Preserve unrelated files.',
+                     'allowed_changes': {'tiers.py'}, 'debug_program': 'main.py',
+                     'workflow_markers': ('index', '1')},
 }

@@ -187,14 +187,14 @@ def sanitize(report, timing_dir=None, omit_events=False):
         row = {key: run.get(key) if isinstance(run.get(key), bool) else None for key in
                ('correct', 'artifact_correct', 'comparison_valid', 'timed_out')}
         row.update({key: numeric(run.get(key)) for key in ('repetition', 'attempt', 'elapsed_ms', 'exit_code')})
-        row['task'] = run.get('task') if run.get('task') in {'cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested'} else 'other'
+        row['task'] = run.get('task') if run.get('task') in {'cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand'} else 'other'
         reasons = run.get('comparison_invalid_reasons')
         row['comparison_invalid_reasons'] = [x for x in reasons if x in {'tool_profile_violation', 'provider_api_error', 'benchmark_setup_error'}] if isinstance(reasons, list) else []
         provider_errors = run.get('provider_errors')
         row['provider_error_count'] = len(provider_errors) if isinstance(provider_errors, list) else None
         if isinstance(run.get('reported_model'), str) and SAFE_NAME.fullmatch(run['reported_model']):
             row['reported_model'] = run['reported_model']
-        row['mode'] = run.get('mode') if run.get('mode') in {'baseline', 'ffsake', 'core', 'editing', 'compact', 'context', 'old', 'changed'} else 'other'
+        row['mode'] = run.get('mode') if run.get('mode') in {'baseline', 'ffsake', 'core', 'editing', 'compact', 'context', 'old', 'changed', 'cli'} else 'other'
         if run.get('server_profile') in ('core', 'editing'):
             row['server_profile'] = run['server_profile']
         if isinstance(run.get('startup_context'), dict):
@@ -207,7 +207,8 @@ def sanitize(report, timing_dir=None, omit_events=False):
             'tool_calls', 'ffsake_tool_calls', 'shell_tool_calls', 'observed_tool_errors',
             'mcp_failed_tool_calls', 'mcp_approval_blocked_calls', 'events', 'num_turns',
             'input_tokens', 'total_input_tokens', 'uncached_input_tokens', 'output_tokens',
-            'cache_read_input_tokens', 'cache_creation_input_tokens', 'total_cost_usd', 'retries')}
+            'cache_read_input_tokens', 'cache_creation_input_tokens', 'total_cost_usd', 'retries',
+            'toolsearch_calls', 'mcp_calls', 'cli_calls')}
         row['trace']['tool_names'] = [tool_name(x) for x in trace.get('tool_names', [])]
         if row['task'].startswith('debug'):
             row['debug_actions'] = (claude_debug_actions(raw_stdout) if run.get('agent') == 'claude'
@@ -218,7 +219,8 @@ def sanitize(report, timing_dir=None, omit_events=False):
                            'output_markers', 'live_mcp_observed', 'live_native_observed',
                            'ffsake_launch', 'ffsake_inspected_state', 'ffsake_resumed',
                            'ffsake_state_observed', 'native_debugger', 'native_state_observed',
-                           'review_before_commit', 'workflow_evidence_required')
+                           'review_before_commit', 'workflow_evidence_required',
+                           'cli_probe', 'cli_cleanup')
         row['workflow_evidence'] = {'passed': passed if isinstance(passed, bool) else None,
                                     'details': {key: details[key] for key in allowed_details
                                                 if isinstance(details.get(key), bool)}}
@@ -252,7 +254,7 @@ def sanitize(report, timing_dir=None, omit_events=False):
             'driver_sha256': digest(report.get('driver_sha256')),
             'fixture_sha256': digest(report.get('fixture_sha256')),
             'agents': [x if x in ('codex','claude','opencode') else 'other' for x in report.get('agents', [])],
-            'tasks': [x if x in ('cross','maintenance','layout','build','git','debug','debug_shipping','debug_inventory','debug_intervals','debug_cache','edit_batch','debug_ledger','debug_nested') else 'other' for x in report.get('tasks', [])],
+            'tasks': [x if x in ('cross','maintenance','layout','build','git','debug','debug_shipping','debug_inventory','debug_intervals','debug_cache','edit_batch','debug_ledger','debug_nested','edit_multi','debug_expand') else 'other' for x in report.get('tasks', [])],
             'repetitions': numeric(report.get('repetitions')),
             'complete': report.get('complete') if isinstance(report.get('complete'), bool) else None,
             'platform': settings.get('machine') if settings.get('machine') in ('arm64', 'x86_64', 'aarch64') else None,
@@ -263,7 +265,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('input', type=Path)
     parser.add_argument('output', type=Path)
-    parser.add_argument('--task', choices=('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested'))
+    parser.add_argument('--task', choices=('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand'))
     parser.add_argument('--timing-dir', type=Path, help='private directory containing content-free timing logs')
     parser.add_argument('--omit-events', action='store_true', help='omit host event index; retain tool names and timing')
     args = parser.parse_args()

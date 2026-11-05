@@ -39,11 +39,33 @@ GUIDANCE = ('Use FFSAKE MCP for scoped repository reading, search, previews, edi
             'Git review and mutation, project tasks, and debugging. Native tools remain '
             'available for commands FFSAKE cannot perform; do not use them to evade access denial.')
 
+CLI_GUIDANCE = ''
 
-def claude(root, prompt, enabled, timeout, profile):
+
+def cli_guidance(binary):
+    return (
+        f"The guarded FFSAKE CLI is available at {binary}. Use it through Bash for repository "
+        "reads, edits, history and debugging. "
+        f"Read files: {binary} \"$PWD\" --request '{{\"op\":\"read_files\",\"files\":[{{\"path\":\"src/lib.rs\"}}]}}'. "
+        f"Preview edits: {binary} \"$PWD\" --request '{{\"op\":\"preview_files\",\"operations\":[...]}}' "
+        f"then {binary} \"$PWD\" --apply <token>. "
+        f"Debug: {binary} \"$PWD\" --debug .ffsake/rc-debug.json --request "
+        "'{\"op\":\"debug_probe\",\"configuration\":\"main\",\"breakpoints\":[{\"path\":\"main.py\",\"lines\":4}],\"stops\":2}'. "
+        "Preview before applying. Native tools remain available; never bypass an access denial."
+    )
+
+
+def claude(root, prompt, enabled, timeout, profile, mode=None):
     # The task prompt and native tools are identical in both arms. MCP itself
     # supplies FFSAKE's server guidance; the baseline has no MCP servers.
     cfg = root / '.ffsake-claude-mcp.json'
+    if mode == 'cli':
+        cfg.write_text(json.dumps({'mcpServers': {}}))
+        cmd = ['claude', '-p', prompt, '--output-format', 'stream-json', '--verbose',
+               '--max-turns', '40', '--model', 'sonnet', '--effort', 'low',
+               '--dangerously-skip-permissions', '--strict-mcp-config', '--mcp-config', str(cfg),
+               '--append-system-prompt', CLI_GUIDANCE]
+        return suite.run_process(cmd, root, timeout)
     servers = {'ffsake': {'command': str(suite.FFSAKE_MCP),
                          'args': suite.mcp_arguments(root, profile)}} if enabled else {}
     cfg.write_text(json.dumps({'mcpServers': servers}))
@@ -383,6 +405,14 @@ def _native_debugger_state(calls, markers):
     return False
 
 
+def _contains_true(value, key):
+    if isinstance(value, dict):
+        return value.get(key) is True or any(_contains_true(child, key) for child in value.values())
+    if isinstance(value, list):
+        return any(_contains_true(child, key) for child in value)
+    return False
+
+
 def workflow_evidence(agent, task, calls, output):
     """Check trace-visible workflow behavior that a final file verifier cannot prove."""
     names = [call['name'] for call in calls]
@@ -440,6 +470,21 @@ def workflow_evidence(agent, task, calls, output):
                    for variable in variables):
                 ffsake_state = True
         ffsake_resume = 'continue' in actions or combined_start
+        cli_payloads = []
+        for call in calls:
+            text = call.get('text') or ''
+            if 'debug_probe' in text and '--request' in text:
+                payload = _embedded_json(call.get('output', ''))
+                if payload is not None:
+                    cli_payloads.append(payload)
+        cli_variables = [variable for payload in cli_payloads
+                         for variable in _debug_variables(payload)]
+        cli_probe = bool(cli_payloads)
+        cli_inspect = bool(cli_variables)
+        cli_state = any(variable['name'] == markers[0]
+                        and _runtime_value_matches(variable['value'], markers[1])
+                        for variable in cli_variables)
+        cli_cleanup = any(_contains_true(payload, 'cleaned') for payload in cli_payloads)
         native_debugger = any(any(token in command.lower() for token in _DEBUGGER_TOKENS)
                               for command in commands)
         native_state = _native_debugger_state(calls, markers)
@@ -447,8 +492,11 @@ def workflow_evidence(agent, task, calls, output):
                    'ffsake_inspected_state': ffsake_inspect, 'auto_inspection': auto_inspect,
                    'ffsake_resumed': ffsake_resume,
                    'native_debugger': native_debugger, 'native_state_observed': native_state,
-                   'ffsake_state_observed': ffsake_state, 'state_markers': markers}
-        passed = (ffsake_launch and ffsake_inspect and ffsake_resume and ffsake_state) or (native_debugger and native_state)
+                   'ffsake_state_observed': ffsake_state, 'cli_probe': cli_probe,
+                   'cli_cleanup': cli_cleanup, 'state_markers': markers}
+        passed = ((ffsake_launch and ffsake_inspect and ffsake_resume and ffsake_state)
+                  or (cli_probe and cli_inspect and cli_state and cli_cleanup)
+                  or (native_debugger and native_state))
     elif task == 'git':
         commit = next((i for i, c in enumerate(calls) if
                        ('ffsake_git_mutate' in c['name'] and c['input'].get('action') == 'commit')
@@ -579,21 +627,25 @@ def main():
     p.add_argument('--compact', action='store_true', help='diagnostic compact batch-read responses via proxy')
     p.add_argument('--diagnostic-matrix', action='store_true', help='counterbalance native, core, editing catalog, compact and startup snapshot')
     p.add_argument('--baseline-binary', type=Path, help='counterbalance native, this core binary and --binary (editing for editing tasks, core for debug)')
+    p.add_argument('--cli-binary', type=Path, help='add a no-MCP CLI arm using this ffsake binary (Claude only)')
+    p.add_argument('--dry-run', action='store_true', help='validate binaries, policies and arm commands without model calls')
     a = p.parse_args()
-    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING
+    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE
     CATALOG = a.catalog
     COMPACT = a.compact
     if a.diagnostic_matrix and (not a.instrument_dir or a.catalog != 'core' or a.compact or a.agents != 'codex'):
         p.error('--diagnostic-matrix requires Codex, --instrument-dir, and default catalog/compact options')
     if a.baseline_binary and (a.diagnostic_matrix or not a.instrument_dir or a.catalog != 'core' or a.compact):
         p.error('--baseline-binary requires --instrument-dir and default diagnostic options')
+    if a.cli_binary and (a.baseline_binary or a.diagnostic_matrix or a.agents != 'claude'):
+        p.error('--cli-binary supports Claude only and cannot be combined with baseline or diagnostic modes')
     if COMPACT and not a.instrument_dir:
         p.error('--compact requires --instrument-dir')
     if a.instrument_dir:
         a.instrument_dir = a.instrument_dir.resolve()
         a.instrument_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     agents, tasks = a.agents.split(','), a.tasks.split(',')
-    if any(x not in ('claude', 'codex') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested') for x in tasks):
+    if any(x not in ('claude', 'codex') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand') for x in tasks):
         p.error('unsupported agent or task')
     if not a.pilot and 'codex' in agents and 'git' in tasks:
         p.error('Codex Git comparison unavailable: native workspace sandbox denies linked-worktree Git metadata while MCP can write it')
@@ -602,6 +654,9 @@ def main():
     if not a.pilot and a.repetitions < 5:
         p.error('measured pairs require at least five repetitions')
     suite.FFSAKE_MCP = a.binary.resolve(strict=True)
+    suite.CLI_BINARY = a.cli_binary.resolve(strict=True) if a.cli_binary else None
+    CLI_GUIDANCE = cli_guidance(suite.CLI_BINARY) if suite.CLI_BINARY else ''
+    suite.CLI_GUIDANCE = CLI_GUIDANCE
     changed_binary = suite.FFSAKE_MCP
     baseline_binary = a.baseline_binary.resolve(strict=True) if a.baseline_binary else None
     for task in tasks:
@@ -632,11 +687,31 @@ def main():
         old_preflight = suite.mcp_profile_preflight('core', baseline_binary)
         if not old_preflight['ok']:
             raise SystemExit('baseline MCP preflight failed; no model calls made')
+    cli_preflight = None
+    if a.cli_binary:
+        cli_preflight = suite.cli_preflight(a.cli_binary)
+        if not cli_preflight['ok']:
+            raise SystemExit('CLI preflight failed; no model calls made')
+    if a.dry_run:
+        print(json.dumps({
+            'ok': True, 'model_calls': 0, 'agents': agents, 'tasks': tasks,
+            'repetitions': a.repetitions,
+            'arms': ['baseline', 'ffsake', 'cli'] if a.cli_binary else ['baseline', 'ffsake'],
+            'planned_attempts': (3 if a.cli_binary else 2) * len(tasks) * a.repetitions,
+            'preflight': preflight, 'cli_preflight': cli_preflight,
+            'cli_guidance': CLI_GUIDANCE,
+            'mcp_catalog': suite.mcp_profile_preflight('core', a.binary)['catalog_bytes']
+                if suite.mcp_profile_preflight('core', a.binary)['ok'] else None,
+        }, indent=2))
+        return
     report = {'kind': 'pilot' if a.pilot else 'measured', 'revision': suite.benchmark_provenance(),
               'driver_sha256': suite.file_sha256(Path(__file__)),
               'fixture_sha256': suite.file_sha256(Path(fixtures.__file__)), 'preflight': preflight,
               'agents': agents, 'tasks': tasks, 'repetitions': a.repetitions,
               'baseline_binary_sha256': suite.file_sha256(baseline_binary) if baseline_binary else None,
+              'cli_binary_sha256': suite.file_sha256(a.cli_binary) if a.cli_binary else None,
+              'cli_preflight': cli_preflight,
+              'cli_guidance': CLI_GUIDANCE,
               'settings': {'claude_model': 'sonnet (host alias)', 'claude_effort': 'low',
                            'codex_model': 'gpt-6-astra', 'codex_reasoning_effort': 'low',
                            'approval': 'intentional noninteractive auto allowance for the fixture',
@@ -674,6 +749,9 @@ def main():
                     elif baseline_binary:
                         base_modes = ('baseline', 'old', 'changed')
                         modes = rotate_conditions(base_modes, repetition, tasks.index(task))
+                    elif a.cli_binary:
+                        base_modes = ('baseline', 'ffsake', 'cli')
+                        modes = rotate_conditions(base_modes, repetition, tasks.index(task))
                     else:
                         modes = ('baseline', 'ffsake') if baseline_first else ('ffsake', 'baseline')
                     group_start = len(report['results'])
@@ -684,7 +762,7 @@ def main():
                         CONTEXT_MS = None
                         suite.FFSAKE_MCP = baseline_binary if mode == 'old' else changed_binary
                         SERVER_EDITING = bool(baseline_binary and mode == 'changed' and task in ('cross', 'maintenance', 'layout'))
-                        suite_mode = 'baseline' if mode == 'baseline' else 'ffsake'
+                        suite_mode = mode if mode in ('baseline', 'ffsake', 'cli') else 'ffsake'
                         print(f'{agent} {task} {mode} {repetition}', flush=True)
                         # Keep a model's parent-directory discovery in an empty,
                         # disposable container rather than the user's shared tmp.
@@ -717,6 +795,15 @@ def main():
                         TIMING_FILE = None
                         events = suite.parse_jsonl(result['stdout'])
                         calls = tool_calls(agent, events)
+                        result['trace']['toolsearch_calls'] = sum(
+                            1 for call in calls if call['name'] == 'ToolSearch')
+                        result['trace']['mcp_calls'] = sum(
+                            1 for call in calls if 'mcp__ffsake__' in call['name'])
+                        result['trace']['cli_calls'] = sum(
+                            1 for call in calls if call['name'] == 'Bash'
+                            and ('--request' in (call.get('text') or '')
+                                 or '--apply' in (call.get('text') or '')))
+                        result['trace']['cli_adopted'] = result['trace']['cli_calls'] > 0
                         evidence = workflow_evidence(agent, task, calls, tool_output_text(agent, events))
                         result['workflow_evidence'] = evidence
                         result['workflow_evidence_reviewed'] = evidence['passed']

@@ -20,6 +20,8 @@ CASES = {
                      'marker': ('index', '1'), 'stops': 2},
     'debug_nested': {'path': 'settings.py', 'line': 5,
                      'marker': ('key', 'limits')},
+    'debug_expand': {'path': 'tiers.py', 'line': 9,
+                     'marker': ('index', '1'), 'stops': 2},
 }
 
 
@@ -84,17 +86,18 @@ def main():
             results[task_name] = {'adapter': str(debug_python), 'marker': list(case['marker']),
                                   'initial_verifier': 'fails', 'reference_verifier': 'passes',
                                   'adapter_cleaned': True}
-    with tempfile.TemporaryDirectory(prefix='ffsake-preflight-edit_batch-') as td:
-        root = Path(td).resolve()
-        task = suite.TASKS['edit_batch']
-        state = task['fixture'](root)
-        assert not task['verify'](root, state)[0], 'edit_batch: fixture unexpectedly passes'
-        for path, content in state['reference'].items():
-            target = root / path
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(content)
-        assert task['verify'](root, state)[0], 'edit_batch: reference fix fails verification'
-        results['edit_batch'] = {'initial_verifier': 'fails', 'reference_verifier': 'passes'}
+    for edit_task in ('edit_batch', 'edit_multi'):
+        with tempfile.TemporaryDirectory(prefix=f'ffsake-preflight-{edit_task}-') as td:
+            root = Path(td).resolve()
+            task = suite.TASKS[edit_task]
+            state = task['fixture'](root)
+            assert not task['verify'](root, state)[0], f'{edit_task}: fixture unexpectedly passes'
+            for path, content in state['reference'].items():
+                target = root / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(content)
+            assert task['verify'](root, state)[0], f'{edit_task}: reference fix fails verification'
+            results[edit_task] = {'initial_verifier': 'fails', 'reference_verifier': 'passes'}
     print(json.dumps({'ok': True, 'cases': results}, indent=2))
 
 

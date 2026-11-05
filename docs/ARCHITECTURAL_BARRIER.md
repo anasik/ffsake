@@ -194,22 +194,33 @@ surface through the host's existing Bash tool, with no MCP catalog.
 - Remaining cost: the host must be told the CLI exists. That guidance and
   adoption are what the next paid batch must measure.
 
-### R4. Honest measurement
+### R4. Honest measurement (harness integrated)
 
 - Freeze candidate and verifier before scoring.
 - Use the generalized runtime-evidence check above; report artifact completion
   separately.
-- Evaluate unseen tasks, including one multi-file edit and one debug requiring
-  multiple stops or expansion.
-- Report per fixture: calls, elapsed, cached/uncached input, output, cost,
-  failures, timeouts and native fallback.
+- The harness now supports a third arm: `rc_benchmark.py --cli-binary` runs
+  native, core MCP and CLI counterbalanced, five attempts per arm per task.
+  Per-run trace now records `toolsearch_calls`, `mcp_calls`, `cli_calls` and
+  `cli_adopted`; CLI debug evidence is checked from probe output
+  (`cli_probe`, `cli_cleanup`) in addition to artifact verification.
+- Two fresh unseen tasks are prepared and preflighted: `edit_multi` (three-file
+  billing validation/serialization/handler fix) and `debug_expand` (tier-boundary
+  bug requiring at least two loop iterations; `stops=2` observes `index=1`).
+  Reference fixes pass and initial fixtures fail for both.
+- `rc_benchmark.py --dry-run` validates the CLI binary, MCP catalog
+  (20,929 bytes/28 tools), Claude CLI, CLI read preflight and the exact 30-attempt
+  three-arm plan without model calls.
+- Report per fixture and arm: calls, elapsed, cached/uncached input, output,
+  cost, failures, timeouts, native fallback, ToolSearch count and CLI adoption.
 
 ## Remaining gap and decision
 
 After the implemented consolidations, projected MCP calls are 130 vs 113, with
 all 17 remaining extra turns attributable to `ToolSearch`. Core context is
-21.8 KB and default `all` is 37.9 KB. R3 is now implemented: the CLI projects
-4-5 turns per task with zero catalog, below native's observed 6-10. The
+21.8 KB and default `all` is 37.9 KB. R3 is implemented: the CLI projects
+4-5 turns per task with zero catalog, below native's observed 6-10. The harness
+now has the three-arm path and two fresh fixtures; the dry run passes. The
 remaining question is adoption, not capability: can the host guidance make an
 agent choose the CLI? That is the next paid measurement, alongside whether the
 lean core catalog removes `ToolSearch`.

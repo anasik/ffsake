@@ -4,6 +4,7 @@ import sys
 import copy
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -20,7 +21,7 @@ class FixtureTests(unittest.TestCase):
         self.assertTrue(all(set(order) == set(names) for order in orders))
 
     def test_paired_worktrees_and_reference_fixes(self):
-        for name in ('cross', 'build', 'git', 'debug', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested'):
+        for name in ('cross', 'build', 'git', 'debug', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand'):
             with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
                 base = Path(td).resolve()
                 template, left, right = base / 'template', base / 'left', base / 'right'
@@ -176,6 +177,13 @@ class FixtureTests(unittest.TestCase):
         self.assertTrue(combined['passed'])
         self.assertTrue(combined['details']['ffsake_resumed'])
         self.assertTrue(combined['details']['auto_inspection'])
+        cli = rc.workflow_evidence('claude', 'debug_ledger', [
+            {'name':'Bash','text':"ffsake . --request '{\"op\":\"debug_probe\"}'",'input':{},
+             'output':'{"ok":true,"result":{"cleaned":true,"result":{"result":{"inspection":{"scopes":[{"variables":[{"name":"index","value":"0"}]}]}}}}}'}], '')
+        self.assertTrue(cli['passed'])
+        self.assertTrue(cli['details']['cli_probe'])
+        self.assertTrue(cli['details']['cli_cleanup'])
+        self.assertFalse(cli['details']['ffsake_launch'])
         probe = rc.workflow_evidence('claude', 'debug', [
             {'name':'mcp__ffsake__ffsake_debug_probe','text':'{"configuration":"payroll"}',
              'input':{'configuration':'payroll','breakpoints':[{'path':'payroll.py','lines':17}]},
@@ -199,6 +207,30 @@ class FixtureTests(unittest.TestCase):
         rc.normalize_usage('codex', codex)
         self.assertEqual(codex['total_input_tokens'], 20)
         self.assertEqual(codex['uncached_input_tokens'], 12)
+
+
+class CliArmTests(unittest.TestCase):
+    def test_cli_arm_has_no_mcp_server_and_appends_guidance(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            old = rc.CLI_GUIDANCE
+            rc.CLI_GUIDANCE = 'CLI_GUIDANCE_SENTINEL'
+            try:
+                with mock.patch.object(rc.suite, 'run_process', return_value={
+                        'stdout': '', 'stderr': '', 'exit_code': 0, 'elapsed_ms': 0}) as run:
+                    rc.claude(root, 'task', False, 5, 'core', 'cli')
+            finally:
+                rc.CLI_GUIDANCE = old
+            command = run.call_args.args[0]
+            config = json.loads((root / '.ffsake-claude-mcp.json').read_text())
+            self.assertEqual(config['mcpServers'], {})
+            self.assertIn('--append-system-prompt', command)
+            self.assertEqual(command[command.index('--append-system-prompt') + 1],
+                             'CLI_GUIDANCE_SENTINEL')
+            self.assertNotIn('--tools', command)
 
 
 if __name__ == '__main__': unittest.main()

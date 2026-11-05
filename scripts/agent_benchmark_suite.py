@@ -21,6 +21,8 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 FFSAKE_MCP = (ROOT / "target" / "debug" / "ffsake-mcp").resolve()
 RESULT_DIR = ROOT / "docs" / "agent-benchmark-runs"
+CLI_BINARY = None
+CLI_GUIDANCE = ""
 FFSAKE_ACCESS_TOOLS = ("ffsake_open_access", "ffsake_list_access", "ffsake_remove_access")
 FFSAKE_ACCESS_MUTATIONS = ("ffsake_open_access", "ffsake_remove_access")
 FFSAKE_APPROVAL_TOOLS = FFSAKE_ACCESS_MUTATIONS + ("ffsake_debug_probe", "ffsake_debug_launch", "ffsake_debug_attach", "ffsake_task_register", "ffsake_run_task", "ffsake_git_mutate", "ffsake_git_operation")
@@ -895,7 +897,21 @@ def task_provenance(root, files, prompt):
             "fixture_scope": "task files and directories before runner configuration; excludes harness control directories"}
 
 
-def claude_run(root: Path, prompt: str, use_ffsake: bool, timeout: int, tool_profile="all"):
+def cli_prompt(prompt: str) -> str:
+    if not CLI_BINARY or not CLI_GUIDANCE:
+        raise ValueError("CLI guidance is not configured")
+    return prompt + "\n\n" + CLI_GUIDANCE
+
+
+def claude_run(root: Path, prompt: str, use_ffsake: bool, timeout: int, tool_profile="all", mode="ffsake"):
+    if mode == "cli":
+        cmd = [
+            "claude", "-p", prompt, "--output-format", "stream-json", "--verbose",
+            "--max-turns", "40", "--dangerously-skip-permissions",
+            "--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}',
+            "--append-system-prompt", CLI_GUIDANCE,
+        ]
+        return run_process(cmd, root, timeout)
     cmd = [
         "claude", "-p", ffsake_prompt(prompt, tool_profile) if use_ffsake else prompt,
         "--output-format", "stream-json", "--verbose",
@@ -1040,15 +1056,18 @@ def one(agent, task_name, mode, timeout, opencode_model, tool_profile="all"):
     profile_tools(tool_profile)
     task = TASKS[task_name]
     use_ffsake = mode == "ffsake"
+    use_cli = mode == "cli"
     with tempfile.TemporaryDirectory(prefix=f"ffsake-suite-{agent}-{task_name}-") as td:
         root = Path(td)
         state = task["fixture"](root)
         original_files = fixture_files(root)
-        provenance = task_provenance(root, original_files,
-            ffsake_prompt(task["prompt"], tool_profile) if use_ffsake else task["prompt"])
+        prompt = (task["prompt"] if use_cli
+                  else ffsake_prompt(task["prompt"], tool_profile) if use_ffsake
+                  else task["prompt"])
+        provenance = task_provenance(root, original_files, prompt)
 
         if agent == "claude":
-            result = claude_run(root, task["prompt"], use_ffsake, timeout, tool_profile)
+            result = claude_run(root, task["prompt"], use_ffsake, timeout, tool_profile, mode)
         elif agent == "codex":
             result = codex_run(root, task["prompt"], use_ffsake, timeout, tool_profile)
         elif agent == "opencode":
@@ -1197,6 +1216,28 @@ def mcp_profile_preflight(tool_profile, binary=None):
             return {**check, "ok": True, "tool_count": len(tools),
                 "catalog_bytes": len(json.dumps(tools, ensure_ascii=False, separators=(",", ":")).encode())}
         except (OSError, ValueError, KeyError, TypeError, subprocess.TimeoutExpired) as exc:
+            return {**check, "error": type(exc).__name__}
+
+
+def cli_preflight(binary):
+    """Execute one guarded CLI read in a temporary workspace, without a model."""
+    binary = Path(binary)
+    check = {"ok": False, "model_calls": 0, "catalog_bytes": 0}
+    if not binary.is_file():
+        return {**check, "error": "missing_cli_binary"}
+    with tempfile.TemporaryDirectory(prefix="ffsake-cli-preflight-") as td:
+        root = Path(td)
+        (root / "a.txt").write_text("cli preflight\n")
+        request = json.dumps({"op": "read", "path": "a.txt"})
+        try:
+            run = subprocess.run([str(binary), str(root), "--request", request],
+                                 capture_output=True, text=True, timeout=10)
+            value = json.loads(run.stdout)
+            ok = (run.returncode == 0 and value.get("ok") is True
+                  and value.get("result", {}).get("text") == "cli preflight")
+            return {**check, "ok": ok,
+                    "error": None if ok else (run.stderr or run.stdout)[:200]}
+        except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
             return {**check, "error": type(exc).__name__}
 
 
