@@ -232,5 +232,25 @@ class CliArmTests(unittest.TestCase):
                              'CLI_GUIDANCE_SENTINEL')
             self.assertNotIn('--tools', command)
 
+    def test_forced_guarded_arm_disables_native_file_tools(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            old = rc.FORCE_GUARDED
+            rc.FORCE_GUARDED = True
+            try:
+                with mock.patch.object(rc.suite, 'run_process', return_value={
+                        'stdout': '', 'stderr': '', 'exit_code': 0, 'elapsed_ms': 0}) as run:
+                    rc.claude(root, 'task', True, 5, 'core')
+            finally:
+                rc.FORCE_GUARDED = old
+            command = run.call_args.args[0]
+            self.assertIn('--disallowedTools', command)
+            self.assertEqual(command[command.index('--disallowedTools') + 1],
+                             'Read,Edit,Write,Glob,Grep,NotebookEdit')
+            guidance = command[command.index('--append-system-prompt') + 1]
+            self.assertIn('Native Read, Edit, Write, Glob and Grep are disabled', guidance)
+
 
 if __name__ == '__main__': unittest.main()

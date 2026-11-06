@@ -63,3 +63,7 @@ The [final index](20261105-generalization/final.json) records the 30-attempt hel
 ## 2026-11-05 Three-arm CLI validation
 
 The [three-arm index](20261105-cli-arm/three-arm.json) records 30 counterbalanced paid attempts on `edit_multi` and `debug_expand` across native, core MCP and CLI. All arms were 5/5 correct; median paired ratios were 1.092 elapsed/1.394 input for MCP and 1.190/1.268 for CLI. The CLI was not adopted for the edit task and was slower when adopted for the debug task.
+
+## 2026-11-06 Forced-guarded policy
+
+The [forced-guard indexes](20261106-forced-guard/guarded-mcp.json) record a 10-attempt native-versus-forced-MCP run (all correct; 7 calls each; 1.454x input) and a 5-attempt [forced CLI](20261106-forced-guard/forced-cli.json) run (2/5 correct). Disabling native file tools did not make the guarded path competitive and the forced CLI degraded completion.

@@ -156,6 +156,33 @@ Zero catalog cost did not produce turn parity. The dominant variable is host and
 model tool choice, not FFSAKE's server latency, schema size or missing
 capability.
 
+## Forced-guarded policy (2026-11-06)
+
+Disabling native `Read`, `Edit`, `Write`, `Glob` and `Grep` in the MCP arm
+produced the cleanest comparison yet. Ten attempts on `edit_multi`, five native
+and five forced MCP, all correct:
+
+| Arm | Correct | Calls | Seconds | Total input |
+| --- | ---: | ---: | ---: | ---: |
+| Native | 5/5 | 7 | 16.8 | 135,707 |
+| Forced MCP | 5/5 | 7 | 18.9 | 197,998 |
+
+Median paired ratios: **1.118 elapsed, 1.454 input**. Calls matched exactly, yet
+the guarded arm paid about **9,000 more input tokens per turn**. The catalog is
+20.9 KB (about 5.2k tokens per request), and the guarded `read_files` and
+combined preview diffs are larger than native Bash output. This isolates
+per-turn context cost from turn count.
+
+A five-attempt forced-CLI follow-up disabled the same tools and used the
+zero-catalog CLI. Only **2/5 artifacts passed**; two runs made no edit, and the
+passing runs used Bash heredocs or a mix of CLI and shell writes. Forcing the
+CLI path is not a viable policy.
+
+The measured conclusion is now stronger than a projection: native tools remain
+necessary for reliable completion, and FFSAKE is not competitive on elapsed or
+input even when its path is forced. The remaining levers are per-turn payload
+and host/model tool policy, not a missing capability.
+
 ## Why this is architectural, not a tuning miss
 
 - FFSAKE's per-turn cost is already at or below native.
@@ -253,12 +280,12 @@ surface through the host's existing Bash tool, with no MCP catalog.
 
 ## Remaining gap and decision
 
-The measured three-arm result closes the product-only redesign path. The
-consolidations reduced catalog and response size, and the CLI removed catalog
-cost entirely, but neither reduced the turns an agent chose to spend. The
-remaining gap is host/model tool choice: agents fall back to native reads,
-writes, `pdb` and repeated verification even when a guarded one-call path is
-available.
+The three-arm and forced-policy results close the product-only redesign path.
+The consolidations reduced catalog and response size, and the CLI removed catalog
+cost entirely, but forcing tool availability either left calls equal and input
+45% higher or degraded completion to 2/5. The remaining gap is per-turn context
+plus host/model tool choice: agents fall back to native reads, writes, `pdb` and
+repeated verification even when a guarded one-call path is available.
 
 A further product-only change would have to force a tool choice or collapse
 diagnosis, edit and verification into one opaque command. The first requires

@@ -859,6 +859,21 @@ The CLI was not adopted for `edit_multi` at all: the agent used native Bash here
 
 The [sanitized three-arm index](20261105-cli-arm/three-arm.json) preserves per-run metrics. This result supersedes the model-free CLI projections for decision purposes: zero catalog cost did not produce turn parity because tool choice and verification behavior dominate. The remaining gap is host/model behavior, not server latency, catalog size or a missing FFSAKE capability.
 
+### Forced-guarded host policy (2026-11-06)
+
+To test whether native tool availability was the missing lever, the MCP arm disabled native `Read`, `Edit`, `Write`, `Glob` and `Grep` and instructed the agent to use FFSAKE for repository reads/edits while reserving Bash for programs and tests. Ten attempts on `edit_multi` (5 native, 5 forced MCP), counterbalanced, all valid and all artifacts correct. Cost **$1.0036**.
+
+| Arm | Correct | Calls | Seconds | Total input | ToolSearch |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Native | 5/5 | 7 | 16.8 | 135,707 | 0 |
+| Forced MCP | 5/5 | 7 | 18.9 | 197,998 | 5/5 runs |
+
+Median paired ratios: **1.118 elapsed, 1.454 input**. The forced arm did use the intended path (`workspace_info`, `read_files`, `preview_files`, `apply`) and matched native's call count. It still paid about **9,000 more input tokens per turn** from the 20.9 KB catalog plus larger guarded read/preview payloads. This is the cleanest evidence that per-turn context cost, not only turn count, is a barrier.
+
+A five-attempt forced-CLI follow-up disabled the same native tools and pointed the agent at `ffsake` (cost **$0.4720**). Only **2/5 artifacts passed**: two runs made no edit at all, two passed by using Bash heredocs despite guidance, and one used the CLI plus a shell write. Forcing the CLI path degraded completion instead of producing a usable zero-catalog workflow.
+
+Both experiments are preserved in the [forced-guard index](20261106-forced-guard/guarded-mcp.json) and [forced-CLI index](20261106-forced-guard/forced-cli.json). Together with the three-arm run, the measured conclusion is: native tools remain necessary for reliable completion; FFSAKE is not competitive on either elapsed time or input on these tasks; and the remaining gap is per-turn context plus host/model tool choice, not a missing server capability.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

@@ -40,6 +40,7 @@ GUIDANCE = ('Use FFSAKE MCP for scoped repository reading, search, previews, edi
             'available for commands FFSAKE cannot perform; do not use them to evade access denial.')
 
 CLI_GUIDANCE = ''
+FORCE_GUARDED = False
 
 
 def cli_guidance(binary):
@@ -61,10 +62,17 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
     cfg = root / '.ffsake-claude-mcp.json'
     if mode == 'cli':
         cfg.write_text(json.dumps({'mcpServers': {}}))
+        guidance = CLI_GUIDANCE
+        if FORCE_GUARDED:
+            guidance += (' Native Read, Edit, Write, Glob and Grep are disabled for this run. '
+                         'Use the CLI for all repository reads and edits, and use Bash only to run '
+                         'programs and tests, not to read or modify repository files.')
         cmd = ['claude', '-p', prompt, '--output-format', 'stream-json', '--verbose',
                '--max-turns', '40', '--model', 'sonnet', '--effort', 'low',
                '--dangerously-skip-permissions', '--strict-mcp-config', '--mcp-config', str(cfg),
-               '--append-system-prompt', CLI_GUIDANCE]
+               '--append-system-prompt', guidance]
+        if FORCE_GUARDED:
+            cmd += ['--disallowedTools', 'Read,Edit,Write,Glob,Grep,NotebookEdit']
         return suite.run_process(cmd, root, timeout)
     servers = {'ffsake': {'command': str(suite.FFSAKE_MCP),
                          'args': suite.mcp_arguments(root, profile)}} if enabled else {}
@@ -73,7 +81,13 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
            '--max-turns', '40', '--model', 'sonnet', '--effort', 'low',
            '--dangerously-skip-permissions', '--strict-mcp-config', '--mcp-config', str(cfg)]
     if enabled:
-        cmd += ['--append-system-prompt', GUIDANCE]
+        cmd += ['--append-system-prompt',
+                GUIDANCE + (' Native Read, Edit, Write, Glob and Grep are disabled for this run; '
+                            'use FFSAKE MCP for all repository reads and edits. Use Bash only to run '
+                            'programs and tests, not to read or modify repository files.'
+                            if FORCE_GUARDED else '')]
+        if FORCE_GUARDED:
+            cmd += ['--disallowedTools', 'Read,Edit,Write,Glob,Grep,NotebookEdit']
     return suite.run_process(cmd, root, timeout)
 
 
@@ -629,9 +643,12 @@ def main():
     p.add_argument('--baseline-binary', type=Path, help='counterbalance native, this core binary and --binary (editing for editing tasks, core for debug)')
     p.add_argument('--cli-binary', type=Path, help='add a no-MCP CLI arm using this ffsake binary (Claude only)')
     p.add_argument('--dry-run', action='store_true', help='validate binaries, policies and arm commands without model calls')
+    p.add_argument('--force-guarded', action='store_true', help='disable native repository read/edit tools in the MCP arm')
+    p.add_argument('--cli-only', action='store_true', help='with --cli-binary, run only the CLI arm')
     a = p.parse_args()
-    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE
+    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED
     CATALOG = a.catalog
+    FORCE_GUARDED = a.force_guarded
     COMPACT = a.compact
     if a.diagnostic_matrix and (not a.instrument_dir or a.catalog != 'core' or a.compact or a.agents != 'codex'):
         p.error('--diagnostic-matrix requires Codex, --instrument-dir, and default catalog/compact options')
@@ -639,6 +656,8 @@ def main():
         p.error('--baseline-binary requires --instrument-dir and default diagnostic options')
     if a.cli_binary and (a.baseline_binary or a.diagnostic_matrix or a.agents != 'claude'):
         p.error('--cli-binary supports Claude only and cannot be combined with baseline or diagnostic modes')
+    if a.cli_only and not a.cli_binary:
+        p.error('--cli-only requires --cli-binary')
     if COMPACT and not a.instrument_dir:
         p.error('--compact requires --instrument-dir')
     if a.instrument_dir:
@@ -696,8 +715,11 @@ def main():
         print(json.dumps({
             'ok': True, 'model_calls': 0, 'agents': agents, 'tasks': tasks,
             'repetitions': a.repetitions,
-            'arms': ['baseline', 'ffsake', 'cli'] if a.cli_binary else ['baseline', 'ffsake'],
-            'planned_attempts': (3 if a.cli_binary else 2) * len(tasks) * a.repetitions,
+            'arms': (['cli'] if a.cli_only else
+                     ['baseline', 'ffsake', 'cli'] if a.cli_binary else
+                     ['baseline', 'ffsake']),
+            'planned_attempts': (1 if a.cli_only else 3 if a.cli_binary else 2)
+                * len(tasks) * a.repetitions,
             'preflight': preflight, 'cli_preflight': cli_preflight,
             'cli_guidance': CLI_GUIDANCE,
             'mcp_catalog': suite.mcp_profile_preflight('core', a.binary)['catalog_bytes']
@@ -711,6 +733,8 @@ def main():
               'baseline_binary_sha256': suite.file_sha256(baseline_binary) if baseline_binary else None,
               'cli_binary_sha256': suite.file_sha256(a.cli_binary) if a.cli_binary else None,
               'cli_preflight': cli_preflight,
+              'force_guarded': FORCE_GUARDED,
+              'disallowed_native_tools': ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'NotebookEdit'] if FORCE_GUARDED else [],
               'cli_guidance': CLI_GUIDANCE,
               'settings': {'claude_model': 'sonnet (host alias)', 'claude_effort': 'low',
                            'codex_model': 'gpt-6-astra', 'codex_reasoning_effort': 'low',
@@ -750,7 +774,7 @@ def main():
                         base_modes = ('baseline', 'old', 'changed')
                         modes = rotate_conditions(base_modes, repetition, tasks.index(task))
                     elif a.cli_binary:
-                        base_modes = ('baseline', 'ffsake', 'cli')
+                        base_modes = ('cli',) if a.cli_only else ('baseline', 'ffsake', 'cli')
                         modes = rotate_conditions(base_modes, repetition, tasks.index(task))
                     else:
                         modes = ('baseline', 'ffsake') if baseline_first else ('ffsake', 'baseline')
