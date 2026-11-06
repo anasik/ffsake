@@ -83,3 +83,7 @@ The [CLI subcommand index](20261106-haiku/cli-subcommands.json) records 30 Haiku
 ## 2026-11-06 Forced native-like CLI
 
 The [forced CLI index](20261106-haiku/forced-cli-subcommands.json) records 10 Haiku attempts with native read/write tools disabled. All were 5/5 correct; debug reached elapsed parity (0.998) with 9 calls versus 14 but used 19% more input. Edit remained 1.403 elapsed / 1.544 input.
+
+## 2026-11-06 Payload-trimmed forced CLI
+
+The [payload debug index](20261106-haiku/payload-debug.json) records the first target win: forced CLI on `debug_expand` at 0.838 elapsed / 0.923 input with 5/5 correctness versus native 4/5. [Payload edit](20261106-haiku/payload-edit.json) remained 1.176/1.445. A retained-trace verifier correction for compact `values` raised CLI debug from 0/5 to 5/5 without rerunning.

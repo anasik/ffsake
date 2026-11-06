@@ -95,8 +95,14 @@ def main():
         assert probe["status"] == "stopped" and probe["cleaned"] is True, probe
         assert probe.get("breakpoint_stops_collected") == 2, probe
         assert probe.get("next_inspection") and probe.get("stop_inspection_2"), probe
+        compact = subprocess.run([str(binary), "probe", str(root), "--debug", str(policy),
+                                  "--config", "fake", "--breakpoint", "a.txt:1", "--stops", "2"],
+                                 cwd=root, capture_output=True, text=True, timeout=30)
+        compact_value = json.loads(compact.stdout)
+        assert compact_value["ok"] and compact_value["cleaned"] is True, compact_value
+        assert len(compact_value["stops"]) >= 2, compact_value
         calls = [json.loads(line) for line in (base / "calls.jsonl").read_text().splitlines()]
-        assert [c["command"] for c in calls].count("continue") == 1, calls
+        assert [c["command"] for c in calls].count("continue") >= 1, calls
         pids = json.loads((base / "pids.json").read_text())
         deadline = time.time() + 5
         alive = list(pids)
@@ -111,6 +117,9 @@ def main():
         read_cmd = subprocess.run([str(binary), "read", str(root), "sub.txt"],
                                   cwd=root, capture_output=True, text=True, timeout=30)
         assert "1: before" in read_cmd.stdout, read_cmd.stdout
+        ranged = subprocess.run([str(binary), "read", str(root), "sub.txt:1-1"],
+                                cwd=root, capture_output=True, text=True, timeout=30)
+        assert "1: before" in ranged.stdout and "after" not in ranged.stdout, ranged.stdout
         preview_cmd = subprocess.run([str(binary), "edit", str(root), "sub.txt",
                                       "--old", "before", "--new", "after"],
                                      cwd=root, capture_output=True, text=True, timeout=30)

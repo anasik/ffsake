@@ -149,6 +149,16 @@ fn runtime_for(root: &str, access: Option<&Path>, debug: Option<&Path>) -> Resul
     Ok(runtime)
 }
 
+fn read_spec(spec: &str) -> (String, Option<usize>, Option<usize>) {
+    if let Some((path, range)) = spec.rsplit_once(':')
+        && let Some((start, end)) = range.split_once('-')
+        && let (Ok(start), Ok(end)) = (start.parse::<usize>(), end.parse::<usize>())
+    {
+        return (path.to_string(), Some(start), Some(end));
+    }
+    (spec.to_string(), None, None)
+}
+
 fn subcommand(args: &[String]) -> Result<Value> {
     let command = args.first().map(String::as_str).unwrap_or_else(|| usage());
     let root = args.get(1).cloned().unwrap_or_else(|| usage());
@@ -182,7 +192,15 @@ fn subcommand(args: &[String]) -> Result<Value> {
             }
             let files = rest
                 .iter()
-                .map(|path| json!({"path": path}))
+                .map(|spec| {
+                    let (path, start, end) = read_spec(spec);
+                    match (start, end) {
+                        (Some(start), Some(end)) => {
+                            json!({"path": path, "start": start, "end": end})
+                        }
+                        _ => json!({"path": path}),
+                    }
+                })
                 .collect::<Vec<_>>();
             let result = runtime.execute(Request::ReadFiles {
                 files: serde_json::from_value(Value::Array(files))?,
@@ -194,6 +212,7 @@ fn subcommand(args: &[String]) -> Result<Value> {
                     text.push_str(&format!("{path}: missing\n"));
                     continue;
                 }
+                let start = item["read"]["start_line"].as_u64().unwrap_or(1) as usize;
                 text.push_str(&format!("{path}:\n"));
                 for (offset, line) in item["read"]["text"]
                     .as_str()
@@ -201,7 +220,7 @@ fn subcommand(args: &[String]) -> Result<Value> {
                     .lines()
                     .enumerate()
                 {
-                    text.push_str(&format!("{}: {line}\n", offset + 1));
+                    text.push_str(&format!("{}: {line}\n", start + offset));
                 }
             }
             Ok(json!({"ok": true, "text": text}))
@@ -282,8 +301,10 @@ fn subcommand(args: &[String]) -> Result<Value> {
                 "breakpoints":breakpoints,"stops":stops});
             let result = runtime.execute(serde_json::from_value(request)?)?;
             let mut inspections = Vec::new();
-            if result.get("result").is_some() {
-                inspections.push(result["result"]["inspection"].clone());
+            if let Some(inspection) = result.pointer("/result/result/inspection") {
+                inspections.push(inspection.clone());
+            } else if let Some(inspection) = result.pointer("/result/inspection") {
+                inspections.push(inspection.clone());
             }
             for key in [
                 "next_inspection",
@@ -296,7 +317,25 @@ fn subcommand(args: &[String]) -> Result<Value> {
                     inspections.push(result[key].clone());
                 }
             }
-            Ok(json!({"ok": true, "cleaned": result.get("cleaned"), "inspections": inspections}))
+            let mut stops = Vec::new();
+            for inspection in inspections {
+                let mut values = serde_json::Map::new();
+                for scope in inspection["scopes"].as_array().cloned().unwrap_or_default() {
+                    for variable in scope["variables"].as_array().cloned().unwrap_or_default() {
+                        let name = variable["name"].as_str().unwrap_or("");
+                        let value = variable["value"].as_str().unwrap_or("");
+                        if !name.is_empty() && !value.is_empty() {
+                            values.insert(name.to_string(), Value::String(value.to_string()));
+                        }
+                    }
+                }
+                stops.push(json!({
+                    "reason": inspection["stop"]["reason"],
+                    "line": inspection["frames"][0]["line"],
+                    "values": values,
+                }));
+            }
+            Ok(json!({"ok": true, "cleaned": result.get("cleaned"), "stops": stops}))
         }
         _ => usage(),
     }

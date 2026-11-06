@@ -49,11 +49,12 @@ def cli_guidance(binary):
     return (
         f"The guarded FFSAKE CLI is available at {binary}. Use it instead of native Read, Write or Edit "
         "for repository files.\n"
-        f"- Read one or more files with line numbers: {binary} read \"$PWD\" path1 path2\n"
+        f"- Read only needed ranges with line numbers: {binary} read \"$PWD\" path:10-40 path2\n"
         f"- Preview an edit: {binary} edit \"$PWD\" path --old 'old text' --new 'new text'\n"
         f"- Apply the reviewed preview: {binary} apply \"$PWD\" <token>\n"
-        f"- Debug with one call: {binary} probe \"$PWD\" --debug .ffsake/rc-debug.json "
-        "--config main --breakpoint path:line --stops 2\n"
+        f"- Debug with one compact call: {binary} probe \"$PWD\" --debug .ffsake/rc-debug.json "
+        "--config main --breakpoint path:line --stops 2; it returns stop lines and variable values. "
+        "Do not repeat the same stops with pdb.\n"
         "Native tools remain available for running programs and tests. Never bypass an access denial."
     )
 
@@ -499,6 +500,12 @@ def workflow_evidence(agent, task, calls, output):
                     cli_payloads.append(payload)
         cli_variables = [variable for payload in cli_payloads
                          for variable in _debug_variables(payload)]
+        for payload in cli_payloads:
+            for stop in payload.get('stops', []) if isinstance(payload, dict) else []:
+                if isinstance(stop, dict) and isinstance(stop.get('values'), dict):
+                    cli_variables.extend(
+                        {'name': name, 'value': str(value)}
+                        for name, value in stop['values'].items())
         cli_probe = bool(cli_payloads)
         cli_inspect = bool(cli_variables)
         cli_state = any(variable['name'] == markers[0]
@@ -653,6 +660,7 @@ def main():
     p.add_argument('--claude-model', default='sonnet', help='Claude model alias or ID for paid runs')
     p.add_argument('--claude-effort', default='low', help='Claude effort level')
     p.add_argument('--cli-only', action='store_true', help='with --cli-binary, run only the CLI arm')
+    p.add_argument('--cli-native', action='store_true', help='with --cli-binary, run native and CLI arms only')
     a = p.parse_args()
     global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, CLAUDE_MODEL, CLAUDE_EFFORT
     CATALOG = a.catalog
@@ -666,8 +674,8 @@ def main():
         p.error('--baseline-binary requires --instrument-dir and default diagnostic options')
     if a.cli_binary and (a.baseline_binary or a.diagnostic_matrix or a.agents != 'claude'):
         p.error('--cli-binary supports Claude only and cannot be combined with baseline or diagnostic modes')
-    if a.cli_only and not a.cli_binary:
-        p.error('--cli-only requires --cli-binary')
+    if (a.cli_only or a.cli_native) and not a.cli_binary:
+        p.error('--cli-only and --cli-native require --cli-binary')
     if COMPACT and not a.instrument_dir:
         p.error('--compact requires --instrument-dir')
     if a.instrument_dir:
@@ -727,9 +735,10 @@ def main():
             'ok': True, 'model_calls': 0, 'agents': agents, 'tasks': tasks,
             'repetitions': a.repetitions,
             'arms': (['cli'] if a.cli_only else
+                     ['baseline', 'cli'] if a.cli_native else
                      ['baseline', 'ffsake', 'cli'] if a.cli_binary else
                      ['baseline', 'ffsake']),
-            'planned_attempts': (1 if a.cli_only else 3 if a.cli_binary else 2)
+            'planned_attempts': (1 if a.cli_only else 2 if a.cli_native or not a.cli_binary else 3)
                 * len(tasks) * a.repetitions,
             'preflight': preflight, 'cli_preflight': cli_preflight,
             'cli_guidance': CLI_GUIDANCE,
@@ -785,7 +794,9 @@ def main():
                         base_modes = ('baseline', 'old', 'changed')
                         modes = rotate_conditions(base_modes, repetition, tasks.index(task))
                     elif a.cli_binary:
-                        base_modes = ('cli',) if a.cli_only else ('baseline', 'ffsake', 'cli')
+                        base_modes = (('cli',) if a.cli_only else
+                                      ('baseline', 'cli') if a.cli_native else
+                                      ('baseline', 'ffsake', 'cli'))
                         modes = rotate_conditions(base_modes, repetition, tasks.index(task))
                     else:
                         modes = ('baseline', 'ffsake') if baseline_first else ('ffsake', 'baseline')

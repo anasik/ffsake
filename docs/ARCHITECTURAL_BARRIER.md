@@ -207,12 +207,15 @@ versus native 11, all 5/5 correct. It still lost on both criteria.
 
 A final native-like CLI surface (`read`, `edit`, `apply`, `probe`) achieved
 5/5 adoption and 5/5 correctness on both tasks, but measured **1.214/1.520** on
-edits and **1.435/2.108** on debug. Forcing it by disabling native file tools
-cut calls by 19-29% and brought debug to **elapsed parity (0.998)** with 9 calls
-versus 14, but input was still **1.189**; edits were 1.403/1.544. Adoption and
-call count were solved; the remaining gap is CLI payload plus model token use.
-A retained-trace verifier fix raised CLI debug evidence from 0/5 to 5/5 without
-a rerun.
+edits and **1.435/2.108** on debug. Forcing it cut calls by 19-29% and brought
+debug to elapsed parity (0.998) but input was still 1.189.
+
+Trimming the payload then produced the first measured win: compact probe
+`values`, ranged reads and forced CLI on `debug_expand` measured **0.838 elapsed
+/ 0.923 input**, 8 calls versus 14, **5/5 correctness versus native 4/5**. The
+edit task remained 1.176/1.445 because reviewed preview diffs and command output
+dominate. A retained-trace verifier fix for compact `values` raised CLI debug
+from 0/5 to 5/5 without a rerun.
 
 Cheaper models did not make FFSAKE competitive, and shrinking the catalog alone
 did not either. The remaining overhead is the model's tool-use behavior plus

@@ -937,6 +937,32 @@ Forcing the CLI solved adoption and correctness and cut calls by 19-29%. On debu
 
 Evidence: [forced CLI index](20261106-haiku/forced-cli-subcommands.json). Total paid spend is **$5.3465** across 160 attempts; ~$0.65 remains.
 
+### Payload-trimmed forced CLI (2026-11-06)
+
+The CLI was trimmed to reduce payload: `probe` returns only stop reason, line and `values` name/value pairs; `read` accepts `path:START-END` ranges and preserves original line numbers. Twenty Haiku attempts (10 debug, 10 edit), **$0.1568**.
+
+**Debug target met.** Five native and five forced-CLI attempts on `debug_expand`:
+
+| Arm | Correct | Calls | Seconds | Input |
+| --- | ---: | ---: | ---: | ---: |
+| Native | 4/5 | 14 | 24.8 | 295,226 |
+| Forced CLI | 5/5 | 8 | 19.3 | 248,998 |
+
+Median paired ratios: **0.838 elapsed / 0.923 input** — both targets (≤1.0, ≤1.10), with 5/5 correctness versus native 4/5. Two of five pairs were above 1.10 input (1.258 and 1.284); the median meets the target.
+
+**Edit still fails.** Five native and five forced-CLI attempts on `edit_multi`, all 5/5 correct:
+
+| Arm | Correct | Calls | Seconds | Input |
+| --- | ---: | ---: | ---: | ---: |
+| Native | 5/5 | 15 | 19.6 | 203,992 |
+| Forced CLI | 5/5 | 10 | 23.2 | 251,426 |
+
+Median paired ratios: **1.176 elapsed / 1.445 input**. Fewer calls but larger per-turn payload (reviewed preview diffs and command output).
+
+**Verifier correction, no rerun:** the compact probe reports `values` instead of a `variables` array, so the first pass scored CLI debug 0/5. Re-evaluating the retained traces with `values` recognized raised it to **5/5 artifact and 5/5 evidence**. No model calls were made for the correction.
+
+Evidence: [debug](20261106-haiku/payload-debug.json), [edit](20261106-haiku/payload-edit.json). Total paid spend is **$5.5033** across 180 attempts; ~$0.50 remains.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh
