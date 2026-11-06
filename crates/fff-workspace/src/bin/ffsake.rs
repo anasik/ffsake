@@ -61,6 +61,12 @@ fn run() -> Result<Value> {
     if args.first().is_some_and(|arg| arg == "serve") {
         return serve(&args);
     }
+    if args
+        .first()
+        .is_some_and(|arg| matches!(arg.as_str(), "read" | "edit" | "apply" | "probe"))
+    {
+        return subcommand(&args);
+    }
     let root = args.first().cloned().unwrap_or_else(|| usage());
     let mut access_policy: Option<PathBuf> = None;
     let mut debug_policy: Option<PathBuf> = None;
@@ -124,6 +130,173 @@ fn run() -> Result<Value> {
             let result = runtime.execute(Request::Apply { handle })?;
             let _ = remove_token(&canonical_root, &token);
             Ok(json!({ "ok": true, "result": result, "token_consumed": true }))
+        }
+        _ => usage(),
+    }
+}
+
+fn runtime_for(root: &str, access: Option<&Path>, debug: Option<&Path>) -> Result<Resident> {
+    let mut workspace = Workspace::new(root)?;
+    if let Some(path) = access {
+        workspace.configure_access(path)?;
+    } else {
+        workspace.configure_persistent_access()?;
+    }
+    let mut runtime = Resident::open(workspace)?;
+    if let Some(path) = debug {
+        runtime.configure_debug(fff_workspace::debug::Configurations::load(path)?);
+    }
+    Ok(runtime)
+}
+
+fn subcommand(args: &[String]) -> Result<Value> {
+    let command = args.first().map(String::as_str).unwrap_or_else(|| usage());
+    let root = args.get(1).cloned().unwrap_or_else(|| usage());
+    let mut rest = args[2..].to_vec();
+    let mut access: Option<PathBuf> = None;
+    let mut debug: Option<PathBuf> = None;
+    let mut filtered = Vec::new();
+    let mut index = 0;
+    while index < rest.len() {
+        match rest[index].as_str() {
+            "--access" if index + 1 < rest.len() => {
+                access = Some(rest[index + 1].clone().into());
+                index += 2;
+            }
+            "--debug" if index + 1 < rest.len() => {
+                debug = Some(rest[index + 1].clone().into());
+                index += 2;
+            }
+            _ => {
+                filtered.push(rest[index].clone());
+                index += 1;
+            }
+        }
+    }
+    rest = filtered;
+    let mut runtime = runtime_for(&root, access.as_deref(), debug.as_deref())?;
+    match command {
+        "read" => {
+            if rest.is_empty() {
+                return Err("read requires at least one path".into());
+            }
+            let files = rest
+                .iter()
+                .map(|path| json!({"path": path}))
+                .collect::<Vec<_>>();
+            let result = runtime.execute(Request::ReadFiles {
+                files: serde_json::from_value(Value::Array(files))?,
+            })?;
+            let mut text = String::new();
+            for item in result["files"].as_array().cloned().unwrap_or_default() {
+                let path = item["path"].as_str().unwrap_or("");
+                if item["status"].as_str() != Some("ok") {
+                    text.push_str(&format!("{path}: missing\n"));
+                    continue;
+                }
+                text.push_str(&format!("{path}:\n"));
+                for (offset, line) in item["read"]["text"]
+                    .as_str()
+                    .unwrap_or("")
+                    .lines()
+                    .enumerate()
+                {
+                    text.push_str(&format!("{}: {line}\n", offset + 1));
+                }
+            }
+            Ok(json!({"ok": true, "text": text}))
+        }
+        "edit" => {
+            let Some(path) = rest.first().cloned() else {
+                return Err("edit requires PATH --old TEXT --new TEXT".into());
+            };
+            let mut old_text = None;
+            let mut new_text = None;
+            let mut count = 1usize;
+            let mut index = 1;
+            while index + 1 < rest.len() {
+                match rest[index].as_str() {
+                    "--old" => old_text = Some(rest[index + 1].clone()),
+                    "--new" => new_text = Some(rest[index + 1].clone()),
+                    "--count" => count = rest[index + 1].parse()?,
+                    _ => return Err("edit accepts --old, --new and --count".into()),
+                }
+                index += 2;
+            }
+            let old_text = old_text.ok_or("edit requires --old")?;
+            let new_text = new_text.ok_or("edit requires --new")?;
+            let request = json!({"op":"preview_files","operations":[{
+                "op":"edit","path":path,"old_text":old_text,"new_text":new_text,"expected_matches":count
+            }]});
+            let preview = runtime.execute(serde_json::from_value(request)?)?;
+            let token = store_token(
+                &fs::canonicalize(&root)?,
+                &serde_json::to_string(&json!({
+                    "op":"preview_files","operations":[{
+                        "op":"edit","path":path,"old_text":old_text,"new_text":new_text,"expected_matches":count
+                    }]
+                }))?,
+            )?;
+            Ok(json!({"ok": true, "preview": preview, "token": token}))
+        }
+        "apply" => {
+            let Some(token) = rest.first().cloned() else {
+                return Err("apply requires TOKEN".into());
+            };
+            let text = load_token(&fs::canonicalize(&root)?, &token)?;
+            let request: Request = serde_json::from_str(&text)?;
+            let preview = runtime.execute(request)?;
+            let handle = preview
+                .get("handle")
+                .and_then(Value::as_u64)
+                .ok_or("preview did not return an apply handle")?;
+            let result = runtime.execute(Request::Apply { handle })?;
+            let _ = remove_token(&fs::canonicalize(&root)?, &token);
+            Ok(json!({"ok": true, "result": result, "token_consumed": true}))
+        }
+        "probe" => {
+            let mut configuration = None;
+            let mut breakpoints = Vec::new();
+            let mut stops = 1usize;
+            let mut index = 0;
+            while index + 1 < rest.len() {
+                match rest[index].as_str() {
+                    "--config" => configuration = Some(rest[index + 1].clone()),
+                    "--breakpoint" => {
+                        let spec = &rest[index + 1];
+                        let (path, line) = spec
+                            .rsplit_once(':')
+                            .ok_or("breakpoint must be PATH:LINE")?;
+                        breakpoints.push(json!({"path": path, "lines": line.parse::<u32>()?}));
+                    }
+                    "--stops" => stops = rest[index + 1].parse()?,
+                    _ => return Err("probe accepts --config, --breakpoint and --stops".into()),
+                }
+                index += 2;
+            }
+            let configuration = configuration.ok_or("probe requires --config")?;
+            if breakpoints.is_empty() {
+                return Err("probe requires at least one --breakpoint".into());
+            }
+            let request = json!({"op":"debug_probe","configuration":configuration,
+                "breakpoints":breakpoints,"stops":stops});
+            let result = runtime.execute(serde_json::from_value(request)?)?;
+            let mut inspections = Vec::new();
+            if result.get("result").is_some() {
+                inspections.push(result["result"]["inspection"].clone());
+            }
+            for key in [
+                "next_inspection",
+                "next2_inspection",
+                "stop_inspection_2",
+                "stop_inspection_3",
+                "stop_inspection_4",
+            ] {
+                if result.get(key).is_some() {
+                    inspections.push(result[key].clone());
+                }
+            }
+            Ok(json!({"ok": true, "cleaned": result.get("cleaned"), "inspections": inspections}))
         }
         _ => usage(),
     }

@@ -205,6 +205,12 @@ one-call `debug_probe` (**5,979 bytes / 7 tools**). It avoided the call explosio
 and was the best guarded variant: **1.139 elapsed / 1.592 input**, 14 calls
 versus native 11, all 5/5 correct. It still lost on both criteria.
 
+A final native-like CLI surface (`read`, `edit`, `apply`, `probe`) achieved
+5/5 adoption and 5/5 correctness on both tasks, but measured **1.214/1.520** on
+edits and **1.435/2.108** on debug. Adoption was solved; efficiency was not. A
+retained-trace verifier fix raised CLI debug evidence from 0/5 to 5/5 without a
+rerun.
+
 Cheaper models did not make FFSAKE competitive, and shrinking the catalog alone
 did not either. The remaining overhead is the model's tool-use behavior plus
 guarded payloads; native tools remained fastest and lowest-input in every fair

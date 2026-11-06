@@ -903,6 +903,25 @@ Median paired ratios: **1.139 elapsed, 1.592 input**. The hybrid avoided the com
 
 This is the best guarded variant measured: full core 1.185/2.060, compact 1.929/2.616, hybrid 1.139/1.592. Native remained the fastest and lowest-input option. Evidence: [hybrid index](20261106-haiku/hybrid-debug.json). Total paid spend is now **$5.0122** across 120 attempts.
 
+### Single-command CLI surface (2026-11-06)
+
+The final candidate added native-like CLI subcommands on the cheapest model: `ffsake read "$PWD" a.py b.py` (line-numbered), `ffsake edit "$PWD" path --old ... --new ...`, `ffsake apply "$PWD" token`, and one-call `ffsake probe "$PWD" --config main --breakpoint path:line --stops 2`. Thirty Haiku attempts, five per arm on `edit_multi` and `debug_expand`, cost **$0.2502**.
+
+| Task / arm | Correct | Calls | Seconds | Input | CLI adopted |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Edit native | 5/5 | 15 | 19.8 | 174,582 | 0/5 |
+| Edit MCP | 4/5 | 13 | 20.1 | 309,303 | 0/5 |
+| Edit CLI | 5/5 | 13 | 24.1 | 267,738 | **5/5** |
+| Debug native | 4/5 | 14 | 21.5 | 241,586 | 0/5 |
+| Debug MCP | 4/5 | 10 | 20.4 | 275,861 | 0/5 |
+| Debug CLI | 5/5 | 14 | 27.1 | 399,560 | **5/5** |
+
+Median paired ratios versus native: edit CLI **1.214 elapsed / 1.520 input**; debug CLI **1.435 / 2.108**. MCP was 1.120/1.531 and 1.250/1.809. The CLI was now adopted in every run and completed 5/5 on both tasks, but it remained slower and higher-input than native.
+
+**Verifier correction, no rerun.** The first pass reported CLI debug as 0/5 correct because the workflow-evidence detector recognized only `--request` probes, not the new `probe` subcommand. Re-evaluating the retained traces with `probe` recognized raised CLI debug to 5/5 artifact and 5/5 evidence. No model calls were made for this correction.
+
+Evidence: [single-command CLI index](20261106-haiku/cli-subcommands.json). Total paid spend is **$5.2624** across 150 attempts; ~$0.74 of the $6 ceiling remains.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

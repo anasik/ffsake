@@ -47,16 +47,15 @@ CLAUDE_EFFORT = 'low'
 
 def cli_guidance(binary):
     return (
-        f"The guarded FFSAKE CLI is available at {binary}. Use it through Bash for repository "
-        "reads, edits, history and debugging. "
-        f"Read files: {binary} \"$PWD\" --request '{{\"op\":\"read_files\",\"files\":[{{\"path\":\"src/lib.rs\"}}]}}'. "
-        f"Preview edits: {binary} \"$PWD\" --request '{{\"op\":\"preview_files\",\"operations\":[...]}}' "
-        f"then {binary} \"$PWD\" --apply <token>. "
-        f"Debug: {binary} \"$PWD\" --debug .ffsake/rc-debug.json --request "
-        "'{\"op\":\"debug_probe\",\"configuration\":\"main\",\"breakpoints\":[{\"path\":\"main.py\",\"lines\":4}],\"stops\":2}'. "
-        "Preview before applying. Native tools remain available; never bypass an access denial."
+        f"The guarded FFSAKE CLI is available at {binary}. Use it instead of native Read, Write or Edit "
+        "for repository files.\n"
+        f"- Read one or more files with line numbers: {binary} read \"$PWD\" path1 path2\n"
+        f"- Preview an edit: {binary} edit \"$PWD\" path --old 'old text' --new 'new text'\n"
+        f"- Apply the reviewed preview: {binary} apply \"$PWD\" <token>\n"
+        f"- Debug with one call: {binary} probe \"$PWD\" --debug .ffsake/rc-debug.json "
+        "--config main --breakpoint path:line --stops 2\n"
+        "Native tools remain available for running programs and tests. Never bypass an access denial."
     )
-
 
 def claude(root, prompt, enabled, timeout, profile, mode=None):
     # The task prompt and native tools are identical in both arms. MCP itself
@@ -492,7 +491,9 @@ def workflow_evidence(agent, task, calls, output):
         cli_payloads = []
         for call in calls:
             text = call.get('text') or ''
-            if 'debug_probe' in text and '--request' in text:
+            cli_probe_command = ('ffsake' in text and
+                                 ('debug_probe' in text or ' probe ' in text))
+            if cli_probe_command:
                 payload = _embedded_json(call.get('output', ''))
                 if payload is not None:
                     cli_payloads.append(payload)
@@ -833,10 +834,14 @@ def main():
                             1 for call in calls if call['name'] == 'ToolSearch')
                         result['trace']['mcp_calls'] = sum(
                             1 for call in calls if 'mcp__ffsake__' in call['name'])
+                        def is_cli_call(call):
+                            text = call.get('text') or ''
+                            return (call['name'] == 'Bash' and 'ffsake' in text
+                                    and any(token in text for token in (
+                                        '--request', '--apply', ' read ', ' edit ',
+                                        ' apply ', ' probe ')))
                         result['trace']['cli_calls'] = sum(
-                            1 for call in calls if call['name'] == 'Bash'
-                            and ('--request' in (call.get('text') or '')
-                                 or '--apply' in (call.get('text') or '')))
+                            1 for call in calls if is_cli_call(call))
                         result['trace']['cli_adopted'] = result['trace']['cli_calls'] > 0
                         evidence = workflow_evidence(agent, task, calls, tool_output_text(agent, events))
                         result['workflow_evidence'] = evidence

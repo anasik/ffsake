@@ -106,6 +106,22 @@ def main():
                 time.sleep(0.05)
         assert not alive, alive
 
+        # Native-like subcommands: line-numbered read and reviewed edit/apply.
+        (root / "sub.txt").write_text("before\n")
+        read_cmd = subprocess.run([str(binary), "read", str(root), "sub.txt"],
+                                  cwd=root, capture_output=True, text=True, timeout=30)
+        assert "1: before" in read_cmd.stdout, read_cmd.stdout
+        preview_cmd = subprocess.run([str(binary), "edit", str(root), "sub.txt",
+                                      "--old", "before", "--new", "after"],
+                                     cwd=root, capture_output=True, text=True, timeout=30)
+        preview_value = json.loads(preview_cmd.stdout)
+        assert preview_value["ok"] and preview_value["token"], preview_value
+        assert (root / "sub.txt").read_text() == "before\n"
+        apply_cmd = subprocess.run([str(binary), "apply", str(root), preview_value["token"]],
+                                   cwd=root, capture_output=True, text=True, timeout=30)
+        assert json.loads(apply_cmd.stdout)["ok"], apply_cmd.stdout
+        assert (root / "sub.txt").read_text() == "after\n"
+
         # Persistent JSONL mode keeps handles in one process, matching the old
         # resident CLI while the one-shot mode above bridges separate Bash turns.
         (root / "serve.txt").write_text("before\n")

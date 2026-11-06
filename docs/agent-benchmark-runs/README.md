@@ -75,3 +75,7 @@ The [Haiku indexes](20261106-haiku/three-arm.json) record three studies using Cl
 ## 2026-11-06 Hybrid guarded profile
 
 The [hybrid index](20261106-haiku/hybrid-debug.json) records 10 Haiku attempts on `debug_expand`: compact query/change plus granular debug_probe, 5/5 correct, but 14 calls / 328,706 input versus native 11 / 206,668 (1.139 elapsed / 1.592 input).
+
+## 2026-11-06 Single-command CLI surface
+
+The [CLI subcommand index](20261106-haiku/cli-subcommands.json) records 30 Haiku attempts with native-like `read`/`edit`/`probe` commands. CLI was adopted 5/5 and correct 5/5 on both tasks, but remained slower and higher-input than native. A retained-trace verifier correction raised CLI debug evidence from 0/5 to 5/5 without rerunning.
