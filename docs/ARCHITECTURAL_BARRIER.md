@@ -262,6 +262,29 @@ disabled and edits auto-approved) would be needed to test the intended workflow.
 That requires host-side integration work outside this repository; without it,
 native tools remain faster, lower-input and more correct on unfamiliar tasks.
 
+## Host hook enforcement result (2026-11-06)
+
+A real Claude Code `PreToolUse` hook was implemented and installed for the CLI
+arm. It denies native `Read`/`Glob`/`Grep` and file-reading shell commands,
+allows `Edit`/`Write`, and allows `ffsake`, program and test commands. Model-free
+hook tests pass. Twenty Haiku attempts on fresh tasks, $0.1637, all 5/5 correct.
+
+| Task / arm | Calls | Seconds | Input | Denials |
+| --- | ---: | ---: | ---: | ---: |
+| Edit native | 13 | 18.0 | 174,685 | 0-1 |
+| Edit hooked CLI | 19 | 25.5 | 327,241 | 8-11 |
+| Debug native | 10 | 17.9 | 172,998 | 0-2 |
+| Debug hooked CLI | 17 | 29.7 | 399,732 | 7-11 |
+
+Enforcement worked, but the agent retried denied reads 7-11 times before
+switching to the CLI. `--tools`/`--allowedTools` did not remove native Read.
+Deny-only host hooks therefore add friction and cost; native remains faster and
+lower-input on fresh work.
+
+The concrete missing capability is a host plugin or input-rewriting hook that
+exposes a first-class scoped read tool and removes native Read without a denial
+loop. That host integration is outside this repository’s current boundary.
+
 ## Why this is architectural, not a tuning miss
 
 - FFSAKE's per-turn cost is already at or below native.

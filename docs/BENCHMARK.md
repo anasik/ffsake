@@ -1075,6 +1075,23 @@ Median paired ratios: edit **1.797 elapsed / 2.292 input**; debug **1.621 / 1.71
 
 Evidence: [fresh permission index](20261106-permission/fresh.json). Total paid spend is **$6.5751** across 320 attempts.
 
+### Host hook policy: first-class read enforcement attempt (2026-11-06)
+
+A Claude Code `PreToolUse` hook was implemented (`scripts/claude_pre_tool_policy.py`) and installed with `--settings` for the CLI arm. It denies native `Read`/`Glob`/`Grep` and file-reading shell commands, allows native `Edit`/`Write`, and allows `ffsake`, program and test commands. The hook was model-free checked by `scripts/claude_hook_smoke.py`. Twenty Haiku attempts on the fresh `edit_units` and `debug_cursor` tasks, **$0.1637**, all valid and all 5/5 correct.
+
+| Task / arm | Correct | Calls | Seconds | Input | Permission denials |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Edit native | 5/5 | 13 | 18.0 | 174,685 | 0–1 |
+| Edit hooked CLI | 5/5 | 19 | 25.5 | 327,241 | 8–11 |
+| Debug native | 5/5 | 10 | 17.9 | 172,998 | 0–2 |
+| Debug hooked CLI | 5/5 | 17 | 29.7 | 399,732 | 7–11 |
+
+Median paired ratios: edit **1.590 elapsed / 1.894 input**; debug **1.250 / 1.669**. The hook enforcement worked—Read outputs were `PreToolUse:Read hook error`—but the agent retried the denied read 7–11 times before using the CLI. Native `--tools`/`--allowedTools` combinations did not remove Read; the hook was the only working enforcement.
+
+This closes the host-enforcement question with a negative result: a deny-only hook adds permission friction and retries. A host plugin or hook that replaces native Read with a first-class scoped read tool (or rewrites the call) is required to avoid retries. Without that, native remains faster and lower-input on fresh work even when correctness is preserved.
+
+Evidence: [hook policy index](20261106-permission/hook-policy.json). Total paid spend is about **$6.78** across roughly 346 attempts.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

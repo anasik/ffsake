@@ -119,3 +119,7 @@ The [task-guidance index](20261106-haiku/task-guidance.json) records 20 Haiku at
 ## 2026-11-06 Fresh permission-controlled tasks
 
 The [fresh index](20261106-permission/fresh.json) records 20 Haiku attempts on new `edit_units` and `debug_cursor` fixtures with host permission profiles. Native was faster, lower-input and more correct; the CLI arm had more denials and failed both tasks (1/5 edit, 0/5 debug).
+
+## 2026-11-06 Host hook policy
+
+The [hook index](20261106-permission/hook-policy.json) records 20 Haiku attempts with a PreToolUse hook denying native reads. All arms were 5/5 correct, but the CLI arm retried denied reads 7-11 times and measured 1.590/1.894 on edits and 1.250/1.669 on debug. Deny-only host enforcement adds friction.

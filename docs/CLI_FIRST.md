@@ -66,3 +66,7 @@ and one-shot debugging.
 ## Fresh-task caveat (2026-11-06)
 
 On two previously unused fixtures under host permission profiles, native tools were more correct and lower-cost: edit 4/5 vs CLI 1/5, debug artifact 5/5 vs CLI 0/5, with more CLI permission denials. Host-level `--tools`/`--allowedTools` did not reliably remove native Read. Treat CLI-first as a setup simplification, not proven runtime permission or efficiency superiority; a host plugin is required to enforce the scoped path.
+
+## Host hook result (2026-11-06)
+
+A PreToolUse hook can deny native reads and allow edits/ffsake/tests (see `scripts/claude_pre_tool_policy.py`), but Claude retried denied reads 7-11 times. All 20 fresh-task attempts were correct, yet hooked CLI was 1.590/1.894 on edits and 1.250/1.669 on debug versus native. A host plugin or input-rewriting hook is needed for first-class scoped reads without denial retries.

@@ -15,6 +15,7 @@ from pathlib import Path
 import re
 import statistics
 import subprocess
+import sys
 import tempfile
 import time
 import uuid
@@ -43,6 +44,8 @@ CLI_GUIDANCE = ''
 FORCE_GUARDED = False
 FORCE_READS_CLI = False
 PERMISSION_PROFILES = False
+CLI_HOOK_POLICY = False
+CLI_TOOLS_ONLY = False
 CLAUDE_MODEL = 'sonnet'
 CLAUDE_EFFORT = 'low'
 
@@ -87,8 +90,20 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
         cmd = ['claude', '-p', prompt, '--output-format', 'stream-json', '--verbose',
                '--max-turns', '40', '--model', CLAUDE_MODEL, '--effort', CLAUDE_EFFORT,
                '--strict-mcp-config', '--mcp-config', str(cfg)]
-        if PERMISSION_PROFILES:
-            cmd += ['--tools', 'Bash,Edit,Write', '--allowedTools', 'Bash,Edit,Write']
+        if CLI_TOOLS_ONLY:
+            cmd += ['--tools', 'Bash', 'Edit', 'Write', '--dangerously-skip-permissions']
+        elif CLI_HOOK_POLICY:
+            hook = Path(__file__).with_name('claude_pre_tool_policy.py').resolve()
+            settings = root.parent / 'ffsake-claude-policy.json'
+            settings.write_text(json.dumps({'hooks': {'PreToolUse': [{
+                'matcher': 'Read|Glob|Grep|Bash',
+                'hooks': [{'type': 'command', 'command': f'{sys.executable} {hook}'}],
+            }]}}))
+            cmd += ['--settings', str(settings),
+                    '--allowedTools', 'Bash', 'Edit', 'Write']
+        elif PERMISSION_PROFILES:
+            cmd += ['--tools', 'Bash', 'Edit', 'Write', '--allowedTools', 'Bash', 'Edit', 'Write',
+                    '--disallowedTools', 'Read', 'Glob', 'Grep']
         else:
             cmd += ['--dangerously-skip-permissions']
         if guidance:
@@ -107,7 +122,10 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
     if PERMISSION_PROFILES:
         allowed = ('Bash,Edit,Write' if mode == 'cli'
                    else 'Bash,Read,Edit,Write,Glob,Grep')
-        cmd += ['--tools', allowed, '--allowedTools', allowed]
+        tools = allowed.split(',')
+        cmd += ['--tools', *tools, '--allowedTools', *tools]
+        if mode == 'cli':
+            cmd += ['--disallowedTools', 'Read', 'Glob', 'Grep']
     else:
         cmd += ['--dangerously-skip-permissions']
     if enabled:
@@ -694,11 +712,15 @@ def main():
     p.add_argument('--no-cli-guidance', action='store_true', help='do not add CLI guidance text to the CLI arm')
     p.add_argument('--cli-debug-guidance', action='store_true', help='add CLI guidance only for debug tasks')
     p.add_argument('--permission-profiles', action='store_true', help='use host allowlists instead of skip-all permissions')
+    p.add_argument('--cli-hook-policy', action='store_true', help='install a PreToolUse hook that denies native repository reads in the CLI arm')
+    p.add_argument('--cli-tools-only', action='store_true', help='expose only Bash/Edit/Write in the CLI arm')
     a = p.parse_args()
-    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, FORCE_READS_CLI, PERMISSION_PROFILES, CLAUDE_MODEL, CLAUDE_EFFORT
+    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, FORCE_READS_CLI, PERMISSION_PROFILES, CLI_HOOK_POLICY, CLI_TOOLS_ONLY, CLAUDE_MODEL, CLAUDE_EFFORT
     CATALOG = a.catalog
     FORCE_GUARDED = a.force_guarded
     PERMISSION_PROFILES = a.permission_profiles
+    CLI_HOOK_POLICY = a.cli_hook_policy
+    CLI_TOOLS_ONLY = a.cli_tools_only
     FORCE_READS_CLI = a.force_reads_cli
     CLAUDE_MODEL = a.claude_model
     CLAUDE_EFFORT = a.claude_effort
@@ -792,6 +814,7 @@ def main():
               'cli_preflight': cli_preflight,
               'force_guarded': FORCE_GUARDED,
               'permission_profiles': PERMISSION_PROFILES,
+              'cli_hook_policy': CLI_HOOK_POLICY,
               'disallowed_native_tools': ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'NotebookEdit'] if FORCE_GUARDED else [],
               'cli_guidance': CLI_GUIDANCE,
               'settings': {'claude_model': CLAUDE_MODEL, 'claude_effort': CLAUDE_EFFORT,
