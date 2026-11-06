@@ -31,6 +31,9 @@ or quotes. The host read block rejects commands it cannot parse.
 {binary} probe . --debug .ffsake/rc-debug.json --config main --breakpoint main.py:12 --stops 2
 ```
 
+Replace the example paths and line number with the real ones; do not copy them
+literally.
+
 Combine simple commands without quotes or variables in one Bash call, for
 example `git ls-files && python3 main.py`. On debugger tasks, always run one
 probe before editing so the required runtime values are observed. Make ordinary
