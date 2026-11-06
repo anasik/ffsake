@@ -16,9 +16,10 @@ guidance also batches simple shell commands and requires one probe before edits.
 
 Final Haiku 5.5 validation, ten repetitions per task on two fresh pairs:
 
-- Edit (`edit_units`, `edit_settings`, 20 pairs): 20/20 both. Pooled median
-  **1.047 elapsed / 0.996 input / 0.999 cost**. The edit arm uses native
-  Edit/Write; FFSAKE governs reads.
+- Edit (`edit_units`, `edit_settings`, `edit_refactor`, 30 pairs): 30/30 both.
+  Pooled median **1.038 elapsed / 1.003 input / 1.015 cost**. The edit arm uses
+  native Edit/Write; FFSAKE governs reads. The multi-file rename alone measured
+  1.036 / 1.009 / 1.034.
 - Debug (`debug_cursor`, `debug_retry`, 20 pairs): **20/20 versus native 17/20**.
   Pooled median **0.806 elapsed / 0.826 input / 0.867 cost**; FFSAKE won 16/20
   elapsed and 17/20 input pairs.
@@ -27,8 +28,8 @@ Final Haiku 5.5 validation, ten repetitions per task on two fresh pairs:
 
 Evidence: `docs/agent-benchmark-runs/20261106-redirect/final-debug-40.json`,
 `edit-settings-40.json`, `final-40.json` (edit units), plus the retained
-no-always-probe failure run. Final evidence batch cost $0.7624; the current
-Haiku validation phase totals about $8.77.
+no-always-probe failure run. Final evidence batch cost $0.8833; the current
+Haiku validation phase totals about $8.89.
 
 Verdict: **met for the measured scope**. FFSAKE is cheaper, faster and lower-input
 on fresh debug work, at efficiency parity on edits, with better debug

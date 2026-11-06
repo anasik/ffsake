@@ -298,15 +298,15 @@ editing. Final Haiku runs, ten repetitions per task:
 
 | Task / arm | Correct | Calls | Seconds | Input | Cost |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Edit (20 pairs) | 20/20 both | 12.5-13 | 16.5-19.1 | parity | 0.999 |
+| Edit (30 pairs) | 30/30 both | 12.5-13 | 15.8-19.1 | parity | 1.015 |
 | Debug cursor native | 8/10 | 10.0 | 20.7 | 203,481 | $0.00707 |
 | Debug cursor FFSAKE | 10/10 | 5.0 | 15.3 | 140,649 | $0.00528 |
 | Debug retry native | 9/10 | 9.5 | 15.6 | 170,198 | $0.00605 |
 | Debug retry FFSAKE | 10/10 | 5.5 | 14.6 | 140,386 | $0.00522 |
 
 Pooled debug medians: **0.806 elapsed, 0.826 input, 0.867 cost**, 20/20 correct
-versus native 17/20. Edit pooled medians: **1.047 elapsed, 0.996 input, 0.999
-cost**, 20/20 both. The native debug failures were workflow failures: the agent
+versus native 17/20. Edit pooled medians across three shapes (including a
+multi-file rename): **1.038 elapsed, 1.003 input, 1.015 cost**, 30/30 both. The native debug failures were workflow failures: the agent
 fixed the program without observing the required runtime iterations. The probe
 makes that observation part of the path.
 

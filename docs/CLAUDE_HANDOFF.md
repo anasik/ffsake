@@ -17,8 +17,8 @@ requires one probe before editing.
 
 Final Haiku 5.5 runs, ten repetitions per task:
 
-- Edit (`edit_units`, `edit_settings`): 20/20 both; pooled median 1.047 elapsed
-  / 0.996 input / 0.999 cost.
+- Edit (`edit_units`, `edit_settings`, `edit_refactor`): 30/30 both; pooled
+  median 1.038 elapsed / 1.003 input / 1.015 cost.
 - Debug (`debug_cursor`, `debug_retry`): 20/20 FFSAKE versus 17/20 native;
   pooled median 0.806 elapsed / 0.826 input / 0.867 cost.
 - Denials: 0-2 FFSAKE versus 0-4 native.

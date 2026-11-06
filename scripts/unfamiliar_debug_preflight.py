@@ -90,7 +90,7 @@ def main():
             results[task_name] = {'adapter': str(debug_python), 'marker': list(case['marker']),
                                   'initial_verifier': 'fails', 'reference_verifier': 'passes',
                                   'adapter_cleaned': True}
-    for edit_task in ('edit_batch', 'edit_multi', 'edit_units', 'edit_settings'):
+    for edit_task in ('edit_batch', 'edit_multi', 'edit_units', 'edit_settings', 'edit_refactor'):
         with tempfile.TemporaryDirectory(prefix=f'ffsake-preflight-{edit_task}-') as td:
             root = Path(td).resolve()
             task = suite.TASKS[edit_task]

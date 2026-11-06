@@ -131,3 +131,5 @@ The [final 40-attempt index](20261106-redirect/final-40.json) records 10 Haiku r
 ## 2026-11-06 Final redirect integration
 
 [final-debug-40.json](20261106-redirect/final-debug-40.json) records the final 20 debug pairs: 20/20 FFSAKE versus 17/20 native, pooled median 0.806 elapsed / 0.826 input / 0.867 cost. [edit-settings-40.json](20261106-redirect/edit-settings-40.json) records the second edit pair; together with `final-40.json` edit is 20/20 both at 1.047 elapsed / 0.996 input / 0.999 cost. [debug-no-always-probe-40.json](20261106-redirect/debug-no-always-probe-40.json) retains the earlier failure mode where two runs skipped the probe.
+
+[edit-refactor-20.json](20261106-redirect/edit-refactor-20.json) adds a third edit shape, a multi-file helper rename: 10/10 both at 1.036 elapsed / 1.009 input / 1.034 cost. With `final-40.json` and `edit-settings-40.json`, edit is 30/30 both at 1.038 / 1.003 / 1.015.

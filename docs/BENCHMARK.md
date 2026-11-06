@@ -1156,10 +1156,11 @@ FFSAKE won 16/20 elapsed pairs and 17/20 input pairs, and completed **20/20
 versus native 17/20**. Native failures were workflow failures: the agent fixed
 the program without observing the required runtime iterations.
 
-Edit remains at parity. Twenty pairs across `edit_units` and `edit_settings`
-were 20/20 in both arms with pooled median **1.047 elapsed / 0.996 input / 0.999
-cost**. The edit arm uses no CLI guidance and native Edit/Write; FFSAKE governs
-the reads.
+Edit remains at parity. Thirty pairs across `edit_units`, `edit_settings` and
+the multi-file rename `edit_refactor` were 30/30 in both arms with pooled median
+**1.038 elapsed / 1.003 input / 1.015 cost**. The edit arm uses no CLI guidance
+and native Edit/Write; FFSAKE governs the reads. The refactor shape on its own
+measured 1.036 / 1.009 / 1.034 with 10/10 both.
 
 The immediately preceding fair run without the mandatory-probe instruction
 (`debug-no-always-probe-40.json`) was 18/20 versus native 16/20 because two
@@ -1168,8 +1169,9 @@ fixed that failure mode without adding turns.
 
 Evidence: [final debug index](20261106-redirect/final-debug-40.json),
 [without always-probe](20261106-redirect/debug-no-always-probe-40.json),
-[edit settings](20261106-redirect/edit-settings-40.json). Final evidence batch
-cost **$0.7624**; the current Haiku validation phase totals about **$8.77**.
+[edit settings](20261106-redirect/edit-settings-40.json),
+[edit refactor](20261106-redirect/edit-refactor-20.json). Final evidence batch
+cost **$0.8833**; the current Haiku validation phase totals about **$8.89**.
 
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 

@@ -421,6 +421,38 @@ def debug_retry_verify(root, state):
              'test_exit': tests.returncode, 'test_stderr': tests.stderr})
 
 
+def edit_refactor_fixture(root):
+    files = {
+        'pricing.py': 'def apply_discount(price, percent):\n    return round(price * (1 - percent / 100), 2)\n',
+        'checkout.py': 'from pricing import apply_discount\n\ndef total(items, percent):\n    return round(sum(apply_discount(price, percent) for price in items), 2)\n',
+        'reports.py': 'from pricing import apply_discount\n\ndef summary(prices, percent):\n    return {"discounted": [apply_discount(price, percent) for price in prices]}\n',
+        'tests/__init__.py': '',
+        'tests/test_pricing.py': 'import unittest\nfrom pricing import apply_discount\nfrom checkout import total\nfrom reports import summary\n\nclass Pricing(unittest.TestCase):\n    def test_discount(self):\n        self.assertEqual(apply_discount(80, 25), 60.0)\n        self.assertEqual(total([80, 20], 25), 75.0)\n        self.assertEqual(summary([80], 25), {"discounted": [60.0]})\n',
+        'README.md': '# Pricing\nThe public helper is apply_discount.\n',
+        'sentinel.txt': 'unrelated refactor notes\n',
+        '.gitignore': '.ffsake/\n__pycache__/\n*.pyc\n.pytest_cache/\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['pricing.py'] = 'def apply_rate(price, percent):\n    return round(price * (1 - percent / 100), 2)\n'
+    reference['checkout.py'] = 'from pricing import apply_rate\n\ndef total(items, percent):\n    return round(sum(apply_rate(price, percent) for price in items), 2)\n'
+    reference['reports.py'] = 'from pricing import apply_rate\n\ndef summary(prices, percent):\n    return {"discounted": [apply_rate(price, percent) for price in prices]}\n'
+    reference['tests/test_pricing.py'] = 'import unittest\nfrom pricing import apply_rate\nfrom checkout import total\nfrom reports import summary\n\nclass Pricing(unittest.TestCase):\n    def test_discount(self):\n        self.assertEqual(apply_rate(80, 25), 60.0)\n        self.assertEqual(total([80, 20], 25), 75.0)\n        self.assertEqual(summary([80], 25), {"discounted": [60.0]})\n'
+    reference['README.md'] = '# Pricing\nThe public helper is apply_rate.\n'
+    return {'reference': reference}
+
+
+def edit_refactor_verify(root, state):
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    sources = list(root.rglob('*.py'))
+    stale = [str(path.relative_to(root)) for path in sources if 'apply_discount' in path.read_text()]
+    renamed = any('apply_rate' in path.read_text() for path in sources)
+    return (tests.returncode == 0 and not stale and renamed,
+            {'test_exit': tests.returncode, 'test_stderr': tests.stderr,
+             'stale_references': stale, 'renamed': renamed})
+
+
 TASKS = {
     'cross': {'fixture': cross_fixture, 'verify': cross_verify,
               'prompt': 'Explore this pricing project and fix the discount calculation. Both checkout and the pricing function should accept discounts as percentages, and final prices must be correct. Keep tests and unrelated files unchanged. Finish when the existing tests pass.',
@@ -476,6 +508,9 @@ TASKS = {
                      'prompt': 'Run main.py to reproduce the pagination failure. Use a debugger to observe at least two page iterations and the cursor values, make the smallest fix, and verify the program and tests. Preserve unrelated files.',
                      'allowed_changes': {'cursor.py'}, 'debug_program': 'main.py',
                      'workflow_markers': ('cursor', '0')},
+    'edit_refactor': {'fixture': edit_refactor_fixture, 'verify': edit_refactor_verify,
+                      'prompt': 'Rename the public pricing helper apply_discount to apply_rate and update every callsite, including tests. Behavior must stay identical. Preserve unrelated files.',
+                      'allowed_changes': {'pricing.py', 'checkout.py', 'reports.py', 'tests/test_pricing.py', 'README.md'}},
     'edit_settings': {'fixture': edit_settings_fixture, 'verify': edit_settings_verify,
                       'prompt': 'The settings package mishandles boolean parsing, nested overrides and value formatting. Fix all affected modules, keep tests unchanged, and verify the program and test suite. Preserve unrelated files.',
                       'allowed_changes': {'settings/parse.py', 'settings/merge.py', 'settings/format.py'}},

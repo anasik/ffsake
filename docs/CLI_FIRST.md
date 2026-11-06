@@ -62,15 +62,15 @@ debug configuration and hook read cache.
 ## Measured trade-offs (Claude Haiku 5.5)
 
 Final 10-repetition runs per task, native versus redirected reads + native edits
-+ one-call probe. Edit pairs: `edit_units` and `edit_settings`. Debug pairs:
-`debug_cursor` and `debug_retry`.
++ one-call probe. Edit shapes: `edit_units`, `edit_settings` and the multi-file
+rename `edit_refactor`. Debug pairs: `debug_cursor` and `debug_retry`.
 
 | Task | Native | FFSAKE | Pooled median |
 | --- | ---: | ---: | --- |
-| Edit correctness | 20/20 | **20/20** | — |
-| Edit elapsed | 16.5–19.1 s | 17.1–18.8 s | 1.047 |
-| Edit input | 156,682–174,323 | 157,229–173,954 | **0.996** |
-| Edit cost | $0.00614–$0.00670 | $0.00620–$0.00655 | **0.999** |
+| Edit correctness | 30/30 | **30/30** | — |
+| Edit elapsed | 15.8–19.1 s | 16.4–18.8 s | 1.038 |
+| Edit input | 142,514–174,323 | 156,571–173,954 | **1.003** |
+| Edit cost | $0.00592–$0.00670 | $0.00615–$0.00655 | **1.015** |
 | Debug correctness | 17/20 | **20/20** | — |
 | Debug elapsed | 15.6–20.7 s | 14.6–15.3 s | **0.806** |
 | Debug input | 170,198–203,481 | 140,386–140,649 | **0.826** |
@@ -88,9 +88,9 @@ Two guidance details matter and are included in the setup block: combine simple
 commands in one Bash call, and always run one probe before editing. An earlier
 fair run without the mandatory probe was 18/20 because two runs skipped it.
 
-Fit within run-to-run variance: edit input/cost are at parity, edit elapsed is
-+4.7%, and debug is clearly better on all three efficiency measures while also
-being more correct.
+Fit within run-to-run variance: edit input/cost are at parity across three
+shapes (including a multi-file rename), edit elapsed is +3.8%, and debug is
+clearly better on all three efficiency measures while also being more correct.
 
 ## Measurement correction
 
