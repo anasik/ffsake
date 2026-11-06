@@ -922,6 +922,21 @@ Median paired ratios versus native: edit CLI **1.214 elapsed / 1.520 input**; de
 
 Evidence: [single-command CLI index](20261106-haiku/cli-subcommands.json). Total paid spend is **$5.2624** across 150 attempts; ~$0.74 of the $6 ceiling remains.
 
+### Forced native-like CLI (2026-11-06)
+
+Final candidate test: disable native `Read`, `Edit`, `Write`, `Glob` and `Grep` and run only the native-like CLI subcommands. Ten Haiku attempts (five per task), all valid, all **5/5 correct**, cost **$0.0841**. Native comparisons use the retained Haiku baselines from the immediately preceding run, so they are matched on model, fixtures and task prompts but not contemporaneous.
+
+| Task / arm | Correct | Calls | Seconds | Input | Paired ratios |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Edit native | 5/5 | 14 | 19.8 | 174,582 | — |
+| Edit forced CLI | 5/5 | 12 | 24.4 | 284,664 | 1.403 elapsed / 1.544 input |
+| Debug native | 4/5 | 14 | 20.7 | 235,201 | — |
+| Debug forced CLI | 5/5 | 9 | 20.7 | 280,159 | **0.998** elapsed / **1.189** input |
+
+Forcing the CLI solved adoption and correctness and cut calls by 19-29%. On debug it reached **elapsed parity** (0.998) with 9 calls versus 14, but still used 19% more input. On edits it was slower and 54% higher-input. The remaining input gap comes from CLI process/output payload and model turns, not catalog size.
+
+Evidence: [forced CLI index](20261106-haiku/forced-cli-subcommands.json). Total paid spend is **$5.3465** across 160 attempts; ~$0.65 remains.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

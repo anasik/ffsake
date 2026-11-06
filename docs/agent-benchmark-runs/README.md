@@ -79,3 +79,7 @@ The [hybrid index](20261106-haiku/hybrid-debug.json) records 10 Haiku attempts o
 ## 2026-11-06 Single-command CLI surface
 
 The [CLI subcommand index](20261106-haiku/cli-subcommands.json) records 30 Haiku attempts with native-like `read`/`edit`/`probe` commands. CLI was adopted 5/5 and correct 5/5 on both tasks, but remained slower and higher-input than native. A retained-trace verifier correction raised CLI debug evidence from 0/5 to 5/5 without rerunning.
+
+## 2026-11-06 Forced native-like CLI
+
+The [forced CLI index](20261106-haiku/forced-cli-subcommands.json) records 10 Haiku attempts with native read/write tools disabled. All were 5/5 correct; debug reached elapsed parity (0.998) with 9 calls versus 14 but used 19% more input. Edit remained 1.403 elapsed / 1.544 input.
