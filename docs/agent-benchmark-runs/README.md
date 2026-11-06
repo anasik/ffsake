@@ -107,3 +107,7 @@ The [split index](20261106-haiku/split-workflow.json) records 10 Haiku attempts 
 ## 2026-11-06 Forced CLI reads
 
 The [force-reads index](20261106-haiku/force-reads.json) records 10 Haiku attempts with native Read/Glob/Grep disabled and native edits kept. CLI reads were adopted, but forced CLI was 1.426 elapsed / 1.444 input with one failure (4/5).
+
+## 2026-11-06 No-guidance forced reads
+
+The [no-guidance index](20261106-haiku/no-guidance.json) records 10 Haiku attempts with native reads disabled and no CLI guidance. Only 1/5 was correct; the model could not discover the CLI read path. Budget is effectively exhausted.

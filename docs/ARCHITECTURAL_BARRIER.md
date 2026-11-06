@@ -221,8 +221,12 @@ both 5/5. Range-capped reads and line-addressed edits were worse still:
 reads/probe) held the debug target at **0.985/0.888** but not edits
 (**1.064/1.195**; CLI reads were not adopted). Forcing the CLI read path while
 keeping native edits made it worse: **1.426/1.444**, 4/5 correct, despite 19%
-fewer calls. Reviewed edits and per-turn CLI/model behavior, not metadata size,
-call count, address scope or read-tool choice, dominate the edit path. A retained-trace verifier fix for compact
+fewer calls. Removing CLI guidance to cut overhead collapsed correctness to
+**1/5** (1.428/1.506): the model could not discover the read path. The edit path
+therefore has no measured configuration that meets the target—guidance adds
+overhead, and without it correctness fails. Reviewed edits and per-turn
+CLI/model behavior, not metadata size, call count, address scope or read-tool
+choice, dominate. A retained-trace verifier fix for compact
 `values` raised CLI debug from 0/5 to 5/5 without a rerun.
 
 Cheaper models did not make FFSAKE competitive, and shrinking the catalog alone

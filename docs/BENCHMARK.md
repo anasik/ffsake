@@ -1030,6 +1030,19 @@ The CLI read path was adopted in all five runs (3-6 CLI calls), and calls fell 1
 
 Evidence: [force-reads index](20261106-haiku/force-reads.json). Total paid spend is **$5.9032** across 230 attempts; ~$0.10 remains.
 
+### No-guidance forced read rerun (2026-11-06)
+
+Native `Read`/`Glob`/`Grep` were disabled with native edits kept and **no CLI guidance text**. Ten Haiku attempts, **$0.0869**, ten valid.
+
+| Arm | Correct | Calls | Seconds | Input | Paired ratios |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Native | 5/5 | 15 | 20.3 | 207,512 | — |
+| No-guidance CLI reads | **1/5** | 14 | 29.2 | 352,731 | 1.428 elapsed / 1.506 input |
+
+Without guidance the model could not discover the CLI read path; it guessed file contents and four of five runs failed. CLI guidance is therefore required for correctness, and the guided version still measured 1.426/1.444. The edit path has no configuration that meets the target: guidance adds overhead and native reads avoid the CLI entirely.
+
+Evidence: [no-guidance index](20261106-haiku/no-guidance.json). Total paid spend is **$5.9901** across 240 attempts; ~$0.01 remains.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

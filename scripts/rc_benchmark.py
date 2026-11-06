@@ -85,8 +85,9 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
                          'repository reads and native Edit/Write for changes.')
         cmd = ['claude', '-p', prompt, '--output-format', 'stream-json', '--verbose',
                '--max-turns', '40', '--model', CLAUDE_MODEL, '--effort', CLAUDE_EFFORT,
-               '--dangerously-skip-permissions', '--strict-mcp-config', '--mcp-config', str(cfg),
-               '--append-system-prompt', guidance]
+               '--dangerously-skip-permissions', '--strict-mcp-config', '--mcp-config', str(cfg)]
+        if guidance:
+            cmd += ['--append-system-prompt', guidance]
         if FORCE_GUARDED:
             cmd += ['--disallowedTools', 'Read,Edit,Write,Glob,Grep,NotebookEdit']
         elif FORCE_READS_CLI:
@@ -679,6 +680,7 @@ def main():
     p.add_argument('--cli-native', action='store_true', help='with --cli-binary, run native and CLI arms only')
     p.add_argument('--split-guidance', action='store_true', help='guide the CLI arm to use native edits and CLI reads/probe')
     p.add_argument('--force-reads-cli', action='store_true', help='disable native Read/Glob/Grep in the CLI arm, keeping Edit/Write')
+    p.add_argument('--no-cli-guidance', action='store_true', help='do not add CLI guidance text to the CLI arm')
     a = p.parse_args()
     global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, FORCE_READS_CLI, CLAUDE_MODEL, CLAUDE_EFFORT
     CATALOG = a.catalog
@@ -711,7 +713,9 @@ def main():
         p.error('measured pairs require at least five repetitions')
     suite.FFSAKE_MCP = a.binary.resolve(strict=True)
     suite.CLI_BINARY = a.cli_binary.resolve(strict=True) if a.cli_binary else None
-    CLI_GUIDANCE = cli_guidance(suite.CLI_BINARY, a.split_guidance or a.force_reads_cli) if suite.CLI_BINARY else ''
+    CLI_GUIDANCE = ('' if a.no_cli_guidance else
+                    cli_guidance(suite.CLI_BINARY, a.split_guidance or a.force_reads_cli)
+                    if suite.CLI_BINARY else '')
     suite.CLI_GUIDANCE = CLI_GUIDANCE
     changed_binary = suite.FFSAKE_MCP
     baseline_binary = a.baseline_binary.resolve(strict=True) if a.baseline_binary else None
