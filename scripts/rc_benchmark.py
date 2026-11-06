@@ -47,6 +47,7 @@ PERMISSION_PROFILES = False
 CLI_HOOK_POLICY = False
 CLI_TOOLS_ONLY = False
 CLI_REDIRECT_READS = False
+DEFAULT_PERMISSIONS = False
 CLAUDE_MODEL = 'sonnet'
 CLAUDE_EFFORT = 'low'
 
@@ -102,12 +103,17 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
         if CLI_REDIRECT_READS:
             hook = Path(__file__).with_name('claude_read_redirect_hook.py').resolve()
             settings = root.parent / 'ffsake-read-policy.json'
-            settings.write_text(json.dumps({'hooks': {'PreToolUse': [{
-                'matcher': 'Read|Bash',
+            policy = {'hooks': {'PreToolUse': [{
+                'matcher': 'Read',
                 'hooks': [{'type': 'command',
                            'command': f'FFSAKE_BIN={suite.CLI_BINARY} {sys.executable} {hook}'}],
-            }]}}))
-            cmd += ['--settings', str(settings), '--dangerously-skip-permissions']
+            }]}}
+            if PERMISSION_PROFILES:
+                policy['permissions'] = {'allow': ['Bash', 'Edit', 'Write']}
+            settings.write_text(json.dumps(policy))
+            cmd += ['--settings', str(settings)]
+            if not DEFAULT_PERMISSIONS and not PERMISSION_PROFILES:
+                cmd += ['--dangerously-skip-permissions']
         elif CLI_TOOLS_ONLY:
             cmd += ['--tools', 'Bash', 'Edit', 'Write', '--dangerously-skip-permissions']
         elif CLI_HOOK_POLICY:
@@ -120,8 +126,7 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
             cmd += ['--settings', str(settings),
                     '--allowedTools', 'Bash', 'Edit', 'Write']
         elif PERMISSION_PROFILES:
-            cmd += ['--tools', 'Bash', 'Edit', 'Write', '--allowedTools', 'Bash', 'Edit', 'Write',
-                    '--disallowedTools', 'Read', 'Glob', 'Grep']
+            cmd += ['--allowedTools', 'Bash', 'Edit', 'Write']
         else:
             cmd += ['--dangerously-skip-permissions']
         if guidance:
@@ -140,11 +145,8 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
     if PERMISSION_PROFILES:
         allowed = ('Bash,Edit,Write' if mode == 'cli'
                    else 'Bash,Read,Edit,Write,Glob,Grep')
-        tools = allowed.split(',')
-        cmd += ['--tools', *tools, '--allowedTools', *tools]
-        if mode == 'cli':
-            cmd += ['--disallowedTools', 'Read', 'Glob', 'Grep']
-    else:
+        cmd += ['--allowedTools', *allowed.split(',')]
+    elif not DEFAULT_PERMISSIONS:
         cmd += ['--dangerously-skip-permissions']
     if enabled:
         cmd += ['--append-system-prompt',
@@ -322,6 +324,17 @@ def tool_calls(agent, events):
                     call = by_id.get(block.get('tool_use_id'))
                     if call is not None:
                         call['output'] = '\n'.join(suite.recursive_strings(block.get('content')))
+    elif agent == 'opencode':
+        for event in events:
+            if not isinstance(event, dict) or event.get('type') != 'tool_use':
+                continue
+            part = event.get('part') or {}
+            state = part.get('state') or {}
+            arguments = state.get('input') or {}
+            calls.append({'name': str(part.get('tool') or ''),
+                          'input': arguments if isinstance(arguments, dict) else {},
+                          'text': json.dumps(arguments),
+                          'output': str(state.get('output') or '')})
     elif agent == 'codex':
         for event in events:
             if not isinstance(event, dict) or event.get('type') != 'item.completed':
@@ -355,6 +368,13 @@ def tool_output_text(agent, events):
             for block in message.get('content', []):
                 if isinstance(block, dict) and block.get('type') == 'tool_result':
                     chunks.extend(suite.recursive_strings(block.get('content')))
+    elif agent == 'opencode':
+        for event in events:
+            if not isinstance(event, dict) or event.get('type') != 'tool_use':
+                continue
+            part = event.get('part') or {}
+            state = part.get('state') or {}
+            chunks.append(str(state.get('output') or ''))
     elif agent == 'codex':
         for event in events:
             if not isinstance(event, dict) or event.get('type') != 'item.completed':
@@ -633,7 +653,7 @@ def agent_provider_errors(agent, events):
 
 def normalize_usage(agent, trace):
     """Expose one comparable total while retaining provider-reported components."""
-    if agent == 'claude':
+    if agent in ('claude', 'opencode'):
         parts = [trace.get('input_tokens'), trace.get('cache_read_input_tokens'),
                  trace.get('cache_creation_input_tokens')]
         if all(isinstance(value, (int, float)) and not isinstance(value, bool) for value in parts):
@@ -723,6 +743,7 @@ def main():
     p.add_argument('--force-guarded', action='store_true', help='disable native repository read/edit tools in the MCP arm')
     p.add_argument('--claude-model', default='sonnet', help='Claude model alias or ID for paid runs')
     p.add_argument('--claude-effort', default='low', help='Claude effort level')
+    p.add_argument('--opencode-model', default='opencode-go/claude-haiku-5-5', help='OpenCode model for paid runs')
     p.add_argument('--cli-only', action='store_true', help='with --cli-binary, run only the CLI arm')
     p.add_argument('--cli-native', action='store_true', help='with --cli-binary, run native and CLI arms only')
     p.add_argument('--split-guidance', action='store_true', help='guide the CLI arm to use native edits and CLI reads/probe')
@@ -733,14 +754,16 @@ def main():
     p.add_argument('--cli-hook-policy', action='store_true', help='install a PreToolUse hook that denies native repository reads in the CLI arm')
     p.add_argument('--cli-tools-only', action='store_true', help='expose only Bash/Edit/Write in the CLI arm')
     p.add_argument('--cli-redirect-reads', action='store_true', help='rewrite native Read through ffsake with a PreToolUse hook')
+    p.add_argument('--default-permissions', action='store_true', help='use host default permissions instead of skip-all')
     a = p.parse_args()
-    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, FORCE_READS_CLI, PERMISSION_PROFILES, CLI_HOOK_POLICY, CLI_TOOLS_ONLY, CLI_REDIRECT_READS, CLAUDE_MODEL, CLAUDE_EFFORT
+    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, FORCE_READS_CLI, PERMISSION_PROFILES, CLI_HOOK_POLICY, CLI_TOOLS_ONLY, CLI_REDIRECT_READS, DEFAULT_PERMISSIONS, CLAUDE_MODEL, CLAUDE_EFFORT
     CATALOG = a.catalog
     FORCE_GUARDED = a.force_guarded
     PERMISSION_PROFILES = a.permission_profiles
     CLI_HOOK_POLICY = a.cli_hook_policy
     CLI_TOOLS_ONLY = a.cli_tools_only
     CLI_REDIRECT_READS = a.cli_redirect_reads
+    DEFAULT_PERMISSIONS = a.default_permissions
     FORCE_READS_CLI = a.force_reads_cli
     CLAUDE_MODEL = a.claude_model
     CLAUDE_EFFORT = a.claude_effort
@@ -749,8 +772,8 @@ def main():
         p.error('--diagnostic-matrix requires Codex, --instrument-dir, and default catalog/compact options')
     if a.baseline_binary and (a.diagnostic_matrix or not a.instrument_dir or a.catalog != 'core' or a.compact):
         p.error('--baseline-binary requires --instrument-dir and default diagnostic options')
-    if a.cli_binary and (a.baseline_binary or a.diagnostic_matrix or a.agents != 'claude'):
-        p.error('--cli-binary supports Claude only and cannot be combined with baseline or diagnostic modes')
+    if a.cli_binary and (a.baseline_binary or a.diagnostic_matrix or a.agents not in ('claude', 'opencode')):
+        p.error('--cli-binary supports Claude or OpenCode and cannot be combined with baseline or diagnostic modes')
     if (a.cli_only or a.cli_native or a.force_reads_cli) and not a.cli_binary:
         p.error('--cli-only, --cli-native and --force-reads-cli require --cli-binary')
     if COMPACT and not a.instrument_dir:
@@ -759,7 +782,7 @@ def main():
         a.instrument_dir = a.instrument_dir.resolve()
         a.instrument_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     agents, tasks = a.agents.split(','), a.tasks.split(',')
-    if any(x not in ('claude', 'codex') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand', 'edit_units', 'debug_cursor', 'edit_settings', 'edit_refactor', 'debug_retry') for x in tasks):
+    if any(x not in ('claude', 'codex', 'opencode') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand', 'edit_units', 'debug_cursor', 'edit_settings', 'edit_refactor', 'debug_retry') for x in tasks):
         p.error('unsupported agent or task')
     if not a.pilot and 'codex' in agents and 'git' in tasks:
         p.error('Codex Git comparison unavailable: native workspace sandbox denies linked-worktree Git metadata while MCP can write it')
@@ -797,7 +820,7 @@ def main():
     suite.mcp_arguments = mcp_args
     suite.claude_run, suite.codex_run = claude, codex
     suite.ffsake_prompt = lambda prompt, tool_profile='all': prompt
-    preflight = suite.preflight(agents, a.catalog)
+    preflight = suite.preflight(agents, a.catalog, workspace_probe=not (a.cli_binary and 'opencode' in agents))
     if not preflight['ok']:
         raise SystemExit('preflight failed; no model calls made')
     if baseline_binary:
@@ -835,6 +858,7 @@ def main():
               'force_guarded': FORCE_GUARDED,
               'permission_profiles': PERMISSION_PROFILES,
               'cli_hook_policy': CLI_HOOK_POLICY,
+              'default_permissions': DEFAULT_PERMISSIONS,
               'disallowed_native_tools': ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'NotebookEdit'] if FORCE_GUARDED else [],
               'cli_guidance': CLI_GUIDANCE,
               'settings': {'claude_model': CLAUDE_MODEL, 'claude_effort': CLAUDE_EFFORT,
@@ -893,6 +917,7 @@ def main():
                         if a.cli_debug_guidance and suite.CLI_BINARY:
                             CLI_GUIDANCE = (cli_guidance(suite.CLI_BINARY, True, task)
                                             if task.startswith('debug') else '')
+                        suite.CLI_GUIDANCE = CLI_GUIDANCE
                         print(f'{agent} {task} {mode} {repetition}', flush=True)
                         # Keep a model's parent-directory discovery in an empty,
                         # disposable container rather than the user's shared tmp.
@@ -904,7 +929,7 @@ def main():
                                                if a.instrument_dir and agent == 'codex' and suite_mode == 'ffsake' else None)
                                 tempfile.tempdir = run_base
                                 os.environ['TMPDIR'] = run_base
-                                result = suite.one(agent, task, suite_mode, a.timeout, None, a.catalog)
+                                result = suite.one(agent, task, suite_mode, a.timeout, a.opencode_model, a.catalog)
                                 if a.diagnostic_matrix or baseline_binary:
                                     result['mode'] = mode
                             finally:
@@ -931,7 +956,7 @@ def main():
                             1 for call in calls if 'mcp__ffsake__' in call['name'])
                         def is_cli_call(call):
                             text = call.get('text') or ''
-                            return (call['name'] == 'Bash' and 'ffsake' in text
+                            return (call['name'] in ('Bash', 'shell') and 'ffsake' in text
                                     and any(token in text for token in (
                                         '--request', '--apply', ' read ', ' edit ',
                                         ' apply ', ' probe ')))

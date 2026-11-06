@@ -239,20 +239,24 @@ class CliArmTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             old = rc.CLI_REDIRECT_READS
+            old_profiles = rc.PERMISSION_PROFILES
             rc.CLI_REDIRECT_READS = True
+            rc.PERMISSION_PROFILES = True
             try:
                 with mock.patch.object(rc.suite, 'run_process', return_value={
                         'stdout': '', 'stderr': '', 'exit_code': 0, 'elapsed_ms': 0}) as run:
                     rc.claude(root, 'task', False, 5, 'core', 'cli')
             finally:
                 rc.CLI_REDIRECT_READS = old
+                rc.PERMISSION_PROFILES = old_profiles
             command = run.call_args.args[0]
             policy = Path(command[command.index('--settings') + 1])
             self.assertTrue(policy.is_file())
             settings = json.loads(policy.read_text())
-            self.assertEqual(settings['hooks']['PreToolUse'][0]['matcher'], 'Read|Bash')
+            self.assertEqual(settings['hooks']['PreToolUse'][0]['matcher'], 'Read')
+            self.assertEqual(settings['permissions']['allow'], ['Bash', 'Edit', 'Write'])
             self.assertIn('FFSAKE_BIN=', settings['hooks']['PreToolUse'][0]['hooks'][0]['command'])
-            self.assertIn('--dangerously-skip-permissions', command)
+            self.assertNotIn('--dangerously-skip-permissions', command)
             self.assertNotIn('--disallowedTools', command)
 
     def test_forced_guarded_arm_disables_native_file_tools(self):

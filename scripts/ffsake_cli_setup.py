@@ -48,13 +48,16 @@ def hook_settings(binary):
     return {
         "hooks": {
             "PreToolUse": [{
-                "matcher": "Read|Bash",
+                "matcher": "Read",
                 "hooks": [{
                     "type": "command",
                     "command": f"FFSAKE_BIN={binary} {os.sys.executable} {hook}",
                 }],
             }]
-        }
+        },
+        # Three entries replace the native read/glob/grep surface. Native Read
+        # is still available to the model; the hook serves it through ffsake.
+        "permissions": {"allow": ["Bash", "Edit", "Write"]},
     }
 
 

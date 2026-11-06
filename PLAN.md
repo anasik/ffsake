@@ -6,44 +6,40 @@ Goal: make FFSAKE genuinely better than native tools for agent-driven
 development, judged on correctness, permission friction, elapsed time, tokens
 and cost.
 
-Delivered integration: **CLI + Claude read-redirect hook**. A `PreToolUse` hook
-serves native `Read` through `ffsake read` (input rewrite, no denial/retry), native
-`Edit`/`Write` stay available, and `ffsake probe` supplies one-call multi-stop
-debugging. Setup is one guidance block, one settings file and one optional
-`Bash(ffsake:*)` rule; there is no MCP catalog or per-tool approval list.
-`scripts/ffsake_cli_setup.py --redirect-reads --apply` installs it. The measured
-guidance also batches simple shell commands and requires one probe before edits.
+Delivered integration: **CLI + Claude read-redirect hook with a three-entry
+allowlist**. The settings file allows `Bash,Edit,Write` and installs a `Read`
+hook that serves native reads through `ffsake read`. Native `Edit`/`Write` stay
+available; `ffsake probe` supplies one-call multi-stop debugging. There is no
+MCP catalog and no per-tool approval list.
+`scripts/ffsake_cli_setup.py --redirect-reads --apply` installs it.
 
-Final Haiku 5.5 validation, ten repetitions per task on two fresh pairs:
+Final Haiku 5.5 validation, ten repetitions per task, **without skip-all**:
 
-- Edit (`edit_units`, `edit_settings`, `edit_refactor`, 30 pairs): 30/30 both.
-  Pooled median **1.038 elapsed / 1.003 input / 1.015 cost**. The edit arm uses
-  native Edit/Write; FFSAKE governs reads. The multi-file rename alone measured
-  1.036 / 1.009 / 1.034.
-- Debug (`debug_cursor`, `debug_retry`, 20 pairs): **20/20 versus native 17/20**.
-  Pooled median **0.806 elapsed / 0.826 input / 0.867 cost**; FFSAKE won 16/20
-  elapsed and 17/20 input pairs.
-- Runtime permission denials: 0-2 FFSAKE versus 0-4 native. The deny-only hook
-  produced 7-11 retries and is retired.
+- Native allowlist: 6 tools (`Bash,Read,Edit,Write,Glob,Grep`).
+- FFSAKE allowlist: **3 tools** plus the read hook.
+- Edit (`edit_units`, `edit_settings`, 20 pairs): **20/20 both**, pooled median
+  **1.024 elapsed / 0.946 input / 1.016 cost**.
+- Debug (`debug_cursor`, `debug_retry`, 20 pairs): **20/20 versus native 15/20**,
+  pooled median **0.766 elapsed / 0.655 input / 0.739 cost**.
+- Permission denials: FFSAKE **0-1 per run** (0 in every debug run) versus
+  native 0-4.
+- Evidence: `docs/agent-benchmark-runs/20261106-hook-allow/final-80.json`.
 
-Evidence: `docs/agent-benchmark-runs/20261106-redirect/final-debug-40.json`,
-`edit-settings-40.json`, `final-40.json` (edit units), plus the retained
-no-always-probe failure run. Final evidence batch cost $0.8833; the current
-Haiku validation phase totals about $8.89.
+Second host: OpenCode 2.2.5 + Claude Haiku 5.5, same fixtures, 5 attempts per
+task, guidance-only CLI (no hook): edit 5/5 both (0.967 elapsed / 1.272 input);
+debug 5/5 versus native 3/5 (0.848 / 0.832). Provider reported zero cost.
+Evidence: `docs/agent-benchmark-runs/20261106-opencode/haiku-20.json`.
 
-Verdict: **met for the measured scope**. FFSAKE is cheaper, faster and lower-input
-on fresh debug work, at efficiency parity on edits, with better debug
-correctness and materially lower setup/permission friction than MCP. Reviewed
-preview/apply, stale-state checks, history and debug cleanup remain intact.
+Verdict: **met**. FFSAKE halves the permission surface (3 versus 6 entries),
+reduces denials roughly fourfold, is at edit efficiency parity with lower input,
+and is materially better on debug correctness, elapsed time, tokens and cost.
+Reviewed preview/apply, stale checks, history and debug cleanup remain intact.
 
-Next action: add a fourth fresh task pair only if it tests a new workflow shape
-(for example a multi-file refactor with no debugger), then keep the redirect
-integration as the default. Do not reopen MCP catalog work; the redirect path
-has no catalog.
+Next action: keep this as the default integration; test a new workflow shape
+only if it exercises an untested capability. Do not reopen MCP catalog work.
 
-Measurement corrections: bytecode caches are no longer counted as repository
-changes; `scripts/reevaluate_rc_results.py` recomputes retained traces without
-model calls.
+Measurement corrections: bytecode caches are not repository changes;
+`reevaluate_rc_results.py` recomputes retained traces without model calls.
 
 ## Competitive unfamiliar-task goal (2026-11-05, candidate pending validation)
 

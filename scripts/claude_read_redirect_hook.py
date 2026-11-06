@@ -48,9 +48,11 @@ def main():
         words = command.replace(";", " ").replace("|", " ").split()
         if words and words[0] in READ_COMMANDS:
             output("deny", "use the ffsake CLI read command for repository contents")
-        output("allow")
+        # Defer every other command to the host's normal permission policy.
+        raise SystemExit(0)
     if tool != "Read":
-        output("allow")
+        # Never blanket-approve edits, tasks or other tools from a read policy.
+        raise SystemExit(0)
     path = str(tool_input.get("file_path", ""))
     if not path:
         output("allow")

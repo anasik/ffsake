@@ -40,7 +40,8 @@ def main():
         settings = json.loads(policy.read_text())
         command = settings["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
         assert "claude_read_redirect_hook.py" in command and "FFSAKE_BIN=" in command, command
-        assert settings["hooks"]["PreToolUse"][0]["matcher"] == "Read|Bash"
+        assert settings["hooks"]["PreToolUse"][0]["matcher"] == "Read"
+        assert settings["permissions"]["allow"] == ["Bash", "Edit", "Write"]
         assert hooked["settings_flag"] == f"--settings {policy.resolve()}"
 
         (project / "AGENTS.md").write_text("# Agents\n")

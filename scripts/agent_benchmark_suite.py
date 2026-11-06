@@ -792,6 +792,22 @@ def generic_metrics(agent, events):
         completed = next((e for e in reversed(events) if isinstance(e, dict)
                           and e.get("type") == "turn.completed"), {})
         usage = completed.get("usage", {})
+    total_cost = result_event.get("total_cost_usd") if isinstance(result_event, dict) else None
+    if agent == "opencode":
+        usage = {"input_tokens": 0, "output_tokens": 0,
+                 "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0}
+        total_cost = 0.0
+        for event in events:
+            if not isinstance(event, dict) or event.get("type") != "step_finish":
+                continue
+            part = event.get("part") or {}
+            tokens = part.get("tokens") or {}
+            cache = tokens.get("cache") or {}
+            usage["input_tokens"] += tokens.get("input") or 0
+            usage["output_tokens"] += tokens.get("output") or 0
+            usage["cache_read_input_tokens"] += cache.get("read") or 0
+            usage["cache_creation_input_tokens"] += cache.get("write") or 0
+            total_cost += part.get("cost") or 0
     if not isinstance(usage, dict):
         usage = {}
 
@@ -810,7 +826,7 @@ def generic_metrics(agent, events):
         "output_tokens": usage.get("output_tokens"),
         "cache_read_input_tokens": usage.get("cache_read_input_tokens", usage.get("cached_input_tokens")),
         "cache_creation_input_tokens": usage.get("cache_creation_input_tokens", usage.get("cache_write_input_tokens")),
-        "total_cost_usd": result_event.get("total_cost_usd") if isinstance(result_event, dict) else None,
+        "total_cost_usd": total_cost,
         "num_turns": result_event.get("num_turns") if isinstance(result_event, dict) else None,
     }
 
@@ -981,11 +997,15 @@ def codex_run(root: Path, prompt: str, use_ffsake: bool, timeout: int, tool_prof
     return run_process(cmd, root, timeout)
 
 
-def configure_opencode(root: Path, use_ffsake: bool, tool_profile="all"):
+def configure_opencode(root: Path, use_ffsake: bool, tool_profile="all", mode=None):
     # Deny by default, including inherited MCPs and delegation/custom tools.
     # Only the selected mode's explicitly named repository tools are authorized.
     permission = {"*": "deny"}
-    if use_ffsake:
+    if mode == "cli":
+        permission.update({name: "allow" for name in
+                           ["bash", "shell", "read", "edit", "write", "apply_patch",
+                            "glob", "grep", "list"]})
+    elif use_ffsake:
         permission["ffsake_*"] = "allow"
         permission["ffsake_ffsake_task_register"] = "ask"
         permission["ffsake_ffsake_run_task"] = "ask"
@@ -1002,12 +1022,15 @@ def configure_opencode(root: Path, use_ffsake: bool, tool_profile="all"):
     return config
 
 
-def opencode_run(root: Path, prompt: str, use_ffsake: bool, timeout: int, model: str | None, tool_profile="all"):
+def opencode_run(root: Path, prompt: str, use_ffsake: bool, timeout: int, model: str | None,
+                 tool_profile="all", mode=None):
     root = root.resolve()
-    configure_opencode(root, use_ffsake, tool_profile)
-    cmd = ["opencode", "run", "--dir", str(root), "--format", "json"]
+    configure_opencode(root, use_ffsake, tool_profile, mode)
+    cmd = ["opencode", "run", "--format", "json"]
     if model:
         cmd += ["--model", model]
+    if mode == "cli" and CLI_GUIDANCE:
+        prompt = prompt + "\n\n" + CLI_GUIDANCE
     cmd += [ffsake_prompt(prompt, tool_profile) if use_ffsake else prompt]
     return run_process(cmd, root, timeout)
 
@@ -1095,7 +1118,8 @@ def one(agent, task_name, mode, timeout, opencode_model, tool_profile="all"):
         elif agent == "codex":
             result = codex_run(root, task["prompt"], use_ffsake, timeout, tool_profile)
         elif agent == "opencode":
-            result = opencode_run(root, task["prompt"], use_ffsake, timeout, opencode_model, tool_profile)
+            result = opencode_run(root, task["prompt"], use_ffsake, timeout, opencode_model,
+                                  tool_profile, mode)
         else:
             raise ValueError(agent)
 
@@ -1268,7 +1292,7 @@ def cli_preflight(binary):
             return {**check, "error": type(exc).__name__}
 
 
-def preflight(agents, tool_profile="all"):
+def preflight(agents, tool_profile="all", workspace_probe=True):
     """Inspect CLIs and optional core catalog without sending a model prompt."""
     profile_tools(tool_profile)
     checks = []
@@ -1279,7 +1303,7 @@ def preflight(agents, tool_profile="all"):
         "claude": ["--output-format", "--verbose", "--dangerously-skip-permissions",
                    "--strict-mcp-config", "--mcp-config", "--tools"],
         "codex": ["--json", "--sandbox", "--config"],
-        "opencode": ["--format", "--model", "--dir"],
+        "opencode": ["--format", "--model"],
     }
     for agent in agents:
         executable = shutil.which(agent)
@@ -1299,7 +1323,7 @@ def preflight(agents, tool_profile="all"):
             check.update({"version": version["stdout"].strip(), "help_exit_code": help_result["exit_code"],
                           "missing_flags": missing, "stderr": help_result["stderr"],
                           "ok": help_result["exit_code"] == 0 and not help_result["timed_out"] and not missing})
-            if agent == "opencode" and check["ok"]:
+            if agent == "opencode" and check["ok"] and workspace_probe:
                 workspace = opencode_workspace_preflight(executable, tool_profile)
                 check["workspace_probe"] = workspace
                 check["ok"] = workspace["ok"]

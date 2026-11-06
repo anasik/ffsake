@@ -1173,6 +1173,30 @@ Evidence: [final debug index](20261106-redirect/final-debug-40.json),
 [edit refactor](20261106-redirect/edit-refactor-20.json). Final evidence batch
 cost **$0.8833**; the current Haiku validation phase totals about **$8.89**.
 
+### Permission-minimal hook integration and second host (2026-11-06)
+
+The permission comparison was rerun **without `--dangerously-skip-permissions`** so host defaults applied. The native arm allowed six tools (`Bash,Read,Edit,Write,Glob,Grep`); the FFSAKE arm allowed three (`Bash,Edit,Write`) and installed the Read-redirect hook. The hook's settings file carries the same three-entry allowlist, so the hook and the host policy compose. Eighty Haiku attempts, **$0.5123**, all valid.
+
+| Task group | Correct | Elapsed (med) | Input (med) | Cost (med) | Denials/run |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Edit native (20 pairs) | 20/20 | 17.0–18.3 s | 151,361–184,791 | $0.00610–$0.00676 | 0–2 |
+| Edit FFSAKE (20 pairs) | **20/20** | 17.9–19.2 s | 172,179–174,047 | $0.00629–$0.00668 | 0–1 |
+| Debug native (20 pairs) | **15/20** | 17.0–21.1 s | 195,909–245,677 | $0.00634–$0.00749 | 0–4 |
+| Debug FFSAKE (20 pairs) | **20/20** | 14.9–15.6 s | 140,096–140,769 | $0.00531–$0.00532 | **0** (one 1) |
+
+Pooled medians: edit **1.024 elapsed / 0.946 input / 1.016 cost** (13/20 input wins); debug **0.766 elapsed / 0.655 input / 0.739 cost** (17/20 elapsed, 19/20 input wins). Native debug failures were workflow failures: the agent fixed the program without observing the required runtime iterations. FFSAKE's probe makes that observation part of the path and cleans up.
+
+This is the first configuration that measures all three goal axes together: **half the allowlist entries, roughly four times fewer permission denials, 20/20 versus 15/20 debug correctness, edit efficiency at parity, and debug efficiency materially better.**
+
+A second host was tested with OpenCode 2.2.5 + Claude Haiku 5.5 on the same fixtures. OpenCode has no equivalent read-redirect hook, so its CLI arm is guidance-only; native reads remain available. Five attempts per task (`20261106-opencode/haiku-20.json`):
+
+| Task | Native | FFSAKE CLI | Paired median |
+| --- | ---: | ---: | --- |
+| Edit units | 5/5 | **5/5** | 0.967 elapsed / 1.272 input |
+| Debug cursor | 3/5 | **5/5** | **0.848 elapsed / 0.832 input** |
+
+Debug correctness and efficiency transfer to the second host; edit input is 27% higher because reads are separate Bash turns without a redirect hook. OpenCode reported zero cost for this provider, so only elapsed, input and correctness are comparable. The host-specific efficiency advantage depends on the read-redirect hook; the permission advantage (three entries, fewer denials) was measured on Claude Code.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

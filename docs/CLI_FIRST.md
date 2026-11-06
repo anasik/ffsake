@@ -41,56 +41,59 @@ the host's static read block can parse them:
 
 ## Permission comparison
 
-| Artifact | MCP core | CLI + redirect |
-| --- | ---: | ---: |
-| Host config files | `.mcp.json` / host config | one settings file |
-| Advertised operations | 28 tools | one executable + native tools |
-| Per-tool approval entries | up to 28 | **0** |
-| Host permission scopes | per MCP tool | **one** `Bash(ffsake:*)` rule |
-| Catalog bytes | 20.9 KB | **0** |
-| Read path | MCP read tool | native `Read` rewritten to ffsake |
-| Workspace access policy | optional `--access` | same optional policy |
-| Debug policy | optional `--debug` | same optional policy |
+Measured without skip-all: native defaults versus the CLI arm with the redirect
+hook and a three-entry allowlist in the same settings file.
+
+| Artifact | MCP core | Native defaults | CLI + redirect |
+| --- | ---: | ---: | ---: |
+| Host config files | `.mcp.json` / host config | host settings | one settings file |
+| Advertised operations | 28 tools | 6 tools | 3 tools + native `Read` |
+| Per-tool approval entries | up to 28 | 6 | **3** |
+| Read path | MCP read tool | native `Read` | native `Read` rewritten to ffsake |
+| Runtime denials per run | n/a | 0–4 | **0–1** |
+| Catalog bytes | 20.9 KB | 0 | **0** |
+
+The settings file contains:
+
+```json
+{"permissions": {"allow": ["Bash", "Edit", "Write"]}}
+```
+
+plus the `Read` hook. Native `Read` is still available to the model, so edit
+turns do not grow; the hook serves it through FFSAKE. Native `Edit`/`Write` stay
+available, and native `Glob`/`Grep` are not in the allowlist.
+
+## Measured trade-offs (Claude Haiku 5.5)
+
+Final 80-attempt run on four fresh tasks (`final-80.json`), ten repetitions
+each, no skip-all:
+
+| Task group | Correct | Pooled elapsed | Pooled input | Pooled cost |
+| --- | ---: | ---: | ---: | ---: |
+| Edit (20 pairs) | 20/20 both | 1.024 | **0.946** | 1.016 |
+| Debug (20 pairs) | **20/20 vs 15/20** | **0.766** | **0.655** | **0.739** |
+
+Native debug failures were workflow failures: the agent fixed the program
+without observing the required runtime iterations. The FFSAKE probe returns the
+observed values in one call and cleans up.
 
 The CLI still enforces workspace access, reviewed preview/apply, stale-state
 checks, undo/redo and owned-adapter cleanup. The hook only changes where read
 content comes from; it does not bypass denial or approval checks.
 
-Add `.ffsake/` to the project's `.gitignore`; that directory holds the optional
-debug configuration and hook read cache.
+## Second host
 
-## Measured trade-offs (Claude Haiku 5.5)
+OpenCode 2.2.5 + Claude Haiku 5.5, same fixtures, five attempts per task, CLI
+guidance only (OpenCode has no read-redirect hook):
 
-Final 10-repetition runs per task, native versus redirected reads + native edits
-+ one-call probe. Edit shapes: `edit_units`, `edit_settings` and the multi-file
-rename `edit_refactor`. Debug pairs: `debug_cursor` and `debug_retry`.
-
-| Task | Native | FFSAKE | Pooled median |
+| Task | Native | FFSAKE CLI | Paired median |
 | --- | ---: | ---: | --- |
-| Edit correctness | 30/30 | **30/30** | — |
-| Edit elapsed | 15.8–19.1 s | 16.4–18.8 s | 1.038 |
-| Edit input | 142,514–174,323 | 156,571–173,954 | **1.003** |
-| Edit cost | $0.00592–$0.00670 | $0.00615–$0.00655 | **1.015** |
-| Debug correctness | 17/20 | **20/20** | — |
-| Debug elapsed | 15.6–20.7 s | 14.6–15.3 s | **0.806** |
-| Debug input | 170,198–203,481 | 140,386–140,649 | **0.826** |
-| Debug cost | $0.00605–$0.00707 | $0.00522–$0.00528 | **0.867** |
+| Edit units | 5/5 | **5/5** | 0.967 elapsed / 1.272 input |
+| Debug cursor | 3/5 | **5/5** | **0.848 elapsed / 0.832 input** |
 
-The debug arm won 16/20 elapsed pairs and 17/20 input pairs. Native failures
-were workflow failures: the agent fixed the program without observing the
-required runtime iterations. The FFSAKE probe returns observed values in one
-call and cleans up, so the workflow requirement is part of the normal path.
-
-Runtime permission denials were 0–2 for FFSAKE and 0–4 for native; the earlier
-deny-only hook produced 7–11 retries per run and is retired.
-
-Two guidance details matter and are included in the setup block: combine simple
-commands in one Bash call, and always run one probe before editing. An earlier
-fair run without the mandatory probe was 18/20 because two runs skipped it.
-
-Fit within run-to-run variance: edit input/cost are at parity across three
-shapes (including a multi-file rename), edit elapsed is +3.8%, and debug is
-clearly better on all three efficiency measures while also being more correct.
+Debug correctness and efficiency transfer; edit input is 27% higher because
+reads become separate Bash turns. The provider reported zero cost, so only
+elapsed, input and correctness are comparable there.
 
 ## Measurement correction
 

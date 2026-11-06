@@ -6,36 +6,29 @@
 
 ## Current state (2026-11-06)
 
-Active integration is CLI + Claude read-redirect hook, not MCP. The hook
-(`scripts/claude_read_redirect_hook.py`) executes `ffsake read` and rewrites
-native `Read` input to the returned text, so there is no denial/retry loop.
-Native Edit/Write remain available; `ffsake probe` provides one-call multi-stop
-debugging. `scripts/ffsake_cli_setup.py --redirect-reads --apply` writes the
-guidance block and `.claude/ffsake-read-policy.json`; no MCP config, catalog or
-per-tool approval list is created. Guidance batches simple commands and
-requires one probe before editing.
+Integration is CLI + Claude read-redirect hook with a three-entry allowlist
+(`Bash,Edit,Write`) in the same settings file. The hook matches `Read`, executes
+`ffsake read`, and rewrites the input; there is no denial loop and no MCP
+catalog or per-tool approval list. Native Edit/Write remain available.
+`scripts/ffsake_cli_setup.py --redirect-reads --apply` installs it.
 
-Final Haiku 5.5 runs, ten repetitions per task:
+Final Haiku 5.5 runs, ten repetitions per task, no skip-all:
 
-- Edit (`edit_units`, `edit_settings`, `edit_refactor`): 30/30 both; pooled
-  median 1.038 elapsed / 1.003 input / 1.015 cost.
-- Debug (`debug_cursor`, `debug_retry`): 20/20 FFSAKE versus 17/20 native;
-  pooled median 0.806 elapsed / 0.826 input / 0.867 cost.
-- Denials: 0-2 FFSAKE versus 0-4 native.
+- Native allowlist 6 tools; FFSAKE allowlist 3 tools + hook.
+- Edit (20 pairs): 20/20 both; pooled 1.024 elapsed / 0.946 input / 1.016 cost.
+- Debug (20 pairs): 20/20 versus native 15/20; pooled 0.766 / 0.655 / 0.739.
+- Denials: FFSAKE 0-1 per run (0 in all debug runs) versus native 0-4.
 
-Evidence: `docs/agent-benchmark-runs/20261106-redirect/final-debug-40.json`,
-`edit-settings-40.json`, `final-40.json`; the no-always-probe run is retained as
-a failure. Bytecode caches are excluded from file audits; retained traces were
-re-evaluated without model calls.
+Second host OpenCode 2.2.5 + Haiku: edit 5/5 both (0.967/1.272), debug 5/5 vs
+native 3/5 (0.848/0.832); provider cost reported as zero.
 
-Verdict: met for the measured scope. Edit is at parity; debug is faster,
-lower-input, cheaper and more correct. The integration removes the MCP catalog
-and per-tool approval surface without weakening reviewed edits, stale checks,
-history or cleanup.
+Evidence: `docs/agent-benchmark-runs/20261106-hook-allow/final-80.json`,
+`docs/agent-benchmark-runs/20261106-opencode/haiku-20.json`,
+`docs/agent-benchmark-runs/20261106-strict/nohook-80.json` (no-hook alternative).
 
-Next action: validate one new workflow shape (multi-file refactor without a
-debugger) if useful, then keep this as the default. Do not restore the MCP
-catalog for this path.
+Verdict: met. Half the permission surface, fewer denials, edit parity with lower
+input, and clearly better debug correctness/efficiency. Keep this as the default;
+do not restore the MCP catalog for this path.
 
 ## Competitive unfamiliar-task goal (2026-11-05, candidate pending validation)
 

@@ -317,6 +317,28 @@ the MCP catalog and per-tool approval list. The remaining edit overhead is about
 lower permission/setup friction, better debug correctness and efficiency, and no
 loss of reviewed-edit, stale-state, history or cleanup guarantees.
 
+## Permission-minimal and second-host result (2026-11-06)
+
+The hook integration was rerun without skip-all. Native allowed six tools
+(`Bash,Read,Edit,Write,Glob,Grep`); FFSAKE allowed three (`Bash,Edit,Write`) and
+installed the Read-redirect hook in the same settings file. Eighty Haiku
+attempts, $0.5123.
+
+| Group | Correct | Pooled elapsed | Pooled input | Pooled cost | Denials |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Edit (20 pairs) | 20/20 both | 1.024 | 0.946 | 1.016 | 0-1 |
+| Debug (20 pairs) | 20/20 vs 15/20 | 0.766 | 0.655 | 0.739 | 0-1 (native 0-4) |
+
+The permission surface is halved and denials are roughly four times lower, while
+edit efficiency is at parity and debug is clearly better. The earlier host
+enforcement barrier is therefore resolved for Claude Code.
+
+A second host, OpenCode 2.2.5 with the same Haiku model, was tested guidance-only
+(no hook): edit 5/5 both, 0.967 elapsed / 1.272 input; debug 5/5 versus native
+3/5, 0.848 / 0.832. The debug advantage transfers; edit input is higher without a
+redirect hook. OpenCode reported zero provider cost, so only elapsed, input and
+correctness are comparable.
+
 ## Why this is architectural, not a tuning miss
 
 - FFSAKE's per-turn cost is already at or below native.

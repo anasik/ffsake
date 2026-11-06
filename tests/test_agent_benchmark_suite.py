@@ -527,7 +527,7 @@ class PreflightTests(unittest.TestCase):
         def run(cmd, *args):
             calls.append(cmd)
             self.assertIn(cmd[-1], ["--help", "--version"])
-            return {"stdout": "--format --model --dir" if cmd[-1] == "--help" else "1.2.3",
+            return {"stdout": "--format --model" if cmd[-1] == "--help" else "1.2.3",
                     "stderr": "", "exit_code": 0, "timed_out": False}
         with patch.object(suite.shutil, "which", return_value="/fake/opencode"), patch.object(suite, "run_process", side_effect=run), patch.object(suite, "opencode_workspace_preflight", return_value={"ok": True, "model_calls": 0}):
             report = suite.preflight(["opencode"])
@@ -747,7 +747,7 @@ from pathlib import Path
 args=sys.argv[1:]
 root=Path(os.environ.get("PWD",os.getcwd()))
 if args and args[-1]=="--help":
- print("--format --model --dir")
+ print("--format --model")
 elif args==["--version"]:
  print("1.18.31")
 elif args[:3]==["debug","file","read"]:
@@ -763,7 +763,7 @@ elif args==["debug","config"]:
  if os.environ.get("BAD_ORDER"): config["permission"]["*"]=config["permission"].pop("*")
  print(json.dumps(config))
 elif args and args[0]=="run":
- root=Path(args[args.index("--dir")+1])
+ root=Path(os.environ.get("PWD",os.getcwd()))
  print(json.dumps({"directory":str(root),"pwd":os.environ["PWD"],"config":json.loads((root/"opencode.json").read_text())}))
 else:
  raise SystemExit("Unexpected command: " + repr(args))
