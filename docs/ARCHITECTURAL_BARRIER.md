@@ -214,10 +214,11 @@ Trimming the payload then produced the first measured win: compact probe
 `values`, ranged reads and forced CLI on `debug_expand` measured **0.838 elapsed
 / 0.923 input**, 8 calls versus 14, **5/5 correctness versus native 4/5**. A
 second edit trim (compact preview/apply output, shorter guidance) did not help:
-edit measured **1.436/1.872** with 10 calls versus 15, both 5/5. Reviewed edits
-and per-turn CLI behavior, not metadata size, dominate that path. A retained
-trace verifier fix for compact `values` raised CLI debug from 0/5 to 5/5 without
-a rerun.
+edit measured **1.436/1.872** with 10 calls versus 15, both 5/5. A single-call
+batch preview plus one apply also failed: **1.249/2.023**, 9 calls versus 15,
+both 5/5. Reviewed edits and per-turn CLI/model behavior, not metadata size or
+call count, dominate that path. A retained-trace verifier fix for compact
+`values` raised CLI debug from 0/5 to 5/5 without a rerun.
 
 Cheaper models did not make FFSAKE competitive, and shrinking the catalog alone
 did not either. The remaining overhead is the model's tool-use behavior plus

@@ -163,6 +163,74 @@ fn read_spec(spec: &str) -> (String, Option<usize>, Option<usize>) {
     (spec.to_string(), None, None)
 }
 
+fn edit_operations(args: &[String]) -> Result<Vec<Value>> {
+    let mut operations = Vec::new();
+    if args.first().map(String::as_str) == Some("--edit") {
+        let mut index = 0;
+        while index < args.len() {
+            if args[index] != "--edit" {
+                return Err("batch edit requires --edit PATH --old TEXT --new TEXT".into());
+            }
+            let path = args
+                .get(index + 1)
+                .cloned()
+                .ok_or("--edit requires a path")?;
+            index += 2;
+            let mut old_text = None;
+            let mut new_text = None;
+            let mut count = 1usize;
+            while index < args.len() && args[index] != "--edit" {
+                match args[index].as_str() {
+                    "--old" if index + 1 < args.len() => {
+                        old_text = Some(args[index + 1].clone());
+                        index += 2;
+                    }
+                    "--new" if index + 1 < args.len() => {
+                        new_text = Some(args[index + 1].clone());
+                        index += 2;
+                    }
+                    "--count" if index + 1 < args.len() => {
+                        count = args[index + 1].parse()?;
+                        index += 2;
+                    }
+                    _ => return Err("batch edit accepts --old, --new and --count".into()),
+                }
+            }
+            operations.push(json!({
+                "op":"edit","path":path,
+                "old_text":old_text.ok_or("missing --old")?,
+                "new_text":new_text.ok_or("missing --new")?,
+                "expected_matches":count
+            }));
+        }
+        return Ok(operations);
+    }
+    let path = args
+        .first()
+        .cloned()
+        .ok_or("edit requires PATH --old TEXT --new TEXT")?;
+    let mut old_text = None;
+    let mut new_text = None;
+    let mut count = 1usize;
+    let mut index = 1;
+    while index + 1 < args.len() {
+        match args[index].as_str() {
+            "--old" => old_text = Some(args[index + 1].clone()),
+            "--new" => new_text = Some(args[index + 1].clone()),
+            "--count" => count = args[index + 1].parse()?,
+            _ => return Err("edit accepts --old, --new and --count".into()),
+        }
+        index += 2;
+    }
+    operations.push(json!({
+        "op":"edit","path":path,
+        "old_text":old_text.ok_or("edit requires --old")?,
+        "new_text":new_text.ok_or("edit requires --new")?,
+        "expected_matches":count
+    }));
+    Ok(operations)
+}
+
 fn subcommand(args: &[String]) -> Result<Value> {
     let command = args.first().map(String::as_str).unwrap_or_else(|| usage());
     let root = args.get(1).cloned().unwrap_or_else(|| usage());
@@ -230,36 +298,10 @@ fn subcommand(args: &[String]) -> Result<Value> {
             Ok(json!({"ok": true, "text": text}))
         }
         "edit" => {
-            let Some(path) = rest.first().cloned() else {
-                return Err("edit requires PATH --old TEXT --new TEXT".into());
-            };
-            let mut old_text = None;
-            let mut new_text = None;
-            let mut count = 1usize;
-            let mut index = 1;
-            while index + 1 < rest.len() {
-                match rest[index].as_str() {
-                    "--old" => old_text = Some(rest[index + 1].clone()),
-                    "--new" => new_text = Some(rest[index + 1].clone()),
-                    "--count" => count = rest[index + 1].parse()?,
-                    _ => return Err("edit accepts --old, --new and --count".into()),
-                }
-                index += 2;
-            }
-            let old_text = old_text.ok_or("edit requires --old")?;
-            let new_text = new_text.ok_or("edit requires --new")?;
-            let request = json!({"op":"preview_files","operations":[{
-                "op":"edit","path":path,"old_text":old_text,"new_text":new_text,"expected_matches":count
-            }]});
-            let preview = runtime.execute(serde_json::from_value(request)?)?;
-            let token = store_token(
-                &fs::canonicalize(&root)?,
-                &serde_json::to_string(&json!({
-                    "op":"preview_files","operations":[{
-                        "op":"edit","path":path,"old_text":old_text,"new_text":new_text,"expected_matches":count
-                    }]
-                }))?,
-            )?;
+            let operations = edit_operations(&rest)?;
+            let request = json!({"op":"preview_files","operations":operations});
+            let preview = runtime.execute(serde_json::from_value(request.clone())?)?;
+            let token = store_token(&fs::canonicalize(&root)?, &serde_json::to_string(&request)?)?;
             let diff = preview["preview"]["files"]
                 .as_array()
                 .map(|files| {

@@ -976,6 +976,19 @@ Median paired ratios: **1.436 elapsed / 1.872 input** — worse than the previou
 
 Evidence: [compact edit index](20261106-haiku/payload-edit-compact.json). Total paid spend is **$5.5832** across 190 attempts; ~$0.42 remains.
 
+### Single-call batch edit rerun (2026-11-06)
+
+Added `ffsake edit "$PWD" --edit path --old ... --new ... --edit path2 ...`, which previews all files in one call and returns a compact diff plus one token, followed by one `apply`. Ten Haiku attempts, **$0.0794**, all valid, both arms 5/5.
+
+| Arm | Correct | Calls | Seconds | Input |
+| --- | ---: | ---: | ---: | ---: |
+| Native | 5/5 | 15 | 19.3 | 171,787 |
+| Forced CLI batch | 5/5 | 9 | 23.5 | 284,008 |
+
+Median paired ratios: **1.249 elapsed / 2.023 input** — worse than both previous edit runs (1.436/1.872 and 1.176/1.445). Fewer calls did not reduce input; one run used 17 turns and 534,402 input. Batching the preview did not fix the edit path.
+
+Evidence: [batch edit index](20261106-haiku/payload-edit-batch.json). Total paid spend is **$5.6626** across 200 attempts; ~$0.34 remains.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

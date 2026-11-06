@@ -91,3 +91,7 @@ The [payload debug index](20261106-haiku/payload-debug.json) records the first t
 ## 2026-11-06 Edit payload trim
 
 The [compact edit index](20261106-haiku/payload-edit-compact.json) records a 10-attempt Haiku rerun with compact preview/apply output and ranged reads. Both arms were 5/5, but forced CLI was 1.436 elapsed / 1.872 input; the trim did not improve the edit path.
+
+## 2026-11-06 Batch edit rerun
+
+The [batch edit index](20261106-haiku/payload-edit-batch.json) records 10 Haiku attempts with one-call batch preview and one apply. Both arms were 5/5, but forced CLI was 1.249 elapsed / 2.023 input; batching did not improve the edit path.
