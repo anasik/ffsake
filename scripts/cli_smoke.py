@@ -55,7 +55,7 @@ def main():
         if os.name == "posix":
             assert stat.S_IMODE(token_path.stat().st_mode) == 0o600
 
-        applied = call(binary, root, "--apply", token)
+        applied = call_full(binary, root, "--apply", token)
         assert (root / "a.txt").read_text() == "ONE\ntwo\n"
         assert (root / "b.txt").read_text() == "ALPHA beta\n"
         assert not token_path.exists()

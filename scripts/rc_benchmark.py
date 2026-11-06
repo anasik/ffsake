@@ -47,15 +47,14 @@ CLAUDE_EFFORT = 'low'
 
 def cli_guidance(binary):
     return (
-        f"The guarded FFSAKE CLI is available at {binary}. Use it instead of native Read, Write or Edit "
-        "for repository files.\n"
-        f"- Read only needed ranges with line numbers: {binary} read \"$PWD\" path:10-40 path2\n"
-        f"- Preview an edit: {binary} edit \"$PWD\" path --old 'old text' --new 'new text'\n"
-        f"- Apply the reviewed preview: {binary} apply \"$PWD\" <token>\n"
-        f"- Debug with one compact call: {binary} probe \"$PWD\" --debug .ffsake/rc-debug.json "
-        "--config main --breakpoint path:line --stops 2; it returns stop lines and variable values. "
-        "Do not repeat the same stops with pdb.\n"
-        "Native tools remain available for running programs and tests. Never bypass an access denial."
+        f"The guarded FFSAKE CLI is at {binary}. Set F={binary} and use it instead of native "
+        "Read, Write or Edit for repository files:\n"
+        'F read "$PWD" path:10-40 path2\n'
+        'F edit "$PWD" path --old \'old\' --new \'new\'\n'
+        'F apply "$PWD" <token>\n'
+        'F probe "$PWD" --debug .ffsake/rc-debug.json --config main --breakpoint path:line --stops 2\n'
+        "Probe returns compact stop values. Use Bash only to run programs and tests. "
+        "Never bypass an access denial."
     )
 
 def claude(root, prompt, enabled, timeout, profile, mode=None):

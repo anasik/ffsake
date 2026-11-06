@@ -963,6 +963,19 @@ Median paired ratios: **1.176 elapsed / 1.445 input**. Fewer calls but larger pe
 
 Evidence: [debug](20261106-haiku/payload-debug.json), [edit](20261106-haiku/payload-edit.json). Total paid spend is **$5.5033** across 180 attempts; ~$0.50 remains.
 
+### Edit payload trim rerun (2026-11-06)
+
+The edit path was trimmed again: compact preview output (`diff` plus token, no metadata), compact apply output, ranged reads, and a shorter CLI guidance block. Ten Haiku attempts (five native, five forced CLI), all valid, all 5/5 correct, cost **$0.0799**.
+
+| Arm | Correct | Calls | Seconds | Input |
+| --- | ---: | ---: | ---: | ---: |
+| Native | 5/5 | 15 | 19.8 | 172,287 |
+| Forced CLI | 5/5 | 10 | 27.6 | 317,382 |
+
+Median paired ratios: **1.436 elapsed / 1.872 input** — worse than the previous edit run's 1.176/1.445. The trim did not reduce the edit arm's input; the model spent more per turn despite fewer calls. Native remained faster and lower-input. The edit target is not met.
+
+Evidence: [compact edit index](20261106-haiku/payload-edit-compact.json). Total paid spend is **$5.5832** across 190 attempts; ~$0.42 remains.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

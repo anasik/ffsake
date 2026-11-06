@@ -87,3 +87,7 @@ The [forced CLI index](20261106-haiku/forced-cli-subcommands.json) records 10 Ha
 ## 2026-11-06 Payload-trimmed forced CLI
 
 The [payload debug index](20261106-haiku/payload-debug.json) records the first target win: forced CLI on `debug_expand` at 0.838 elapsed / 0.923 input with 5/5 correctness versus native 4/5. [Payload edit](20261106-haiku/payload-edit.json) remained 1.176/1.445. A retained-trace verifier correction for compact `values` raised CLI debug from 0/5 to 5/5 without rerunning.
+
+## 2026-11-06 Edit payload trim
+
+The [compact edit index](20261106-haiku/payload-edit-compact.json) records a 10-attempt Haiku rerun with compact preview/apply output and ranged reads. Both arms were 5/5, but forced CLI was 1.436 elapsed / 1.872 input; the trim did not improve the edit path.

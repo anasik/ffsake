@@ -129,7 +129,11 @@ fn run() -> Result<Value> {
                 .ok_or("preview did not return an apply handle")?;
             let result = runtime.execute(Request::Apply { handle })?;
             let _ = remove_token(&canonical_root, &token);
-            Ok(json!({ "ok": true, "result": result, "token_consumed": true }))
+            Ok(json!({
+                "ok": true,
+                "transaction": result["transaction"],
+                "changed_files": result["changed_files"],
+            }))
         }
         _ => usage(),
     }
@@ -256,7 +260,17 @@ fn subcommand(args: &[String]) -> Result<Value> {
                     }]
                 }))?,
             )?;
-            Ok(json!({"ok": true, "preview": preview, "token": token}))
+            let diff = preview["preview"]["files"]
+                .as_array()
+                .map(|files| {
+                    files
+                        .iter()
+                        .filter_map(|file| file["unified_diff"].as_str())
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                })
+                .unwrap_or_default();
+            Ok(json!({"ok": true, "diff": diff, "token": token}))
         }
         "apply" => {
             let Some(token) = rest.first().cloned() else {
@@ -271,7 +285,11 @@ fn subcommand(args: &[String]) -> Result<Value> {
                 .ok_or("preview did not return an apply handle")?;
             let result = runtime.execute(Request::Apply { handle })?;
             let _ = remove_token(&fs::canonicalize(&root)?, &token);
-            Ok(json!({"ok": true, "result": result, "token_consumed": true}))
+            Ok(json!({
+                "ok": true,
+                "transaction": result["transaction"],
+                "changed_files": result["changed_files"],
+            }))
         }
         "probe" => {
             let mut configuration = None;
