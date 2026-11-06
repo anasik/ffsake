@@ -681,6 +681,7 @@ def main():
     p.add_argument('--split-guidance', action='store_true', help='guide the CLI arm to use native edits and CLI reads/probe')
     p.add_argument('--force-reads-cli', action='store_true', help='disable native Read/Glob/Grep in the CLI arm, keeping Edit/Write')
     p.add_argument('--no-cli-guidance', action='store_true', help='do not add CLI guidance text to the CLI arm')
+    p.add_argument('--cli-debug-guidance', action='store_true', help='add CLI guidance only for debug tasks')
     a = p.parse_args()
     global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, FORCE_READS_CLI, CLAUDE_MODEL, CLAUDE_EFFORT
     CATALOG = a.catalog
@@ -832,6 +833,9 @@ def main():
                         suite.FFSAKE_MCP = baseline_binary if mode == 'old' else changed_binary
                         SERVER_EDITING = bool(baseline_binary and mode == 'changed' and task in ('cross', 'maintenance', 'layout'))
                         suite_mode = mode if mode in ('baseline', 'ffsake', 'cli') else 'ffsake'
+                        if a.cli_debug_guidance and suite.CLI_BINARY:
+                            CLI_GUIDANCE = (cli_guidance(suite.CLI_BINARY, True)
+                                            if task.startswith('debug') else '')
                         print(f'{agent} {task} {mode} {repetition}', flush=True)
                         # Keep a model's parent-directory discovery in an empty,
                         # disposable container rather than the user's shared tmp.

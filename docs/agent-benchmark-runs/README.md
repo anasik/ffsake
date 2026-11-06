@@ -111,3 +111,7 @@ The [force-reads index](20261106-haiku/force-reads.json) records 10 Haiku attemp
 ## 2026-11-06 No-guidance forced reads
 
 The [no-guidance index](20261106-haiku/no-guidance.json) records 10 Haiku attempts with native reads disabled and no CLI guidance. Only 1/5 was correct; the model could not discover the CLI read path. Budget is effectively exhausted.
+
+## 2026-11-06 Task-scoped guidance and CLI-first
+
+The [task-guidance index](20261106-haiku/task-guidance.json) records 20 Haiku attempts with CLI guidance only for debug tasks. Edit input was at parity (1.004) but the CLI was unused; debug used the CLI and measured 1.052/1.141. Across three debug batches the median is ~0.985/0.923. CLI-first setup adds one permission rule and zero tool approvals, with no MCP config.

@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""Model-free checks for the CLI-first, no-MCP host integration."""
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+
+SCRIPT = Path(__file__).resolve().with_name("ffsake_cli_setup.py")
+
+
+def run(*args):
+    result = subprocess.run([sys.executable, str(SCRIPT), *args],
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout)
+
+
+def main():
+    with tempfile.TemporaryDirectory(prefix="ffsake-cli-setup-") as td:
+        project = Path(td)
+        (project / "CLAUDE.md").write_text("# Project\n\nexisting guidance\n")
+        first = run("--host", "claude", "--project", str(project), "--apply")
+        assert first["mcp_config"] is None and first["tool_approvals"] == 0, first
+        assert first["permission_rule"] == "Bash(ffsake:*)", first
+        assert first["action"] == "appended", first
+        text = (project / "CLAUDE.md").read_text()
+        assert text.count("<!-- ffsake-cli:start -->") == 1, text
+        assert '"$F" probe' in text and '"$F" read' in text
+        second = run("--host", "claude", "--project", str(project), "--apply")
+        assert second["action"] == "present", second
+        assert (project / "CLAUDE.md").read_text().count("<!-- ffsake-cli:start -->") == 1
+        for name in (".mcp.json", ".codex", "opencode.json"):
+            assert not (project / name).exists(), name
+
+        (project / "AGENTS.md").write_text("# Agents\n")
+        codex = run("--host", "codex", "--project", str(project), "--apply")
+        assert codex["mcp_config"] is None and codex["tool_approvals"] == 0, codex
+        assert codex["guidance_file"].endswith("AGENTS.md"), codex
+        assert '"$F" probe' in (project / "AGENTS.md").read_text()
+
+        print(json.dumps({
+            "no_mcp_config": True,
+            "tool_approvals": 0,
+            "claude_permission_rule": first["permission_rule"],
+            "idempotent_guidance": True,
+            "codex_guidance": True,
+            "model_calls": 0,
+        }, indent=2))
+
+
+if __name__ == "__main__":
+    main()

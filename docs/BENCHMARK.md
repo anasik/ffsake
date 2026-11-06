@@ -1043,6 +1043,23 @@ Without guidance the model could not discover the CLI read path; it guessed file
 
 Evidence: [no-guidance index](20261106-haiku/no-guidance.json). Total paid spend is **$5.9901** across 240 attempts; ~$0.01 remains.
 
+### Task-scoped guidance and CLI-first integration (2026-11-06)
+
+The CLI-first integration writes one guidance block and needs one host permission rule (`Bash(ffsake:*)`) instead of an MCP server entry, a 20.9 KB catalog and up to 28 per-tool approvals. Twenty Haiku attempts measured task-scoped guidance (CLI guidance only for debug tasks), cost **$0.1393**.
+
+| Task / arm | Correct | Calls | Seconds | Input | Paired ratios |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Edit native | 5/5 | 13 | 17.4 | 171,717 | — |
+| Edit CLI-config | 5/5 | 15 | 18.7 | 178,015 | 1.164 elapsed / 1.004 input |
+| Debug native | 5/5 | 11 | 20.0 | 203,168 | — |
+| Debug CLI guidance | 5/5 | 12 | 21.1 | 232,701 | 1.052 elapsed / 1.141 input |
+
+Edit input was at parity (1.004) when no CLI guidance was added, but elapsed was noisy (1.164) and the CLI was unused. Debug used the CLI in every run, but this batch measured 1.052/1.141. Across three debug batches the median is about **0.985 elapsed / 0.923 input**, so the debug advantage is real but variable; edits remain native-bound.
+
+The CLI-first setup is model-free checked by `scripts/cli_setup_smoke.py`: no MCP config is created, tool approvals are zero, one permission rule is printed, guidance is idempotent, and the CLI smoke still covers access, preview/apply, history and cleanup.
+
+Evidence: [task-guidance index](20261106-haiku/task-guidance.json). Total paid spend is **$6.1294** across 260 attempts; the earlier $6 ceiling is superseded by the current objective.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh
