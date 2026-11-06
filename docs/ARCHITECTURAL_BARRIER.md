@@ -216,8 +216,9 @@ Trimming the payload then produced the first measured win: compact probe
 second edit trim (compact preview/apply output, shorter guidance) did not help:
 edit measured **1.436/1.872** with 10 calls versus 15, both 5/5. A single-call
 batch preview plus one apply also failed: **1.249/2.023**, 9 calls versus 15,
-both 5/5. Reviewed edits and per-turn CLI/model behavior, not metadata size or
-call count, dominate that path. A retained-trace verifier fix for compact
+both 5/5. Range-capped reads and line-addressed edits were worse still:
+**1.955/2.623** with 15 calls versus 14. Reviewed edits and per-turn CLI/model
+behavior, not metadata size, call count or address scope, dominate that path. A retained-trace verifier fix for compact
 `values` raised CLI debug from 0/5 to 5/5 without a rerun.
 
 Cheaper models did not make FFSAKE competitive, and shrinking the catalog alone

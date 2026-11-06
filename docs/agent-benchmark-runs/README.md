@@ -95,3 +95,7 @@ The [compact edit index](20261106-haiku/payload-edit-compact.json) records a 10-
 ## 2026-11-06 Batch edit rerun
 
 The [batch edit index](20261106-haiku/payload-edit-batch.json) records 10 Haiku attempts with one-call batch preview and one apply. Both arms were 5/5, but forced CLI was 1.249 elapsed / 2.023 input; batching did not improve the edit path.
+
+## 2026-11-06 Line-addressed edit
+
+The [line-addressed index](20261106-haiku/payload-edit-lines.json) records 10 Haiku attempts with ranged reads and `--lines` edits. Both arms were 5/5, but forced CLI was 1.955 elapsed / 2.623 input; narrowing scope increased repeated turns.

@@ -989,6 +989,19 @@ Median paired ratios: **1.249 elapsed / 2.023 input** — worse than both previo
 
 Evidence: [batch edit index](20261106-haiku/payload-edit-batch.json). Total paid spend is **$5.6626** across 200 attempts; ~$0.34 remains.
 
+### Line-addressed edit rerun (2026-11-06)
+
+Range-capped `read` (`path:8-12`) and line-addressed single-file `edit --lines 8-10 --old ... --new ...` were tested. Ten Haiku attempts, **$0.0856**, all valid, both arms 5/5.
+
+| Arm | Correct | Calls | Seconds | Input |
+| --- | ---: | ---: | ---: | ---: |
+| Native | 5/5 | 14 | 17.2 | 146,135 |
+| Forced CLI lines | 5/5 | 15 | 34.2 | 383,281 |
+
+Median paired ratios: **1.955 elapsed / 2.623 input** — the worst edit result. The model performed repeated range reads and edit attempts (12-24 calls), so narrowing the read/edit scope increased turns and tokens rather than reducing them. Native remained faster and lower-input.
+
+Evidence: [line-addressed index](20261106-haiku/payload-edit-lines.json). Total paid spend is **$5.7482** across 210 attempts; ~$0.25 remains.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

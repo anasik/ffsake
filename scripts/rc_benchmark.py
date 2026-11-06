@@ -49,11 +49,11 @@ def cli_guidance(binary):
     return (
         f"The guarded FFSAKE CLI is at {binary}. Set F={binary} and use it instead of native "
         "Read, Write or Edit for repository files:\n"
-        'F read "$PWD" path:10-40 path2\n'
-        'F edit "$PWD" --edit path --old \'old\' --new \'new\' --edit path2 --old \'old2\' --new \'new2\'\n'
+        'F read "$PWD" path:8-12 path2:1-40\n'
+        'F edit "$PWD" path --lines 8-10 --old \'old\' --new \'new\'\n'
         'F apply "$PWD" <token>\n'
         'F probe "$PWD" --debug .ffsake/rc-debug.json --config main --breakpoint path:line --stops 2\n'
-        "The batch edit previews all files in one call; review its diff, then apply once. "
+        "Read only the lines you need. The edit is line-addressed and previews one file; review its diff, then apply once. "
         "Probe returns compact stop values. Use Bash only to run programs and tests. "
         "Never bypass an access denial."
     )

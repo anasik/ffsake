@@ -163,6 +163,29 @@ fn read_spec(spec: &str) -> (String, Option<usize>, Option<usize>) {
     (spec.to_string(), None, None)
 }
 
+fn line_range(args: &[String]) -> Option<(usize, usize)> {
+    let mut index = 0;
+    while index + 1 < args.len() {
+        match args[index].as_str() {
+            "--line" => {
+                if let Ok(line) = args[index + 1].parse::<usize>() {
+                    return Some((line, line));
+                }
+            }
+            "--lines" => {
+                if let Some((start, end)) = args[index + 1].split_once('-')
+                    && let (Ok(start), Ok(end)) = (start.parse::<usize>(), end.parse::<usize>())
+                {
+                    return Some((start, end));
+                }
+            }
+            _ => {}
+        }
+        index += 1;
+    }
+    None
+}
+
 fn edit_operations(args: &[String]) -> Result<Vec<Value>> {
     let mut operations = Vec::new();
     if args.first().map(String::as_str) == Some("--edit") {
@@ -193,6 +216,9 @@ fn edit_operations(args: &[String]) -> Result<Vec<Value>> {
                         count = args[index + 1].parse()?;
                         index += 2;
                     }
+                    "--line" | "--lines" if index + 1 < args.len() => {
+                        index += 2;
+                    }
                     _ => return Err("batch edit accepts --old, --new and --count".into()),
                 }
             }
@@ -218,6 +244,7 @@ fn edit_operations(args: &[String]) -> Result<Vec<Value>> {
             "--old" => old_text = Some(args[index + 1].clone()),
             "--new" => new_text = Some(args[index + 1].clone()),
             "--count" => count = args[index + 1].parse()?,
+            "--line" | "--lines" => {}
             _ => return Err("edit accepts --old, --new and --count".into()),
         }
         index += 2;
@@ -298,7 +325,33 @@ fn subcommand(args: &[String]) -> Result<Value> {
             Ok(json!({"ok": true, "text": text}))
         }
         "edit" => {
+            let range = line_range(&rest);
             let operations = edit_operations(&rest)?;
+            if let Some((start, end)) = range {
+                if operations.len() != 1 {
+                    return Err("--line/--lines requires a single-file edit".into());
+                }
+                let path = operations[0]["path"].as_str().unwrap_or("").to_string();
+                let old_text = operations[0]["old_text"].as_str().unwrap_or("").to_string();
+                let scoped = runtime.execute(Request::Read {
+                    path: path.clone(),
+                    start: Some(start),
+                    end: Some(end),
+                })?;
+                let whole = runtime.execute(Request::Read {
+                    path,
+                    start: None,
+                    end: None,
+                })?;
+                let count_in = |text: &str| text.matches(&old_text).count();
+                if count_in(scoped["text"].as_str().unwrap_or("")) != 1
+                    || count_in(whole["text"].as_str().unwrap_or("")) != 1
+                {
+                    return Err(format!(
+                        "line-addressed edit requires exactly one old_text match in lines {start}-{end} and in the file"
+                    ).into());
+                }
+            }
             let request = json!({"op":"preview_files","operations":operations});
             let preview = runtime.execute(serde_json::from_value(request.clone())?)?;
             let token = store_token(&fs::canonicalize(&root)?, &serde_json::to_string(&request)?)?;
