@@ -51,26 +51,35 @@ CLAUDE_MODEL = 'sonnet'
 CLAUDE_EFFORT = 'low'
 
 
-def cli_guidance(binary, split=False):
+def cli_guidance(binary, split=False, task=None):
     if split:
+        spec = {}
+        if task:
+            spec = suite.TASKS.get(task, {})
+        program = spec.get('debug_program') or 'main.py'
         return (
             f"The guarded FFSAKE CLI is at {binary}. Use it for repository reads and debugging, "
             "and use native Edit/Write for code changes.\n"
-            f"{binary} read . main.py:1-40 tests/test_main.py:1-80\n"
-            f"{binary} probe . --debug .ffsake/rc-debug.json --config main --breakpoint main.py:12 --stops 2\n"
-            "Replace the example filenames and line numbers with the real ones. Use a literal dot for the workspace and no shell variables or quotes; the host read "
-            "block rejects commands it cannot parse. Run one command per Bash call. Read only the "
-            "lines you need. Probe returns compact stop values; do not repeat the same stops with "
+            f"{binary} read . {program}:1-80\n"
+            f"{binary} probe . --debug .ffsake/rc-debug.json --config main --breakpoint <source-file>:<line> --stops 2\n"
+            "Identify the source file and loop line from the repository, then replace <source-file> "
+            "and <line>. Use a literal dot for the workspace and no shell variables or quotes; the "
+            "host read block rejects commands it cannot parse. Combine simple commands without quotes "
+            "or variables in one Bash call, for example `git ls-files && python3 main.py`. Read only "
+            "the lines you need. Always run at least one probe before editing; the task requires observed "
+            "runtime values. Probe returns compact stop values; do not repeat the same stops with "
             "pdb. Never bypass an access denial."
         )
     return (
         f"The guarded FFSAKE CLI is at {binary}. Use it for repository reads and debugging, and "
         "use native Edit/Write for code changes.\n"
-        f"{binary} read . main.py:1-40 tests/test_main.py:1-80\n"
-        f"{binary} probe . --debug .ffsake/rc-debug.json --config main --breakpoint main.py:12 --stops 2\n"
-        "Replace the example filenames and line numbers with the real ones. Use a literal dot for the workspace and no shell variables or quotes; the host read "
-        "block rejects commands it cannot parse. Run one command per Bash call. Read only the "
-        "lines you need. Probe returns compact stop values. Never bypass an access denial."
+        f"{binary} read . FILE:1-80\n"
+        f"{binary} probe . --debug .ffsake/rc-debug.json --config main --breakpoint FILE:LINE --stops 2\n"
+        "Replace FILE and LINE with the real path and line. Use a literal dot for the workspace "
+        "and no shell variables or quotes; the host read block rejects commands it cannot parse. "
+        "Combine simple commands without quotes or variables in one Bash call, for example "
+        "`git ls-files && python3 main.py`. Read only the lines you need. Probe returns compact "
+        "stop values. Never bypass an access denial."
     )
 
 def claude(root, prompt, enabled, timeout, profile, mode=None):
@@ -750,7 +759,7 @@ def main():
         a.instrument_dir = a.instrument_dir.resolve()
         a.instrument_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     agents, tasks = a.agents.split(','), a.tasks.split(',')
-    if any(x not in ('claude', 'codex') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand', 'edit_units', 'debug_cursor') for x in tasks):
+    if any(x not in ('claude', 'codex') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand', 'edit_units', 'debug_cursor', 'edit_settings', 'debug_retry') for x in tasks):
         p.error('unsupported agent or task')
     if not a.pilot and 'codex' in agents and 'git' in tasks:
         p.error('Codex Git comparison unavailable: native workspace sandbox denies linked-worktree Git metadata while MCP can write it')
@@ -882,7 +891,7 @@ def main():
                         SERVER_EDITING = bool(baseline_binary and mode == 'changed' and task in ('cross', 'maintenance', 'layout'))
                         suite_mode = mode if mode in ('baseline', 'ffsake', 'cli') else 'ffsake'
                         if a.cli_debug_guidance and suite.CLI_BINARY:
-                            CLI_GUIDANCE = (cli_guidance(suite.CLI_BINARY, True)
+                            CLI_GUIDANCE = (cli_guidance(suite.CLI_BINARY, True, task)
                                             if task.startswith('debug') else '')
                         print(f'{agent} {task} {mode} {repetition}', flush=True)
                         # Keep a model's parent-directory discovery in an empty,

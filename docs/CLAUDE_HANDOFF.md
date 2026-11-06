@@ -12,24 +12,30 @@ native `Read` input to the returned text, so there is no denial/retry loop.
 Native Edit/Write remain available; `ffsake probe` provides one-call multi-stop
 debugging. `scripts/ffsake_cli_setup.py --redirect-reads --apply` writes the
 guidance block and `.claude/ffsake-read-policy.json`; no MCP config, catalog or
-per-tool approval list is created.
+per-tool approval list is created. Guidance batches simple commands and
+requires one probe before editing.
 
-Final 40-attempt Haiku run ($0.2608, 10 reps per fresh task):
-`docs/agent-benchmark-runs/20261106-redirect/final-40.json`.
+Final Haiku 5.5 runs, ten repetitions per task:
 
-- Edit: 10/10 both; 1.075 elapsed / 1.075 input; cost +1% (parity).
-- Debug: 10/10 FFSAKE vs 7/10 native; 1.038 elapsed / 1.196 input; cost -5.6%.
-- Denials: 0–2 both arms.
+- Edit (`edit_units`, `edit_settings`): 20/20 both; pooled median 1.047 elapsed
+  / 0.996 input / 0.999 cost.
+- Debug (`debug_cursor`, `debug_retry`): 20/20 FFSAKE versus 17/20 native;
+  pooled median 0.806 elapsed / 0.826 input / 0.867 cost.
+- Denials: 0-2 FFSAKE versus 0-4 native.
 
-Earlier 20-attempt run: edit 1.056/0.998, debug 0.898/0.856. The direction is
-within run-to-run variance; the defensible claim is edit parity and
-parity-to-better debug with better correctness/cost and lower setup friction.
-Bytecode caches are now excluded from file audits; retained traces were
+Evidence: `docs/agent-benchmark-runs/20261106-redirect/final-debug-40.json`,
+`edit-settings-40.json`, `final-40.json`; the no-always-probe run is retained as
+a failure. Bytecode caches are excluded from file audits; retained traces were
 re-evaluated without model calls.
 
-Next action: validate the same integration on a third fresh task pair, then
-tighten probe/read payload if token parity is the remaining gap. Do not restore
-the MCP catalog for this path.
+Verdict: met for the measured scope. Edit is at parity; debug is faster,
+lower-input, cheaper and more correct. The integration removes the MCP catalog
+and per-tool approval surface without weakening reviewed edits, stale checks,
+history or cleanup.
+
+Next action: validate one new workflow shape (multi-file refactor without a
+debugger) if useful, then keep this as the default. Do not restore the MCP
+catalog for this path.
 
 ## Competitive unfamiliar-task goal (2026-11-05, candidate pending validation)
 

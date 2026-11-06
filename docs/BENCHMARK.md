@@ -1092,7 +1092,9 @@ This closes the host-enforcement question with a negative result: a deny-only ho
 
 Evidence: [hook policy index](20261106-permission/hook-policy.json). Total paid spend is about **$6.78** across roughly 346 attempts.
 
-### Read-redirect hook: fresh-task validation (2026-11-06)
+### Read-redirect hook: first fresh-task validation (2026-11-06)
+
+> Superseded by “Final integration: batched commands and mandatory probe” below; this run is retained as the first redirect measurement.
 
 Native `Read` calls are now rewritten through FFSAKE by a Claude Code `PreToolUse`
 hook. The hook runs `ffsake read`, writes the returned text under `.ffsake/hook-reads`,
@@ -1132,6 +1134,42 @@ recomputed retained traces without model calls.
 
 Evidence: [final 40-attempt index](20261106-redirect/final-40.json),
 [earlier 20-attempt index](20261106-redirect/earlier-20.json). The final run cost **$0.2608**; the current Haiku validation phase totals about **$7.26**.
+
+### Final integration: batched commands and mandatory probe (2026-11-06)
+
+The guidance was tightened after trace review in three ways: combine simple
+commands (for example `git ls-files && python3 main.py`) instead of one command
+per turn, name only the debug program from the task prompt and use
+`<source-file>:<line>` placeholders (no hidden target-file hint), and require at
+least one probe before editing. Twenty Haiku attempts per task, **$0.2432**,
+all 40 valid.
+
+| Debug task / arm | Correct | Calls (med) | Seconds (med) | Input (med) | Cost (med) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Cursor native | 8/10 | 10.0 | 20.7 | 203,481 | $0.00707 |
+| Cursor FFSAKE | **10/10** | **5.0** | **15.3** | **140,649** | **$0.00528** |
+| Retry native | 9/10 | 9.5 | 15.6 | 170,198 | $0.00605 |
+| Retry FFSAKE | **10/10** | **5.5** | **14.6** | **140,386** | **$0.00522** |
+
+Pooled across the 20 debug pairs: **0.806 elapsed, 0.826 input, 0.867 cost**;
+FFSAKE won 16/20 elapsed pairs and 17/20 input pairs, and completed **20/20
+versus native 17/20**. Native failures were workflow failures: the agent fixed
+the program without observing the required runtime iterations.
+
+Edit remains at parity. Twenty pairs across `edit_units` and `edit_settings`
+were 20/20 in both arms with pooled median **1.047 elapsed / 0.996 input / 0.999
+cost**. The edit arm uses no CLI guidance and native Edit/Write; FFSAKE governs
+the reads.
+
+The immediately preceding fair run without the mandatory-probe instruction
+(`debug-no-always-probe-40.json`) was 18/20 versus native 16/20 because two
+FFSAKE runs skipped the probe and failed workflow evidence. The instruction
+fixed that failure mode without adding turns.
+
+Evidence: [final debug index](20261106-redirect/final-debug-40.json),
+[without always-probe](20261106-redirect/debug-no-always-probe-40.json),
+[edit settings](20261106-redirect/edit-settings-40.json). Final evidence batch
+cost **$0.7624**; the current Haiku validation phase totals about **$8.77**.
 
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 

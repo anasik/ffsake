@@ -22,6 +22,8 @@ CASES = {
                      'marker': ('key', 'limits')},
     'debug_expand': {'path': 'tiers.py', 'line': 9,
                      'marker': ('index', '1'), 'stops': 2},
+    'debug_retry': {'path': 'retry.py', 'line': 7,
+                    'marker': ('attempt', '1'), 'stops': 2},
     'debug_cursor': {'path': 'cursor.py', 'line': 2,
                      'marker': ('cursor', '0'), 'stops': 2},
 }
@@ -88,7 +90,7 @@ def main():
             results[task_name] = {'adapter': str(debug_python), 'marker': list(case['marker']),
                                   'initial_verifier': 'fails', 'reference_verifier': 'passes',
                                   'adapter_cleaned': True}
-    for edit_task in ('edit_batch', 'edit_multi', 'edit_units'):
+    for edit_task in ('edit_batch', 'edit_multi', 'edit_units', 'edit_settings'):
         with tempfile.TemporaryDirectory(prefix=f'ffsake-preflight-{edit_task}-') as td:
             root = Path(td).resolve()
             task = suite.TASKS[edit_task]

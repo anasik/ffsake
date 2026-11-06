@@ -365,6 +365,62 @@ def debug_cursor_verify(root, state):
              'test_exit': tests.returncode, 'test_stderr': tests.stderr})
 
 
+def edit_settings_fixture(root):
+    files = {
+        'settings/__init__.py': '',
+        'settings/parse.py': 'def parse_bool(value):\n    return value == "true"\n',
+        'settings/merge.py': 'def merge(base, override):\n    result = dict(base)\n    result.update(override)\n    return result\n',
+        'settings/format.py': 'def format_value(value):\n    return str(value)\n',
+        'main.py': 'from settings.parse import parse_bool\nfrom settings.merge import merge\nfrom settings.format import format_value\n\nactual = [\n    parse_bool("TRUE"), parse_bool("no"), parse_bool("1"),\n    merge({"a": {"x": 1, "y": 2}}, {"a": {"y": 3}}),\n    format_value(True), format_value(False),\n]\nexpected = [True, False, True, {"a": {"x": 1, "y": 3}}, "true", "false"]\nprint(f"actual={actual}")\nprint(f"expected={expected}")\nraise SystemExit(0 if actual == expected else 1)\n',
+        'tests/__init__.py': '',
+        'tests/test_settings.py': 'import unittest\nfrom settings.parse import parse_bool\nfrom settings.merge import merge\nfrom settings.format import format_value\n\nclass Settings(unittest.TestCase):\n    def test_parse(self):\n        for value in ("true", "TRUE", "yes", "1", "on"):\n            self.assertTrue(parse_bool(value))\n        for value in ("false", "FALSE", "no", "0", "off"):\n            self.assertFalse(parse_bool(value))\n    def test_merge(self):\n        self.assertEqual(merge({"a": {"x": 1, "y": 2}}, {"a": {"y": 3}}),\n                         {"a": {"x": 1, "y": 3}})\n    def test_format(self):\n        self.assertEqual(format_value(True), "true")\n        self.assertEqual(format_value(False), "false")\n        self.assertEqual(format_value(3), "3")\n',
+        'README.md': '# Settings\nBoolean parsing is case-insensitive and accepts 1/0, yes/no and on/off.\nNested overrides merge recursively.\n',
+        'sentinel.txt': 'unrelated settings notes\n',
+        '.gitignore': '.ffsake/\n__pycache__/\n*.pyc\n.pytest_cache/\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['settings/parse.py'] = 'def parse_bool(value):\n    return str(value).strip().lower() in ("true", "yes", "1", "on")\n'
+    reference['settings/merge.py'] = 'def merge(base, override):\n    result = dict(base)\n    for key, value in override.items():\n        if isinstance(value, dict) and isinstance(result.get(key), dict):\n            result[key] = merge(result[key], value)\n        else:\n            result[key] = value\n    return result\n'
+    reference['settings/format.py'] = 'def format_value(value):\n    if isinstance(value, bool):\n        return "true" if value else "false"\n    return str(value)\n'
+    return {'reference': reference}
+
+
+def edit_settings_verify(root, state):
+    program = command(root, sys.executable, '-B', 'main.py')
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    return (program.returncode == 0 and tests.returncode == 0,
+            {'program_exit': program.returncode, 'stdout': program.stdout,
+             'test_exit': tests.returncode, 'test_stderr': tests.stderr})
+
+
+def debug_retry_fixture(root):
+    files = {
+        'retry.py': 'def delay_for(attempt):\n    return 2 ** attempt\n\ndef schedule(attempts):\n    delays = []\n    for attempt in range(attempts):\n        delay = delay_for(attempt)\n        delays.append(delay)\n    return delays\n',
+        'main.py': 'from retry import schedule\n\nactual = schedule(4)\nexpected = [1, 2, 4, 4]\nprint(f"actual={actual}")\nprint(f"expected={expected}")\nraise SystemExit(0 if actual == expected else 1)\n',
+        'tests/__init__.py': '',
+        'tests/test_retry.py': 'import unittest\nfrom retry import schedule\n\nclass Retry(unittest.TestCase):\n    def test_cap(self):\n        self.assertEqual(schedule(4), [1, 2, 4, 4])\n        self.assertEqual(schedule(6), [1, 2, 4, 4, 4, 4])\n',
+        'README.md': '# Retry\nBackoff doubles but must be capped at four seconds.\n',
+        'notes.txt': 'Never wait more than four seconds between attempts.\n',
+        '.gitignore': '.ffsake/\n__pycache__/\n*.pyc\n.pytest_cache/\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['retry.py'] = reference['retry.py'].replace('return 2 ** attempt', 'return min(2 ** attempt, 4)')
+    return {'reference': reference}
+
+
+def debug_retry_verify(root, state):
+    program = command(root, sys.executable, '-B', 'main.py')
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    return (program.returncode == 0 and 'actual=[1, 2, 4, 4]' in program.stdout
+            and tests.returncode == 0,
+            {'program_exit': program.returncode, 'stdout': program.stdout,
+             'test_exit': tests.returncode, 'test_stderr': tests.stderr})
+
+
 TASKS = {
     'cross': {'fixture': cross_fixture, 'verify': cross_verify,
               'prompt': 'Explore this pricing project and fix the discount calculation. Both checkout and the pricing function should accept discounts as percentages, and final prices must be correct. Keep tests and unrelated files unchanged. Finish when the existing tests pass.',
@@ -420,4 +476,11 @@ TASKS = {
                      'prompt': 'Run main.py to reproduce the pagination failure. Use a debugger to observe at least two page iterations and the cursor values, make the smallest fix, and verify the program and tests. Preserve unrelated files.',
                      'allowed_changes': {'cursor.py'}, 'debug_program': 'main.py',
                      'workflow_markers': ('cursor', '0')},
+    'edit_settings': {'fixture': edit_settings_fixture, 'verify': edit_settings_verify,
+                      'prompt': 'The settings package mishandles boolean parsing, nested overrides and value formatting. Fix all affected modules, keep tests unchanged, and verify the program and test suite. Preserve unrelated files.',
+                      'allowed_changes': {'settings/parse.py', 'settings/merge.py', 'settings/format.py'}},
+    'debug_retry': {'fixture': debug_retry_fixture, 'verify': debug_retry_verify,
+                    'prompt': 'Run main.py to reproduce the retry schedule failure. Use a debugger to observe at least two loop iterations and the delay values, make the smallest fix, and verify the program and tests. Preserve unrelated files.',
+                    'allowed_changes': {'retry.py'}, 'debug_program': 'main.py',
+                    'workflow_markers': ('attempt', '1')},
 }

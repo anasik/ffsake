@@ -127,3 +127,7 @@ The [hook index](20261106-permission/hook-policy.json) records 20 Haiku attempts
 ## 2026-11-06 Read-redirect hook
 
 The [final 40-attempt index](20261106-redirect/final-40.json) records 10 Haiku repetitions per fresh task with native `Read` rewritten through `ffsake read` and native edits kept. Edit was 10/10 both at 1.075 elapsed / 1.075 input; debug was 10/10 FFSAKE versus 7/10 native at 1.038 elapsed / 1.196 input and 5.6% lower cost. The [earlier 20-attempt index](20261106-redirect/earlier-20.json) shows edit 1.056/0.998 and debug 0.898/0.856. Bytecode caches are excluded from the file audit; retained traces were re-evaluated without model calls.
+
+## 2026-11-06 Final redirect integration
+
+[final-debug-40.json](20261106-redirect/final-debug-40.json) records the final 20 debug pairs: 20/20 FFSAKE versus 17/20 native, pooled median 0.806 elapsed / 0.826 input / 0.867 cost. [edit-settings-40.json](20261106-redirect/edit-settings-40.json) records the second edit pair; together with `final-40.json` edit is 20/20 both at 1.047 elapsed / 0.996 input / 0.999 cost. [debug-no-always-probe-40.json](20261106-redirect/debug-no-always-probe-40.json) retains the earlier failure mode where two runs skipped the probe.

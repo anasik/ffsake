@@ -31,10 +31,12 @@ or quotes. The host read block rejects commands it cannot parse.
 {binary} probe . --debug .ffsake/rc-debug.json --config main --breakpoint main.py:12 --stops 2
 ```
 
-Make ordinary code changes with native Edit/Write; that is faster than
-reviewed CLI edits. FFSAKE still enforces workspace policy, stale-state checks,
-history and debug cleanup for the operations it runs. Never bypass an access
-denial.
+Combine simple commands without quotes or variables in one Bash call, for
+example `git ls-files && python3 main.py`. On debugger tasks, always run one
+probe before editing so the required runtime values are observed. Make ordinary
+code changes with native Edit/Write; that is faster than reviewed CLI edits.
+FFSAKE still enforces workspace policy, stale-state checks, history and debug
+cleanup for the operations it runs. Never bypass an access denial.
 {END}"""
 
 

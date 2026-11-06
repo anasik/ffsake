@@ -11,28 +11,34 @@ serves native `Read` through `ffsake read` (input rewrite, no denial/retry), nat
 `Edit`/`Write` stay available, and `ffsake probe` supplies one-call multi-stop
 debugging. Setup is one guidance block, one settings file and one optional
 `Bash(ffsake:*)` rule; there is no MCP catalog or per-tool approval list.
-`scripts/ffsake_cli_setup.py --redirect-reads --apply` installs it.
+`scripts/ffsake_cli_setup.py --redirect-reads --apply` installs it. The measured
+guidance also batches simple shell commands and requires one probe before edits.
 
-Final validation (10 repetitions per task, Claude Haiku 5.5, $0.2608, 40/40
-valid, `docs/agent-benchmark-runs/20261106-redirect/final-40.json`):
+Final Haiku 5.5 validation, ten repetitions per task on two fresh pairs:
 
-- Edit: native 10/10 vs redirect 10/10; 16.5 s vs 17.1 s; 156,682 vs 157,229
-  input; $0.00614 vs $0.00620; paired median 1.075 elapsed / 1.075 input.
-- Debug: native 7/10 vs redirect **10/10**; 20.2 s vs 21.0 s; 201,868 vs 215,081
-  input; $0.00694 vs **$0.00655**; paired median 1.038 elapsed / 1.196 input.
-- Runtime permission denials: 0–2 in both arms (deny-only hook produced 7–11
-  retries and is retired).
+- Edit (`edit_units`, `edit_settings`, 20 pairs): 20/20 both. Pooled median
+  **1.047 elapsed / 0.996 input / 0.999 cost**. The edit arm uses native
+  Edit/Write; FFSAKE governs reads.
+- Debug (`debug_cursor`, `debug_retry`, 20 pairs): **20/20 versus native 17/20**.
+  Pooled median **0.806 elapsed / 0.826 input / 0.867 cost**; FFSAKE won 16/20
+  elapsed and 17/20 input pairs.
+- Runtime permission denials: 0-2 FFSAKE versus 0-4 native. The deny-only hook
+  produced 7-11 retries and is retired.
 
-Verdict: **equal-or-better overall**. Edit is at practical efficiency parity;
-debug has better correctness, lower cost and near-parity elapsed at ~20% higher
-tokens. Setup/permission friction is materially lower than MCP. The remaining
-limit is that native tool use is already near the minimum turn count on these
-tasks, so FFSAKE can match but rarely beat it on tokens.
+Evidence: `docs/agent-benchmark-runs/20261106-redirect/final-debug-40.json`,
+`edit-settings-40.json`, `final-40.json` (edit units), plus the retained
+no-always-probe failure run. Final evidence batch cost $0.7624; the current
+Haiku validation phase totals about $8.77.
 
-Next action: run the same 10-repetition harness on a third fresh task pair to
-test generality, then either tighten the probe/read payload or document the
-token-parity limit. Do not reopen MCP catalog work; the redirect path has no
-catalog.
+Verdict: **met for the measured scope**. FFSAKE is cheaper, faster and lower-input
+on fresh debug work, at efficiency parity on edits, with better debug
+correctness and materially lower setup/permission friction than MCP. Reviewed
+preview/apply, stale-state checks, history and debug cleanup remain intact.
+
+Next action: add a fourth fresh task pair only if it tests a new workflow shape
+(for example a multi-file refactor with no debugger), then keep the redirect
+integration as the default. Do not reopen MCP catalog work; the redirect path
+has no catalog.
 
 Measurement corrections: bytecode caches are no longer counted as repository
 changes; `scripts/reevaluate_rc_results.py` recomputes retained traces without
