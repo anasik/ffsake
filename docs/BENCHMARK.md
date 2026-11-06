@@ -1017,6 +1017,19 @@ Final candidate kept native Edit/Write for changes and guided the CLI only for r
 
 Evidence: [split workflow index](20261106-haiku/split-workflow.json). Total paid spend is **$5.8218** across 220 attempts; ~$0.18 remains.
 
+### Forced CLI reads, native edits (2026-11-06)
+
+Native `Read`, `Glob` and `Grep` were disabled in the CLI arm while `Edit`/`Write` stayed available, forcing the CLI range-read path with native edits. Ten Haiku attempts, **$0.0814**, ten valid.
+
+| Arm | Correct | Calls | Seconds | Input | Paired ratios |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Native | 5/5 | 15 | 19.3 | 203,245 | — |
+| Forced CLI reads | 4/5 | 11 | 26.3 | 269,953 | **1.426 elapsed / 1.444 input** |
+
+The CLI read path was adopted in all five runs (3-6 CLI calls), and calls fell 19%, but input was still 44% higher and one CLI attempt failed. Native edits plus CLI reads did not restore parity. The edit target remains unmet.
+
+Evidence: [force-reads index](20261106-haiku/force-reads.json). Total paid spend is **$5.9032** across 230 attempts; ~$0.10 remains.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

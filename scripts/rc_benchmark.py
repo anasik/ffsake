@@ -41,6 +41,7 @@ GUIDANCE = ('Use FFSAKE MCP for scoped repository reading, search, previews, edi
 
 CLI_GUIDANCE = ''
 FORCE_GUARDED = False
+FORCE_READS_CLI = False
 CLAUDE_MODEL = 'sonnet'
 CLAUDE_EFFORT = 'low'
 
@@ -79,12 +80,17 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
             guidance += (' Native Read, Edit, Write, Glob and Grep are disabled for this run. '
                          'Use the CLI for all repository reads and edits, and use Bash only to run '
                          'programs and tests, not to read or modify repository files.')
+        elif FORCE_READS_CLI:
+            guidance += (' Native Read, Glob and Grep are disabled for this run. Use the CLI for '
+                         'repository reads and native Edit/Write for changes.')
         cmd = ['claude', '-p', prompt, '--output-format', 'stream-json', '--verbose',
                '--max-turns', '40', '--model', CLAUDE_MODEL, '--effort', CLAUDE_EFFORT,
                '--dangerously-skip-permissions', '--strict-mcp-config', '--mcp-config', str(cfg),
                '--append-system-prompt', guidance]
         if FORCE_GUARDED:
             cmd += ['--disallowedTools', 'Read,Edit,Write,Glob,Grep,NotebookEdit']
+        elif FORCE_READS_CLI:
+            cmd += ['--disallowedTools', 'Read,Glob,Grep']
         return suite.run_process(cmd, root, timeout)
     servers = {'ffsake': {'command': str(suite.FFSAKE_MCP),
                          'args': suite.mcp_arguments(root, profile)}} if enabled else {}
@@ -672,10 +678,12 @@ def main():
     p.add_argument('--cli-only', action='store_true', help='with --cli-binary, run only the CLI arm')
     p.add_argument('--cli-native', action='store_true', help='with --cli-binary, run native and CLI arms only')
     p.add_argument('--split-guidance', action='store_true', help='guide the CLI arm to use native edits and CLI reads/probe')
+    p.add_argument('--force-reads-cli', action='store_true', help='disable native Read/Glob/Grep in the CLI arm, keeping Edit/Write')
     a = p.parse_args()
-    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, CLAUDE_MODEL, CLAUDE_EFFORT
+    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, FORCE_READS_CLI, CLAUDE_MODEL, CLAUDE_EFFORT
     CATALOG = a.catalog
     FORCE_GUARDED = a.force_guarded
+    FORCE_READS_CLI = a.force_reads_cli
     CLAUDE_MODEL = a.claude_model
     CLAUDE_EFFORT = a.claude_effort
     COMPACT = a.compact
@@ -685,8 +693,8 @@ def main():
         p.error('--baseline-binary requires --instrument-dir and default diagnostic options')
     if a.cli_binary and (a.baseline_binary or a.diagnostic_matrix or a.agents != 'claude'):
         p.error('--cli-binary supports Claude only and cannot be combined with baseline or diagnostic modes')
-    if (a.cli_only or a.cli_native) and not a.cli_binary:
-        p.error('--cli-only and --cli-native require --cli-binary')
+    if (a.cli_only or a.cli_native or a.force_reads_cli) and not a.cli_binary:
+        p.error('--cli-only, --cli-native and --force-reads-cli require --cli-binary')
     if COMPACT and not a.instrument_dir:
         p.error('--compact requires --instrument-dir')
     if a.instrument_dir:
@@ -703,7 +711,7 @@ def main():
         p.error('measured pairs require at least five repetitions')
     suite.FFSAKE_MCP = a.binary.resolve(strict=True)
     suite.CLI_BINARY = a.cli_binary.resolve(strict=True) if a.cli_binary else None
-    CLI_GUIDANCE = cli_guidance(suite.CLI_BINARY, a.split_guidance) if suite.CLI_BINARY else ''
+    CLI_GUIDANCE = cli_guidance(suite.CLI_BINARY, a.split_guidance or a.force_reads_cli) if suite.CLI_BINARY else ''
     suite.CLI_GUIDANCE = CLI_GUIDANCE
     changed_binary = suite.FFSAKE_MCP
     baseline_binary = a.baseline_binary.resolve(strict=True) if a.baseline_binary else None

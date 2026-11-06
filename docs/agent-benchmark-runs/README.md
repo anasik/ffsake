@@ -103,3 +103,7 @@ The [line-addressed index](20261106-haiku/payload-edit-lines.json) records 10 Ha
 ## 2026-11-06 Split workflow
 
 The [split index](20261106-haiku/split-workflow.json) records 10 Haiku attempts using native edits and CLI reads/probe. Debug held the target (0.985 elapsed / 0.888 input, 5/5), but edits did not (1.064/1.195) because CLI reads were not adopted and guidance added overhead.
+
+## 2026-11-06 Forced CLI reads
+
+The [force-reads index](20261106-haiku/force-reads.json) records 10 Haiku attempts with native Read/Glob/Grep disabled and native edits kept. CLI reads were adopted, but forced CLI was 1.426 elapsed / 1.444 input with one failure (4/5).

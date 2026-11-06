@@ -219,9 +219,10 @@ batch preview plus one apply also failed: **1.249/2.023**, 9 calls versus 15,
 both 5/5. Range-capped reads and line-addressed edits were worse still:
 **1.955/2.623** with 15 calls versus 14. A split workflow (native edits, CLI
 reads/probe) held the debug target at **0.985/0.888** but not edits
-(**1.064/1.195**; CLI reads were not adopted). Reviewed edits and per-turn
-CLI/model behavior, not metadata size, call count or address scope, dominate the
-edit path. A retained-trace verifier fix for compact
+(**1.064/1.195**; CLI reads were not adopted). Forcing the CLI read path while
+keeping native edits made it worse: **1.426/1.444**, 4/5 correct, despite 19%
+fewer calls. Reviewed edits and per-turn CLI/model behavior, not metadata size,
+call count, address scope or read-tool choice, dominate the edit path. A retained-trace verifier fix for compact
 `values` raised CLI debug from 0/5 to 5/5 without a rerun.
 
 Cheaper models did not make FFSAKE competitive, and shrinking the catalog alone
