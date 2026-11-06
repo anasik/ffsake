@@ -642,7 +642,7 @@ def main():
     p.add_argument('--timeout', type=int, default=300)
     p.add_argument('--pilot', action='store_true')
     p.add_argument('--instrument-dir', type=Path, help='private directory for per-run content-free MCP timing logs')
-    p.add_argument('--catalog', choices=('core', 'editing', 'compact'), default='core', help='host-side tool selection')
+    p.add_argument('--catalog', choices=('core', 'editing', 'compact', 'hybrid'), default='core', help='host-side tool selection')
     p.add_argument('--compact', action='store_true', help='diagnostic compact batch-read responses via proxy')
     p.add_argument('--diagnostic-matrix', action='store_true', help='counterbalance native, core, editing catalog, compact and startup snapshot')
     p.add_argument('--baseline-binary', type=Path, help='counterbalance native, this core binary and --binary (editing for editing tasks, core for debug)')

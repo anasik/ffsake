@@ -890,6 +890,19 @@ The generic `op` interface caused repeated `query`/`debug_op` calls. Cheaper mod
 
 Evidence: [three-arm](20261106-haiku/three-arm.json), [edit rerun](20261106-haiku/edit-noninteractive.json), [compact](20261106-haiku/compact.json). Total paid spend across all studies is now **$4.9276**; no further runs are authorized without a new budget.
 
+### Hybrid compact-read plus granular probe (2026-11-06)
+
+The compact profile's generic `debug_op` caused a call explosion. A hybrid profile kept compact `query`/`change` tools but advertised the granular one-call `ffsake_debug_probe` and `ffsake_debug` instead: **5,979 bytes / 7 tools**, versus 20,929 bytes / 28 for core and 3,827 / 7 for compact. Ten Haiku attempts on `debug_expand`, five native and five hybrid, all valid and all 5/5 correct. Cost **$0.0846**.
+
+| Arm | Correct | Calls | Seconds | Total input | ToolSearch |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Native | 5/5 | 11 | 21.2 | 206,668 | 0 |
+| Hybrid | 5/5 | 14 | 24.1 | 328,706 | 4/5 runs |
+
+Median paired ratios: **1.139 elapsed, 1.592 input**. The hybrid avoided the compact profile's 22-call blow-up (14 calls) and improved on full core's 2.060x input, but still could not match native. It remained slower and used 59% more input.
+
+This is the best guarded variant measured: full core 1.185/2.060, compact 1.929/2.616, hybrid 1.139/1.592. Native remained the fastest and lowest-input option. Evidence: [hybrid index](20261106-haiku/hybrid-debug.json). Total paid spend is now **$5.0122** across 120 attempts.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

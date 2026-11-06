@@ -71,3 +71,7 @@ The [forced-guard indexes](20261106-forced-guard/guarded-mcp.json) record a 10-a
 ## 2026-11-06 Cheapest-model validation
 
 The [Haiku indexes](20261106-haiku/three-arm.json) record three studies using Claude Haiku 5.5: a 30-attempt three-arm run, a 15-attempt noninteractive edit rerun, and a 20-attempt compact-catalog run. Native remained fastest and lowest-input; the compact profile reduced catalog bytes but increased calls and input.
+
+## 2026-11-06 Hybrid guarded profile
+
+The [hybrid index](20261106-haiku/hybrid-debug.json) records 10 Haiku attempts on `debug_expand`: compact query/change plus granular debug_probe, 5/5 correct, but 14 calls / 328,706 input versus native 11 / 206,668 (1.139 elapsed / 1.592 input).

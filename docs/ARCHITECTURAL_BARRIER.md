@@ -200,6 +200,11 @@ but caused repeated generic calls: edit 1.128 elapsed / 1.421 input (4/5
 correct); debug **1.929 / 2.616** with 22 calls versus 11 native. The model paid
 more turns than the catalog saved.
 
+A hybrid profile kept compact read/change tools but restored the granular
+one-call `debug_probe` (**5,979 bytes / 7 tools**). It avoided the call explosion
+and was the best guarded variant: **1.139 elapsed / 1.592 input**, 14 calls
+versus native 11, all 5/5 correct. It still lost on both criteria.
+
 Cheaper models did not make FFSAKE competitive, and shrinking the catalog alone
 did not either. The remaining overhead is the model's tool-use behavior plus
 guarded payloads; native tools remained fastest and lowest-input in every fair

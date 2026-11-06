@@ -14,6 +14,7 @@ enum ToolProfile {
     Core,
     Editing,
     Compact,
+    Hybrid,
 }
 
 impl ToolProfile {
@@ -36,7 +37,11 @@ impl ToolProfile {
             "ffsake_query" | "ffsake_change" | "ffsake_debug_op" | "ffsake_task_op"
         );
         if compact_only {
-            return matches!(self, Self::Compact);
+            return match self {
+                Self::Compact => true,
+                Self::Hybrid => matches!(name, "ffsake_query" | "ffsake_change"),
+                _ => false,
+            };
         }
         let legacy_rust = matches!(
             name,
@@ -88,6 +93,10 @@ impl ToolProfile {
                 name,
                 "ffsake_query" | "ffsake_change" | "ffsake_debug_op" | "ffsake_task_op"
             ),
+            Self::Hybrid => matches!(
+                name,
+                "ffsake_query" | "ffsake_change" | "ffsake_debug_probe" | "ffsake_debug"
+            ),
             Self::Core => matches!(
                 name,
                 "ffsake_workspace_info"
@@ -129,7 +138,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
     let usage = || -> ! {
         eprintln!(
-            "usage: ffsake-mcp WORKSPACE [--profile all|core|editing|compact] [--tasks TRUSTED_HOST_POLICY.json] [--access HOST_AUTHORIZATION.json] [--debug HOST_DEBUG_CONFIG.json]"
+            "usage: ffsake-mcp WORKSPACE [--profile all|core|editing|compact|hybrid] [--tasks TRUSTED_HOST_POLICY.json] [--access HOST_AUTHORIZATION.json] [--debug HOST_DEBUG_CONFIG.json]"
         );
         std::process::exit(2)
     };
@@ -150,6 +159,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "core" => ToolProfile::Core,
                     "editing" => ToolProfile::Editing,
                     "compact" => ToolProfile::Compact,
+                    "hybrid" => ToolProfile::Hybrid,
                     _ => usage(),
                 };
             }
@@ -594,6 +604,7 @@ fn handle_message(runtime: &mut Resident, profile: ToolProfile, message: Value) 
                     "serverInfo":{"name":"ffsake","version":option_env!("FFSAKE_RELEASE_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"))},
                     "instructions": match profile {
                         ToolProfile::Editing => "Prefer FFSAKE for scoped exploration and guarded editing. Read known files with ffsake_read_files; preview independent edits together with ffsake_preview_files, review the diff, then apply its handle. Before edits in a child or fork, verify ffsake_workspace_info matches the host worktree. Host approval controls access and mutations; never use native fallback to evade denial. The editing profile omits tasks, debugging, Git mutations and language intelligence. If a result includes update_notice, relay it; do not install automatically.",
+                        ToolProfile::Hybrid => "Use the hybrid FFSAKE tools. ffsake_query ops: workspace_info, read, read_files, list, search, git, git_branches, archive, tasks, task_status, task_output. ffsake_change ops: preview_files, preview_edit, preview_create, preview_copy, preview_move, preview_delete, preview_rename, preview_matches, apply, undo, redo, release, target, refresh, git_review, git_mutate, git_operation_review, git_operation. Use ffsake_debug_probe for one-shot or multi-stop diagnosis and ffsake_debug for poll/wait/continue. Pass operation arguments in the arguments object. Review preview diffs before apply. Host approval governs execution and mutation; never use native fallback to evade access denial.",
                         ToolProfile::Compact => "Use the compact FFSAKE tools. ffsake_query ops: workspace_info, read, read_files, list, search, git, git_branches, archive, tasks, task_status, task_output. ffsake_change ops: preview_files, preview_edit, preview_create, preview_copy, preview_move, preview_delete, preview_rename, preview_matches, apply, undo, redo, release, target, refresh, git_review, git_mutate, git_operation_review, git_operation. ffsake_debug_op ops: probe, launch, attach, debug. ffsake_task_op ops: tasks, run_task, register, status, output, cancel. Pass operation arguments in the arguments object. Review preview diffs before apply. Host approval governs execution and mutation; never use native fallback to evade access denial.",
                         _ => "Prefer FFSAKE for scoped exploration, guarded previews/edits, Git, tasks and debugging. Read known files together with ffsake_read_files; batch independent edits in one ffsake_preview_files and review the combined diff, then apply once. ffsake_workspace_info summarizes root, entries, debug configurations, tasks, line-numbered debug-program source and optional reads; use it before separate list, read or ffsake_tasks calls. ffsake_debug_probe performs one-shot or multi-stop diagnosis and cleans up; use ffsake_debug_launch or ffsake_debug for persistent sessions. In children or forks, verify the workspace_info root matches the host before edits or tasks. Host approval governs execution and mutation; never use native fallback to evade access denial. Tasks and debugging execute code and are not sandboxed or editor transactions. Relay update_notice; do not install automatically.",
                     }
@@ -717,6 +728,7 @@ fn call_tool(
                 ToolProfile::Editing => "editing",
                 ToolProfile::Core => "core",
                 ToolProfile::Compact => "compact",
+                ToolProfile::Hybrid => "hybrid",
                 ToolProfile::All => "all",
             };
             return json!({"ok":false,"error":format!("tool disabled by {active} profile: {name}")});
@@ -750,6 +762,7 @@ fn call_tool(
                 ToolProfile::Editing => "editing",
                 ToolProfile::Core => "core",
                 ToolProfile::Compact => "compact",
+                ToolProfile::Hybrid => "hybrid",
                 ToolProfile::All => "all",
             };
             return json!({"ok":false,"error":format!("tool disabled by {active} profile: {name}")});
@@ -827,6 +840,7 @@ fn call_tool(
             ToolProfile::Editing => "editing",
             ToolProfile::Core => "core",
             ToolProfile::Compact => "compact",
+            ToolProfile::Hybrid => "hybrid",
             ToolProfile::All => "all",
         };
         return json!({"ok":false,"error":format!("tool disabled by {active} profile: {name}")});
@@ -1572,6 +1586,16 @@ mod tests {
         assert!(!ToolProfile::All.advertises("ffsake_rust_references"));
         assert!(!ToolProfile::Core.advertises("ffsake_rust"));
         assert!(!ToolProfile::Core.allows("ffsake_rust"));
+    }
+
+    #[test]
+    fn hybrid_profile_advertises_compact_read_and_granular_probe() {
+        assert!(ToolProfile::Hybrid.advertises("ffsake_query"));
+        assert!(ToolProfile::Hybrid.advertises("ffsake_change"));
+        assert!(ToolProfile::Hybrid.advertises("ffsake_debug_probe"));
+        assert!(!ToolProfile::Hybrid.advertises("ffsake_debug_op"));
+        assert!(!ToolProfile::Hybrid.allows("ffsake_debug_op"));
+        assert!(!ToolProfile::All.advertises("ffsake_query"));
     }
 
     #[test]
