@@ -874,6 +874,22 @@ A five-attempt forced-CLI follow-up disabled the same native tools and pointed t
 
 Both experiments are preserved in the [forced-guard index](20261106-forced-guard/guarded-mcp.json) and [forced-CLI index](20261106-forced-guard/forced-cli.json). Together with the three-arm run, the measured conclusion is: native tools remain necessary for reliable completion; FFSAKE is not competitive on either elapsed time or input on these tasks; and the remaining gap is per-turn context plus host/model tool choice, not a missing server capability.
 
+### Cheapest-model validation (2026-11-06)
+
+All paid tests in this section used **Claude Haiku 5.5** (`--model haiku`, effort low), the cheapest available Claude model, rather than Sonnet.
+
+**Three-arm run (30 attempts, $0.2147).** On `debug_expand` all arms were 5/5 correct. MCP used 12 calls / 24.2 s / 381,896 input versus native 10 / 20.4 s / 175,165; median paired ratios **1.185 elapsed, 2.060 input**. The CLI was adopted 5/5 but used 10 calls / 22.2 s / 241,472 input (**1.034 / 1.208**). On `edit_multi`, four of five MCP runs and one baseline/CLI run returned a clarifying question without any tool call; those attempts are marked invalid and were not pooled.
+
+**Edit rerun with a noninteractive instruction (15 attempts, $0.1121).** Adding “Do not ask the user questions” to the task prompt made all arms act. Native 5/5 at 15 calls / 20.5 s / 173,996 input; MCP 4/5 at 13 / 21.9 s / 242,313 (**1.002 / 1.393**); CLI 5/5 at 14 / 19.8 s / 173,938 (**0.910 / 1.052**) but the CLI was not adopted in any run, so that arm is effectively native plus guidance.
+
+**Compact catalog (20 attempts, $0.1786).** A new `compact` profile advertises four multiplexed tools plus the three access tools: **3,827 bytes / 7 tools** versus 20,929 bytes / 28 tools for core. It reduced fixed context but increased interaction:
+- `edit_multi`: baseline 5/5 at 14 calls / 19.1 s / 203,379 input; compact 4/5 at 13 / 21.6 s / 244,221 (**1.128 / 1.421**).
+- `debug_expand`: baseline 5/5 at 11 calls / 18.5 s / 201,903 input; compact 5/5 at 22 / 40.2 s / 682,634 (**1.929 / 2.616**).
+
+The generic `op` interface caused repeated `query`/`debug_op` calls. Cheaper models did not make FFSAKE competitive, and a smaller catalog alone did not either. Native remained fastest and lowest-input in every fair comparison.
+
+Evidence: [three-arm](20261106-haiku/three-arm.json), [edit rerun](20261106-haiku/edit-noninteractive.json), [compact](20261106-haiku/compact.json). Total paid spend across all studies is now **$4.9276**; no further runs are authorized without a new budget.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

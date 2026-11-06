@@ -49,6 +49,11 @@ FFSAKE_EDITING_TOOLS = FFSAKE_ACCESS_TOOLS + (
     "ffsake_release", "ffsake_refresh", "ffsake_preview_files",
 )
 
+FFSAKE_COMPACT_TOOLS = FFSAKE_ACCESS_TOOLS + (
+    "ffsake_query", "ffsake_change", "ffsake_debug_op", "ffsake_task_op",
+)
+
+
 def profile_tools(tool_profile):
     if tool_profile == "all":
         return FFSAKE_TOOLS
@@ -56,12 +61,14 @@ def profile_tools(tool_profile):
         return FFSAKE_CORE_TOOLS
     if tool_profile == "editing":
         return FFSAKE_EDITING_TOOLS
+    if tool_profile == "compact":
+        return FFSAKE_COMPACT_TOOLS
     raise ValueError(f"unknown FFSAKE tool profile: {tool_profile}")
 
 
 def mcp_arguments(root, tool_profile):
     profile_tools(tool_profile)
-    return [str(root)] + (["--profile", tool_profile] if tool_profile in ("core", "editing") else [])
+    return [str(root)] + (["--profile", tool_profile] if tool_profile in ("core", "editing", "compact") else [])
 
 
 def git_init(root: Path):
@@ -1279,7 +1286,7 @@ def preflight(agents, tool_profile="all"):
         except OSError as exc:
             check["error"] = str(exc)
         checks.append(check)
-    mcp_check = mcp_profile_preflight(tool_profile) if tool_profile in ("core", "editing") else None
+    mcp_check = mcp_profile_preflight(tool_profile) if tool_profile in ("core", "editing", "compact") else None
     return {"checks": checks, "ok": all(c["ok"] for c in checks) and (mcp_check is None or mcp_check["ok"]),
             "mcp_profile": mcp_check, "model_calls": 0, "runtime_permission_isolation_verified": False}
 

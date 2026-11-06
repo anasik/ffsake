@@ -41,6 +41,8 @@ GUIDANCE = ('Use FFSAKE MCP for scoped repository reading, search, previews, edi
 
 CLI_GUIDANCE = ''
 FORCE_GUARDED = False
+CLAUDE_MODEL = 'sonnet'
+CLAUDE_EFFORT = 'low'
 
 
 def cli_guidance(binary):
@@ -68,7 +70,7 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
                          'Use the CLI for all repository reads and edits, and use Bash only to run '
                          'programs and tests, not to read or modify repository files.')
         cmd = ['claude', '-p', prompt, '--output-format', 'stream-json', '--verbose',
-               '--max-turns', '40', '--model', 'sonnet', '--effort', 'low',
+               '--max-turns', '40', '--model', CLAUDE_MODEL, '--effort', CLAUDE_EFFORT,
                '--dangerously-skip-permissions', '--strict-mcp-config', '--mcp-config', str(cfg),
                '--append-system-prompt', guidance]
         if FORCE_GUARDED:
@@ -78,7 +80,7 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
                          'args': suite.mcp_arguments(root, profile)}} if enabled else {}
     cfg.write_text(json.dumps({'mcpServers': servers}))
     cmd = ['claude', '-p', prompt, '--output-format', 'stream-json', '--verbose',
-           '--max-turns', '40', '--model', 'sonnet', '--effort', 'low',
+           '--max-turns', '40', '--model', CLAUDE_MODEL, '--effort', CLAUDE_EFFORT,
            '--dangerously-skip-permissions', '--strict-mcp-config', '--mcp-config', str(cfg)]
     if enabled:
         cmd += ['--append-system-prompt',
@@ -474,8 +476,11 @@ def workflow_evidence(agent, task, calls, output):
             action = request.get('action') if isinstance(request, dict) else None
             if action == 'continue' and _nested_key(payload, 'inspection'):
                 auto_inspect = True
-            if ((call['name'].endswith('ffsake_debug_launch') and call['input'].get('resume') is True
-                     or call['name'].endswith('ffsake_debug_probe'))
+            compact_probe = (call['name'].endswith('ffsake_debug_op')
+                             and isinstance(call.get('input'), dict)
+                             and call['input'].get('op') == 'probe')
+            if (((call['name'].endswith('ffsake_debug_launch') and call['input'].get('resume') is True)
+                     or call['name'].endswith('ffsake_debug_probe') or compact_probe)
                     and _nested_key(payload, 'inspection')):
                 combined_start = True
                 auto_inspect = True
@@ -637,18 +642,22 @@ def main():
     p.add_argument('--timeout', type=int, default=300)
     p.add_argument('--pilot', action='store_true')
     p.add_argument('--instrument-dir', type=Path, help='private directory for per-run content-free MCP timing logs')
-    p.add_argument('--catalog', choices=('core', 'editing'), default='core', help='diagnostic host-side tool selection')
+    p.add_argument('--catalog', choices=('core', 'editing', 'compact'), default='core', help='host-side tool selection')
     p.add_argument('--compact', action='store_true', help='diagnostic compact batch-read responses via proxy')
     p.add_argument('--diagnostic-matrix', action='store_true', help='counterbalance native, core, editing catalog, compact and startup snapshot')
     p.add_argument('--baseline-binary', type=Path, help='counterbalance native, this core binary and --binary (editing for editing tasks, core for debug)')
     p.add_argument('--cli-binary', type=Path, help='add a no-MCP CLI arm using this ffsake binary (Claude only)')
     p.add_argument('--dry-run', action='store_true', help='validate binaries, policies and arm commands without model calls')
     p.add_argument('--force-guarded', action='store_true', help='disable native repository read/edit tools in the MCP arm')
+    p.add_argument('--claude-model', default='sonnet', help='Claude model alias or ID for paid runs')
+    p.add_argument('--claude-effort', default='low', help='Claude effort level')
     p.add_argument('--cli-only', action='store_true', help='with --cli-binary, run only the CLI arm')
     a = p.parse_args()
-    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED
+    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, CLAUDE_MODEL, CLAUDE_EFFORT
     CATALOG = a.catalog
     FORCE_GUARDED = a.force_guarded
+    CLAUDE_MODEL = a.claude_model
+    CLAUDE_EFFORT = a.claude_effort
     COMPACT = a.compact
     if a.diagnostic_matrix and (not a.instrument_dir or a.catalog != 'core' or a.compact or a.agents != 'codex'):
         p.error('--diagnostic-matrix requires Codex, --instrument-dir, and default catalog/compact options')
@@ -680,7 +689,8 @@ def main():
     baseline_binary = a.baseline_binary.resolve(strict=True) if a.baseline_binary else None
     for task in tasks:
         suite.TASKS[task]['prompt'] += ('\nWork only in this repository; do not write scratch files elsewhere. '
-                                        'Do not use process-name-based termination or signal processes outside this task.')
+                                        'Do not use process-name-based termination or signal processes outside this task. '
+                                        'Do not ask the user questions; inspect the repository and act autonomously.')
     old_provenance = suite.task_provenance
     def task_provenance(root, files, prompt):
         result = old_provenance(root, files, prompt)
@@ -699,7 +709,7 @@ def main():
     suite.mcp_arguments = mcp_args
     suite.claude_run, suite.codex_run = claude, codex
     suite.ffsake_prompt = lambda prompt, tool_profile='all': prompt
-    preflight = suite.preflight(agents, 'core')
+    preflight = suite.preflight(agents, a.catalog)
     if not preflight['ok']:
         raise SystemExit('preflight failed; no model calls made')
     if baseline_binary:
@@ -736,7 +746,7 @@ def main():
               'force_guarded': FORCE_GUARDED,
               'disallowed_native_tools': ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'NotebookEdit'] if FORCE_GUARDED else [],
               'cli_guidance': CLI_GUIDANCE,
-              'settings': {'claude_model': 'sonnet (host alias)', 'claude_effort': 'low',
+              'settings': {'claude_model': CLAUDE_MODEL, 'claude_effort': CLAUDE_EFFORT,
                            'codex_model': 'gpt-6-astra', 'codex_reasoning_effort': 'low',
                            'approval': 'intentional noninteractive auto allowance for the fixture',
                            'native_tools_available_in_both_arms': True,
@@ -798,7 +808,7 @@ def main():
                                                if a.instrument_dir and agent == 'codex' and suite_mode == 'ffsake' else None)
                                 tempfile.tempdir = run_base
                                 os.environ['TMPDIR'] = run_base
-                                result = suite.one(agent, task, suite_mode, a.timeout, None, 'core')
+                                result = suite.one(agent, task, suite_mode, a.timeout, None, a.catalog)
                                 if a.diagnostic_matrix or baseline_binary:
                                     result['mode'] = mode
                             finally:

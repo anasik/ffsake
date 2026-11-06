@@ -183,6 +183,28 @@ necessary for reliable completion, and FFSAKE is not competitive on elapsed or
 input even when its path is forced. The remaining levers are per-turn payload
 and host/model tool policy, not a missing capability.
 
+## Cheapest model and compact catalog (2026-11-06)
+
+All paid tests used Claude Haiku 5.5, the cheapest available Claude model.
+
+| Study | Native | Guarded | Median ratios |
+| --- | --- | --- | --- |
+| Debug three-arm | 10 calls / 20.4 s / 175k | MCP 12 / 24.2 / 382k | 1.185 elapsed / 2.060 input |
+| Debug three-arm | 10 / 20.4 / 175k | CLI 10 / 22.2 / 241k | 1.034 / 1.208 |
+| Edit noninteractive | 15 / 20.5 / 174k | MCP 13 / 21.9 / 242k | 1.002 / 1.393 |
+| Edit noninteractive | 15 / 20.5 / 174k | CLI 14 / 19.8 / 174k | 0.910 / 1.052, 0/5 adopted |
+
+A new `compact` profile advertised four multiplexed tools plus access tools:
+**3,827 bytes / 7 tools** instead of 20,929 bytes / 28. It reduced fixed context
+but caused repeated generic calls: edit 1.128 elapsed / 1.421 input (4/5
+correct); debug **1.929 / 2.616** with 22 calls versus 11 native. The model paid
+more turns than the catalog saved.
+
+Cheaper models did not make FFSAKE competitive, and shrinking the catalog alone
+did not either. The remaining overhead is the model's tool-use behavior plus
+guarded payloads; native tools remained fastest and lowest-input in every fair
+comparison.
+
 ## Why this is architectural, not a tuning miss
 
 - FFSAKE's per-turn cost is already at or below native.
@@ -280,12 +302,14 @@ surface through the host's existing Bash tool, with no MCP catalog.
 
 ## Remaining gap and decision
 
-The three-arm and forced-policy results close the product-only redesign path.
-The consolidations reduced catalog and response size, and the CLI removed catalog
-cost entirely, but forcing tool availability either left calls equal and input
-45% higher or degraded completion to 2/5. The remaining gap is per-turn context
-plus host/model tool choice: agents fall back to native reads, writes, `pdb` and
-repeated verification even when a guarded one-call path is available.
+The three-arm, forced-policy, cheapest-model and compact-catalog results close
+the product-only redesign path. Consolidations reduced catalog and response
+size, the CLI removed catalog cost entirely, and the compact profile cut the
+catalog to 3.8 KB. Forcing tool availability either left calls equal with 45%
+more input or degraded completion to 2/5; the compact profile traded bytes for
+more calls (up to 2.6x input on debug); the cheapest model produced the same or
+worse ratios. The remaining gap is host/model tool choice and guarded payload,
+not a missing FFSAKE capability.
 
 A further product-only change would have to force a tool choice or collapse
 diagnosis, edit and verification into one opaque command. The first requires

@@ -67,3 +67,7 @@ The [three-arm index](20261105-cli-arm/three-arm.json) records 30 counterbalance
 ## 2026-11-06 Forced-guarded policy
 
 The [forced-guard indexes](20261106-forced-guard/guarded-mcp.json) record a 10-attempt native-versus-forced-MCP run (all correct; 7 calls each; 1.454x input) and a 5-attempt [forced CLI](20261106-forced-guard/forced-cli.json) run (2/5 correct). Disabling native file tools did not make the guarded path competitive and the forced CLI degraded completion.
+
+## 2026-11-06 Cheapest-model validation
+
+The [Haiku indexes](20261106-haiku/three-arm.json) record three studies using Claude Haiku 5.5: a 30-attempt three-arm run, a 15-attempt noninteractive edit rerun, and a 20-attempt compact-catalog run. Native remained fastest and lowest-input; the compact profile reduced catalog bytes but increased calls and input.
