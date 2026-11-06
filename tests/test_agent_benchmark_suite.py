@@ -376,6 +376,31 @@ class RunValidationTests(unittest.TestCase):
         self.assertFalse(result["correct"])
         self.assertEqual(result["verification"]["unexpected_file_changes"], ["README.md", "extra.txt"])
 
+    def test_verifier_created_bytecode_is_not_a_verification_change(self):
+        def mutation(root):
+            (root / "policy.py").write_text("def f():\n    return 2\n")
+
+        def verify(root, state):
+            cache = root / "units" / "__pycache__"
+            cache.mkdir(parents=True, exist_ok=True)
+            (cache / "length.cpython-314.pyc").write_bytes(b"cache")
+            return True, {"program_exit": 0, "test_exit": 0}
+        from unittest.mock import patch
+        with patch.dict(suite.TASKS["medium"], {"verify": verify}):
+            result = self.run_mock_agent(mutation)
+        self.assertEqual(result["verification"]["verification_file_changes"], [])
+
+    def test_bytecode_caches_are_not_counted_as_repository_changes(self):
+        def mutation(root):
+            (root / "policy.py").write_text("def f():\n    return 2\n")
+            cache = root / "tests" / "__pycache__"
+            cache.mkdir(parents=True, exist_ok=True)
+            (cache / "test_policy.cpython-314.pyc").write_bytes(b"cache")
+        from unittest.mock import patch
+        with patch.dict(suite.TASKS["medium"], {"verify": lambda *_: (True, {})}):
+            result = self.run_mock_agent(mutation)
+        self.assertEqual(result["verification"]["unexpected_file_changes"], [])
+
     def test_verification_time_changes_fail_without_being_attributed_to_agent_edits(self):
         from unittest.mock import patch
         mutations = {

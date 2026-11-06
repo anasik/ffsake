@@ -225,12 +225,35 @@ class CliArmTests(unittest.TestCase):
             finally:
                 rc.CLI_GUIDANCE = old
             command = run.call_args.args[0]
-            config = json.loads((root / '.ffsake-claude-mcp.json').read_text())
+            config = json.loads((root.parent / 'ffsake-claude-mcp.json').read_text())
             self.assertEqual(config['mcpServers'], {})
             self.assertIn('--append-system-prompt', command)
             self.assertEqual(command[command.index('--append-system-prompt') + 1],
                              'CLI_GUIDANCE_SENTINEL')
             self.assertNotIn('--tools', command)
+
+    def test_redirect_reads_writes_policy_and_keeps_native_edits(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            old = rc.CLI_REDIRECT_READS
+            rc.CLI_REDIRECT_READS = True
+            try:
+                with mock.patch.object(rc.suite, 'run_process', return_value={
+                        'stdout': '', 'stderr': '', 'exit_code': 0, 'elapsed_ms': 0}) as run:
+                    rc.claude(root, 'task', False, 5, 'core', 'cli')
+            finally:
+                rc.CLI_REDIRECT_READS = old
+            command = run.call_args.args[0]
+            policy = Path(command[command.index('--settings') + 1])
+            self.assertTrue(policy.is_file())
+            settings = json.loads(policy.read_text())
+            self.assertEqual(settings['hooks']['PreToolUse'][0]['matcher'], 'Read|Bash')
+            self.assertIn('FFSAKE_BIN=', settings['hooks']['PreToolUse'][0]['hooks'][0]['command'])
+            self.assertIn('--dangerously-skip-permissions', command)
+            self.assertNotIn('--disallowedTools', command)
 
     def test_forced_guarded_arm_disables_native_file_tools(self):
         import tempfile

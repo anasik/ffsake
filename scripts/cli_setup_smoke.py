@@ -26,18 +26,28 @@ def main():
         assert first["action"] == "appended", first
         text = (project / "CLAUDE.md").read_text()
         assert text.count("<!-- ffsake-cli:start -->") == 1, text
-        assert '"$F" probe' in text and '"$F" read' in text
+        assert 'probe . --debug' in text and 'read . ' in text
         second = run("--host", "claude", "--project", str(project), "--apply")
         assert second["action"] == "present", second
         assert (project / "CLAUDE.md").read_text().count("<!-- ffsake-cli:start -->") == 1
         for name in (".mcp.json", ".codex", "opencode.json"):
             assert not (project / name).exists(), name
+        policy = project / ".claude" / "ffsake-read-policy.json"
+        assert not policy.exists(), policy
+        hooked = run("--host", "claude", "--project", str(project),
+                     "--redirect-reads", "--apply")
+        assert hooked["read_policy_installed"] is True, hooked
+        settings = json.loads(policy.read_text())
+        command = settings["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+        assert "claude_read_redirect_hook.py" in command and "FFSAKE_BIN=" in command, command
+        assert settings["hooks"]["PreToolUse"][0]["matcher"] == "Read|Bash"
+        assert hooked["settings_flag"] == f"--settings {policy.resolve()}"
 
         (project / "AGENTS.md").write_text("# Agents\n")
         codex = run("--host", "codex", "--project", str(project), "--apply")
         assert codex["mcp_config"] is None and codex["tool_approvals"] == 0, codex
         assert codex["guidance_file"].endswith("AGENTS.md"), codex
-        assert '"$F" probe' in (project / "AGENTS.md").read_text()
+        assert 'probe . --debug' in (project / "AGENTS.md").read_text()
 
         print(json.dumps({
             "no_mcp_config": True,
@@ -45,6 +55,7 @@ def main():
             "claude_permission_rule": first["permission_rule"],
             "idempotent_guidance": True,
             "codex_guidance": True,
+            "read_redirect_hook": True,
             "model_calls": 0,
         }, indent=2))
 

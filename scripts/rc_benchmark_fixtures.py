@@ -320,6 +320,7 @@ def edit_units_fixture(root):
         'tests/test_units.py': 'import unittest\nfrom units.length import meters_to_feet\nfrom units.mass import kg_to_pounds\nfrom units.temperature import celsius_to_fahrenheit\n\nclass Units(unittest.TestCase):\n    def test_length(self):\n        self.assertEqual(meters_to_feet(1), 3.28)\n        self.assertEqual(meters_to_feet(2), 6.56)\n    def test_mass(self):\n        self.assertEqual(kg_to_pounds(1), 2.2)\n        self.assertEqual(kg_to_pounds(5), 11.02)\n    def test_temperature(self):\n        self.assertEqual(celsius_to_fahrenheit(0), 32.0)\n        self.assertEqual(celsius_to_fahrenheit(100), 212.0)\n',
         'README.md': '# Units\nRun main.py and the test suite.\n',
         'sentinel.txt': 'unrelated unit notes\n',
+        '.gitignore': '.ffsake/\n__pycache__/\n*.pyc\n.pytest_cache/\n',
     }
     suite.write_files(root, files)
     suite.git_init(root)
@@ -342,9 +343,11 @@ def debug_cursor_fixture(root):
     files = {
         'cursor.py': 'def page(items, cursor, size):\n    start = cursor + 1\n    end = start + size\n    return items[start:end], end\n\ndef collect(items, size):\n    cursor = 0\n    result = []\n    while True:\n        batch, nxt = page(items, cursor, size)\n        if not batch:\n            break\n        result.extend(batch)\n        if nxt >= len(items):\n            break\n        cursor = nxt\n    return result\n',
         'main.py': 'from cursor import collect\n\nactual = collect([1, 2, 3, 4, 5], 2)\nexpected = [1, 2, 3, 4, 5]\nprint(f"actual={actual}")\nprint(f"expected={expected}")\nraise SystemExit(0 if actual == expected else 1)\n',
+        'tests/__init__.py': '',
         'tests/test_cursor.py': 'import unittest\nfrom cursor import collect\n\nclass Cursor(unittest.TestCase):\n    def test_pages(self):\n        self.assertEqual(collect([1, 2, 3, 4, 5], 2), [1, 2, 3, 4, 5])\n        self.assertEqual(collect(list(range(10)), 3), list(range(10)))\n',
         'README.md': '# Cursor\nRun main.py to reproduce the pagination failure.\n',
         'notes.txt': 'Each item must appear exactly once.\n',
+        '.gitignore': '.ffsake/\n__pycache__/\n*.pyc\n.pytest_cache/\n',
     }
     suite.write_files(root, files)
     suite.git_init(root)

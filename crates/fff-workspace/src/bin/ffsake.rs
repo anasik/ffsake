@@ -286,6 +286,8 @@ fn subcommand(args: &[String]) -> Result<Value> {
     let mut runtime = runtime_for(&root, access.as_deref(), debug.as_deref())?;
     match command {
         "read" => {
+            let raw = rest.iter().any(|arg| arg == "--raw");
+            rest.retain(|arg| arg != "--raw");
             if rest.is_empty() {
                 return Err("read requires at least one path".into());
             }
@@ -305,6 +307,7 @@ fn subcommand(args: &[String]) -> Result<Value> {
                 files: serde_json::from_value(Value::Array(files))?,
             })?;
             let mut text = String::new();
+            let mut raw_text = String::new();
             for item in result["files"].as_array().cloned().unwrap_or_default() {
                 let path = item["path"].as_str().unwrap_or("");
                 if item["status"].as_str() != Some("ok") {
@@ -312,6 +315,8 @@ fn subcommand(args: &[String]) -> Result<Value> {
                     continue;
                 }
                 let start = item["read"]["start_line"].as_u64().unwrap_or(1) as usize;
+                raw_text.push_str(item["read"]["text"].as_str().unwrap_or(""));
+                raw_text.push('\n');
                 text.push_str(&format!("{path}:\n"));
                 for (offset, line) in item["read"]["text"]
                     .as_str()
@@ -322,7 +327,11 @@ fn subcommand(args: &[String]) -> Result<Value> {
                     text.push_str(&format!("{}: {line}\n", start + offset));
                 }
             }
-            Ok(json!({"ok": true, "text": text}))
+            if raw {
+                Ok(json!({"ok": true, "text": raw_text}))
+            } else {
+                Ok(json!({"ok": true, "text": text}))
+            }
         }
         "edit" => {
             let range = line_range(&rest);

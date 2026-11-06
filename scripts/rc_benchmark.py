@@ -46,6 +46,7 @@ FORCE_READS_CLI = False
 PERMISSION_PROFILES = False
 CLI_HOOK_POLICY = False
 CLI_TOOLS_ONLY = False
+CLI_REDIRECT_READS = False
 CLAUDE_MODEL = 'sonnet'
 CLAUDE_EFFORT = 'low'
 
@@ -53,30 +54,29 @@ CLAUDE_EFFORT = 'low'
 def cli_guidance(binary, split=False):
     if split:
         return (
-            f"The guarded FFSAKE CLI is at {binary}. Set F={binary}. Use the CLI for repository "
-            "reads and debugging, and use native Edit/Write for code changes:\n"
-            'F read "$PWD" path:10-40 path2:1-40\n'
-            'F probe "$PWD" --debug .ffsake/rc-debug.json --config main --breakpoint path:line --stops 2\n'
-            "Read only the lines you need. Probe returns compact stop values; do not repeat the "
-            "same stops with pdb. Make fixes with native Edit/Write. Native tools are available; "
-            "never bypass an access denial."
+            f"The guarded FFSAKE CLI is at {binary}. Use it for repository reads and debugging, "
+            "and use native Edit/Write for code changes.\n"
+            f"{binary} read . main.py:1-40 tests/test_main.py:1-80\n"
+            f"{binary} probe . --debug .ffsake/rc-debug.json --config main --breakpoint main.py:12 --stops 2\n"
+            "Replace the example filenames and line numbers with the real ones. Use a literal dot for the workspace and no shell variables or quotes; the host read "
+            "block rejects commands it cannot parse. Run one command per Bash call. Read only the "
+            "lines you need. Probe returns compact stop values; do not repeat the same stops with "
+            "pdb. Never bypass an access denial."
         )
     return (
-        f"The guarded FFSAKE CLI is at {binary}. Set F={binary} and use it instead of native "
-        "Read, Write or Edit for repository files:\n"
-        'F read "$PWD" path:8-12 path2:1-40\n'
-        'F edit "$PWD" path --lines 8-10 --old \'old\' --new \'new\'\n'
-        'F apply "$PWD" <token>\n'
-        'F probe "$PWD" --debug .ffsake/rc-debug.json --config main --breakpoint path:line --stops 2\n'
-        "Read only the lines you need. The edit is line-addressed and previews one file; review its diff, then apply once. "
-        "Probe returns compact stop values. Use Bash only to run programs and tests. "
-        "Never bypass an access denial."
+        f"The guarded FFSAKE CLI is at {binary}. Use it for repository reads and debugging, and "
+        "use native Edit/Write for code changes.\n"
+        f"{binary} read . main.py:1-40 tests/test_main.py:1-80\n"
+        f"{binary} probe . --debug .ffsake/rc-debug.json --config main --breakpoint main.py:12 --stops 2\n"
+        "Replace the example filenames and line numbers with the real ones. Use a literal dot for the workspace and no shell variables or quotes; the host read "
+        "block rejects commands it cannot parse. Run one command per Bash call. Read only the "
+        "lines you need. Probe returns compact stop values. Never bypass an access denial."
     )
 
 def claude(root, prompt, enabled, timeout, profile, mode=None):
     # The task prompt and native tools are identical in both arms. MCP itself
     # supplies FFSAKE's server guidance; the baseline has no MCP servers.
-    cfg = root / '.ffsake-claude-mcp.json'
+    cfg = root.parent / 'ffsake-claude-mcp.json'
     if mode == 'cli':
         cfg.write_text(json.dumps({'mcpServers': {}}))
         guidance = CLI_GUIDANCE
@@ -90,7 +90,16 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
         cmd = ['claude', '-p', prompt, '--output-format', 'stream-json', '--verbose',
                '--max-turns', '40', '--model', CLAUDE_MODEL, '--effort', CLAUDE_EFFORT,
                '--strict-mcp-config', '--mcp-config', str(cfg)]
-        if CLI_TOOLS_ONLY:
+        if CLI_REDIRECT_READS:
+            hook = Path(__file__).with_name('claude_read_redirect_hook.py').resolve()
+            settings = root.parent / 'ffsake-read-policy.json'
+            settings.write_text(json.dumps({'hooks': {'PreToolUse': [{
+                'matcher': 'Read|Bash',
+                'hooks': [{'type': 'command',
+                           'command': f'FFSAKE_BIN={suite.CLI_BINARY} {sys.executable} {hook}'}],
+            }]}}))
+            cmd += ['--settings', str(settings), '--dangerously-skip-permissions']
+        elif CLI_TOOLS_ONLY:
             cmd += ['--tools', 'Bash', 'Edit', 'Write', '--dangerously-skip-permissions']
         elif CLI_HOOK_POLICY:
             hook = Path(__file__).with_name('claude_pre_tool_policy.py').resolve()
@@ -714,13 +723,15 @@ def main():
     p.add_argument('--permission-profiles', action='store_true', help='use host allowlists instead of skip-all permissions')
     p.add_argument('--cli-hook-policy', action='store_true', help='install a PreToolUse hook that denies native repository reads in the CLI arm')
     p.add_argument('--cli-tools-only', action='store_true', help='expose only Bash/Edit/Write in the CLI arm')
+    p.add_argument('--cli-redirect-reads', action='store_true', help='rewrite native Read through ffsake with a PreToolUse hook')
     a = p.parse_args()
-    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, FORCE_READS_CLI, PERMISSION_PROFILES, CLI_HOOK_POLICY, CLI_TOOLS_ONLY, CLAUDE_MODEL, CLAUDE_EFFORT
+    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, FORCE_READS_CLI, PERMISSION_PROFILES, CLI_HOOK_POLICY, CLI_TOOLS_ONLY, CLI_REDIRECT_READS, CLAUDE_MODEL, CLAUDE_EFFORT
     CATALOG = a.catalog
     FORCE_GUARDED = a.force_guarded
     PERMISSION_PROFILES = a.permission_profiles
     CLI_HOOK_POLICY = a.cli_hook_policy
     CLI_TOOLS_ONLY = a.cli_tools_only
+    CLI_REDIRECT_READS = a.cli_redirect_reads
     FORCE_READS_CLI = a.force_reads_cli
     CLAUDE_MODEL = a.claude_model
     CLAUDE_EFFORT = a.claude_effort

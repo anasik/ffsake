@@ -1,5 +1,43 @@
 # Action plan
 
+## Current state (2026-11-06)
+
+Goal: make FFSAKE genuinely better than native tools for agent-driven
+development, judged on correctness, permission friction, elapsed time, tokens
+and cost.
+
+Delivered integration: **CLI + Claude read-redirect hook**. A `PreToolUse` hook
+serves native `Read` through `ffsake read` (input rewrite, no denial/retry), native
+`Edit`/`Write` stay available, and `ffsake probe` supplies one-call multi-stop
+debugging. Setup is one guidance block, one settings file and one optional
+`Bash(ffsake:*)` rule; there is no MCP catalog or per-tool approval list.
+`scripts/ffsake_cli_setup.py --redirect-reads --apply` installs it.
+
+Final validation (10 repetitions per task, Claude Haiku 5.5, $0.2608, 40/40
+valid, `docs/agent-benchmark-runs/20261106-redirect/final-40.json`):
+
+- Edit: native 10/10 vs redirect 10/10; 16.5 s vs 17.1 s; 156,682 vs 157,229
+  input; $0.00614 vs $0.00620; paired median 1.075 elapsed / 1.075 input.
+- Debug: native 7/10 vs redirect **10/10**; 20.2 s vs 21.0 s; 201,868 vs 215,081
+  input; $0.00694 vs **$0.00655**; paired median 1.038 elapsed / 1.196 input.
+- Runtime permission denials: 0–2 in both arms (deny-only hook produced 7–11
+  retries and is retired).
+
+Verdict: **equal-or-better overall**. Edit is at practical efficiency parity;
+debug has better correctness, lower cost and near-parity elapsed at ~20% higher
+tokens. Setup/permission friction is materially lower than MCP. The remaining
+limit is that native tool use is already near the minimum turn count on these
+tasks, so FFSAKE can match but rarely beat it on tokens.
+
+Next action: run the same 10-repetition harness on a third fresh task pair to
+test generality, then either tighten the probe/read payload or document the
+token-parity limit. Do not reopen MCP catalog work; the redirect path has no
+catalog.
+
+Measurement corrections: bytecode caches are no longer counted as repository
+changes; `scripts/reevaluate_rc_results.py` recomputes retained traces without
+model calls.
+
 ## Competitive unfamiliar-task goal (2026-11-05, candidate pending validation)
 
 Active goal: make FFSAKE reliably competitive with native tools on unfamiliar editing and debugging while preserving capabilities and safeguards.
@@ -14,9 +52,9 @@ Model-free barrier analysis (`docs/ARCHITECTURAL_BARRIER.md`): final traces used
 
 R3 CLI shim: `ffsake` restores the persistent JSONL `serve` mode and adds one-shot `--request`/`--apply` with private, canonical-root-bound preview tokens under `.ffsake/cli/` (0700/0600, one-hour TTL, traversal rejection, replay-time hash/count checks). It uses the same access policy, reviewed preview/apply split, journal history and debug cleanup as MCP, adds zero MCP catalog bytes, produces responses 21-48 bytes larger than MCP, and measured about 75-85 ms median per `serve` round trip versus 209-217 ms for an equivalent shell pipeline, with 46-48 ms startup. `scripts/cli_smoke.py` covers guarded reads, preview-without-write, apply-once, stale rejection, undo/redo, authorization denial, traversal rejection, two-stop debug cleanup and persistent handles; `scripts/benchmark.py` passes. Projected turns are 4-5 per task versus native 7-10. Adoption and paid timing are unmeasured.
 
-Host hook policy (2026-11-06): implemented a Claude PreToolUse hook denying native reads and file-reading shell commands while allowing edits/ffsake/tests; model-free hook smoke passes. 20 Haiku attempts on fresh tasks, $0.1637, all 5/5 correct. Edit native 13 calls/18.0 s/174,685 input vs hooked CLI 19/25.5/327,241 (1.590/1.894, denials 8-11 vs 0-1). Debug native 10/17.9/172,998 vs hooked CLI 17/29.7/399,732 (1.250/1.669, denials 7-11). Deny-only enforcement adds retry friction; --tools/allowedTools could not remove Read. Concrete barrier: a host plugin or input-rewriting hook is required. Total paid spend ~$6.78 across ~346 attempts.
+Host hook policy (2026-11-06): implemented a Claude PreToolUse hook denying native reads and file-reading shell commands while allowing edits/ffsake/tests; model-free hook smoke passes. 20 Haiku attempts on fresh tasks, $0.1637, all 5/5 correct. Edit native 13 calls/18.0 s/174,685 input vs hooked CLI 19/25.5/327,241 (1.590/1.894, denials 8-11 vs 0-1). Debug native 10/17.9/172,998 vs hooked CLI 17/29.7/399,732 (1.250/1.669, denials 7-11). Deny-only enforcement adds retry friction; --tools/allowedTools could not remove Read. Concrete barrier: a host plugin or input-rewriting hook is required. The current Haiku validation phase totals about $7.26.
 
-Fresh permission-controlled tasks (2026-11-06): 20 Haiku attempts, $0.1129, on new `edit_units` and `debug_cursor` with host permission profiles. Native edit 4/5, 14 calls/17.0 s/68,078 input, 0-1 denials; CLI edit 1/5, 20/30.8/154,589, 3-6 denials. Native debug 4/5 artifact 5/5, 12/19.0/99,673; CLI debug 0/5, 18/32.8/171,166, 2-6 denials. Host enforcement was unreliable (native Read still appeared), so CLI-first simplifies setup but increases runtime friction and loses correctness on fresh work. Concrete barrier: host-level tool restriction/auto-approval is outside the product; a host plugin would be required. Total paid spend ~$6.78 across ~346 attempts.
+Fresh permission-controlled tasks (2026-11-06): 20 Haiku attempts, $0.1129, on new `edit_units` and `debug_cursor` with host permission profiles. Native edit 4/5, 14 calls/17.0 s/68,078 input, 0-1 denials; CLI edit 1/5, 20/30.8/154,589, 3-6 denials. Native debug 4/5 artifact 5/5, 12/19.0/99,673; CLI debug 0/5, 18/32.8/171,166, 2-6 denials. Host enforcement was unreliable (native Read still appeared), so CLI-first simplifies setup but increases runtime friction and loses correctness on fresh work. Concrete barrier: host-level tool restriction/auto-approval is outside the product; a host plugin would be required. The current Haiku validation phase totals about $7.26.
 
 CLI-first integration (2026-11-06): `ffsake_cli_setup.py` writes one project guidance block and one host rule (`Bash(ffsake:*)`), with no MCP config, catalog or per-tool approvals (28 core tools/approvals under MCP; zero under CLI). Model-free smoke passes. A task-scoped guidance run (20 Haiku attempts, $0.1393) measured edit input parity 1.004x with noisy elapsed 1.164x, and debug 1.141x input/1.052x elapsed; across three debug batches the median is ~0.985 elapsed/0.923 input, while edits remain native-bound. Total paid spend $6.1294 across 260 attempts.
 

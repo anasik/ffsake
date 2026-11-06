@@ -1092,6 +1092,47 @@ This closes the host-enforcement question with a negative result: a deny-only ho
 
 Evidence: [hook policy index](20261106-permission/hook-policy.json). Total paid spend is about **$6.78** across roughly 346 attempts.
 
+### Read-redirect hook: fresh-task validation (2026-11-06)
+
+Native `Read` calls are now rewritten through FFSAKE by a Claude Code `PreToolUse`
+hook. The hook runs `ffsake read`, writes the returned text under `.ffsake/hook-reads`,
+and returns `updatedInput.file_path` for the cache file, so the model keeps using
+Read but the content comes from the workspace policy. There is no denial and no
+retry loop. File-reading shell commands are still denied. Native Edit/Write remain
+available for changes, and `ffsake probe` supplies one-call multi-stop debugging.
+
+Ten Haiku attempts per task on the fresh `edit_units` and `debug_cursor` fixtures,
+**$0.2608**, all 40 attempts valid. Native and redirect arms ran contemporaneously.
+
+| Task / arm | Correct | Calls (med) | Seconds (med) | Input (med) | Cost (med) | Denials |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Edit native | 10/10 | 12.5 | 16.5 | 156,682 | $0.00614 | 0–1 |
+| Edit redirect | 10/10 | 13.0 | 17.1 | 157,229 | $0.00620 | 0–2 |
+| Debug native | **7/10** | 10.5 | 20.2 | 201,868 | $0.00694 | 0–4 |
+| Debug redirect | **10/10** | 10.0 | 21.0 | 215,081 | **$0.00655** | 0–1 |
+
+Median paired ratios: edit **1.075 elapsed / 1.075 input** (practical parity;
+only 2/10 pairs favored the redirect arm on either measure). Debug **1.038
+elapsed / 1.196 input**, but **10/10 correct versus native 7/10** and **5.6%
+lower cost**. The three native debug failures were real workflow failures: the
+agent fixed the program without observing the two required page iterations. The
+one-call probe makes the required observation part of the normal path.
+
+An earlier 20-attempt run with the same hook measured edit 1.056 / 0.998 and
+debug 0.898 / 0.856. The direction is not stable at n=5; the 10-repetition run is
+the basis for the claim. Across both runs the supported statement is: **edit
+efficiency at parity, debug efficiency at parity-to-slightly-worse on tokens but
+better on correctness and cost, with far fewer permission retries than the
+deny-only hook (0–2 versus 7–11)**.
+
+Measurement defect fixed: the file audit counted `__pycache__/*.pyc` created by
+running Python as repository changes, and counted verifier-created caches as
+agent changes. Both audits now ignore bytecode and tool caches; `reevaluate_rc_results.py`
+recomputed retained traces without model calls.
+
+Evidence: [final 40-attempt index](20261106-redirect/final-40.json),
+[earlier 20-attempt index](20261106-redirect/earlier-20.json). The final run cost **$0.2608**; the current Haiku validation phase totals about **$7.26**.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

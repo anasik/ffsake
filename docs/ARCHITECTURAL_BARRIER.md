@@ -285,6 +285,35 @@ The concrete missing capability is a host plugin or input-rewriting hook that
 exposes a first-class scoped read tool and removes native Read without a denial
 loop. That host integration is outside this repository’s current boundary.
 
+## Read-redirect hook result (2026-11-06)
+
+The deny-only hook was replaced by an input-rewriting hook
+(`scripts/claude_read_redirect_hook.py`). It executes `ffsake read` for the
+requested file/range, writes the returned text under `.ffsake/hook-reads`, and
+returns `updatedInput.file_path`. Native `Read` still works for the model, but
+repository content comes from FFSAKE. There is no denial and no retry loop.
+
+Ten Haiku attempts per task on `edit_units` and `debug_cursor`, $0.2608:
+
+| Task / arm | Correct | Calls | Seconds | Input | Cost | Denials |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Edit native | 10/10 | 12.5 | 16.5 | 156,682 | $0.00614 | 0-1 |
+| Edit redirect | 10/10 | 13.0 | 17.1 | 157,229 | $0.00620 | 0-2 |
+| Debug native | 7/10 | 10.5 | 20.2 | 201,868 | $0.00694 | 0-4 |
+| Debug redirect | 10/10 | 10.0 | 21.0 | 215,081 | **$0.00655** | 0-1 |
+
+Edit is at practical parity (+7.5% elapsed and input, +1% cost). Debug is 4%
+slower and 20% higher-input, but 10/10 correct versus 7/10, 5.6% cheaper, and
+with no denial retries. The earlier 20-attempt run measured edit 1.056/0.998
+and debug 0.898/0.856, so the efficiency effect is within run-to-run variance.
+
+The host-enforcement question is therefore closed: rewriting Read through
+FFSAKE works without retries, and one hook plus one optional `Bash(ffsake:*)`
+rule replaces the MCP catalog and per-tool approval list. The remaining gap is
+not a missing host capability; it is that native tool use is already near the
+minimum turn count for these tasks, so FFSAKE can match it but rarely beat it on
+tokens.
+
 ## Why this is architectural, not a tuning miss
 
 - FFSAKE's per-turn cost is already at or below native.

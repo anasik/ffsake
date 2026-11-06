@@ -123,3 +123,7 @@ The [fresh index](20261106-permission/fresh.json) records 20 Haiku attempts on n
 ## 2026-11-06 Host hook policy
 
 The [hook index](20261106-permission/hook-policy.json) records 20 Haiku attempts with a PreToolUse hook denying native reads. All arms were 5/5 correct, but the CLI arm retried denied reads 7-11 times and measured 1.590/1.894 on edits and 1.250/1.669 on debug. Deny-only host enforcement adds friction.
+
+## 2026-11-06 Read-redirect hook
+
+The [final 40-attempt index](20261106-redirect/final-40.json) records 10 Haiku repetitions per fresh task with native `Read` rewritten through `ffsake read` and native edits kept. Edit was 10/10 both at 1.075 elapsed / 1.075 input; debug was 10/10 FFSAKE versus 7/10 native at 1.038 elapsed / 1.196 input and 5.6% lower cost. The [earlier 20-attempt index](20261106-redirect/earlier-20.json) shows edit 1.056/0.998 and debug 0.898/0.856. Bytecode caches are excluded from the file audit; retained traces were re-evaluated without model calls.

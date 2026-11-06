@@ -858,6 +858,18 @@ def fixture_directories(root):
             for path in fixture_paths(root) if not path.is_symlink() and path.is_dir()}
 
 
+TRANSIENT_DIRS = ("__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache")
+TRANSIENT_SUFFIXES = (".pyc", ".pyo", ".pyd")
+
+
+def transient_artifact(name):
+    """Bytecode and tool caches are build output, not repository edits."""
+    parts = name.replace("\\", "/").split("/")
+    if any(part in TRANSIENT_DIRS for part in parts[:-1]):
+        return True
+    return parts[-1].endswith(TRANSIENT_SUFFIXES)
+
+
 def fixture_files(root):
     """Snapshot task files, excluding harness configuration and journal state."""
     return {str(p.relative_to(root)): (b"SYMLINK:" + os.fsencode(os.readlink(p))
@@ -1105,6 +1117,8 @@ def one(agent, task_name, mode, timeout, opencode_model, tool_profile="all"):
         else:
             allowed_changes = set(task.get("allowed_changes", set(original_files) if task_name == "micro" else {
                 "policy.py" if task_name == "medium" else "issue_tracker.py"}))
+            original_files = {k: v for k, v in original_files.items() if not transient_artifact(k)}
+            final_files = {k: v for k, v in final_files.items() if not transient_artifact(k)}
             unexpected = sorted((set(original_files) - set(final_files) - set(task.get("allowed_deletions", ()))) |
                                 (set(final_files) - set(original_files) - allowed_changes) |
                                 {name for name in original_files.keys() & final_files.keys()
@@ -1117,6 +1131,7 @@ def one(agent, task_name, mode, timeout, opencode_model, tool_profile="all"):
                 correct, verification = False, {"exception": repr(exc)}
             verified_files = audit_files("after_verification")
             if verified_files is not None:
+                verified_files = {k: v for k, v in verified_files.items() if not transient_artifact(k)}
                 verification_changes = sorted(name for name in final_files.keys() | verified_files.keys()
                                               if final_files.get(name) != verified_files.get(name))
         verification["unexpected_file_changes"] = unexpected
