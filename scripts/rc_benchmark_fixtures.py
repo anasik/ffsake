@@ -309,6 +309,59 @@ def debug_expand_verify(root, state):
              'test_exit': tests.returncode, 'test_stderr': tests.stderr})
 
 
+def edit_units_fixture(root):
+    files = {
+        'units/__init__.py': '',
+        'units/length.py': 'def meters_to_feet(meters):\n    return round(meters * 3.0, 2)\n',
+        'units/mass.py': 'def kg_to_pounds(kilograms):\n    return round(kilograms * 2.0, 2)\n',
+        'units/temperature.py': 'def celsius_to_fahrenheit(celsius):\n    return round(celsius * 9 / 5, 2)\n',
+        'main.py': 'from units.length import meters_to_feet\nfrom units.mass import kg_to_pounds\nfrom units.temperature import celsius_to_fahrenheit\n\nactual = [meters_to_feet(1), kg_to_pounds(1), celsius_to_fahrenheit(0)]\nexpected = [3.28, 2.2, 32.0]\nprint(f"actual={actual}")\nprint(f"expected={expected}")\nraise SystemExit(0 if actual == expected else 1)\n',
+        'tests/__init__.py': '',
+        'tests/test_units.py': 'import unittest\nfrom units.length import meters_to_feet\nfrom units.mass import kg_to_pounds\nfrom units.temperature import celsius_to_fahrenheit\n\nclass Units(unittest.TestCase):\n    def test_length(self):\n        self.assertEqual(meters_to_feet(1), 3.28)\n        self.assertEqual(meters_to_feet(2), 6.56)\n    def test_mass(self):\n        self.assertEqual(kg_to_pounds(1), 2.2)\n        self.assertEqual(kg_to_pounds(5), 11.02)\n    def test_temperature(self):\n        self.assertEqual(celsius_to_fahrenheit(0), 32.0)\n        self.assertEqual(celsius_to_fahrenheit(100), 212.0)\n',
+        'README.md': '# Units\nRun main.py and the test suite.\n',
+        'sentinel.txt': 'unrelated unit notes\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['units/length.py'] = 'def meters_to_feet(meters):\n    return round(meters * 3.28084, 2)\n'
+    reference['units/mass.py'] = 'def kg_to_pounds(kilograms):\n    return round(kilograms * 2.20462, 2)\n'
+    reference['units/temperature.py'] = 'def celsius_to_fahrenheit(celsius):\n    return round(celsius * 9 / 5 + 32, 2)\n'
+    return {'reference': reference}
+
+
+def edit_units_verify(root, state):
+    program = command(root, sys.executable, '-B', 'main.py')
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    return (program.returncode == 0 and tests.returncode == 0,
+            {'program_exit': program.returncode, 'stdout': program.stdout,
+             'test_exit': tests.returncode, 'test_stderr': tests.stderr})
+
+
+def debug_cursor_fixture(root):
+    files = {
+        'cursor.py': 'def page(items, cursor, size):\n    start = cursor + 1\n    end = start + size\n    return items[start:end], end\n\ndef collect(items, size):\n    cursor = 0\n    result = []\n    while True:\n        batch, nxt = page(items, cursor, size)\n        if not batch:\n            break\n        result.extend(batch)\n        if nxt >= len(items):\n            break\n        cursor = nxt\n    return result\n',
+        'main.py': 'from cursor import collect\n\nactual = collect([1, 2, 3, 4, 5], 2)\nexpected = [1, 2, 3, 4, 5]\nprint(f"actual={actual}")\nprint(f"expected={expected}")\nraise SystemExit(0 if actual == expected else 1)\n',
+        'tests/test_cursor.py': 'import unittest\nfrom cursor import collect\n\nclass Cursor(unittest.TestCase):\n    def test_pages(self):\n        self.assertEqual(collect([1, 2, 3, 4, 5], 2), [1, 2, 3, 4, 5])\n        self.assertEqual(collect(list(range(10)), 3), list(range(10)))\n',
+        'README.md': '# Cursor\nRun main.py to reproduce the pagination failure.\n',
+        'notes.txt': 'Each item must appear exactly once.\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['cursor.py'] = reference['cursor.py'].replace('start = cursor + 1', 'start = cursor')
+    return {'reference': reference}
+
+
+def debug_cursor_verify(root, state):
+    program = command(root, sys.executable, '-B', 'main.py')
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    return (program.returncode == 0 and 'actual=[1, 2, 3, 4, 5]' in program.stdout
+            and tests.returncode == 0,
+            {'program_exit': program.returncode, 'stdout': program.stdout,
+             'test_exit': tests.returncode, 'test_stderr': tests.stderr})
+
+
 TASKS = {
     'cross': {'fixture': cross_fixture, 'verify': cross_verify,
               'prompt': 'Explore this pricing project and fix the discount calculation. Both checkout and the pricing function should accept discounts as percentages, and final prices must be correct. Keep tests and unrelated files unchanged. Finish when the existing tests pass.',
@@ -357,4 +410,11 @@ TASKS = {
                      'prompt': 'Run main.py to reproduce the tier boundary failure. Use a debugger to observe at least two loop iterations and the runtime tier values, make the smallest fix, and verify the program and tests. Preserve unrelated files.',
                      'allowed_changes': {'tiers.py'}, 'debug_program': 'main.py',
                      'workflow_markers': ('index', '1')},
+    'edit_units': {'fixture': edit_units_fixture, 'verify': edit_units_verify,
+                   'prompt': 'The unit conversion package returns wrong values. Fix all affected modules, keep tests unchanged, and verify the program and test suite. Preserve unrelated files.',
+                   'allowed_changes': {'units/length.py', 'units/mass.py', 'units/temperature.py'}},
+    'debug_cursor': {'fixture': debug_cursor_fixture, 'verify': debug_cursor_verify,
+                     'prompt': 'Run main.py to reproduce the pagination failure. Use a debugger to observe at least two page iterations and the cursor values, make the smallest fix, and verify the program and tests. Preserve unrelated files.',
+                     'allowed_changes': {'cursor.py'}, 'debug_program': 'main.py',
+                     'workflow_markers': ('cursor', '0')},
 }

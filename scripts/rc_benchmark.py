@@ -42,6 +42,7 @@ GUIDANCE = ('Use FFSAKE MCP for scoped repository reading, search, previews, edi
 CLI_GUIDANCE = ''
 FORCE_GUARDED = False
 FORCE_READS_CLI = False
+PERMISSION_PROFILES = False
 CLAUDE_MODEL = 'sonnet'
 CLAUDE_EFFORT = 'low'
 
@@ -85,7 +86,11 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
                          'repository reads and native Edit/Write for changes.')
         cmd = ['claude', '-p', prompt, '--output-format', 'stream-json', '--verbose',
                '--max-turns', '40', '--model', CLAUDE_MODEL, '--effort', CLAUDE_EFFORT,
-               '--dangerously-skip-permissions', '--strict-mcp-config', '--mcp-config', str(cfg)]
+               '--strict-mcp-config', '--mcp-config', str(cfg)]
+        if PERMISSION_PROFILES:
+            cmd += ['--tools', 'Bash,Edit,Write', '--allowedTools', 'Bash,Edit,Write']
+        else:
+            cmd += ['--dangerously-skip-permissions']
         if guidance:
             cmd += ['--append-system-prompt', guidance]
         if FORCE_GUARDED:
@@ -98,7 +103,13 @@ def claude(root, prompt, enabled, timeout, profile, mode=None):
     cfg.write_text(json.dumps({'mcpServers': servers}))
     cmd = ['claude', '-p', prompt, '--output-format', 'stream-json', '--verbose',
            '--max-turns', '40', '--model', CLAUDE_MODEL, '--effort', CLAUDE_EFFORT,
-           '--dangerously-skip-permissions', '--strict-mcp-config', '--mcp-config', str(cfg)]
+           '--strict-mcp-config', '--mcp-config', str(cfg)]
+    if PERMISSION_PROFILES:
+        allowed = ('Bash,Edit,Write' if mode == 'cli'
+                   else 'Bash,Read,Edit,Write,Glob,Grep')
+        cmd += ['--tools', allowed, '--allowedTools', allowed]
+    else:
+        cmd += ['--dangerously-skip-permissions']
     if enabled:
         cmd += ['--append-system-prompt',
                 GUIDANCE + (' Native Read, Edit, Write, Glob and Grep are disabled for this run; '
@@ -682,10 +693,12 @@ def main():
     p.add_argument('--force-reads-cli', action='store_true', help='disable native Read/Glob/Grep in the CLI arm, keeping Edit/Write')
     p.add_argument('--no-cli-guidance', action='store_true', help='do not add CLI guidance text to the CLI arm')
     p.add_argument('--cli-debug-guidance', action='store_true', help='add CLI guidance only for debug tasks')
+    p.add_argument('--permission-profiles', action='store_true', help='use host allowlists instead of skip-all permissions')
     a = p.parse_args()
-    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, FORCE_READS_CLI, CLAUDE_MODEL, CLAUDE_EFFORT
+    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, FORCE_READS_CLI, PERMISSION_PROFILES, CLAUDE_MODEL, CLAUDE_EFFORT
     CATALOG = a.catalog
     FORCE_GUARDED = a.force_guarded
+    PERMISSION_PROFILES = a.permission_profiles
     FORCE_READS_CLI = a.force_reads_cli
     CLAUDE_MODEL = a.claude_model
     CLAUDE_EFFORT = a.claude_effort
@@ -704,7 +717,7 @@ def main():
         a.instrument_dir = a.instrument_dir.resolve()
         a.instrument_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     agents, tasks = a.agents.split(','), a.tasks.split(',')
-    if any(x not in ('claude', 'codex') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand') for x in tasks):
+    if any(x not in ('claude', 'codex') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand', 'edit_units', 'debug_cursor') for x in tasks):
         p.error('unsupported agent or task')
     if not a.pilot and 'codex' in agents and 'git' in tasks:
         p.error('Codex Git comparison unavailable: native workspace sandbox denies linked-worktree Git metadata while MCP can write it')
@@ -778,6 +791,7 @@ def main():
               'cli_binary_sha256': suite.file_sha256(a.cli_binary) if a.cli_binary else None,
               'cli_preflight': cli_preflight,
               'force_guarded': FORCE_GUARDED,
+              'permission_profiles': PERMISSION_PROFILES,
               'disallowed_native_tools': ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'NotebookEdit'] if FORCE_GUARDED else [],
               'cli_guidance': CLI_GUIDANCE,
               'settings': {'claude_model': CLAUDE_MODEL, 'claude_effort': CLAUDE_EFFORT,
@@ -881,6 +895,10 @@ def main():
                         result['trace']['cli_calls'] = sum(
                             1 for call in calls if is_cli_call(call))
                         result['trace']['cli_adopted'] = result['trace']['cli_calls'] > 0
+                        result['trace']['permission_denials'] = sum(
+                            len(event.get('permission_denials', []))
+                            for event in events
+                            if isinstance(event, dict) and isinstance(event.get('permission_denials'), list))
                         evidence = workflow_evidence(agent, task, calls, tool_output_text(agent, events))
                         result['workflow_evidence'] = evidence
                         result['workflow_evidence_reviewed'] = evidence['passed']

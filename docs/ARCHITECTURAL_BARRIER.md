@@ -234,6 +234,34 @@ did not either. The remaining overhead is the model's tool-use behavior plus
 guarded payloads; native tools remained fastest and lowest-input in every fair
 comparison.
 
+## Fresh-task permission barrier (2026-11-06)
+
+The CLI-first integration was tested on two previously unused fixtures under host
+permission profiles rather than skip-all approvals: `edit_units` (three-file unit
+conversion) and `debug_cursor` (multi-page cursor). Native allowed
+`Bash,Read,Edit,Write,Glob,Grep`; the CLI arm allowed `Bash,Edit,Write` and
+intended to remove native reads. Twenty Haiku attempts, $0.1129.
+
+| Task / arm | Correct | Artifact | Calls | Seconds | Input | Denials |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Edit native | 4/5 | 4/5 | 14 | 17.0 | 68k | 0-1 |
+| Edit CLI | 1/5 | 1/5 | 20 | 30.8 | 155k | 3-6 |
+| Debug native | 4/5 | 5/5 | 12 | 19.0 | 100k | 0-2 |
+| Debug CLI | 0/5 | 0/5 | 18 | 32.8 | 171k | 2-6 |
+
+The host did not reliably enforce the intended tool restriction: native Read
+still appeared, and the CLI arm accumulated more permission denials despite
+fewer configured scopes. The CLI-first permission story therefore reduces setup
+artifacts but does not reduce runtime friction or preserve correctness on fresh
+work.
+
+This is the concrete barrier: FFSAKE cannot control host tool selection or
+auto-approval granularity from inside the product. A host plugin/extension that
+exposes the scoped operations as first-class tools (with native read/edit
+disabled and edits auto-approved) would be needed to test the intended workflow.
+That requires host-side integration work outside this repository; without it,
+native tools remain faster, lower-input and more correct on unfamiliar tasks.
+
 ## Why this is architectural, not a tuning miss
 
 - FFSAKE's per-turn cost is already at or below native.

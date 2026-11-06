@@ -1060,6 +1060,21 @@ The CLI-first setup is model-free checked by `scripts/cli_setup_smoke.py`: no MC
 
 Evidence: [task-guidance index](20261106-haiku/task-guidance.json). Total paid spend is **$6.1294** across 260 attempts; the earlier $6 ceiling is superseded by the current objective.
 
+### Fresh-task permission-controlled comparison (2026-11-06)
+
+Two previously unused fixtures were added: `edit_units` (three unit-conversion modules) and `debug_cursor` (pagination requiring at least two page iterations). The comparison used host permission profiles instead of skip-all: native allowed `Bash,Read,Edit,Write,Glob,Grep`; CLI allowed `Bash,Edit,Write` with native reads intended to be unavailable. Twenty Haiku attempts, **$0.1129**.
+
+| Task / arm | Correct | Artifact | Calls | Seconds | Input | Permission denials |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Edit units native | 4/5 | 4/5 | 14 | 17.0 | 68,078 | 0–1 |
+| Edit units CLI | **1/5** | 1/5 | 20 | 30.8 | 154,589 | 3–6 |
+| Debug cursor native | 4/5 | 5/5 | 12 | 19.0 | 99,673 | 0–2 |
+| Debug cursor CLI | **0/5** | 0/5 | 18 | 32.8 | 171,166 | 2–6 |
+
+Median paired ratios: edit **1.797 elapsed / 2.292 input**; debug **1.621 / 1.717**. The CLI arm had more permission denials despite fewer configured scopes, and native Read still appeared in traces even with `--tools`/`--allowedTools`/`--disallowedTools` combinations. Host-level enforcement was not reliable, and the CLI path was slower and less correct on both fresh tasks.
+
+Evidence: [fresh permission index](20261106-permission/fresh.json). Total paid spend is **$6.5751** across 320 attempts.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

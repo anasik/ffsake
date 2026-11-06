@@ -62,3 +62,7 @@ Use MCP when you need the richer tool set: Git review/mutation, persistent task
 jobs, Rust/LSP intelligence, or persistent debug sessions with cross-turn
 handles. CLI-first is the lower-friction default for scoped reads, reviewed edits
 and one-shot debugging.
+
+## Fresh-task caveat (2026-11-06)
+
+On two previously unused fixtures under host permission profiles, native tools were more correct and lower-cost: edit 4/5 vs CLI 1/5, debug artifact 5/5 vs CLI 0/5, with more CLI permission denials. Host-level `--tools`/`--allowedTools` did not reliably remove native Read. Treat CLI-first as a setup simplification, not proven runtime permission or efficiency superiority; a host plugin is required to enforce the scoped path.
