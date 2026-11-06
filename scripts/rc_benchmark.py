@@ -45,7 +45,17 @@ CLAUDE_MODEL = 'sonnet'
 CLAUDE_EFFORT = 'low'
 
 
-def cli_guidance(binary):
+def cli_guidance(binary, split=False):
+    if split:
+        return (
+            f"The guarded FFSAKE CLI is at {binary}. Set F={binary}. Use the CLI for repository "
+            "reads and debugging, and use native Edit/Write for code changes:\n"
+            'F read "$PWD" path:10-40 path2:1-40\n'
+            'F probe "$PWD" --debug .ffsake/rc-debug.json --config main --breakpoint path:line --stops 2\n'
+            "Read only the lines you need. Probe returns compact stop values; do not repeat the "
+            "same stops with pdb. Make fixes with native Edit/Write. Native tools are available; "
+            "never bypass an access denial."
+        )
     return (
         f"The guarded FFSAKE CLI is at {binary}. Set F={binary} and use it instead of native "
         "Read, Write or Edit for repository files:\n"
@@ -661,6 +671,7 @@ def main():
     p.add_argument('--claude-effort', default='low', help='Claude effort level')
     p.add_argument('--cli-only', action='store_true', help='with --cli-binary, run only the CLI arm')
     p.add_argument('--cli-native', action='store_true', help='with --cli-binary, run native and CLI arms only')
+    p.add_argument('--split-guidance', action='store_true', help='guide the CLI arm to use native edits and CLI reads/probe')
     a = p.parse_args()
     global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, CLAUDE_MODEL, CLAUDE_EFFORT
     CATALOG = a.catalog
@@ -692,7 +703,7 @@ def main():
         p.error('measured pairs require at least five repetitions')
     suite.FFSAKE_MCP = a.binary.resolve(strict=True)
     suite.CLI_BINARY = a.cli_binary.resolve(strict=True) if a.cli_binary else None
-    CLI_GUIDANCE = cli_guidance(suite.CLI_BINARY) if suite.CLI_BINARY else ''
+    CLI_GUIDANCE = cli_guidance(suite.CLI_BINARY, a.split_guidance) if suite.CLI_BINARY else ''
     suite.CLI_GUIDANCE = CLI_GUIDANCE
     changed_binary = suite.FFSAKE_MCP
     baseline_binary = a.baseline_binary.resolve(strict=True) if a.baseline_binary else None

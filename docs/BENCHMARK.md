@@ -1002,6 +1002,21 @@ Median paired ratios: **1.955 elapsed / 2.623 input** — the worst edit result.
 
 Evidence: [line-addressed index](20261106-haiku/payload-edit-lines.json). Total paid spend is **$5.7482** across 210 attempts; ~$0.25 remains.
 
+### Split workflow: native edits, CLI reads/probe (2026-11-06)
+
+Final candidate kept native Edit/Write for changes and guided the CLI only for ranged reads and one-call probe. Ten Haiku attempts (five per task), all valid, all 5/5, cost **$0.0736**. Native baselines are retained from the immediately preceding matched Haiku batches, not contemporaneous.
+
+| Task / arm | Correct | Calls | Seconds | Input | Paired ratios |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Edit native (retained) | 5/5 | 14 | 17.2 | 146,135 | — |
+| Edit split | 5/5 | 15 | 18.9 | 203,775 | 1.064 elapsed / 1.195 input |
+| Debug native (retained) | 4/5 | 14 | 24.8 | 295,226 | — |
+| Debug split | 5/5 | 13 | 22.6 | 295,875 | **0.985** elapsed / **0.888** input |
+
+**Debug holds the target** on both criteria with 5/5 versus native 4/5. **Edit does not:** the CLI reads were not adopted for `edit_multi` (0/5), so the arm is native edits plus guidance overhead, and input was 19.5% higher.
+
+Evidence: [split workflow index](20261106-haiku/split-workflow.json). Total paid spend is **$5.8218** across 220 attempts; ~$0.18 remains.
+
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
 ```sh

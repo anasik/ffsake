@@ -99,3 +99,7 @@ The [batch edit index](20261106-haiku/payload-edit-batch.json) records 10 Haiku 
 ## 2026-11-06 Line-addressed edit
 
 The [line-addressed index](20261106-haiku/payload-edit-lines.json) records 10 Haiku attempts with ranged reads and `--lines` edits. Both arms were 5/5, but forced CLI was 1.955 elapsed / 2.623 input; narrowing scope increased repeated turns.
+
+## 2026-11-06 Split workflow
+
+The [split index](20261106-haiku/split-workflow.json) records 10 Haiku attempts using native edits and CLI reads/probe. Debug held the target (0.985 elapsed / 0.888 input, 5/5), but edits did not (1.064/1.195) because CLI reads were not adopted and guidance added overhead.
