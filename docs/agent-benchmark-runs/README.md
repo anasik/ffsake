@@ -137,3 +137,7 @@ The [final 40-attempt index](20261106-redirect/final-40.json) records 10 Haiku r
 ## 2026-11-06 Permission-minimal final run
 
 [final-80.json](20261106-hook-allow/final-80.json) is the final 80-attempt run without skip-all: native 6 allowed tools versus FFSAKE 3 plus the Read hook. Edit was 20/20 both at 1.024/0.946/1.016; debug was 20/20 versus native 15/20 at 0.766/0.655/0.739, with 0-1 denials versus native 0-4. [nohook-80.json](20261106-strict/nohook-80.json) retains the no-hook alternative (3 entries, zero denials, slower edits), and [haiku-20.json](20261106-opencode/haiku-20.json) records the OpenCode second-host check.
+
+## 2026-11-09 OpenCode read-redirect
+
+[redirect-40.json](20261109-opencode-redirect/redirect-40.json) records 40 valid OpenCode 2.2.5 + Claude Haiku 5.5 attempts with a v2 local plugin serving native `read` through `ffsake read`. Edit was 10/10 both at 1.258 elapsed / 1.132 input with 7 native versus 14 CLI calls; debug was 10/10 versus native 8/10 at 0.914 / 0.943. Pooled 1.075 / 1.043, zero denials in both arms, provider-reported cost zero. The plugin is kept as an enforcement/correctness mechanism; the edit regression is retained. [haiku-20.json](20261106-opencode/haiku-20.json) remains the earlier guidance-only sample.

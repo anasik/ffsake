@@ -37,6 +37,7 @@ jobs:
       - run: python3 scripts/cli_setup_smoke.py
       - run: python3 scripts/claude_hook_smoke.py
       - run: python3 scripts/claude_read_redirect_smoke.py
+      - run: python3 scripts/opencode_read_redirect_smoke.py
       - run: python3 -m unittest tests.test_reevaluate_rc_results
       - run: python3 scripts/mcp_smoke.py target/debug/ffsake-mcp
       - run: python3 scripts/directory_smoke.py target/debug/ffsake-mcp

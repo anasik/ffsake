@@ -1,6 +1,6 @@
 # Action plan
 
-## Current state (2026-11-06)
+## Current state (2026-11-09)
 
 Goal: make FFSAKE genuinely better than native tools for agent-driven
 development, judged on correctness, permission friction, elapsed time, tokens
@@ -25,18 +25,30 @@ Final Haiku 5.5 validation, ten repetitions per task, **without skip-all**:
   native 0-4.
 - Evidence: `docs/agent-benchmark-runs/20261106-hook-allow/final-80.json`.
 
-Second host: OpenCode 2.2.5 + Claude Haiku 5.5, same fixtures, 5 attempts per
-task, guidance-only CLI (no hook): edit 5/5 both (0.967 elapsed / 1.272 input);
-debug 5/5 versus native 3/5 (0.848 / 0.832). Provider reported zero cost.
-Evidence: `docs/agent-benchmark-runs/20261106-opencode/haiku-20.json`.
+Second host: OpenCode 2.2.5 + Claude Haiku 5.5, same fixtures. The earlier
+five-attempt run was guidance-only: edit 5/5 both (0.967 elapsed / 1.272 input);
+debug 5/5 versus native 3/5 (0.848 / 0.832). The equivalent OpenCode v2 local
+plugin now serves native `read` through `ffsake read`. Its 40-attempt run
+(`docs/agent-benchmark-runs/20261109-opencode-redirect/redirect-40.json`) was
+edit 10/10 both at 1.258 / 1.132 with 7 native versus 14 CLI calls, and debug
+10/10 versus native 8/10 at 0.914 / 0.943; pooled 1.075 elapsed / 1.043 input,
+zero denials in both arms. Debug transfers; edit does not. The plugin is kept as
+an enforcement/correctness mechanism, not an edit speedup. Provider reported
+zero cost.
 
-Verdict: **met**. FFSAKE halves the permission surface (3 versus 6 entries),
-reduces denials roughly fourfold, is at edit efficiency parity with lower input,
-and is materially better on debug correctness, elapsed time, tokens and cost.
-Reviewed preview/apply, stale checks, history and debug cleanup remain intact.
+Verdict: **met for Claude Code; partially met for OpenCode**. FFSAKE halves the
+permission surface (3 versus 6 entries), reduces denials roughly fourfold, is at
+edit efficiency parity with lower input on Claude, and is materially better on
+debug correctness, elapsed time, tokens and cost. OpenCode keeps the debug win
+and the enforcement path but is slower on edits. Reviewed preview/apply, stale
+checks, history and debug cleanup remain intact.
 
-Next action: keep this as the default integration; test a new workflow shape
-only if it exercises an untested capability. Do not reopen MCP catalog work.
+Next action: validate the pending unfamiliar-task candidate (multi-stop
+`ffsake_debug_probe`, compact `ffsake_workspace_info`) with a paid Claude Haiku
+comparison on the retained `debug_ledger`/`debug_nested` generalization
+fixtures, since that is where the measured 1.268 elapsed / 1.127 input
+regression is concentrated. Keep the Claude read-redirect hook as the default
+integration. Do not reopen MCP catalog work.
 
 Measurement corrections: bytecode caches are not repository changes;
 `reevaluate_rc_results.py` recomputes retained traces without model calls.

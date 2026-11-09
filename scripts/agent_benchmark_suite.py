@@ -23,6 +23,7 @@ FFSAKE_MCP = (ROOT / "target" / "debug" / "ffsake-mcp").resolve()
 RESULT_DIR = ROOT / "docs" / "agent-benchmark-runs"
 CLI_BINARY = None
 CLI_GUIDANCE = ""
+OPENCODE_REDIRECT_READS = False
 FFSAKE_ACCESS_TOOLS = ("ffsake_open_access", "ffsake_list_access", "ffsake_remove_access")
 FFSAKE_ACCESS_MUTATIONS = ("ffsake_open_access", "ffsake_remove_access")
 FFSAKE_APPROVAL_TOOLS = FFSAKE_ACCESS_MUTATIONS + ("ffsake_debug_probe", "ffsake_debug_launch", "ffsake_debug_attach", "ffsake_task_register", "ffsake_run_task", "ffsake_git_mutate", "ffsake_git_operation")
@@ -860,7 +861,7 @@ def permission_audit(agent, use_ffsake, metrics, tool_profile="all"):
     }
 
 
-FIXTURE_EXCLUDED = {".git", ".ffsake", ".codex", ".ffsake-claude-mcp.json", "opencode.json"}
+FIXTURE_EXCLUDED = {".git", ".ffsake", ".codex", ".opencode", ".ffsake-claude-mcp.json", "opencode.json"}
 
 
 def fixture_paths(root):
@@ -915,7 +916,9 @@ def benchmark_provenance():
     return {
         "source_revision": head,
         "harness_sha256": {name: file_sha256(ROOT / "scripts" / name)
-                           for name in ("agent_benchmark_suite.py", "agent_benchmark.py")},
+                           for name in ("agent_benchmark_suite.py", "agent_benchmark.py",
+                                        "claude_read_redirect_hook.py",
+                                        "opencode_read_redirect_plugin.js")},
         "mcp_binary_sha256": file_sha256(FFSAKE_MCP),
         "binary_matches_source_verified": False,
     }
@@ -997,6 +1000,32 @@ def codex_run(root: Path, prompt: str, use_ffsake: bool, timeout: int, tool_prof
     return run_process(cmd, root, timeout)
 
 
+def opencode_read_redirect_source(root: Path):
+    """Render the OpenCode read-redirect plugin for one disposable workspace.
+
+    The plugin id is workspace-unique because OpenCode caches plugin modules
+    by id; a shared id would keep the first workspace's root closure.
+    """
+    if not CLI_BINARY:
+        raise ValueError("OpenCode read redirect requires a CLI binary")
+    template = Path(__file__).with_name("opencode_read_redirect_plugin.js").read_text()
+    digest = hashlib.sha256(str(root.resolve()).encode()).hexdigest()[:12]
+    plugin_id = f"ffsake-read-redirect-{digest}"
+    source = (template
+              .replace('"__FFSAKE_BIN__"', json.dumps(str(CLI_BINARY)))
+              .replace('"__FFSAKE_ROOT__"', json.dumps(str(root.resolve())))
+              .replace('"__FFSAKE_PLUGIN_ID__"', json.dumps(plugin_id)))
+    return plugin_id, source
+
+
+def write_opencode_read_redirect(root: Path):
+    plugin_id, source = opencode_read_redirect_source(root)
+    target = root / ".opencode" / "plugins" / plugin_id / "index.js"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(source)
+    return plugin_id
+
+
 def configure_opencode(root: Path, use_ffsake: bool, tool_profile="all", mode=None):
     # Deny by default, including inherited MCPs and delegation/custom tools.
     # Only the selected mode's explicitly named repository tools are authorized.
@@ -1019,6 +1048,8 @@ def configure_opencode(root: Path, use_ffsake: bool, tool_profile="all", mode=No
     # an enabled global FFSAKE server, contaminating the baseline.
     config["mcp"] = {"ffsake": {"type": "local", "command": [str(FFSAKE_MCP), *mcp_arguments(root, tool_profile if use_ffsake else "all")], "enabled": use_ffsake}}
     (root / "opencode.json").write_text(json.dumps(config, indent=2))
+    if mode == "cli" and OPENCODE_REDIRECT_READS:
+        write_opencode_read_redirect(root)
     return config
 
 
@@ -1039,6 +1070,7 @@ def clean_control_files(root: Path):
     for path in [
         root / ".ffsake-claude-mcp.json",
         root / ".codex",
+        root / ".opencode",
         root / "opencode.json",
         root / ".ffsake",
     ]:

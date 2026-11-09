@@ -47,6 +47,7 @@ PERMISSION_PROFILES = False
 CLI_HOOK_POLICY = False
 CLI_TOOLS_ONLY = False
 CLI_REDIRECT_READS = False
+OPENCODE_REDIRECT_READS = False
 DEFAULT_PERMISSIONS = False
 CLAUDE_MODEL = 'sonnet'
 CLAUDE_EFFORT = 'low'
@@ -754,15 +755,17 @@ def main():
     p.add_argument('--cli-hook-policy', action='store_true', help='install a PreToolUse hook that denies native repository reads in the CLI arm')
     p.add_argument('--cli-tools-only', action='store_true', help='expose only Bash/Edit/Write in the CLI arm')
     p.add_argument('--cli-redirect-reads', action='store_true', help='rewrite native Read through ffsake with a PreToolUse hook')
+    p.add_argument('--opencode-redirect-reads', action='store_true', help='serve OpenCode native read through ffsake with a local plugin')
     p.add_argument('--default-permissions', action='store_true', help='use host default permissions instead of skip-all')
     a = p.parse_args()
-    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, FORCE_READS_CLI, PERMISSION_PROFILES, CLI_HOOK_POLICY, CLI_TOOLS_ONLY, CLI_REDIRECT_READS, DEFAULT_PERMISSIONS, CLAUDE_MODEL, CLAUDE_EFFORT
+    global TIMING_FILE, CATALOG, COMPACT, CONTEXT, CONTEXT_MS, SERVER_EDITING, CLI_GUIDANCE, FORCE_GUARDED, FORCE_READS_CLI, PERMISSION_PROFILES, CLI_HOOK_POLICY, CLI_TOOLS_ONLY, CLI_REDIRECT_READS, OPENCODE_REDIRECT_READS, DEFAULT_PERMISSIONS, CLAUDE_MODEL, CLAUDE_EFFORT
     CATALOG = a.catalog
     FORCE_GUARDED = a.force_guarded
     PERMISSION_PROFILES = a.permission_profiles
     CLI_HOOK_POLICY = a.cli_hook_policy
     CLI_TOOLS_ONLY = a.cli_tools_only
     CLI_REDIRECT_READS = a.cli_redirect_reads
+    OPENCODE_REDIRECT_READS = a.opencode_redirect_reads
     DEFAULT_PERMISSIONS = a.default_permissions
     FORCE_READS_CLI = a.force_reads_cli
     CLAUDE_MODEL = a.claude_model
@@ -792,6 +795,9 @@ def main():
         p.error('measured pairs require at least five repetitions')
     suite.FFSAKE_MCP = a.binary.resolve(strict=True)
     suite.CLI_BINARY = a.cli_binary.resolve(strict=True) if a.cli_binary else None
+    suite.OPENCODE_REDIRECT_READS = OPENCODE_REDIRECT_READS
+    if OPENCODE_REDIRECT_READS and (not a.cli_binary or 'opencode' not in agents):
+        p.error('--opencode-redirect-reads requires --cli-binary and the opencode agent')
     CLI_GUIDANCE = ('' if a.no_cli_guidance else
                     cli_guidance(suite.CLI_BINARY, a.split_guidance or a.force_reads_cli)
                     if suite.CLI_BINARY else '')
@@ -844,6 +850,7 @@ def main():
                 * len(tasks) * a.repetitions,
             'preflight': preflight, 'cli_preflight': cli_preflight,
             'cli_guidance': CLI_GUIDANCE,
+            'opencode_redirect_reads': OPENCODE_REDIRECT_READS,
             'mcp_catalog': suite.mcp_profile_preflight('core', a.binary)['catalog_bytes']
                 if suite.mcp_profile_preflight('core', a.binary)['ok'] else None,
         }, indent=2))
@@ -858,6 +865,8 @@ def main():
               'force_guarded': FORCE_GUARDED,
               'permission_profiles': PERMISSION_PROFILES,
               'cli_hook_policy': CLI_HOOK_POLICY,
+              'cli_redirect_reads': CLI_REDIRECT_READS,
+              'opencode_redirect_reads': OPENCODE_REDIRECT_READS,
               'default_permissions': DEFAULT_PERMISSIONS,
               'disallowed_native_tools': ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'NotebookEdit'] if FORCE_GUARDED else [],
               'cli_guidance': CLI_GUIDANCE,

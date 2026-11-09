@@ -27,7 +27,8 @@ def numeric(value):
 
 
 def tool_name(value):
-    native = {'command_execution', 'file_change', 'web_search', 'Bash', 'Read', 'Write', 'Edit', 'ToolSearch'}
+    native = {'command_execution', 'file_change', 'web_search', 'Bash', 'Read', 'Write', 'Edit', 'ToolSearch',
+              'read', 'shell', 'edit', 'write', 'apply_patch', 'glob', 'grep', 'list', 'task'}
     if not isinstance(value, str):
         return 'other'
     if value in native:
@@ -247,12 +248,22 @@ def sanitize(report, timing_dir=None, omit_events=False):
         results.append(row)
     revision = report.get('revision', {})
     settings = report.get('settings', {})
+    configuration = {}
+    for key in ('cli_redirect_reads', 'opencode_redirect_reads',
+                'permission_profiles', 'cli_hook_policy', 'default_permissions'):
+        value = settings.get(key, report.get(key))
+        if isinstance(value, bool):
+            configuration[key] = value
     return {'schema_version': 1, 'kind': 'content-free redacted event index',
             'limitations': 'Commands, arguments, output and private content are omitted; retain the original report privately.',
             'source_revision': digest(revision.get('source_revision')),
             'binary_sha256': digest(revision.get('mcp_binary_sha256')),
             'driver_sha256': digest(report.get('driver_sha256')),
             'fixture_sha256': digest(report.get('fixture_sha256')),
+            'harness_sha256': {name: digest(value) for name, value in (revision.get('harness_sha256') or {}).items()
+                               if name in ('agent_benchmark_suite.py', 'agent_benchmark.py',
+                                           'claude_read_redirect_hook.py', 'opencode_read_redirect_plugin.js')},
+            'configuration': configuration,
             'agents': [x if x in ('codex','claude','opencode') else 'other' for x in report.get('agents', [])],
             'tasks': [x if x in ('cross','maintenance','layout','build','git','debug','debug_shipping','debug_inventory','debug_intervals','debug_cache','edit_batch','debug_ledger','debug_nested','edit_multi','debug_expand','edit_units','debug_cursor') else 'other' for x in report.get('tasks', [])],
             'repetitions': numeric(report.get('repetitions')),

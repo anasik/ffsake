@@ -74,6 +74,23 @@ On POSIX, agent launchers run in their own process group, which is killed on tim
 
 OpenCode provider API errors are recorded separately from tool failures and invalidate the run. A structured non-retryable provider error stops the suite after saving the trace, instead of repeating requests that the provider has rejected. Configuration preflight makes no model calls and cannot verify inference access. If the default provider rejects requests, use an authenticated provider/model with `--opencode-model provider/model`; use the same model for both modes.
 
+## OpenCode read-redirect plugin
+
+OpenCode v2 supports local plugins that replace a built-in tool executor.
+`scripts/opencode_read_redirect_plugin.js` wraps native `read`, calls
+`ffsake read <workspace> <path>` and returns the FFSAKE text in the host's
+declared `file` output shape. The same plugin rejects file-reading shell
+commands in `execute.before`. Native `Edit`/`Write` and native search tools stay
+available.
+
+The plugin id is derived from the workspace path because OpenCode caches plugin
+modules by id; a shared id would keep the first workspace's root closure. The
+setup script and benchmark harness render the plugin with an absolute binary
+path and workspace id. `scripts/opencode_read_redirect_smoke.py` loads the
+rendered plugin in Node with a stub host and verifies read redirection, ranged
+reads, shell blocking, ordinary-shell allowance, outside-workspace denial and
+zero model calls.
+
 
 ## Claude/Codex suite, 2026-10-22
 
@@ -1188,14 +1205,21 @@ Pooled medians: edit **1.024 elapsed / 0.946 input / 1.016 cost** (13/20 input w
 
 This is the first configuration that measures all three goal axes together: **half the allowlist entries, roughly four times fewer permission denials, 20/20 versus 15/20 debug correctness, edit efficiency at parity, and debug efficiency materially better.**
 
-A second host was tested with OpenCode 2.2.5 + Claude Haiku 5.5 on the same fixtures. OpenCode has no equivalent read-redirect hook, so its CLI arm is guidance-only; native reads remain available. Five attempts per task (`20261106-opencode/haiku-20.json`):
+A second host was tested with OpenCode 2.2.5 + Claude Haiku 5.5 on the same fixtures. The first five-attempt run had no redirect integration, so its CLI arm was guidance-only (`20261106-opencode/haiku-20.json`):
 
-| Task | Native | FFSAKE CLI | Paired median |
+| Task (guidance only) | Native | FFSAKE CLI | Paired median |
 | --- | ---: | ---: | --- |
 | Edit units | 5/5 | **5/5** | 0.967 elapsed / 1.272 input |
 | Debug cursor | 3/5 | **5/5** | **0.848 elapsed / 0.832 input** |
 
-Debug correctness and efficiency transfer to the second host; edit input is 27% higher because reads are separate Bash turns without a redirect hook. OpenCode reported zero cost for this provider, so only elapsed, input and correctness are comparable. The host-specific efficiency advantage depends on the read-redirect hook; the permission advantage (three entries, fewer denials) was measured on Claude Code.
+The OpenCode v2 read-redirect plugin described above was then measured on the same fixtures: ten attempts per task, 40 valid runs (`20261109-opencode-redirect/redirect-40.json`). Native `read` was served by `ffsake read`; native edits, writes and search tools stayed available.
+
+| Task (redirect plugin) | Native | FFSAKE CLI | Paired median | Median calls (native/CLI) | Denials |
+| --- | ---: | ---: | --- | ---: | --- |
+| Edit units | 10/10 | **10/10** | **1.258 elapsed / 1.132 input** | 7 / 14 | 0 / 0 |
+| Debug cursor | 8/10 | **10/10** | **0.914 elapsed / 0.943 input** | 11 / 9.5 | 0 / 0 |
+
+Pooled medians were **1.075 elapsed / 1.043 input**. Debug retained its correctness and efficiency advantage (7/10 elapsed and 6/10 input paired wins, 10/10 versus 8/10 correct; native failures were workflow failures). Edit did not: the redirect made reads a shell-shaped turn in this host, the model used roughly twice the calls, and both elapsed and input were worse. The plugin is therefore a working enforcement and correctness mechanism, not an edit-efficiency win; results are retained as measured rather than replaced by the earlier five-attempt sample. OpenCode reported zero cost for this provider, so only elapsed, input and correctness are comparable. The permission advantage (three entries, fewer denials) was measured on Claude Code.
 
 Reproduce using the recorded source revisions, a private output directory, Codex CLI and an installed debugpy environment. Building with `benchmark-timing` is for measurement; normal binaries omit it. The `--baseline-binary` run uses the current binary's editing profile for the two editing tasks and core for debugging; both binary paths must identify frozen builds. Raw reports and timing paths may contain sensitive session metadata and must stay private.
 
@@ -1214,6 +1238,12 @@ python3 scripts/rc_benchmark.py --binary /private/path/to/changed-mcp \
   --tasks debug,debug_shipping --repetitions 5 \
   --debug-python /absolute/path/to/debugpy-venv/bin/python \
   --instrument-dir /private/path/to/claude-comparison-timings
+python3 scripts/rc_benchmark.py --binary /private/path/to/ffsake-mcp \
+  --output /private/path/to/opencode-redirect.json --agents opencode \
+  --tasks edit_units,debug_cursor --repetitions 10 \
+  --cli-binary /private/path/to/ffsake --cli-native --cli-debug-guidance \
+  --opencode-redirect-reads --opencode-model provider/cheapest-model \
+  --debug-python /absolute/path/to/debugpy-venv/bin/python
 python3 scripts/debug_poll_probe.py /private/path/to/corrected-instrumented-mcp \
   --baseline-binary /private/path/to/old-instrumented-mcp \
   --python /absolute/path/to/debugpy-venv/bin/python \

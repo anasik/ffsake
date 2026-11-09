@@ -1565,5 +1565,47 @@ class CliArmIntegrationTests(unittest.TestCase):
         self.assertEqual(result["mode"], "cli")
 
 
+class OpenCodeRedirectSetupTests(unittest.TestCase):
+    def test_plugin_is_rendered_with_unique_id_and_absolute_paths(self):
+        previous = suite.CLI_BINARY
+        suite.CLI_BINARY = Path("/absolute/ffsake")
+        self.addCleanup(setattr, suite, "CLI_BINARY", previous)
+        with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
+            one = suite.opencode_read_redirect_source(Path(first))
+            two = suite.opencode_read_redirect_source(Path(second))
+            self.assertNotEqual(one[0], two[0])
+            self.assertTrue(one[0].startswith("ffsake-read-redirect-"))
+            self.assertIn('"/absolute/ffsake"', one[1])
+            self.assertIn(json.dumps(str(Path(first).resolve())), one[1])
+            self.assertNotIn('"__FFSAKE_BIN__"', one[1])
+            self.assertNotIn('"__FFSAKE_ROOT__"', one[1])
+            self.assertNotIn('"__FFSAKE_PLUGIN_ID__"', one[1])
+
+    def test_configure_writes_plugin_only_for_cli_arm_and_cleanup_removes_it(self):
+        previous_binary, previous_redirect = suite.CLI_BINARY, suite.OPENCODE_REDIRECT_READS
+        suite.CLI_BINARY = Path("/absolute/ffsake")
+        suite.OPENCODE_REDIRECT_READS = True
+        self.addCleanup(setattr, suite, "CLI_BINARY", previous_binary)
+        self.addCleanup(setattr, suite, "OPENCODE_REDIRECT_READS", previous_redirect)
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            suite.configure_opencode(root, False, "all", "baseline")
+            self.assertFalse((root / ".opencode").exists())
+            suite.configure_opencode(root, False, "all", "cli")
+            plugins = list((root / ".opencode/plugins").glob("*/index.js"))
+            self.assertEqual(len(plugins), 1, plugins)
+            self.assertNotIn(".opencode", suite.fixture_files(root))
+            suite.clean_control_files(root)
+            self.assertFalse((root / ".opencode").exists())
+
+    def test_redirect_requires_a_binary(self):
+        previous = suite.CLI_BINARY
+        suite.CLI_BINARY = None
+        self.addCleanup(setattr, suite, "CLI_BINARY", previous)
+        with tempfile.TemporaryDirectory() as td:
+            with self.assertRaises(ValueError):
+                suite.write_opencode_read_redirect(Path(td))
+
+
 if __name__ == "__main__":
     unittest.main()

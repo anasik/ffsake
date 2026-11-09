@@ -50,6 +50,20 @@ def main():
         assert codex["guidance_file"].endswith("AGENTS.md"), codex
         assert 'probe . --debug' in (project / "AGENTS.md").read_text()
 
+        opencode = run("--host", "opencode", "--project", str(project),
+                       "--redirect-reads", "--apply")
+        assert opencode["read_policy_installed"] is True, opencode
+        assert opencode["settings_flag"] is None, opencode
+        assert opencode["read_plugin_id"].startswith("ffsake-read-redirect-"), opencode
+        plugin = Path(opencode["read_plugin"])
+        assert plugin.is_file() and plugin.parent.name == opencode["read_plugin_id"], opencode
+        source = plugin.read_text()
+        assert '"__FFSAKE_BIN__"' not in source and '"__FFSAKE_ROOT__"' not in source
+        assert 'ffsake-read-redirect-' in source
+        host_config = json.loads(Path(opencode["read_policy"]).read_text())
+        assert host_config["permission"]["read"] == "allow", host_config
+        assert host_config["permission"]["edit"] == "allow", host_config
+
         print(json.dumps({
             "no_mcp_config": True,
             "tool_approvals": 0,
@@ -57,6 +71,7 @@ def main():
             "idempotent_guidance": True,
             "codex_guidance": True,
             "read_redirect_hook": True,
+            "opencode_read_redirect_plugin": True,
             "model_calls": 0,
         }, indent=2))
 

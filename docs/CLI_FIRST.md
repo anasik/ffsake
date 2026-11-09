@@ -10,19 +10,30 @@ single governed read path.
 ```sh
 python3 scripts/ffsake_cli_setup.py --host claude --project /path/to/repo \
   --redirect-reads --apply
+python3 scripts/ffsake_cli_setup.py --host opencode --project /path/to/repo \
+  --redirect-reads --apply
 ```
 
-This writes:
+Claude Code writes:
 
 - one guidance block in `CLAUDE.md` (or `AGENTS.md`);
 - `.claude/ffsake-read-policy.json`, a `PreToolUse` hook that serves native
   `Read` through `ffsake read` and returns the text through `updatedInput`;
 - the single host permission rule for shell access: `Bash(ffsake:*)`.
 
-Run Claude Code with the policy:
+OpenCode writes the same guidance block plus:
+
+- `.opencode/plugins/ffsake-read-redirect-<workspace-id>/index.js`, a local
+  plugin that replaces the native `read` executor with `ffsake read` and
+  rejects file-reading shell commands;
+- `.opencode/opencode.json` with the permission-minimal allowlist
+  (`bash`, `read`, `edit`, `write`, and native search tools).
+
+Run Claude Code with the policy, or start OpenCode in the project:
 
 ```sh
 claude --settings .claude/ffsake-read-policy.json ...
+opencode
 ```
 
 No `.mcp.json`, MCP server entry, tool catalog or per-tool approval list is
@@ -83,17 +94,28 @@ content comes from; it does not bypass denial or approval checks.
 
 ## Second host
 
-OpenCode 2.2.5 + Claude Haiku 5.5, same fixtures, five attempts per task, CLI
-guidance only (OpenCode has no read-redirect hook):
+OpenCode 2.2.5 + Claude Haiku 5.5, same fixtures. The first five-attempt run
+used CLI guidance only, before a redirect plugin existed:
 
-| Task | Native | FFSAKE CLI | Paired median |
+| Task (guidance only) | Native | FFSAKE CLI | Paired median |
 | --- | ---: | ---: | --- |
 | Edit units | 5/5 | **5/5** | 0.967 elapsed / 1.272 input |
 | Debug cursor | 3/5 | **5/5** | **0.848 elapsed / 0.832 input** |
 
-Debug correctness and efficiency transfer; edit input is 27% higher because
-reads become separate Bash turns. The provider reported zero cost, so only
-elapsed, input and correctness are comparable there.
+The OpenCode v2 read-redirect plugin was then measured with ten attempts per
+task, 40 valid runs:
+
+| Task (redirect plugin) | Native | FFSAKE CLI | Paired median | Calls (native/CLI) |
+| --- | ---: | ---: | --- | ---: |
+| Edit units | 10/10 | **10/10** | **1.258 elapsed / 1.132 input** | 7 / 14 |
+| Debug cursor | 8/10 | **10/10** | **0.914 elapsed / 0.943 input** | 11 / 9.5 |
+
+Pooled medians were 1.075 elapsed / 1.043 input, with zero permission denials in
+both arms. Debug correctness and efficiency transfer; edit does not, because the
+redirect turns each read into a shell-shaped turn and the model used about twice
+the calls. The plugin is an enforcement and correctness mechanism, not an edit
+speedup. OpenCode reported zero cost, so only elapsed, input and correctness are
+comparable.
 
 ## Measurement correction
 

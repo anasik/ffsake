@@ -37,6 +37,19 @@ class SanitizeTests(unittest.TestCase):
         self.assertNotIn('SECRET', json.dumps(result))
         self.assertNotIn('/Users/private', json.dumps(result))
 
+    def test_redirect_configuration_is_exported_from_top_level_report(self):
+        result = sanitizer.sanitize({'results':[], 'settings':{},
+                                     'opencode_redirect_reads':True,
+                                     'cli_redirect_reads':False,
+                                     'permission_profiles':'private'}, omit_events=True)
+        self.assertEqual(result['configuration'],
+                         {'cli_redirect_reads':False, 'opencode_redirect_reads':True})
+
+    def test_redirect_configuration_prefers_settings(self):
+        result = sanitizer.sanitize({'results':[], 'settings':{'opencode_redirect_reads':True},
+                                     'opencode_redirect_reads':False}, omit_events=True)
+        self.assertEqual(result['configuration'], {'opencode_redirect_reads':True})
+
     def test_benchmark_setup_error_is_exported(self):
         run = {'task':'debug','mode':'changed','comparison_valid':False,
                'comparison_invalid_reasons':['benchmark_setup_error','private_reason'],

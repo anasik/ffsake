@@ -281,9 +281,11 @@ switching to the CLI. `--tools`/`--allowedTools` did not remove native Read.
 Deny-only host hooks therefore add friction and cost; native remains faster and
 lower-input on fresh work.
 
-The concrete missing capability is a host plugin or input-rewriting hook that
-exposes a first-class scoped read tool and removes native Read without a denial
-loop. That host integration is outside this repository’s current boundary.
+The concrete missing capability was a host plugin or input-rewriting hook that
+exposes a first-class scoped read without a denial loop. That gap was closed for
+the two tested hosts: a Claude Code `PreToolUse` input-rewriting hook and an
+OpenCode v2 local plugin both serve native `read` through `ffsake read`. Both
+integrations live in this repository.
 
 ## Read-redirect hook result (2026-11-06)
 
@@ -333,11 +335,17 @@ The permission surface is halved and denials are roughly four times lower, while
 edit efficiency is at parity and debug is clearly better. The earlier host
 enforcement barrier is therefore resolved for Claude Code.
 
-A second host, OpenCode 2.2.5 with the same Haiku model, was tested guidance-only
-(no hook): edit 5/5 both, 0.967 elapsed / 1.272 input; debug 5/5 versus native
-3/5, 0.848 / 0.832. The debug advantage transfers; edit input is higher without a
-redirect hook. OpenCode reported zero provider cost, so only elapsed, input and
-correctness are comparable.
+A second host, OpenCode 2.2.5 with the same Haiku model, now has the equivalent
+v2 local plugin. Its first five-attempt run was guidance-only: edit 5/5 both at
+0.967 elapsed / 1.272 input; debug 5/5 versus native 3/5 at 0.848 / 0.832. A
+subsequent 40-attempt run with native `read` served through `ffsake read`
+measured edit 10/10 both at 1.258 / 1.132 with 7 native versus 14 CLI calls, and
+debug 10/10 versus native 8/10 at 0.914 / 0.943; pooled 1.075 elapsed / 1.043
+input and zero denials in both arms. Debug efficiency and correctness transfer
+to the second host; edit does not, because the redirect adds shell-shaped read
+turns in OpenCode. The plugin is retained as an enforcement/correctness
+mechanism, not claimed as an edit speedup. OpenCode reported zero provider cost,
+so only elapsed, input and correctness are comparable.
 
 ## Why this is architectural, not a tuning miss
 

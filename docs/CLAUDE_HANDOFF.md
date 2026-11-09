@@ -4,7 +4,7 @@
 >
 > State update: performance is the active goal. The numbered steps below are historical context; do not reimplement them or duplicate completed benchmark runs. Read current traces, source and PLAN.md, implement the smallest justified interaction-cost reduction, validate model-free, and request a bounded paid budget before measuring it.
 
-## Current state (2026-11-06)
+## Current state (2026-11-09)
 
 Integration is CLI + Claude read-redirect hook with a three-entry allowlist
 (`Bash,Edit,Write`) in the same settings file. The hook matches `Read`, executes
@@ -19,15 +19,22 @@ Final Haiku 5.5 runs, ten repetitions per task, no skip-all:
 - Debug (20 pairs): 20/20 versus native 15/20; pooled 0.766 / 0.655 / 0.739.
 - Denials: FFSAKE 0-1 per run (0 in all debug runs) versus native 0-4.
 
-Second host OpenCode 2.2.5 + Haiku: edit 5/5 both (0.967/1.272), debug 5/5 vs
-native 3/5 (0.848/0.832); provider cost reported as zero.
+Second host OpenCode 2.2.5 + Haiku: the first five-attempt run was
+guidance-only (edit 5/5 both, 0.967/1.272; debug 5/5 vs native 3/5,
+0.848/0.832). A v2 local plugin now serves native `read` through `ffsake read`;
+its 40-attempt run measured edit 10/10 both at 1.258/1.132 with 7 native versus
+14 CLI calls, and debug 10/10 vs native 8/10 at 0.914/0.943; pooled 1.075/1.043,
+zero denials in both arms. Debug transfers; edit does not. Provider cost reported
+as zero.
 
 Evidence: `docs/agent-benchmark-runs/20261106-hook-allow/final-80.json`,
 `docs/agent-benchmark-runs/20261106-opencode/haiku-20.json`,
+`docs/agent-benchmark-runs/20261109-opencode-redirect/redirect-40.json`,
 `docs/agent-benchmark-runs/20261106-strict/nohook-80.json` (no-hook alternative).
 
-Verdict: met. Half the permission surface, fewer denials, edit parity with lower
-input, and clearly better debug correctness/efficiency. Keep this as the default;
+Verdict: met for Claude Code, partially met for OpenCode. Half the permission
+surface, fewer denials, edit parity with lower input, and clearly better debug
+correctness/efficiency. Keep this as the default;
 do not restore the MCP catalog for this path.
 
 ## Competitive unfamiliar-task goal (2026-11-05, candidate pending validation)
@@ -88,7 +95,7 @@ You are taking over active development of `anasik/ffsake` on Anas's Mac. This is
 - Use FFSAKE MCP for repository reading/search/editing when available. Shell is explicitly authorized for builds, tests, benchmark orchestration, report analysis and Git. If FFSAKE is unavailable in this session, native repository tools are also authorized to finish this handoff; do not stop merely because a tool is missing.
 - Use a normal local Codex or Claude Code development session for this work. `scripts/ffsake_claude.py` deliberately disables native tools for constrained editor pilots and is unsuitable for independently running Cargo and Git.
 - Send short updates while work runs. Poll started CI and benchmark processes through completion. After a green commit, report the checkpoint briefly and continue the next actionable roadmap item. End only for a real stopping condition described in AGENTS.md; include validation, commit and the exact blocker or user action then.
-- Do not add Codex coauthor attribution. Avoid unrelated new features. JEV and a new coding harness are parked. OpenCode benchmarking is paused; use Claude and Codex.
+- Do not add Codex coauthor attribution. Avoid unrelated new features. JEV and a new coding harness are parked. OpenCode benchmarking is complete for the read-redirect comparison; do not reopen it without a new question. Use Claude and Codex.
 
 ## Verified state at handoff, 2026-10-24
 
