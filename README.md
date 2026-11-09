@@ -68,11 +68,13 @@ To register only the MCP server, omit `--cli-first`. Codex uses the same
 `configure --host codex` command; it receives guidance and the MCP entry, but
 read redirection is not implemented for Codex.
 
-FFSAKE does not grant permissions. Allow the CLI commands and MCP server in
-your host policy; for Claude Code an explicit `Bash(ffsake:*)` rule is enough
-for the CLI, while MCP tools follow the host's normal approval policy. Approve
-or trust the server if prompted. In an existing Claude chat, reconnect the MCP
-server after configuration.
+FFSAKE does not add host permissions for the CLI or MCP tools. Allow the
+commands and server in your host policy; for Claude Code an explicit
+`Bash(ffsake:*)` rule is enough for the CLI, while MCP tools follow the host's
+normal approval policy. The optional read redirect is itself an explicit host
+policy: it serves Read through FFSAKE and FFSAKE's workspace policy governs that
+call. Approve or trust the server if prompted. In an existing Claude chat,
+reconnect the MCP server after configuration.
 
 ## What you can do
 
