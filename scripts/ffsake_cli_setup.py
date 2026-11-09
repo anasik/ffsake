@@ -16,7 +16,26 @@ START = "<!-- ffsake-cli:start -->"
 END = "<!-- ffsake-cli:end -->"
 
 
-def guidance(binary):
+def semantic_sources(project):
+    if (project / "Cargo.toml").is_file():
+        return True
+    for pattern in ("*.cpp", "*.cc", "*.cxx", "*.hpp", "*.hh"):
+        if next(project.rglob(pattern), None) is not None:
+            return True
+    return next(project.rglob("Cargo.toml"), None) is not None
+
+
+def guidance(binary, semantic=False):
+    semantic_block = ""
+    if semantic:
+        semantic_block = f"""
+For Rust or C++ semantic references or a rename, query the installed language
+server instead of a textual replace:
+`{binary} . --request '{{"op":"semantic","request":{{"files":["src/lib.rs"],"path":"src/lib.rs","position":{{"line":1,"column":0}},"query":"references","context":{{"language":"rust","crate_root":"src/lib.rs","edition":"2021"}},"limit":100}}}}'`
+Use `query:"rename"` with `new_name` and the same context, or
+`preview_semantic_rename`, then review and `--apply`. Macro-heavy or cfg-gated
+code can be outside the snapshot; run the project build/tests after any rename.
+"""
     return f"""{START}
 ## FFSAKE CLI
 
@@ -24,6 +43,7 @@ Use the guarded FFSAKE CLI through Bash for scoped repository reads and one-call
 debugging. The host needs one allowlist rule for the CLI (for Claude Code:
 `Bash(ffsake:*)`). With the read-redirect hook (below), native Read is served by
 ffsake automatically and needs no extra rule.
+{semantic_block}
 
 Use the absolute path, a literal `.` for the workspace, and no shell variables
 or quotes. The host read block rejects commands it cannot parse.
@@ -116,7 +136,7 @@ def main():
     if not project.is_dir():
         parser.error("project must be a directory")
     binary = Path(args.prefix).expanduser().resolve() / "current" / "ffsake"
-    block = guidance(binary)
+    block = guidance(binary, semantic_sources(project))
     path = project / ("CLAUDE.md" if args.host == "claude" else "AGENTS.md")
     existing = path.read_text() if path.exists() else ""
     if START in existing:

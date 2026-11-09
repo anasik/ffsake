@@ -64,6 +64,14 @@ def main():
         assert host_config["permission"]["read"] == "allow", host_config
         assert host_config["permission"]["edit"] == "allow", host_config
 
+        rust_project = project / "rust-project"
+        rust_project.mkdir()
+        (rust_project / "Cargo.toml").write_text('[package]\nname = "demo"\nversion = "0.1.0"\n')
+        rust = run("--host", "claude", "--project", str(rust_project), "--apply")
+        rust_text = (rust_project / "CLAUDE.md").read_text()
+        assert rust["action"] == "appended", rust
+        assert "preview_semantic_rename" in rust_text and '\"op\":\"semantic\"' in rust_text, rust_text
+
         print(json.dumps({
             "no_mcp_config": True,
             "tool_approvals": 0,
@@ -72,6 +80,7 @@ def main():
             "codex_guidance": True,
             "read_redirect_hook": True,
             "opencode_read_redirect_plugin": True,
+            "semantic_guidance": True,
             "model_calls": 0,
         }, indent=2))
 

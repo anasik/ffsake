@@ -896,6 +896,8 @@ The semantic path cut turns from 37 to 9 and wall time by about 22%, at the cost
 
 The same language server was also exercised without a model on the real `itoa` 1.0.18 source. References for the private `divmod100` helper returned exactly 5 ranges and omitted two call sites inside a `macro_rules!` body, because macro expansion is intentionally not loaded. Applying the 5-edit proposal succeeded and `cargo build` then failed with `E0425: cannot find function divmod100` at the omitted call site; undo restored the source byte-exactly and the build passed again. This is the hard boundary: language intelligence is scope-aware but not complete, so a build/test check is mandatory and a textual search may be more complete on macro-heavy code. No semantic or compiler-correctness guarantee is claimed.
 
+Neither arm required a human intervention beyond the configured host permission profile, and permission denials were zero in both arms. The CLI arm's context includes the semantic usage guidance, counted in its input, and each preview starts a fresh rust-analyzer session, counted in elapsed; the 12-module advantage comes from fewer turns rather than faster server work. Reviewing the semantic diff remains necessary: the field proposal renamed a constructor parameter as part of the field change even though it preserved behavior.
+
 
 ### Catalog and interaction-cost analysis (2026-11-05)
 
