@@ -42,7 +42,9 @@ pooled **0.988 elapsed / 0.935 input**, total **$0.1805**. The MCP
 probe/workspace-info candidate on the two debug fixtures measured
 1.158 / 1.993 for $0.1708, so it is not a competitive path. A fresh
 held-out `debug_recursive` fixture measured **5/5 versus native 2/5**
-harness correctness, **0.718 elapsed / 0.584 input**, $0.0669. Evidence:
+harness correctness, **0.718 elapsed / 0.584 input**, $0.0669. A fresh
+held-out `edit_feature` fixture measured **5/5 both**, **0.997 elapsed /
+0.958 input**, $0.0534. Evidence:
 `docs/agent-benchmark-runs/20261109-generalization/`.
 
 Verdict: **met for Claude Code; partially met for OpenCode**. FFSAKE halves the
@@ -52,12 +54,12 @@ debug correctness, elapsed time, tokens and cost. OpenCode keeps the debug win
 and the enforcement path but is slower on edits. Reviewed preview/apply, stale
 checks, history and debug cleanup remain intact.
 
-Next action: add a fresh held-out **editing** workflow shape, because multi-file
-edit is the remaining slower axis (1.237 elapsed on `edit_batch`), and measure it
-with the default CLI + read-redirect configuration before reading traces. Keep
-the Claude read-redirect hook as the default. The MCP candidate is measured and
-rejected as a competitive path (1.158 elapsed / 1.993 input); do not reopen MCP
-catalog work.
+Next action: extend the two fresh held-out fixtures (`debug_recursive` and
+`edit_feature`) to ten pairs each in one batch, so the held-out estimate rests on
+40 attempts rather than 20 and stability is visible. Keep the Claude
+read-redirect hook as the default. The MCP candidate is measured and rejected as
+a competitive path (1.158 elapsed / 1.993 input); do not reopen MCP catalog
+work.
 
 Measurement corrections: bytecode caches are not repository changes;
 `reevaluate_rc_results.py` recomputes retained traces without model calls.

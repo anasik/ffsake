@@ -21,7 +21,7 @@ class FixtureTests(unittest.TestCase):
         self.assertTrue(all(set(order) == set(names) for order in orders))
 
     def test_paired_worktrees_and_reference_fixes(self):
-        for name in ('cross', 'build', 'git', 'debug', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand', 'edit_units', 'debug_cursor', 'edit_settings', 'edit_refactor', 'debug_retry', 'debug_recursive'):
+        for name in ('cross', 'build', 'git', 'debug', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand', 'edit_units', 'debug_cursor', 'edit_settings', 'edit_refactor', 'debug_retry', 'debug_recursive', 'edit_feature'):
             with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
                 base = Path(td).resolve()
                 template, left, right = base / 'template', base / 'left', base / 'right'

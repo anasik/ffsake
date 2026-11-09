@@ -255,6 +255,37 @@ def debug_nested_verify(root, state):
             {'program_exit': program.returncode, 'stdout': program.stdout,
              'test_exit': tests.returncode, 'test_stderr': tests.stderr})
 
+def edit_feature_fixture(root):
+    files = {
+        'tracker/__init__.py': '',
+        'tracker/store.py': 'def add(title, items=None):\n    items = [] if items is None else items\n    items.append({"title": title, "done": False})\n    return items\n\ndef complete(title, items):\n    for item in items:\n        if item["title"] == title:\n            item["done"] = True\n    return items\n',
+        'main.py': 'from tracker.store import add, complete, pending, summary\n\nitems = add("write")\nadd("review", items)\ncomplete("write", items)\nprint(f"pending={pending(items)}")\nprint(f"summary={summary(items)}")\n',
+        'tests/__init__.py': '',
+        'tests/test_tracker.py': 'import unittest\nfrom tracker.store import add, complete, summary, pending\n\nclass Tracker(unittest.TestCase):\n    def test_pending(self):\n        items = add("a")\n        add("b", items)\n        complete("a", items)\n        self.assertEqual(pending(items), ["b"])\n    def test_summary(self):\n        items = add("a")\n        add("b", items)\n        complete("a", items)\n        self.assertEqual(summary(items), {"total": 2, "done": 1, "pending": 1})\n    def test_empty(self):\n        self.assertEqual(pending([]), [])\n        self.assertEqual(summary([]), {"total": 0, "done": 0, "pending": 0})\n    def test_complete_missing_is_noop(self):\n        items = add("a")\n        self.assertEqual(complete("missing", items), items)\n',
+        'README.md': '# Tracker\nRun the tests and main.py.\n',
+        'notes.txt': 'Titles are unique within a list.\n',
+        '.gitignore': '.ffsake/\n__pycache__/\n*.pyc\n.pytest_cache/\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['tracker/store.py'] = ('def add(title, items=None):\n    items = [] if items is None else items\n'
+        '    items.append({"title": title, "done": False})\n    return items\n\n'
+        'def complete(title, items):\n    for item in items:\n        if item["title"] == title:\n            item["done"] = True\n    return items\n\n'
+        'def pending(items):\n    return [item["title"] for item in items if not item["done"]]\n\n'
+        'def summary(items):\n    total = len(items)\n    done = sum(1 for item in items if item["done"])\n    return {"total": total, "done": done, "pending": total - done}\n')
+    return {'reference': reference}
+
+
+def edit_feature_verify(root, state):
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    program = command(root, sys.executable, '-B', 'main.py')
+    return (tests.returncode == 0 and program.returncode == 0
+            and 'pending=[\'review\']' in program.stdout,
+            {'test_exit': tests.returncode, 'test_stderr': tests.stderr,
+             'program_exit': program.returncode, 'stdout': program.stdout})
+
+
 def edit_multi_fixture(root):
     files = {
         'billing/__init__.py': '',
@@ -523,6 +554,9 @@ TASKS = {
     'edit_multi': {'fixture': edit_multi_fixture, 'verify': edit_multi_verify,
                    'prompt': 'The billing package fails its validation, serialization and handler tests. Fix all affected modules, keep tests unchanged, and run the test suite. Preserve unrelated files.',
                    'allowed_changes': {'billing/validation.py', 'billing/serialization.py', 'billing/handlers.py'}},
+    'edit_feature': {'fixture': edit_feature_fixture, 'verify': edit_feature_verify,
+                     'prompt': 'The tracker package is missing its pending-list and summary behavior. Implement them so the existing tests and main.py pass, keep existing behavior unchanged, and preserve unrelated files.',
+                     'allowed_changes': {'tracker/store.py'}},
     'debug_expand': {'fixture': debug_expand_fixture, 'verify': debug_expand_verify,
                      'prompt': 'Run main.py to reproduce the tier boundary failure. Use a debugger to observe at least two loop iterations and the runtime tier values, make the smallest fix, and verify the program and tests. Preserve unrelated files.',
                      'allowed_changes': {'tiers.py'}, 'debug_program': 'main.py',

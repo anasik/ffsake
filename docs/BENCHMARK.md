@@ -870,6 +870,16 @@ A new `debug_recursive` fixture tests a workflow shape not present in the other 
 
 All three native failures had correct artifacts but no observed runtime value, the same workflow failure mode as the earlier debug fixtures. The CLI probe reached the deeper recursion frame, so the runtime-evidence requirement passed in 5/5. This is one fresh fixture and five pairs, not a broad generalization claim, but it is the first held-out workflow measured after the integration was frozen, and it meets the efficiency criteria on both axes.
 
+### Fresh held-out workflow: feature editing (2026-11-09)
+
+A second fresh fixture, `edit_feature`, tests a different editing shape: the tracker package already supports adding and completing items, and the agent must implement the missing pending-list and summary behavior against frozen tests. It is a feature addition rather than the formula or constant fixes in the earlier edit fixtures. Five pairs, 10 valid attempts, **$0.0534**.
+
+| Task | Artifact | Harness correct | Calls (native/CLI) | Median seconds (native/CLI) | Median input (native/CLI) | Paired median | Denials |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |
+| Feature edit | 5/5 both | 5/5 both | 10 / **9** | 13.0 / **12.8** | 148,388 / **141,599** | **0.997 / 0.958** | 0 / 0 |
+
+The two fresh held-out shapes now measure **edit 0.997 elapsed / 0.958 input** and **debug 0.718 / 0.584**, both with full harness correctness. The fixture was frozen locally before the run, so its provenance hash identifies the exact code and the recorded source revision is the parent commit; the fixture is committed with this evidence.
+
 ### Catalog and interaction-cost analysis (2026-11-05)
 
 The final held-out traces show FFSAKE used 157 tool calls versus native 113, while input per call was **22,090 versus 22,353** and seconds per call **1.69 versus 1.87**. The efficiency gap is therefore turn count, not per-turn payload or server latency. Model-free server timings are sub-millisecond for `workspace_info`/`read_files` and 7.7 ms for search; a real debugpy `stops=2` probe takes about 970 ms of actual stepping.
