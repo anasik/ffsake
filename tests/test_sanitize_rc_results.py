@@ -37,6 +37,16 @@ class SanitizeTests(unittest.TestCase):
         self.assertNotIn('SECRET', json.dumps(result))
         self.assertNotIn('/Users/private', json.dumps(result))
 
+    def test_known_task_names_survive_redaction(self):
+        result = sanitizer.sanitize({'results':[
+            {'task':'edit_settings','mode':'baseline','stdout':'','stderr':''},
+            {'task':'debug_recursive','mode':'cli','stdout':'','stderr':''},
+            {'task':'private_task','mode':'cli','stdout':'','stderr':''}],
+            'tasks':['edit_settings','debug_recursive','private_task'], 'settings':{}}, omit_events=True)
+        self.assertEqual([row['task'] for row in result['results']],
+                         ['edit_settings', 'debug_recursive', 'other'])
+        self.assertEqual(result['tasks'], ['edit_settings', 'debug_recursive', 'other'])
+
     def test_redirect_configuration_is_exported_from_top_level_report(self):
         result = sanitizer.sanitize({'results':[], 'settings':{},
                                      'opencode_redirect_reads':True,

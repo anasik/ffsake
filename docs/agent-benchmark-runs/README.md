@@ -153,3 +153,7 @@ The [final 40-attempt index](20261106-redirect/final-40.json) records 10 Haiku r
 ## 2026-11-09 Edit batch under the default CLI
 
 [edit-batch-10.json](20261109-generalization/edit-batch-10.json) records 10 valid Claude Haiku 5.5 attempts on the third 2026-11-05 held-out fixture with the current CLI + read-redirect integration. Artifact and harness were 5/5 both at 11 native versus 10 CLI calls; paired median 1.237 elapsed / 1.162 input, median cost near equal, total $0.0550. Pooled with the ledger and nested runs, 15 pairs give 0.988 elapsed / 0.935 input for $0.1805 total. These are regression fixtures, not fresh held-out tasks.
+
+## 2026-11-09 Fresh held-out recursive debugging
+
+[debug-recursive-10.json](20261109-generalization/debug-recursive-10.json) records 10 valid Claude Haiku 5.5 attempts on a new `debug_recursive` fixture frozen before the run: a recursive tree total missing inner-node values. Artifact was 5/5 both; harness was 5/5 CLI versus native 2/5, all native failures being missed runtime observations. Calls were 11 native versus 5 CLI; paired median 0.718 elapsed / 0.584 input, zero CLI denials versus 1-4 native, total $0.0669. One fixture and five pairs are not a broad generalization claim.

@@ -860,6 +860,16 @@ Pooled medians were **1.158 elapsed / 1.993 input**, and median cost was about 5
 
 Pooling the 15 valid pairs across `edit_batch`, `debug_ledger` and `debug_nested` gives **0.988 elapsed / 0.935 input** (8 and 11 paired wins respectively), total cost **$0.1805**. The debug fixtures now beat native on both axes; multi-file edit remains slower in elapsed time even with one fewer call, consistent with per-read hook and CLI process startup on a short task. All three fixtures informed the current integration, so this is regression evidence for the default configuration, not a new held-out generalization claim.
 
+### Fresh held-out workflow: recursive debugging (2026-11-09)
+
+A new `debug_recursive` fixture tests a workflow shape not present in the other fixtures: a recursive tree total that omits each inner node's own value, so diagnosis requires observing locals at more than one recursion depth. The fixture, verifier and model-free debugpy preflight were frozen before the paid run, and traces were not inspected while it ran. Five pairs, 10 valid attempts, **$0.0669**.
+
+| Task | Artifact | Harness correct | Calls (native/CLI) | Median seconds (native/CLI) | Median input (native/CLI) | Paired median | Denials (native/CLI) |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| Recursive debug | 5/5 both | **5/5 vs 2/5** | 11 / **5** | 18.2 / **14.9** | 240,199 / **140,760** | **0.718 / 0.584** | 1-4 / **0** |
+
+All three native failures had correct artifacts but no observed runtime value, the same workflow failure mode as the earlier debug fixtures. The CLI probe reached the deeper recursion frame, so the runtime-evidence requirement passed in 5/5. This is one fresh fixture and five pairs, not a broad generalization claim, but it is the first held-out workflow measured after the integration was frozen, and it meets the efficiency criteria on both axes.
+
 ### Catalog and interaction-cost analysis (2026-11-05)
 
 The final held-out traces show FFSAKE used 157 tool calls versus native 113, while input per call was **22,090 versus 22,353** and seconds per call **1.69 versus 1.87**. The efficiency gap is therefore turn count, not per-turn payload or server latency. Model-free server timings are sub-millisecond for `workspace_info`/`read_files` and 7.7 ms for search; a real debugpy `stops=2` probe takes about 970 ms of actual stepping.

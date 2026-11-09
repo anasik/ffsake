@@ -24,6 +24,8 @@ CASES = {
                      'marker': ('index', '1'), 'stops': 2},
     'debug_retry': {'path': 'retry.py', 'line': 7,
                     'marker': ('attempt', '1'), 'stops': 2},
+    'debug_recursive': {'path': 'tree.py', 'line': 4,
+                        'marker': ('depth', '1'), 'stops': 3},
     'debug_cursor': {'path': 'cursor.py', 'line': 2,
                      'marker': ('cursor', '0'), 'stops': 2},
 }

@@ -421,6 +421,32 @@ def debug_retry_verify(root, state):
              'test_exit': tests.returncode, 'test_stderr': tests.stderr})
 
 
+def debug_recursive_fixture(root):
+    files = {
+        'tree.py': 'def total(node, depth=0):\n    subtotal = 0\n    for child in node.get("children", []):\n        subtotal += total(child, depth + 1)\n    return subtotal\n',
+        'main.py': 'from tree import total\n\nTREE = {"value": 3, "children": [\n    {"value": 4, "children": []},\n    {"value": 5, "children": [{"value": 6, "children": []}]},\n]}\nactual = total(TREE)\nexpected = 18\nprint(f"actual={actual}")\nprint(f"expected={expected}")\nraise SystemExit(0 if actual == expected else 1)\n',
+        'tests/__init__.py': '',
+        'tests/test_tree.py': 'import unittest\nfrom tree import total\n\nTREE = {"value": 3, "children": [\n    {"value": 4, "children": []},\n    {"value": 5, "children": [{"value": 6, "children": []}]},\n]}\n\nclass Tree(unittest.TestCase):\n    def test_total(self):\n        self.assertEqual(total(TREE), 18)\n    def test_leaf(self):\n        self.assertEqual(total({"value": 7, "children": []}), 7)\n',
+        'README.md': '# Tree\nRun main.py to reproduce the nested total failure.\n',
+        'notes.txt': 'Every node contributes its own value, including inner nodes.\n',
+        '.gitignore': '.ffsake/\n__pycache__/\n*.pyc\n.pytest_cache/\n',
+    }
+    suite.write_files(root, files)
+    suite.git_init(root)
+    reference = dict(files)
+    reference['tree.py'] = reference['tree.py'].replace('subtotal = 0', 'subtotal = node["value"]')
+    return {'reference': reference}
+
+
+def debug_recursive_verify(root, state):
+    program = command(root, sys.executable, '-B', 'main.py')
+    tests = command(root, sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests')
+    return (program.returncode == 0 and 'actual=18' in program.stdout
+            and 'expected=18' in program.stdout and tests.returncode == 0,
+            {'program_exit': program.returncode, 'stdout': program.stdout,
+             'test_exit': tests.returncode, 'test_stderr': tests.stderr})
+
+
 def edit_refactor_fixture(root):
     files = {
         'pricing.py': 'def apply_discount(price, percent):\n    return round(price * (1 - percent / 100), 2)\n',
@@ -518,4 +544,8 @@ TASKS = {
                     'prompt': 'Run main.py to reproduce the retry schedule failure. Use a debugger to observe at least two loop iterations and the delay values, make the smallest fix, and verify the program and tests. Preserve unrelated files.',
                     'allowed_changes': {'retry.py'}, 'debug_program': 'main.py',
                     'workflow_markers': ('attempt', '1')},
+    'debug_recursive': {'fixture': debug_recursive_fixture, 'verify': debug_recursive_verify,
+                        'prompt': 'Run main.py to reproduce the nested tree total failure. Use a debugger to observe recursive calls at more than one depth and the runtime values, make the smallest fix, and verify the program and tests. Preserve unrelated files.',
+                        'allowed_changes': {'tree.py'}, 'debug_program': 'main.py',
+                        'workflow_markers': ('depth', '1')},
 }
