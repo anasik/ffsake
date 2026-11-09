@@ -31,6 +31,13 @@ jobs:
           cargo build --locked --release --bins
           if [ "$(uname -s)" = Darwin ]; then otool -L target/release/ffsake-mcp; else ldd target/release/ffsake-mcp; fi
           python3 scripts/release_package.py --version "$FFSAKE_RELEASE_VERSION" --binary-dir target/release --output dist
+      - name: Verify clean installation from the packaged archive
+        env:
+          FFSAKE_RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+        run: |
+          python3 scripts/alpha_release_smoke.py \
+            --archive "$(python3 -c "import glob;print(glob.glob('dist/*.tar.gz')[0])")" \
+            --version "$FFSAKE_RELEASE_VERSION"
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform }}
