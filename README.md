@@ -1,94 +1,176 @@
 # FFSAKE
 
-FFSAKE gives coding agents repository tools through MCP: find and read files, review and apply guarded edits, and undo or redo editor transactions. It also provides reviewed Git operations and named build/test tasks. It is an alpha project; host approval settings still control tool use, and task execution is not sandboxed.
+FFSAKE is complementary tooling for coding agents. It does not replace your
+host's editor: ordinary file changes stay with native Edit/Write. FFSAKE adds
+scoped repository reads, one-call debugging, optional reviewed and journaled
+edits, selective semantic operations, and MCP-only capabilities such as Git
+review and named build/test tasks.
 
-**Benchmark snapshot (2026-10-30):** In 50 reported Claude Code runs (five workflows, two arms, five matched repetitions), FFSAKE was reported correct 25/25 and native tools 24/25; one native run also edited README.md outside its allowed change set. FFSAKE used more tokens and time: $3.30 vs $2.27 total reported cost, 623 s vs 471 s reported total wall time, and 8.61M vs 3.96M total input tokens (including cache reads). FFSAKE tools were called in 16/25 runs, mostly build/debug, while only 3/25 avoided native file/shell tools. The original verifier records and per-run wall times were lost; correctness and timing cannot currently be independently reverified. This is one model on one host, descriptive rather than a general performance claim. [Method, available evidence and caveats](docs/BENCHMARK.md#release-candidate-claude-comparison-2026-10-30).
+**Status: alpha (`v0.1.0-alpha.1`; [release notes](docs/releases/v0.1.0-alpha.1.md)).** Interfaces and setup details may still
+change. FFSAKE does not sandbox project code, does not grant filesystem or host
+permissions, and does not make native edits transactional.
 
-**Codex comparison (2026-11-01):** Four tasks, five matched pairs each: external checks passed for all 40 resulting projects; one FFSAKE debugger run timed out before the agent finished. The native build/test traces did not establish live-output observation in any of five runs; FFSAKE traces did in five. Median cross-file time was 22.2 s native versus 35.3 s with FFSAKE, and median total input was 72,246 versus 210,037 tokens, including cached input. Git and OpenCode could not be compared fairly; this small, auto-approved sample is not a general performance claim. [Results, limitations and redacted evidence](docs/BENCHMARK.md#release-candidate-codex-comparison-2026-11-01).
+## Install
 
-**Codex editing study (2026-11-02):** In five matched repetitions per arm, all cross-file and maintenance runs passed. The optional editing profile reduced median calls, total input and elapsed time versus the old core profile on both fixtures; native tools still used less input and time. For the cross-file task, medians were 7 calls / 171,496 input tokens / 46.8 s with editing, 10 / 214,112 / 62.5 s with old core, and 4 / 72,164 / 33.3 s native. Input includes cache reads, and the timing ranges overlap. These small samples are not a general performance claim. [Full results and limitations](docs/BENCHMARK.md#interaction-overhead-study-2026-11-02).
+You need Git and Python 3.11+ for the installer. Release archives target macOS
+ARM64 (macOS 14+) and Linux x86-64 (glibc 2.35+). Source installation also needs
+Rust/Cargo and a C compiler. Windows is not supported. Language servers and
+debug adapters are separate optional dependencies.
 
-**Debugger auto-wait candidate (2026-11-02):** Control and inspection calls now return their completed result after a bounded wait, and a stop wait no longer returns early on the continue response. In a Claude-only 5×3 comparison across payroll and shipping debugger fixtures, payroll medians fell from 44.5 s / 32 calls to 27.6 s / 19 calls, while shipping was 29.6 s / 24 calls to 29.5 s / 18 calls (combined −23%). A result-readiness race found in one shipping run was fixed; the post-fix 5×3 measured payroll 32.6 s / 18.5 calls versus 41.1 s / 28 and shipping 28.4 s / 22 versus 29.3 s / 23 (combined −13.2%). One changed payroll attempt was excluded because Claude Code invoked a nonexistent placeholder tool; the other cells had five valid runs. The 30% target is not met on both fixtures, native tools remained faster, and Codex validation was unavailable because its workspace credits were exhausted. [Results, build hashes and limits](docs/BENCHMARK.md#debugger-auto-wait-candidate-2026-11-02).
-
-**Quick setup:** from the project you want to use, give your agent the [repository URL](https://github.com/anasik/ffsake) and ask it to follow [the installation guide](docs/INSTALL.md). Or run the commands below. You need Git and Python 3.11+. Source builds additionally need Rust/Cargo and a C compiler. Release archives cover macOS ARM64 and Linux x86-64; before the first alpha is published use `install --source`.
-
-```sh
-# Run from your project. Reuse an existing source checkout if present.
-PROJECT_DIR="$(pwd -P)"
-FFSAKE_SOURCE="$HOME/.local/src/ffsake"
-git clone https://github.com/anasik/ffsake.git "$FFSAKE_SOURCE"
-cd "$FFSAKE_SOURCE"
-python3 scripts/ffsake_install.py install  # before the first release: install --source
-python3 scripts/ffsake_install.py configure --host claude --project "$PROJECT_DIR" --guidance          # review
-python3 scripts/ffsake_install.py configure --host claude --project "$PROJECT_DIR" --guidance --apply  # apply
-python3 scripts/ffsake_install.py doctor --host claude --project "$PROJECT_DIR"
-```
-
-Install the binaries once per machine; configure each host and project you want to use. Repeated setup reuses matching installations and entries without silently upgrading. The optional `--guidance` flag previews a marked, idempotent addition to the host's project instructions. Replace `claude` with `codex` or `opencode` for those hosts. Trust or approve the MCP server if your host asks. In an existing Claude chat, use `/mcp` → `ffsake` → **Reconnect**; a new chat in the configured project needs no setup. [Full setup, updates and limitations](docs/INSTALL.md).
-
-## Contents
-
-- [Supported agents and platforms](#supported-agents-and-platforms)
-- [Everyday usage](#everyday-usage)
-- [Optional build, debugging and language tools](#optional-build-debugging-and-language-tools)
-- [Update and uninstall](#update-and-uninstall)
-- [Troubleshooting](#troubleshooting)
-- [Reference and project status](#reference-and-project-status)
-
-## Supported agents and platforms
-
-The source installer and MCP configuration cover Claude Code, Codex and OpenCode 1.x. Isolated checks recognized Claude Code 2.1.312 and Codex CLI 0.163.0 configurations and connected OpenCode 1.19.5. A fresh Codex agent completed an installation; interactive Claude approval was not tested in that installation exercise. See the [acceptance report](docs/demo-runs/20261029-alpha-install/REPORT.md).
-
-Source installation has been exercised on macOS and in Linux CI. Windows is not supported by the installer or current process-group runner. Release archives target macOS ARM64 and Linux x86-64; check the release page for availability. FFSAKE runs as a host-managed MCP stdio process; it does not require a daemon.
-
-## Everyday usage
-
-Ask your agent to use FFSAKE to explore and edit your project. For example: “Find where requests are validated, propose the smallest fix, show me the diff, and run the project's test task.” The server can search, read ranges, preview changes, apply them with stale-content checks, and undo or redo complete transactions, including after reopening history; stale state rejects. Editor history does not reverse Git operations, task effects or debuggee side effects. A search returning no matches does not always prove absence: indexed search has hidden-file and ignore exclusions; [explicit directory search and archive browsing](docs/ARCHITECTURE.md#hidden-source-search-and-zipjar-inspection) cover bounded searches and ZIP/JAR source reads.
-
-For an editing-focused session, the optional `--profile editing` offers a smaller tool catalog with the same guarded file operations. It omits task execution, debugging, Git mutations and language intelligence; reconnect with `core` or `all` when those are needed. [Profile details](docs/CLI.md#mcp-tool-profiles).
-
-For a fork or subagent, verify the server's primary root before editing or running tasks. A shared connection does not automatically follow a child into another worktree. See [subagent and worktree setup](docs/SUBAGENTS.md).
-
-The project directory is the default file scope. To open an external file or folder, ask the agent to use the access tools; the host's normal approval policy applies. Grants can be read-only or read/write and persist until removed. A file grant does not open its parent directory. Explicit restrictive access exports remain authoritative. See [host access and its limits](docs/HOST_ACCESS.md).
-
-For Git, the agent can inspect changes, review selected-file staging and commits, and review branch creation, switching, fetch and non-force push before executing them. Use the optional `repository` selector to choose an authorized added repository or linked worktree; omit it for the primary project and use the same selector when applying a review. Host approval applies to mutations and network operations. Force push, tags, pull, merge, rebase and arbitrary refspecs are outside this scope; some executable Git configurations are refused. See [Git and task workflows](docs/CLI.md#git-review-and-host-configured-buildtest-jobs).
-
-## Optional build, debugging and language tools
-
-- **Build and test:** Ask the agent to list existing tasks or propose a named process task. Task registration and execution follow host approval; task authorizations persist per project and definitions are revalidated before each run. Output can be read incrementally and running tasks cancelled. Tasks execute project code, can change files, and are neither sandboxed nor part of editor history. Explicit restrictive startup task policies remain authoritative. [Task workflow and limits](docs/CLI.md#git-review-and-host-configured-buildtest-jobs).
-- **Debug:** A configured external DAP adapter can launch a local program or attach to an explicitly selected already-running local process, set breakpoints, inspect stack frames and variables, step, pause and continue. Attachment uses host approval and detaches without requesting termination of the independent target. C# with netcoredbg and Python with debugpy have passed local launch tests; the installed Apple LLDB adapter crashed during C++ launch and is not yet validated. See the [compatibility report](docs/demo-runs/20261030-debug-compatibility/REPORT.md). FFSAKE does not bundle it. [Setup and limitations](docs/DEBUGGING.md) · [demonstration](docs/DEBUGGING_DEMO.md).
-- **Language intelligence:** The full MCP profile supports bounded semantic navigation, diagnostics and reviewed rename proposals through configured Rust and C++ language servers. Language servers are optional dependencies; other servers have not been established as supported. Results depend on supplied project context; external builds and tests are still needed. Ordinary editing does not require a language server. [Semantic interface and limitations](docs/CLI.md#shared-language-intelligence).
-
-These capabilities are implemented and tested within their documented bounds. Broader adapters, sandboxing and plugins remain planned, not guarantees of the current alpha. See [PLAN.md](PLAN.md) for the roadmap and evidence.
-
-## Update and uninstall
-
-Inspect the source checkout for local changes, pull without discarding them, and explicitly authorize an update:
+Release installation (after the first alpha archive is published):
 
 ```sh
-git -C "$FFSAKE_SOURCE" status --short
-git -C "$FFSAKE_SOURCE" pull --ff-only
-python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" check-update
-python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" update
-python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" doctor --host claude --project "$PROJECT_DIR"
+git clone --depth 1 https://github.com/anasik/ffsake.git "$HOME/.local/src/ffsake"
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" install
 ```
 
-Reconnect an existing MCP session after the update. To remove the managed binaries, run `python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" uninstall`. This leaves project files, journals, the source checkout and host configuration in place; remove only the FFSAKE host entry separately if desired. [Full update and uninstall instructions](docs/INSTALL.md#update).
+Before the first archive is published, build from source:
 
-## Troubleshooting
+```sh
+git clone https://github.com/anasik/ffsake.git "$HOME/.local/src/ffsake"
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" install --source --profile release
+```
 
-- **Server missing or disconnected:** Run the `doctor` command above for your chosen host and project. It checks binary integrity and performs MCP initialization and tool discovery without model calls. It cannot verify host trust, managed configuration overrides or an already-running connection. Check your host's trust/approval settings and reconnect.
-- **Existing entry or configuration conflict:** Setup refuses conflicting or duplicate FFSAKE entries rather than overwriting them. Review the reported file manually. Existing OpenCode project `opencode.jsonc` also requires a manual merge. See [configuration details](docs/INSTALL.md#configure-a-project).
-- **Build fails or an optional tool is missing:** Check the prerequisites above. Install and configure a language server or debug adapter only if you need that feature; they are not bundled.
-- **An edit or undo is stale:** Read the current files and prepare a fresh preview. Undo reverses an entire transaction and can reject if later changes touched it; selectively reversing an earlier change requires a new reviewed edit. [Mutation details](docs/ARCHITECTURE.md#mutation-model).
+Install the binaries once per machine, then configure each project. The
+recommended setup keeps native editing and adds the FFSAKE CLI for reads,
+debugging and semantic operations. It also registers the MCP server for Git,
+tasks, access tools and persistent debug sessions.
 
-## Reference and project status
+```sh
+# Claude Code (CLI-first; native Edit/Write stays the default)
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" \
+  configure --host claude --project "$PWD" --cli-first --apply
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" \
+  doctor --host claude --project "$PWD" --cli-first
 
-- [Installation, configuration, doctor, update and uninstall](docs/INSTALL.md)
+# OpenCode (CLI-first; native edit/write stays the default)
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" \
+  configure --host opencode --project "$PWD" --cli-first --apply
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" \
+  doctor --host opencode --project "$PWD" --cli-first
+```
+
+`configure` prints a review before writing. With `--cli-first` it:
+
+- adds one marked guidance block to `CLAUDE.md` or `AGENTS.md`;
+- installs a Claude `PreToolUse` hook or an OpenCode local plugin that serves
+  native `Read` through `ffsake read`;
+- merges those entries into existing project settings without replacing other
+  keys, hooks or permissions;
+- adds the MCP server entry for capabilities that need it.
+
+To register only the MCP server, omit `--cli-first`. Codex uses the same
+`configure --host codex` command; it receives guidance and the MCP entry, but
+read redirection is not implemented for Codex.
+
+FFSAKE does not grant permissions. Allow the CLI commands and MCP server in
+your host policy; for Claude Code an explicit `Bash(ffsake:*)` rule is enough
+for the CLI, while MCP tools follow the host's normal approval policy. Approve
+or trust the server if prompted. In an existing Claude chat, reconnect the MCP
+server after configuration.
+
+## What you can do
+
+**Scoped reads and search.** Ask the agent to read ranges or search the project
+through FFSAKE. The project root is the default scope. External paths require
+an explicit access grant; a file grant does not open its parent directory.
+
+**One-call debugging.** With a configured DAP adapter, `ffsake probe` launches
+the program, stops at requested breakpoints, returns bounded stack/variable
+inspection for one or more stops, and cleans up the owned process. Python
+debugpy and C# netcoredbg are validated for launch; the installed Apple LLDB
+adapter failed its C++ launch test. Adapters are not bundled. Persistent debug
+sessions require `ffsake serve` or MCP.
+
+**Optional reviewed edits.** Native Edit/Write is faster and remains the
+default. When you want a reviewable transaction, the agent can preview one or
+more changes, show the diff, and apply the frozen result:
+
+- preview writes nothing;
+- apply rechecks content hashes, match counts and analysis sources;
+- applied FFSAKE edits form one journal transaction with undo/redo;
+- stale content rejects instead of applying.
+
+This is stale-state protection and journaled recovery, not a sandbox. Edits made
+with native tools are outside FFSAKE's journal and cannot be undone through it.
+Git operations, task execution and debuggee side effects are also outside editor
+history.
+
+**Selective semantic operations.** For Rust and C++, the full profile exposes
+bounded definition, reference, hover, symbol, diagnostics and rename proposals
+through installed language servers. The one-shot CLI can preview and apply a
+semantic rename with the same stale-source guards. Coverage is incomplete: the
+explicit snapshot does not load Cargo dependencies, sysroot, build scripts,
+procedural macros or configured features, and macro-expanded, `cfg(test)` and
+integration-test code may be missing. Always run the project build and tests;
+the macro-heavy `itoa` check applied a rename that broke the build until the
+omitted macro-body references were fixed. C++ uses clangd with the same
+limitations.
+
+**Git, tasks and access through MCP.** The MCP server reviews selected-file
+staging and commits, branch creation/switching/fetch/non-force push, named
+project tasks with incremental output and cancellation, and persistent access
+grants. Task execution is not sandboxed and is not part of editor history.
+Force push, tags, merge, rebase and arbitrary refspecs are out of scope.
+
+## Update and removal
+
+```sh
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" check-update
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" update
+```
+
+Updates are never automatic. Pinned installs require an explicit version or
+`--unpin`. Retained generations support `rollback`.
+
+Remove FFSAKE from one project without touching unrelated host configuration:
+
+```sh
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" \
+  configure --host claude --project "$PWD" --remove --apply
+```
+
+This removes the project MCP entry, the FFSAKE guidance block, the Claude hook
+or OpenCode plugin. Other settings, permissions and instructions stay. Remove
+the managed binaries with:
+
+```sh
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" uninstall
+```
+
+`uninstall` leaves the source checkout, project files, journals and host
+configuration in place. Remove those separately if desired.
+
+## Honest limitations
+
+- **Native editing is not journaled.** Only FFSAKE preview/apply transactions
+  can be undone or redone through FFSAKE.
+- **No permission shortcut.** FFSAKE enforces its own workspace policy, but the
+  host remains the permission authority. It does not reduce or bypass host
+  approval settings, and it does not sandbox task execution.
+- **No universal performance claim.** MCP adds catalog and per-turn cost; the
+  earlier broad speed claims do not generalize. Use native editing by default
+  and FFSAKE where scoped reads, debugging, reviewed transactions or semantic
+  operations help. See the [benchmark evidence](docs/BENCHMARK.md) for the
+  measured boundary.
+- **Semantic coverage is incomplete.** Macros, dependencies, sysroot, build
+  scripts, test configurations and generated code can be missing from the
+  snapshot. A build/test check is mandatory; language-server acceptance is not
+  compiler or semantic correctness.
+- **Debug adapters are external.** Only debugpy and netcoredbg launch are
+  validated locally; LLDB C++ failed. Attachment requires an explicit process
+  selection and host approval.
+- **Alpha interfaces.** Installation, configuration and tool details may change
+  before a stable release.
+
+## Development and references
+
+- [Installation, configuration and troubleshooting](docs/INSTALL.md)
+- [CLI-first setup details](docs/CLI_FIRST.md)
 - [MCP and resident CLI contracts](docs/CLI.md)
-- [Architecture and development reference](docs/ARCHITECTURE.md)
+- [Architecture](docs/ARCHITECTURE.md)
 - [Benchmark methodology and evidence](docs/BENCHMARK.md)
-- [Real-project testing checklist](docs/REAL_PROJECT_TESTING.md)
 - [Roadmap and development record](PLAN.md)
 
-FFSAKE uses [FFF](https://github.com/dmtrKovalenko/fff) as its search and indexing substrate.
+FFSAKE uses [FFF](https://github.com/dmtrKovalenko/fff) as its search and
+indexing substrate.

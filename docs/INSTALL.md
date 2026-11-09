@@ -22,17 +22,21 @@ For isolated tests or a different location, put `--prefix /absolute/path` **befo
 
 ## Configure a project
 
-Choose exactly one host (`claude`, `codex`, or `opencode`). First print and review the proposed FFSAKE entry and any new permission defaults, then approve the explicit apply command through the host. Substitute the chosen host below:
+Choose exactly one host (`claude`, `codex`, or `opencode`). First print and review the proposed changes, then approve the explicit apply command through the host. The recommended CLI-first setup keeps native editing, installs the FFSAKE CLI guidance and read redirect, and keeps the MCP entry for Git, tasks, access and persistent debugging:
 
 ```sh
-python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" configure --host claude --project "$PROJECT_DIR" --guidance
-python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" configure --host claude --project "$PROJECT_DIR" --guidance --apply
-python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" doctor --host claude --project "$PROJECT_DIR"
+python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" configure --host claude --project "$PROJECT_DIR" --cli-first
+python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" configure --host claude --project "$PROJECT_DIR" --cli-first --apply
+python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" doctor --host claude --project "$PROJECT_DIR" --cli-first
 ```
+
+Use `--host opencode` for OpenCode. Codex accepts `--cli-first` for guidance but read redirection is not implemented for Codex. For MCP-only setup, omit `--cli-first` and add `--guidance` if you want the MCP guidance block.
+
+With `--cli-first`, Claude Code receives a marked `CLAUDE.md` block and a `PreToolUse` hook merged into `.claude/settings.json`; OpenCode receives the block plus a local read-redirect plugin and merged `.opencode/opencode.json` permissions. Existing keys, hooks, instructions and permission choices are preserved. The CLI itself does not grant permissions: allow the commands your host policy requires (for Claude Code, `Bash(ffsake:*)` covers the CLI), and approve MCP tools normally.
 
 For an editing-focused project, append `--tool-profile editing` to the configure and doctor commands. Review the preview and apply it explicitly. This smaller catalog omits task execution, debugging, Git mutations and language intelligence; use `core` or `all` for those. Existing conflicting entries are not overwritten automatically. Reconnect a running host session after changing its server configuration. [Profile details](CLI.md#mcp-tool-profiles).
 
-The optional `--guidance` adds clearly marked blocks to `CLAUDE.md` for Claude or `AGENTS.md` for Codex/OpenCode. The preview prints the proposed blocks, including Git repository selection guidance. Existing instructions are retained, repeating setup leaves a matching block unchanged, and edited or malformed markers require manual review. Because OpenCode selects the nearest instruction file, adding a new project `AGENTS.md` is refused if it would shadow an existing project or ancestor `CLAUDE.md` or `AGENTS.md`; merge guidance manually in that case. Omit `--guidance` if you do not want project guidance. Hosts may have other instruction precedence and trust settings; installing guidance does not prove that an agent followed it.
+The optional `--guidance` (MCP-only setup) adds clearly marked blocks to `CLAUDE.md` for Claude or `AGENTS.md` for Codex/OpenCode. The preview prints the proposed blocks, including Git repository selection guidance. Existing instructions are retained, repeating setup leaves a matching block unchanged, and edited or malformed markers require manual review. Because OpenCode selects the nearest instruction file, adding a new project `AGENTS.md` is refused if it would shadow an existing project or ancestor `CLAUDE.md` or `AGENTS.md`; merge guidance manually in that case. Omit `--guidance` if you do not want project guidance. Hosts may have other instruction precedence and trust settings; installing guidance does not prove that an agent followed it.
 
 The configuration is project-scoped: Claude Code uses `.mcp.json` and, if absent, `.claude/settings.json`; Codex uses `.codex/config.toml`; OpenCode 1.x uses `opencode.json`. Existing unrelated entries are preserved. A compatible entry in the project or the standard user configuration is reused, and repeated setup leaves it unchanged. Existing duplicate entries, entries under another name pointing to an `ffsake-mcp` executable, and conflicting entries require manual review. Custom or managed configuration locations and differently named executables cannot all be discovered automatically. A conflicting FFSAKE entry, unsafe symlink, invalid file or existing OpenCode `opencode.jsonc` stops for manual review without replacing it. Existing Claude settings and existing OpenCode permission policies are left alone, including deliberate auto/allow rules. When new defaults are created, ordinary file tools are allowed and access changes, task execution, debugger launch and Git mutations follow the host's normal approval policy. Host or organization policy may override these defaults.
 
@@ -61,12 +65,23 @@ An explicit update verifies a new generation before atomically switching `curren
 
 Unpinned alpha servers check the configured channel asynchronously at startup and at most once per day during use, using a shared per-installation cache and a short timeout. A newer compatible release is included once in an ordinary tool response; the agent should relay it. Offline failures do not block tools. A pinned installation suppresses automatic notices and ordinary `update` will not move it. Use an explicit `--version` to change the pin or `update --unpin` to follow the channel again; `check-update` remains available. No automatic installation, background service or forced restart occurs. FFSAKE release versions (for example `v0.1.0-alpha.1`) are distinct from MCP protocol versions; MCP manages the server connection, not software installation.
 
-## Uninstall
+## Remove from a project
+
+Remove FFSAKE's project entry, guidance block, hook and plugin while preserving unrelated host settings:
+
+```sh
+python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" configure --host claude --project "$PROJECT_DIR" --remove
+python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" configure --host claude --project "$PROJECT_DIR" --remove --apply
+```
+
+Use `--host opencode` for OpenCode. Automatic removal currently supports Claude and OpenCode project entries; remove a Codex `[mcp_servers.ffsake]` entry manually. Permission rules created by your host are left in place. A user-scope FFSAKE entry outside the project requires manual removal.
+
+## Uninstall binaries
 
 ```sh
 python3 "$FFSAKE_SOURCE/scripts/ffsake_install.py" uninstall
 ```
 
-This removes the managed active binaries and link; retained generations are left for manual review. It does not remove project files, `.ffsake` journals, source checkout or host configuration. The host entry will point to a missing binary until you remove only its FFSAKE entry using your host's configuration mechanism. Review the relevant project files rather than deleting them wholesale. Repeating uninstall is harmless.
+This removes the managed active binaries and link; retained generations are left for manual review. It does not remove project files, `.ffsake` journals, source checkout or host configuration. Run the project removal command above first so the host does not keep a missing entry. Review the relevant project files rather than deleting them wholesale. Repeating uninstall is harmless.
 
 Host references: [Claude Code MCP](https://code.claude.com/docs/en/mcp), [Codex MCP](https://developers.openai.com/codex/mcp), and [OpenCode MCP](https://opencode.ai/docs/mcp-servers/).

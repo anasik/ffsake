@@ -1,11 +1,31 @@
 # CLI-first integration
 
-FFSAKE can be installed without registering an MCP server or a tool catalog.
-This is the lowest-friction integration for hosts that already permit shell
-commands, and with the Claude read-redirect hook it also gives the host a
-single governed read path.
+FFSAKE can be used without an MCP catalog: the CLI provides scoped reads,
+one-call debugging, optional reviewed transactions and selective semantic
+operations through ordinary shell commands. The recommended alpha setup also
+keeps the MCP server registered for capabilities that need it (Git review,
+tasks, access tools and persistent debug sessions).
+
+Native `Edit`/`Write` remains the default for ordinary changes. Native edits are
+not part of FFSAKE's journal. Only preview/apply operations run by FFSAKE are
+stale-checked and undoable.
 
 ## Setup
+
+Use the installer so binaries, project entries and removal stay coordinated:
+
+```sh
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" \
+  configure --host claude --project /path/to/repo --cli-first --apply
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" \
+  doctor --host claude --project /path/to/repo --cli-first
+```
+
+Replace `claude` with `opencode` for OpenCode. Codex receives guidance and the
+MCP entry; read redirection is not implemented there.
+
+The standalone integration remains available when an MCP entry is deliberately
+not wanted:
 
 ```sh
 python3 scripts/ffsake_cli_setup.py --host claude --project /path/to/repo \
@@ -14,35 +34,38 @@ python3 scripts/ffsake_cli_setup.py --host opencode --project /path/to/repo \
   --redirect-reads --apply
 ```
 
-Claude Code writes:
+Claude Code receives:
 
-- one guidance block in `CLAUDE.md` (or `AGENTS.md`);
-- `.claude/ffsake-read-policy.json`, a `PreToolUse` hook that serves native
-  `Read` through `ffsake read` and returns the text through `updatedInput`;
-- the single host permission rule for shell access: `Bash(ffsake:*)`.
+- one marked guidance block in `CLAUDE.md`;
+- a `PreToolUse` hook merged into `.claude/settings.json` that serves native
+  `Read` through `ffsake read` and returns the text through `updatedInput`.
 
-OpenCode writes the same guidance block plus:
+The hook is loaded by Claude's normal project settings; no `--settings` flag is
+required. Existing hooks, permissions and unrelated keys are preserved.
+
+OpenCode receives the same guidance block plus:
 
 - `.opencode/plugins/ffsake-read-redirect-<workspace-id>/index.js`, a local
   plugin that replaces the native `read` executor with `ffsake read` and
   rejects file-reading shell commands;
-- `.opencode/opencode.json` with the permission-minimal allowlist
-  (`bash`, `read`, `edit`, `write`, and native search tools).
+- merged `.opencode/opencode.json` permissions for `bash`, `read`, `edit`,
+  `write` and native search tools. Existing permission values win.
 
-Run Claude Code with the policy, or start OpenCode in the project:
+If the project already uses `.opencode/opencode.jsonc`, setup refuses the
+redirect and asks for a manual merge instead of creating a shadow config.
+Invalid existing `opencode.json` is also refused rather than overwritten.
 
-```sh
-claude --settings .claude/ffsake-read-policy.json ...
-opencode
-```
+## Permissions
 
-No `.mcp.json`, MCP server entry, tool catalog or per-tool approval list is
-created. Native `Edit`/`Write` stay available because they are the efficient,
-reliable path for ordinary code changes. Native `Read` still works for the
-model, but its content comes from FFSAKE's workspace policy.
+FFSAKE does not grant permissions and does not reduce the host's approval
+surface. Allow the commands your policy requires. For Claude Code,
+`Bash(ffsake:*)` is enough for CLI calls; MCP tools follow the host's normal
+approval policy. The generated guidance does not modify permission settings.
 
-Commands are written with a literal `.` workspace and no variables or quotes so
-the host's static read block can parse them:
+## Commands
+
+Commands use a literal `.` workspace and no variables or quotes so the host's
+static read block can parse them:
 
 ```sh
 ~/.local/share/ffsake/current/ffsake read . src/lib.rs:10-40 src/runtime.rs:1-60
@@ -50,84 +73,32 @@ the host's static read block can parse them:
   --config app --breakpoint main.py:12 --stops 2
 ```
 
-## Permission comparison
+Reviewed edit, then apply:
 
-Measured without skip-all: native defaults versus the CLI arm with the redirect
-hook and a three-entry allowlist in the same settings file.
-
-| Artifact | MCP core | Native defaults | CLI + redirect |
-| --- | ---: | ---: | ---: |
-| Host config files | `.mcp.json` / host config | host settings | one settings file |
-| Advertised operations | 28 tools | 6 tools | 3 tools + native `Read` |
-| Per-tool approval entries | up to 28 | 6 | **3** |
-| Read path | MCP read tool | native `Read` | native `Read` rewritten to ffsake |
-| Runtime denials per run | n/a | 0–4 | **0–1** |
-| Catalog bytes | 20.9 KB | 0 | **0** |
-
-The settings file contains:
-
-```json
-{"permissions": {"allow": ["Bash", "Edit", "Write"]}}
+```sh
+~/.local/share/ffsake/current/ffsake . --request '{"op":"preview_edit","path":"src/lib.rs","old_text":"old","new_text":"new","expected_matches":1}'
+~/.local/share/ffsake/current/ffsake . --apply <token>
 ```
 
-plus the `Read` hook. Native `Read` is still available to the model, so edit
-turns do not grow; the hook serves it through FFSAKE. Native `Edit`/`Write` stay
-available, and native `Glob`/`Grep` are not in the allowlist.
+Semantic rename through an installed Rust/C++ language server:
 
-## Measured trade-offs (Claude Haiku 5.5)
+```sh
+~/.local/share/ffsake/current/ffsake . --request '{"op":"preview_semantic_rename","request":{"files":["src/lib.rs"],"path":"src/lib.rs","position":{"line":5,"column":7},"query":"rename","context":{"language":"rust","crate_root":"src/lib.rs","edition":"2021"},"new_name":"sum_all","limit":100}}'
+~/.local/share/ffsake/current/ffsake . --apply <token>
+```
 
-Final 80-attempt run on four fresh tasks (`final-80.json`), ten repetitions
-each, no skip-all:
+Semantic coverage is incomplete: dependencies, sysroot, build scripts,
+procedural macros, `cfg(test)` and integration-test code may be outside the
+explicit snapshot. Run the project build and tests after a rename. See the
+[measured boundary](BENCHMARK.md#language-intelligence-boundary-semantic-rename-and-reference-discovery-2026-11-09).
 
-| Task group | Correct | Pooled elapsed | Pooled input | Pooled cost |
-| --- | ---: | ---: | ---: | ---: |
-| Edit (20 pairs) | 20/20 both | 1.024 | **0.946** | 1.016 |
-| Debug (20 pairs) | **20/20 vs 15/20** | **0.766** | **0.655** | **0.739** |
+## Removal
 
-Native debug failures were workflow failures: the agent fixed the program
-without observing the required runtime iterations. The FFSAKE probe returns the
-observed values in one call and cleans up.
+```sh
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" \
+  configure --host claude --project /path/to/repo --remove --apply
+```
 
-The CLI still enforces workspace access, reviewed preview/apply, stale-state
-checks, undo/redo and owned-adapter cleanup. The hook only changes where read
-content comes from; it does not bypass denial or approval checks.
-
-## Second host
-
-OpenCode 2.2.5 + Claude Haiku 5.5, same fixtures. The first five-attempt run
-used CLI guidance only, before a redirect plugin existed:
-
-| Task (guidance only) | Native | FFSAKE CLI | Paired median |
-| --- | ---: | ---: | --- |
-| Edit units | 5/5 | **5/5** | 0.967 elapsed / 1.272 input |
-| Debug cursor | 3/5 | **5/5** | **0.848 elapsed / 0.832 input** |
-
-The OpenCode v2 read-redirect plugin was then measured with ten attempts per
-task, 40 valid runs:
-
-| Task (redirect plugin) | Native | FFSAKE CLI | Paired median | Calls (native/CLI) |
-| --- | ---: | ---: | --- | ---: |
-| Edit units | 10/10 | **10/10** | **1.258 elapsed / 1.132 input** | 7 / 14 |
-| Debug cursor | 8/10 | **10/10** | **0.914 elapsed / 0.943 input** | 11 / 9.5 |
-
-Pooled medians were 1.075 elapsed / 1.043 input, with zero permission denials in
-both arms. Debug correctness and efficiency transfer; edit does not, because the
-redirect turns each read into a shell-shaped turn and the model used about twice
-the calls. The plugin is an enforcement and correctness mechanism, not an edit
-speedup. OpenCode reported zero cost, so only elapsed, input and correctness are
-comparable.
-
-## Measurement correction
-
-The file audit originally treated Python bytecode caches (`__pycache__/*.pyc`)
-as unexpected repository changes, and the verification-time audit treated caches
-created by the verifier as agent changes. That failed otherwise-correct runs.
-`agent_benchmark_suite.transient_artifact` now ignores bytecode and tool caches;
-`reevaluate_rc_results.py` recomputed retained traces without model calls.
-
-## When to keep MCP
-
-Use MCP when you need the richer tool set: Git review/mutation, persistent task
-jobs, Rust/LSP intelligence, or persistent debug sessions with cross-turn
-handles. CLI + redirect is the lower-friction default for scoped reads, native
-edits and one-shot debugging.
+This removes the project MCP entry, guidance block, hook or plugin. Other host
+settings and permission rules are left alone. Use `--host opencode` for
+OpenCode; remove a Codex MCP entry manually.
