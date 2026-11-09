@@ -37,6 +37,12 @@ class SanitizeTests(unittest.TestCase):
         self.assertNotIn('SECRET', json.dumps(result))
         self.assertNotIn('/Users/private', json.dumps(result))
 
+    def test_published_evidence_stays_within_bounded_read_limit(self):
+        root = Path(__file__).resolve().parents[1] / 'docs/agent-benchmark-runs'
+        oversized = [str(path.relative_to(root)) for path in root.rglob('*.json')
+                     if path.stat().st_size > 256 * 1024]
+        self.assertEqual(oversized, [])
+
     def test_known_task_names_cover_all_fixtures(self):
         import rc_benchmark_fixtures as fixtures
         self.assertLessEqual(set(fixtures.TASKS), set(sanitizer.TASK_NAMES))
