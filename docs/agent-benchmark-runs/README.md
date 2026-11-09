@@ -145,3 +145,7 @@ The [final 40-attempt index](20261106-redirect/final-40.json) records 10 Haiku r
 ## 2026-11-09 Default CLI on generalization bottlenecks
 
 [ledger-nested-20.json](20261109-generalization/ledger-nested-20.json) records 20 valid Claude Haiku 5.5 attempts on the two fixtures that dominated the 2026-11-05 held-out regression, using the current CLI + read-redirect integration. Ledger was 5/5 artifact and 4/5 harness both, 11 native versus 6 CLI calls, paired 0.988 elapsed / 0.684 input; nested was 5/5 artifact both and 5/5 versus native 2/5 harness, paired 0.869 / 0.797. Pooled 0.915 / 0.741, total cost $0.1254. Both are bottleneck regression fixtures, not new held-out tasks; the MCP `workspace_info` task summary remains unmeasured.
+
+## 2026-11-09 MCP candidate on generalization bottlenecks
+
+[mcp-ledger-nested-20.json](20261109-generalization/mcp-ledger-nested-20.json) records 20 valid Claude Haiku 5.5 attempts measuring the multi-stop probe plus `ffsake_workspace_info` task summary in the MCP arm. Ledger was 5/5 harness both at 10 calls each, paired 1.115 elapsed / 1.925 input; nested was 1/5 versus native 0/5 harness at 13 calls each, paired 1.200 / 2.008. Pooled 1.158 / 1.993 and about 50% higher median cost, total $0.1708. Calls match native, so the turn gap closed; per-turn MCP catalog and `ToolSearch` overhead remains. The CLI arm on the same fixtures is 0.915 / 0.741, so CLI stays the default.

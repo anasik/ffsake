@@ -841,6 +841,15 @@ The two fixtures that dominated the 2026-11-05 held-out regression were rerun wi
 
 Pooled medians were **0.915 elapsed / 0.741 input**, with lower input and elapsed on both fixtures and lower cost. The previous ledger overhead (13 calls and 349,547 input in the held-out MCP arm) did not recur: the CLI probe produced the second iteration in one call. The nested workflow result also reversed from 0/5 to 5/5. Both ledger harness failures, one per arm, were missed runtime observations; the native arm failed the same check. These fixtures were used to design the candidate, so this is a bottleneck regression check, not a new held-out generalization claim. It exercises the CLI probe (`--stops`) rather than the MCP `ffsake_workspace_info` task summary, which remains unmeasured in the MCP arm.
 
+The MCP candidate was then measured directly on the same two fixtures with five pairs each, noninteractive auto-approval as in the 2026-11-05 held-out run, 20 valid attempts, **$0.1708**:
+
+| Fixture | Artifact | Harness correct | Calls (native/MCP) | Median seconds (native/MCP) | Median input (native/MCP) | Paired median |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Ledger | 5/5 both | **5/5 both** | 10 / 10 | 18.3 / 22.2 | 201,313 / 326,707 | **1.115 / 1.925** |
+| Nested | 5/5 both | **1/5 vs 0/5** | 13 / 13 | 22.2 / 24.2 | 234,348 / 470,654 | **1.200 / 2.008** |
+
+Pooled medians were **1.158 elapsed / 1.993 input**, and median cost was about 50% higher. Calls now match native, so the multi-stop probe and the task summary removed the turn gap; the remaining overhead is the MCP catalog and `ToolSearch` on every turn. The candidate therefore fixes the measured turn-count problem but does not make the MCP arm competitive, and it is not the default path. The CLI integration on the same fixtures is faster and uses less input (0.915 / 0.741), so keep CLI as the default and do not restore the MCP catalog for this workflow.
+
 ### Catalog and interaction-cost analysis (2026-11-05)
 
 The final held-out traces show FFSAKE used 157 tool calls versus native 113, while input per call was **22,090 versus 22,353** and seconds per call **1.69 versus 1.87**. The efficiency gap is therefore turn count, not per-turn payload or server latency. Model-free server timings are sub-millisecond for `workspace_info`/`read_files` and 7.7 ms for search; a real debugpy `stops=2` probe takes about 970 ms of actual stepping.

@@ -43,13 +43,12 @@ debug correctness, elapsed time, tokens and cost. OpenCode keeps the debug win
 and the enforcement path but is slower on edits. Reviewed preview/apply, stale
 checks, history and debug cleanup remain intact.
 
-Next action: measure the MCP candidate (`ffsake_workspace_info` task summary plus
-multi-stop `ffsake_debug_probe`) on the same `debug_ledger`/`debug_nested`
-fixtures. The default CLI path was measured on 2026-11-09 and now wins on both:
-20 valid attempts, pooled 0.915 elapsed / 0.741 input, $0.1254, with nested
-harness correctness 5/5 versus native 2/5. That run exercises the CLI probe, not
-the MCP task summary. Keep the Claude read-redirect hook as the default
-integration. Do not reopen MCP catalog work.
+Next action: measure `edit_batch`, the remaining generalization fixture, with
+the current default CLI + read-redirect integration (five pairs) so all three
+2026-11-05 held-out fixtures have current-config evidence. Keep the Claude
+read-redirect hook as the default. The MCP candidate is measured and rejected as
+a competitive path (1.158 elapsed / 1.993 input); do not reopen MCP catalog
+work.
 
 Measurement corrections: bytecode caches are not repository changes;
 `reevaluate_rc_results.py` recomputes retained traces without model calls.
@@ -62,7 +61,7 @@ Baseline (final held-out, 30 attempts, $2.8672, candidate `3e9a9c8` from `2b7821
 
 Diagnosis from retained traces: ledger runs used a one-shot probe and then a separate `debug_launch`/`continue`/`terminate` sequence to observe a second loop iteration; every FFSAKE run called `ffsake_tasks` before its real work; nested runs set the breakpoint at the `main.py` call site, so the exact `key=limits` local-name marker never appeared even though the nested dicts were observed; the remaining overhead includes the fixed MCP catalog and extra native verification commands.
 
-Candidate (tested model-free, not paid-measured): `ffsake_debug_probe` accepts `stops` 1-4 and returns `stop_inspection_2`...`stop_inspection_4` before cleanup; `ffsake_workspace_info` returns a compact task summary. On the retained ledger fixture the old 4-call probe/launch/continue/terminate path returned 8,409 bytes; one `stops=2` probe returns 5,062 bytes in 1 call with `index=0` then `index=1`. Projected median calls: `edit_batch` 10 versus 10, `debug_ledger` 9 versus 7, `debug_nested` 7 versus 7. Rust tests, Clippy, formatting, DAP multi-stop smoke, MCP/profile/worktree/wait/repository smokes and the exact-debugpy preflight pass.
+Candidate (paid-measured 2026-11-09): `ffsake_debug_probe` accepts `stops` 1-4 and returns `stop_inspection_2`...`stop_inspection_4` before cleanup; `ffsake_workspace_info` returns a compact task summary. On the retained ledger fixture the old 4-call probe/launch/continue/terminate path returned 8,409 bytes; one `stops=2` probe returns 5,062 bytes in 1 call with `index=0` then `index=1`. Projected median calls: `edit_batch` 10 versus 10, `debug_ledger` 9 versus 7, `debug_nested` 7 versus 7. Rust tests, Clippy, formatting, DAP multi-stop smoke, MCP/profile/worktree/wait/repository smokes and the exact-debugpy preflight pass. The measured MCP arm closed the call gap (10 vs 10 ledger, 13 vs 13 nested) but pooled 1.158 elapsed / 1.993 input, $0.1708, because the MCP catalog and `ToolSearch` remain per turn. The default CLI on the same fixtures measured 0.915 / 0.741, $0.1254. Evidence: `docs/agent-benchmark-runs/20261109-generalization/`.
 
 Model-free barrier analysis (`docs/ARCHITECTURAL_BARRIER.md`): final traces used 157 calls versus native 113 while input per call was 22,090 versus 22,353 and seconds per call 1.69 versus 1.87, so the gap is turn count. Consolidations remove 27 turns in projection (130 versus 113); the remaining 17 equal the `ToolSearch` count. A description trim plus profile curation reduced core context from 37,598 to **21,814 bytes** (-42%, 28 tools), editing to 15,206 bytes (20 tools), and consolidating twelve Rust snapshot tools into one `ffsake_rust` action tool reduced default `all` to **37,909 bytes (39 tools, -44%)**. Legacy Rust tool names remain dispatchable but unadvertised. The five redundant single-operation preview wrappers are hidden from all catalogs but remain dispatchable; core also omits archive, sticky target, explicit refresh, textual rename and remote Git operations, which remain in `all`. Server timings are sub-millisecond for file tools, so server latency is not the bottleneck.
 
