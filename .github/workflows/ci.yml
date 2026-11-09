@@ -34,6 +34,7 @@ jobs:
       - run: cargo build --locked --bin ffsake-mcp
       - run: python3 scripts/benchmark.py target/debug/ffsake
       - run: python3 scripts/cli_smoke.py target/debug/ffsake
+      - run: python3 scripts/cli_semantic_smoke.py target/debug/ffsake
       - run: python3 scripts/cli_setup_smoke.py
       - run: python3 scripts/claude_hook_smoke.py
       - run: python3 scripts/claude_read_redirect_smoke.py

@@ -31,7 +31,24 @@ ffsake . --request '{"op":"git","query":"status"}'
 # One-shot or multi-stop debug diagnosis; cleans up the owned launch
 ffsake . --debug .ffsake/debug.json --request '{"op":"debug_probe",
   "configuration":"app","breakpoints":[{"path":"main.py","lines":4}],"stops":2}'
+
+# Semantic rename through an installed language server: preview, review, apply
+ffsake . --request '{"op":"preview_semantic_rename",
+  "request":{"files":["src/lib.rs"],"path":"src/lib.rs",
+    "position":{"line":5,"column":7},"query":"rename",
+    "context":{"language":"rust","crate_root":"src/lib.rs","edition":"2021"},
+    "new_name":"sum_all","limit":100},
+  "expected_path":"src/lib.rs","expected_start_byte":85,
+  "expected_old_text":"total","expected_new_name":"sum_all","expected_edits":1}'
+ffsake . --apply <token>
 ```
+
+`preview_semantic_rename` runs discovery and preview in one process, stores the
+discovery request and its analysis-source hashes in the token, and rewrites the
+reviewed proposal on apply. Apply repeats discovery, rejects changed analysis
+sources or a different proposal, and then commits one journal transaction.
+`preview_rust_rename` still needs a resident `rename_set`; use `ffsake serve` or
+MCP for that form. Same-spelling locals and parameters are not renamed.
 
 Output is one JSON object: `{"ok":true,"result":...}` or
 `{"ok":false,"error":"..."}`. Each command is one host tool call and does not

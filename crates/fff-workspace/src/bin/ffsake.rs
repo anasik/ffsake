@@ -9,6 +9,7 @@
 use fff_workspace::{
     Workspace,
     resident::{Request, Resident},
+    semantic::{Query as SemanticQuery, Request as SemanticRequest},
 };
 use serde_json::{Value, json};
 use std::{
@@ -32,7 +33,10 @@ fn usage() -> ! {
          \n\
          --request executes one guarded operation and prints JSON. Preview requests\n\
          (preview_edit, preview_files, preview_create, preview_copy, preview_move,\n\
-         preview_delete, preview_rename) also print a token for --apply.\n\
+         preview_delete, preview_rename, preview_semantic_rename) also print a token\n\
+         for --apply. preview_semantic_rename runs the installed language server,\n\
+         previews the exact rename proposal and stores the discovery request with\n\
+         its source hashes; --apply repeats discovery and rejects changed sources.\n\
          Examples:\n\
          ffsake . --request '{{\"op\":\"read_files\",\"files\":[{{\"path\":\"src/lib.rs\"}}]}}'\n\
          ffsake . --request '{{\"op\":\"preview_files\",\"operations\":[{{\"op\":\"edit\",\"path\":\"src/lib.rs\",\"old_text\":\"a\",\"new_text\":\"b\",\"expected_matches\":1}}]}}'\n\
@@ -104,7 +108,18 @@ fn run() -> Result<Value> {
 
     match (request_json, apply_token) {
         (Some(text), None) => {
-            let value: Value = serde_json::from_str(&text)?;
+            let mut value: Value = serde_json::from_str(&text)?;
+            if value.get("op").and_then(Value::as_str) == Some(SEMANTIC_RENAME_OP) {
+                let result = semantic_rename_preview(&mut runtime, &mut value)?;
+                let token = store_token(&canonical_root, &serde_json::to_string(&value)?)?;
+                return Ok(json!({ "ok": true, "result": result, "token": token }));
+            }
+            if value.get("op").and_then(Value::as_str) == Some("preview_rust_rename") {
+                return Err("preview_rust_rename needs a resident rename_set; use \
+                            preview_semantic_rename for one-shot semantic rename or \
+                            run 'ffsake serve'"
+                    .into());
+            }
             let preview = is_preview(&value);
             let request: Request = serde_json::from_value(value)?;
             if preview {
@@ -117,12 +132,16 @@ fn run() -> Result<Value> {
         }
         (None, Some(token)) => {
             let text = load_token(&canonical_root, &token)?;
-            let value: Value = serde_json::from_str(&text)?;
+            let mut value: Value = serde_json::from_str(&text)?;
             if !is_preview(&value) {
                 return Err("token does not contain a preview request".into());
             }
-            let request: Request = serde_json::from_value(value)?;
-            let preview = runtime.execute(request)?;
+            let preview = if value.get("op").and_then(Value::as_str) == Some(SEMANTIC_RENAME_OP) {
+                semantic_rename_preview(&mut runtime, &mut value)?
+            } else {
+                let request: Request = serde_json::from_value(value)?;
+                runtime.execute(request)?
+            };
             let handle = preview
                 .get("handle")
                 .and_then(Value::as_u64)
@@ -549,7 +568,87 @@ fn is_preview(value: &Value) -> bool {
                 | "preview_move"
                 | "preview_delete"
                 | "preview_rename"
+                | "preview_semantic_rename"
         )
+    })
+}
+
+const SEMANTIC_RENAME_OP: &str = "preview_semantic_rename";
+
+fn semantic_rename_preview(runtime: &mut Resident, value: &mut Value) -> Result<Value> {
+    let request: SemanticRequest = serde_json::from_value(
+        value
+            .get("request")
+            .cloned()
+            .ok_or("preview_semantic_rename requires a semantic request")?,
+    )?;
+    if !matches!(request.query, SemanticQuery::Rename) {
+        return Err("preview_semantic_rename requires query=rename".into());
+    }
+    let expected_path = value["expected_path"]
+        .as_str()
+        .ok_or("preview_semantic_rename requires expected_path")?
+        .to_string();
+    let expected_start = value["expected_start_byte"]
+        .as_u64()
+        .ok_or("preview_semantic_rename requires expected_start_byte")?
+        as usize;
+    let expected_old = value["expected_old_text"]
+        .as_str()
+        .ok_or("preview_semantic_rename requires expected_old_text")?
+        .to_string();
+    let expected_new = value["expected_new_name"]
+        .as_str()
+        .ok_or("preview_semantic_rename requires expected_new_name")?
+        .to_string();
+    let expected_edits = value["expected_edits"]
+        .as_u64()
+        .ok_or("preview_semantic_rename requires expected_edits")?
+        as usize;
+    if expected_edits == 0 {
+        return Err("preview_semantic_rename requires positive expected_edits".into());
+    }
+    let discovery = runtime.execute(Request::Semantic { request })?;
+    let hashes = discovery["file_hashes"].clone();
+    if let Some(stored) = value.get("expected_file_hashes") {
+        if stored != &hashes {
+            return Err("analysis sources changed since preview; preview again".into());
+        }
+    } else {
+        value["expected_file_hashes"] = hashes;
+    }
+    let prepared = discovery
+        .get("prepared")
+        .filter(|prepared| !prepared.is_null())
+        .ok_or("native rename unavailable at this position")?;
+    if prepared["start_byte"].as_u64() != Some(expected_start as u64)
+        || prepared["old_text"].as_str() != Some(expected_old.as_str())
+    {
+        return Err("rename preparation does not match the expected identity".into());
+    }
+    if discovery["path"].as_str() != Some(expected_path.as_str())
+        || discovery["new_name"].as_str() != Some(expected_new.as_str())
+    {
+        return Err("rename proposal does not match the expected identity".into());
+    }
+    let proposal = &discovery["proposal"];
+    let unsupported = proposal["unsupported_reasons"]
+        .as_array()
+        .map(Vec::len)
+        .unwrap_or(0);
+    if unsupported != 0 || proposal["text_edit_count"].as_u64() != Some(expected_edits as u64) {
+        return Err("rename proposal changed or needs unsupported edits; preview again".into());
+    }
+    let rename_set = discovery["rename_set"]
+        .as_u64()
+        .ok_or("rename proposal has no set handle")?;
+    runtime.execute(Request::PreviewRustRename {
+        rename_set,
+        expected_path,
+        expected_start_byte: expected_start,
+        expected_old_text: expected_old,
+        expected_new_name: expected_new,
+        expected_edits,
     })
 }
 
@@ -682,6 +781,7 @@ mod tests {
             "preview_move",
             "preview_delete",
             "preview_rename",
+            "preview_semantic_rename",
         ] {
             assert!(is_preview(&json!({"op": op})), "{op}");
         }

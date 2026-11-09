@@ -309,6 +309,8 @@ Both adapters share bounded JSON-RPC transport (30-second deadline, 8 KiB header
 
 `ffsake_preview_semantic_rename` accepts the same exact identity/count fields as the existing Rust rename preview. It previews only resident-owned proposals and rechecks all analysis sources, including unedited context; apply remains separately guarded and journaled. Rust retains parser validation. C++ does not run a Rust parser or claim syntax validation; review and external build/tests are required. The core profile excludes both semantic tools and remains usable without either language server.
 
+The one-shot CLI exposes the same boundary as `preview_semantic_rename`. It runs discovery and preview in one process, stores the discovery request plus analysis-source hashes in its private token, and re-runs discovery and the exact deterministic preview on apply. Changed analysis sources, a different prepared identity, a different edit count or any unsupported requirement rejects without writes. `preview_rust_rename` remains a resident-handle form for `ffsake serve` and MCP; one-shot callers should use `preview_semantic_rename`.
+
 `python3 scripts/semantic_smoke.py target/debug/ffsake-mcp` checks real-server reuse, three-file C++ rename, same-spelling isolation, external compilation/runtime, stale unedited context at preview/apply and exact history. See [clangd compile commands](https://clangd.llvm.org/design/compile-commands) and [clangd indexing](https://clangd.llvm.org/design/indexing) for why explicit project context matters.
 
 
