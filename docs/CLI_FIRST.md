@@ -6,9 +6,20 @@ operations through ordinary shell commands. The recommended alpha setup also
 keeps the MCP server registered for capabilities that need it (Git review,
 tasks, access tools and persistent debug sessions).
 
-Native `Edit`/`Write` remains the default for ordinary changes. Native edits are
-not part of FFSAKE's journal. Only preview/apply operations run by FFSAKE are
-stale-checked and undoable.
+FFSAKE's editor is the preview/apply path: stale-checked, atomic across changed
+files and journaled with undo/redo. Native `Edit`/`Write` are also available for
+quick changes and are outside FFSAKE's journal.
+
+The optional redirect serves the host's native `Read` through FFSAKE; it does
+not remove FFSAKE's read/write API or disable native edits. In Claude the hook
+matches `Read` only, runs `ffsake read` and rewrites the input to cached content;
+it returns an allow decision, so FFSAKE's workspace policy governs that read and
+host path-specific Read deny rules do not apply after the rewrite. OpenCode's
+plugin replaces the `read` executor and rejects shell file-read commands;
+edit/write/search remain available.
+
+A harness that calls MCP or the CLI directly is unaffected and has full
+read/write access. Use MCP-only setup if native host tools must stay untouched.
 
 ## Setup
 

@@ -63,9 +63,10 @@ literally.
 
 Combine simple commands without quotes or variables in one Bash call, for
 example `git ls-files && python3 main.py`. On debugger tasks, always run one
-probe before editing so the required runtime values are observed. Make ordinary
-code changes with native Edit/Write; that is faster than reviewed CLI edits.
-FFSAKE still enforces workspace policy, stale-state checks, history and debug
+probe before editing so the required runtime values are observed. For quick
+ordinary changes, native Edit/Write is usually faster; use FFSAKE preview/apply
+when you need review, stale-content checks, atomic multi-file application or
+history. FFSAKE enforces workspace policy, stale-state checks, history and debug
 cleanup for the operations it runs. Never bypass an access denial.
 {END}"""
 

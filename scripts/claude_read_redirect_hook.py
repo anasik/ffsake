@@ -5,7 +5,8 @@ The hook executes the scoped ffsake read for the requested file/range, writes
 the returned text to a private cache file under `.ffsake/hook-reads`, and
 rewrites the Read input to that cache file. Native Read therefore still works
 for the model, but repository content is produced by ffsake's access policy
-instead of a direct native read. File-reading shell commands are denied.
+instead of a direct native read. The installed settings match Read only; the
+Bash branch below applies only to a policy that deliberately also matches Bash.
 """
 import hashlib
 import json

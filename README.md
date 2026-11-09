@@ -1,14 +1,19 @@
 # FFSAKE
 
-FFSAKE is complementary tooling for coding agents. It does not replace your
-host's editor: ordinary file changes stay with native Edit/Write. FFSAKE adds
-scoped repository reads, one-call debugging, optional reviewed and journaled
-edits, selective semantic operations, and MCP-only capabilities such as Git
-review and named build/test tasks.
+FFSAKE gives coding agents a governed workspace: scoped reads, one-call
+debugging, a reviewed and journaled editor, selective semantic operations, and
+Git, task and access capabilities through MCP.
+
+FFSAKE's editor is preview/apply. Preview shows the exact diff and writes
+nothing. Apply rechecks source hashes and match counts and commits every changed
+file as one journal transaction with undo/redo. Native Edit/Write remain
+available for quick changes; transactions applied through FFSAKE are the ones
+that get review, stale-content protection, multi-file atomicity and history.
 
 **Status: alpha (`v0.1.0-alpha.1`; [release notes](docs/releases/v0.1.0-alpha.1.md)).** Interfaces and setup details may still
-change. FFSAKE does not sandbox project code, does not grant filesystem or host
-permissions, and does not make native edits transactional.
+change. FFSAKE does not sandbox project code or grant filesystem or host
+permissions. Its transaction guarantees cover edits applied through FFSAKE;
+native edits are outside that journal.
 
 ## Install
 
@@ -37,13 +42,13 @@ debugging and semantic operations. It also registers the MCP server for Git,
 tasks, access tools and persistent debug sessions.
 
 ```sh
-# Claude Code (CLI-first; native Edit/Write stays the default)
+# Claude Code (CLI-first reads/debug/semantic; MCP kept for Git/tasks/access)
 python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" \
   configure --host claude --project "$PWD" --cli-first --apply
 python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" \
   doctor --host claude --project "$PWD" --cli-first
 
-# OpenCode (CLI-first; native edit/write stays the default)
+# OpenCode (CLI-first reads/debug/semantic; MCP kept for Git/tasks/access)
 python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" \
   configure --host opencode --project "$PWD" --cli-first --apply
 python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" \
@@ -82,19 +87,29 @@ debugpy and C# netcoredbg are validated for launch; the installed Apple LLDB
 adapter failed its C++ launch test. Adapters are not bundled. Persistent debug
 sessions require `ffsake serve` or MCP.
 
-**Optional reviewed edits.** Native Edit/Write is faster and remains the
-default. When you want a reviewable transaction, the agent can preview one or
-more changes, show the diff, and apply the frozen result:
+**Reviewed, journaled editing.** FFSAKE's editor previews one or more changes,
+shows the diff, and applies the frozen result:
 
 - preview writes nothing;
 - apply rechecks content hashes, match counts and analysis sources;
 - applied FFSAKE edits form one journal transaction with undo/redo;
 - stale content rejects instead of applying.
 
-This is stale-state protection and journaled recovery, not a sandbox. Edits made
-with native tools are outside FFSAKE's journal and cannot be undone through it.
-Git operations, task execution and debuggee side effects are also outside editor
-history.
+Use it when a change needs review, atomic multi-file application or history.
+Native Edit/Write remain available and are usually faster for small,
+unambiguous changes; they are outside FFSAKE's journal and cannot be undone
+through it. Git operations, task execution and debuggee side effects are also
+outside editor history. This is stale-state protection and recovery, not a
+sandbox.
+
+**Optional read redirection is host middleware, not an API restriction.**
+Claude and OpenCode setup can serve the host's native `Read` through FFSAKE.
+This does not remove FFSAKE's own read/write operations and does not disable
+native Edit/Write. In Claude, the hook intercepts `Read` and returns an allow
+decision, so FFSAKE's workspace policy governs that call; host path-specific
+Read deny rules do not apply after the rewrite. OpenCode's plugin also rejects
+shell file-read commands such as `cat` and `grep`. MCP-only setup leaves native
+tools alone.
 
 **Selective semantic operations.** For Rust and C++, the full profile exposes
 bounded definition, reference, hover, symbol, diagnostics and rename proposals
@@ -112,6 +127,23 @@ staging and commits, branch creation/switching/fetch/non-force push, named
 project tasks with incremental output and cancellation, and persistent access
 grants. Task execution is not sandboxed and is not part of editor history.
 Force push, tags, merge, rebase and arbitrary refspecs are out of scope.
+
+## Building a harness
+
+The read redirect is optional host integration. A custom harness can call
+FFSAKE directly and keeps full read/write access:
+
+- **MCP over stdio:** `ffsake_read`, `ffsake_read_files`, `ffsake_preview_edit`,
+  `ffsake_preview_files`, `ffsake_apply`, `ffsake_undo`/`ffsake_redo`, plus the
+  Git, task, access and debug tools.
+- **CLI:** `ffsake read`, `ffsake . --request '{"op":"preview_edit",...}'`, then
+  `ffsake . --apply TOKEN`; `ffsake . --request '{"op":"undo",...}'`. Use
+  `ffsake serve` when preview/match/debug handles must persist across calls.
+
+Preview/apply checks hashes and match counts, and applied changes form one
+journal transaction. Harness code that calls these endpoints is not affected by
+the Claude hook or OpenCode plugin, and MCP-only setup does not modify native
+host tools.
 
 ## Update and removal
 
@@ -145,14 +177,17 @@ configuration in place. Remove those separately if desired.
 
 - **Native editing is not journaled.** Only FFSAKE preview/apply transactions
   can be undone or redone through FFSAKE.
-- **No permission shortcut.** FFSAKE enforces its own workspace policy, but the
-  host remains the permission authority. It does not reduce or bypass host
-  approval settings, and it does not sandbox task execution.
+- **Read redirection changes the read authority.** Without `--cli-first`, the
+  host remains the permission authority. The optional Claude hook or OpenCode
+  plugin serves native Read through FFSAKE and allows the redirected read, so
+  FFSAKE's workspace policy governs that call; host path-specific Read deny
+  rules do not apply after the rewrite. Edit/Write are not intercepted. FFSAKE
+  does not sandbox task execution.
 - **No universal performance claim.** MCP adds catalog and per-turn cost; the
-  earlier broad speed claims do not generalize. Use native editing by default
-  and FFSAKE where scoped reads, debugging, reviewed transactions or semantic
-  operations help. See the [benchmark evidence](docs/BENCHMARK.md) for the
-  measured boundary.
+  earlier broad speed claims do not generalize. Choose the editing path per
+  task: native Edit/Write for quick unambiguous changes, FFSAKE preview/apply
+  when review, stale protection, multi-file atomicity or history matter. See
+  the [benchmark evidence](docs/BENCHMARK.md) for the measured boundary.
 - **Semantic coverage is incomplete.** Macros, dependencies, sysroot, build
   scripts, test configurations and generated code can be missing from the
   snapshot. A build/test check is mandatory; language-server acceptance is not
