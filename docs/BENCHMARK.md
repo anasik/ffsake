@@ -898,6 +898,10 @@ The same language server was also exercised without a model on the real `itoa` 1
 
 Neither arm required a human intervention beyond the configured host permission profile, and permission denials were zero in both arms. The CLI arm's context includes the semantic usage guidance, counted in its input, and each preview starts a fresh rust-analyzer session, counted in elapsed; the 12-module advantage comes from fewer turns rather than faster server work. Reviewing the semantic diff remains necessary: the field proposal renamed a constructor parameter as part of the field change even though it preserved behavior.
 
+C++ uses the same transport and guards through clangd. `python3 scripts/semantic_smoke.py target/debug/ffsake-mcp` passed locally with 3 references, 3 rename edits, external compile/runtime verification, stale preview/apply rejection, exact history and zero model calls; it was not part of the paid comparison.
+
+**Practical boundary.** Keep native editing as the default: it was faster and used 31-50% fewer input tokens on the three small fixtures. Use the semantic preview when a rename scatters across many modules with same-spelling locals, where it cut calls from 37 to 9 and median seconds from 39.6 to 31.0, or when an exact reference list is needed. In every case run the build and tests: macro-expanded and `cfg(test)` code can be outside the snapshot, and the diff still needs review for non-minimal changes.
+
 
 ### Catalog and interaction-cost analysis (2026-11-05)
 
