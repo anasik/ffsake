@@ -850,6 +850,16 @@ The MCP candidate was then measured directly on the same two fixtures with five 
 
 Pooled medians were **1.158 elapsed / 1.993 input**, and median cost was about 50% higher. Calls now match native, so the multi-stop probe and the task summary removed the turn gap; the remaining overhead is the MCP catalog and `ToolSearch` on every turn. The candidate therefore fixes the measured turn-count problem but does not make the MCP arm competitive, and it is not the default path. The CLI integration on the same fixtures is faster and uses less input (0.915 / 0.741), so keep CLI as the default and do not restore the MCP catalog for this workflow.
 
+### Current default across all three generalization fixtures (2026-11-09)
+
+`edit_batch`, the remaining 2026-11-05 fixture, was measured with the same default CLI configuration: five pairs, 10 valid attempts, **$0.0550**.
+
+| Fixture | Artifact | Harness correct | Calls (native/CLI) | Median seconds (native/CLI) | Median input (native/CLI) | Paired median |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Edit batch | 5/5 both | 5/5 both | 11 / **10** | 14.1 / 16.6 | 146,778 / **143,059** | **1.237 / 1.162** |
+
+Pooling the 15 valid pairs across `edit_batch`, `debug_ledger` and `debug_nested` gives **0.988 elapsed / 0.935 input** (8 and 11 paired wins respectively), total cost **$0.1805**. The debug fixtures now beat native on both axes; multi-file edit remains slower in elapsed time even with one fewer call, consistent with per-read hook and CLI process startup on a short task. All three fixtures informed the current integration, so this is regression evidence for the default configuration, not a new held-out generalization claim.
+
 ### Catalog and interaction-cost analysis (2026-11-05)
 
 The final held-out traces show FFSAKE used 157 tool calls versus native 113, while input per call was **22,090 versus 22,353** and seconds per call **1.69 versus 1.87**. The efficiency gap is therefore turn count, not per-turn payload or server latency. Model-free server timings are sub-millisecond for `workspace_info`/`read_files` and 7.7 ms for search; a real debugpy `stops=2` probe takes about 970 ms of actual stepping.
