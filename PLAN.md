@@ -43,11 +43,12 @@ debug correctness, elapsed time, tokens and cost. OpenCode keeps the debug win
 and the enforcement path but is slower on edits. Reviewed preview/apply, stale
 checks, history and debug cleanup remain intact.
 
-Next action: validate the pending unfamiliar-task candidate (multi-stop
-`ffsake_debug_probe`, compact `ffsake_workspace_info`) with a paid Claude Haiku
-comparison on the retained `debug_ledger`/`debug_nested` generalization
-fixtures, since that is where the measured 1.268 elapsed / 1.127 input
-regression is concentrated. Keep the Claude read-redirect hook as the default
+Next action: measure the MCP candidate (`ffsake_workspace_info` task summary plus
+multi-stop `ffsake_debug_probe`) on the same `debug_ledger`/`debug_nested`
+fixtures. The default CLI path was measured on 2026-11-09 and now wins on both:
+20 valid attempts, pooled 0.915 elapsed / 0.741 input, $0.1254, with nested
+harness correctness 5/5 versus native 2/5. That run exercises the CLI probe, not
+the MCP task summary. Keep the Claude read-redirect hook as the default
 integration. Do not reopen MCP catalog work.
 
 Measurement corrections: bytecode caches are not repository changes;

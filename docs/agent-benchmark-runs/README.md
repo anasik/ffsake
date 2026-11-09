@@ -141,3 +141,7 @@ The [final 40-attempt index](20261106-redirect/final-40.json) records 10 Haiku r
 ## 2026-11-09 OpenCode read-redirect
 
 [redirect-40.json](20261109-opencode-redirect/redirect-40.json) records 40 valid OpenCode 2.2.5 + Claude Haiku 5.5 attempts with a v2 local plugin serving native `read` through `ffsake read`. Edit was 10/10 both at 1.258 elapsed / 1.132 input with 7 native versus 14 CLI calls; debug was 10/10 versus native 8/10 at 0.914 / 0.943. Pooled 1.075 / 1.043, zero denials in both arms, provider-reported cost zero. The plugin is kept as an enforcement/correctness mechanism; the edit regression is retained. [haiku-20.json](20261106-opencode/haiku-20.json) remains the earlier guidance-only sample.
+
+## 2026-11-09 Default CLI on generalization bottlenecks
+
+[ledger-nested-20.json](20261109-generalization/ledger-nested-20.json) records 20 valid Claude Haiku 5.5 attempts on the two fixtures that dominated the 2026-11-05 held-out regression, using the current CLI + read-redirect integration. Ledger was 5/5 artifact and 4/5 harness both, 11 native versus 6 CLI calls, paired 0.988 elapsed / 0.684 input; nested was 5/5 artifact both and 5/5 versus native 2/5 harness, paired 0.869 / 0.797. Pooled 0.915 / 0.741, total cost $0.1254. Both are bottleneck regression fixtures, not new held-out tasks; the MCP `workspace_info` task summary remains unmeasured.

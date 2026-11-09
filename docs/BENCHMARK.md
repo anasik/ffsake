@@ -828,7 +828,18 @@ The final held-out ledger traces showed FFSAKE using a one-shot probe and then a
 
 Model-free measurement on the retained `debug_ledger` fixture: the previous probe plus launch/continue/terminate path returned **8,409 bytes across 4 tool calls**; one `debug_probe` with `stops=2` returned **5,062 bytes in 1 call** with the first stop `index=0` and the second `index=1`. Workspace context with the task summary is **1,127 bytes** and replaces a separate 143-byte `ffsake_tasks` response plus its model turn. The DAP protocol smoke now includes a multi-stop case and asserts one extra `continue`, two collected stops and cleanup; the exact-debugpy preflight uses `stops=2` on the ledger fixture and `stops=4` on the one-shot cache fixture, where the program exits before the requested stop count and the probe still returns cleanly.
 
-Projecting those two changes onto the retained final traces (remove `ffsake_tasks`, collapse debug workaround turns into one probe) gives median calls of **10 vs 10** for `edit_batch`, **9 vs 7** for `debug_ledger`, and **7 vs 7** for `debug_nested`. This is a projection, not a measured result. The remaining ledger difference is one native-source read and an extra verification command, and overall input overhead still includes the fixed MCP catalog. No paid run has measured this candidate.
+Projecting those two changes onto the retained final traces (remove `ffsake_tasks`, collapse debug workaround turns into one probe) gives median calls of **10 vs 10** for `edit_batch`, **9 vs 7** for `debug_ledger`, and **7 vs 7** for `debug_nested`. This is a projection, not a measured result. The remaining ledger difference is one native-source read and an extra verification command, and overall input overhead still includes the fixed MCP catalog. No paid MCP run has measured this candidate.
+
+### Default CLI on the generalization bottlenecks (2026-11-09)
+
+The two fixtures that dominated the 2026-11-05 held-out regression were rerun with the current default integration: CLI plus the Claude read-redirect hook, permission profiles with a three-entry allowlist, and native edits. Five pairs per fixture, 20 valid attempts, **$0.1254**.
+
+| Fixture | Artifact | Harness correct | Calls (native/CLI) | Median seconds (native/CLI) | Median input (native/CLI) | Paired median | Denials (native/CLI) |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| Ledger | 5/5 both | 4/5 both | 11 / **6** | 17.3 / **16.2** | 212,683 / **169,335** | **0.988 / 0.684** | 0-2 / 0-1 |
+| Nested | 5/5 both | **5/5 vs 2/5** | 8 / **6** | 17.9 / **15.3** | 215,628 / **170,030** | **0.869 / 0.797** | 0-3 / **0** |
+
+Pooled medians were **0.915 elapsed / 0.741 input**, with lower input and elapsed on both fixtures and lower cost. The previous ledger overhead (13 calls and 349,547 input in the held-out MCP arm) did not recur: the CLI probe produced the second iteration in one call. The nested workflow result also reversed from 0/5 to 5/5. Both ledger harness failures, one per arm, were missed runtime observations; the native arm failed the same check. These fixtures were used to design the candidate, so this is a bottleneck regression check, not a new held-out generalization claim. It exercises the CLI probe (`--stops`) rather than the MCP `ffsake_workspace_info` task summary, which remains unmeasured in the MCP arm.
 
 ### Catalog and interaction-cost analysis (2026-11-05)
 
