@@ -860,25 +860,16 @@ Pooled medians were **1.158 elapsed / 1.993 input**, and median cost was about 5
 
 Pooling the 15 valid pairs across `edit_batch`, `debug_ledger` and `debug_nested` gives **0.988 elapsed / 0.935 input** (8 and 11 paired wins respectively), total cost **$0.1805**. The debug fixtures now beat native on both axes; multi-file edit remains slower in elapsed time even with one fewer call, consistent with per-read hook and CLI process startup on a short task. All three fixtures informed the current integration, so this is regression evidence for the default configuration, not a new held-out generalization claim.
 
-### Fresh held-out workflow: recursive debugging (2026-11-09)
+### Fresh held-out workflows: recursive debugging and feature editing (2026-11-09)
 
-A new `debug_recursive` fixture tests a workflow shape not present in the other fixtures: a recursive tree total that omits each inner node's own value, so diagnosis requires observing locals at more than one recursion depth. The fixture, verifier and model-free debugpy preflight were frozen before the paid run, and traces were not inspected while it ran. Five pairs, 10 valid attempts, **$0.0669**.
+Two new fixtures test workflow shapes absent from the earlier set. `debug_recursive` has a recursive tree total that omits each inner node's own value, so diagnosis requires observing locals at more than one recursion depth. `edit_feature` asks the agent to implement missing pending-list and summary behavior in an existing tracker package against frozen tests: a feature addition rather than the formula or constant fixes in the earlier edit fixtures. Fixture, verifier and model-free debugpy preflight were frozen before the paid runs. The final batch used ten pairs per fixture, 40 valid attempts, **$0.2376** (debug $0.1301, edit $0.1075).
 
 | Task | Artifact | Harness correct | Calls (native/CLI) | Median seconds (native/CLI) | Median input (native/CLI) | Paired median | Denials (native/CLI) |
 | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| Recursive debug | 5/5 both | **5/5 vs 2/5** | 11 / **5** | 18.2 / **14.9** | 240,199 / **140,760** | **0.718 / 0.584** | 1-4 / **0** |
+| Recursive debug | 10/10 both | **9/10 vs 7/10** | 11.5 / **6** | 20.5 / **15.1** | 230,942 / **168,496** | **0.760 / 0.734** | 0-4 / **0** |
+| Feature edit | 10/10 both | 10/10 both | 10 / **9.5** | 13.3 / 13.4 | 148,610 / 152,916 | **1.022 / 0.948** | 0 / 0-1 |
 
-All three native failures had correct artifacts but no observed runtime value, the same workflow failure mode as the earlier debug fixtures. The CLI probe reached the deeper recursion frame, so the runtime-evidence requirement passed in 5/5. This is one fresh fixture and five pairs, not a broad generalization claim, but it is the first held-out workflow measured after the integration was frozen, and it meets the efficiency criteria on both axes.
-
-### Fresh held-out workflow: feature editing (2026-11-09)
-
-A second fresh fixture, `edit_feature`, tests a different editing shape: the tracker package already supports adding and completing items, and the agent must implement the missing pending-list and summary behavior against frozen tests. It is a feature addition rather than the formula or constant fixes in the earlier edit fixtures. Five pairs, 10 valid attempts, **$0.0534**.
-
-| Task | Artifact | Harness correct | Calls (native/CLI) | Median seconds (native/CLI) | Median input (native/CLI) | Paired median | Denials |
-| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |
-| Feature edit | 5/5 both | 5/5 both | 10 / **9** | 13.0 / **12.8** | 148,388 / **141,599** | **0.997 / 0.958** | 0 / 0 |
-
-The two fresh held-out shapes now measure **edit 0.997 elapsed / 0.958 input** and **debug 0.718 / 0.584**, both with full harness correctness. The fixture was frozen locally before the run, so its provenance hash identifies the exact code and the recorded source revision is the parent commit; the fixture is committed with this evidence.
+Pooled across the 20 pairs: **0.941 elapsed / 0.938 input**. The three native recursive-debug failures and one CLI failure all had correct artifacts but no usable observed runtime state; the CLI passed 9/10 versus native 7/10. Feature editing is at elapsed parity and slightly lower input. These are two fresh workflow shapes with 40 attempts, not a broad generalization claim, but together they meet both efficiency criteria. Earlier five-pair samples of the same fixtures are retained in `debug-recursive-10.json` and `edit-feature-10.json`; the ten-pair `heldout-40.json` supersedes them for headline numbers. The fixtures were frozen locally before the runs, so their provenance hashes identify the exact code and the recorded source revision is the parent commit; the fixtures are committed with this evidence.
 
 ### Catalog and interaction-cost analysis (2026-11-05)
 

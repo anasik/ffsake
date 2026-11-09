@@ -161,3 +161,7 @@ The [final 40-attempt index](20261106-redirect/final-40.json) records 10 Haiku r
 ## 2026-11-09 Fresh held-out feature editing
 
 [edit-feature-10.json](20261109-generalization/edit-feature-10.json) records 10 valid Claude Haiku 5.5 attempts on a new `edit_feature` fixture frozen before the run: implement missing pending-list and summary behavior in a small tracker package against fixed tests. Artifact and harness were 5/5 both; calls 10 native versus 9 CLI, paired median 0.997 elapsed / 0.958 input, zero denials in both arms, total $0.0534. Together with `debug-recursive-10.json`, the two fresh held-out shapes meet both efficiency criteria. The fixture is committed with the evidence; its provenance hash pins the exact code used.
+
+## 2026-11-09 Fresh held-out batch, ten pairs each
+
+[heldout-40.json](20261109-generalization/heldout-40.json) records 40 valid Claude Haiku 5.5 attempts across the two fresh held-out fixtures, ten pairs each, total $0.2376. Recursive debug was artifact 10/10 both, harness 9/10 CLI versus native 7/10, 11.5 versus 6 median calls, paired 0.760 elapsed / 0.734 input, native denials 0-4 versus zero CLI. Feature edit was 10/10 artifact and harness both, paired 1.022 / 0.948. Pooled 0.941 / 0.938 across 20 pairs. This supersedes the five-pair samples in `debug-recursive-10.json` and `edit-feature-10.json` for headline numbers.

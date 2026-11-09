@@ -27,6 +27,13 @@ its 40-attempt run measured edit 10/10 both at 1.258/1.132 with 7 native versus
 zero denials in both arms. Debug transfers; edit does not. Provider cost reported
 as zero.
 
+Fresh held-out (2026-11-09): new `debug_recursive` and `edit_feature`
+fixtures, ten pairs each, 40 valid attempts, $0.2376. Recursive debug:
+artifact 10/10 both, harness 9/10 versus native 7/10, 11.5 versus 6 median
+calls, paired 0.760 elapsed / 0.734 input, zero CLI denials versus 0-4.
+Feature edit: 10/10 both, paired 1.022 / 0.948. Pooled 0.941 / 0.938.
+Evidence: `docs/agent-benchmark-runs/20261109-generalization/heldout-40.json`.
+
 Evidence: `docs/agent-benchmark-runs/20261106-hook-allow/final-80.json`,
 `docs/agent-benchmark-runs/20261106-opencode/haiku-20.json`,
 `docs/agent-benchmark-runs/20261109-opencode-redirect/redirect-40.json`,
@@ -34,7 +41,8 @@ Evidence: `docs/agent-benchmark-runs/20261106-hook-allow/final-80.json`,
 
 Verdict: met for Claude Code, partially met for OpenCode. Half the permission
 surface, fewer denials, edit parity with lower input, and clearly better debug
-correctness/efficiency. Keep this as the default;
+correctness/efficiency. Both fresh held-out shapes meet the elapsed and input
+criteria (pooled 0.941 / 0.938). Keep this as the default;
 do not restore the MCP catalog for this path.
 
 ## Competitive unfamiliar-task goal (2026-11-05, candidate pending validation)

@@ -37,6 +37,10 @@ class SanitizeTests(unittest.TestCase):
         self.assertNotIn('SECRET', json.dumps(result))
         self.assertNotIn('/Users/private', json.dumps(result))
 
+    def test_known_task_names_cover_all_fixtures(self):
+        import rc_benchmark_fixtures as fixtures
+        self.assertLessEqual(set(fixtures.TASKS), set(sanitizer.TASK_NAMES))
+
     def test_known_task_names_survive_redaction(self):
         result = sanitizer.sanitize({'results':[
             {'task':'edit_settings','mode':'baseline','stdout':'','stderr':''},

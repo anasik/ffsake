@@ -40,12 +40,14 @@ Bottleneck regression check (2026-11-09): the default CLI on
 `debug_ledger`, `debug_nested` and `edit_batch`, 15 valid pairs,
 pooled **0.988 elapsed / 0.935 input**, total **$0.1805**. The MCP
 probe/workspace-info candidate on the two debug fixtures measured
-1.158 / 1.993 for $0.1708, so it is not a competitive path. A fresh
-held-out `debug_recursive` fixture measured **5/5 versus native 2/5**
-harness correctness, **0.718 elapsed / 0.584 input**, $0.0669. A fresh
-held-out `edit_feature` fixture measured **5/5 both**, **0.997 elapsed /
-0.958 input**, $0.0534. Evidence:
-`docs/agent-benchmark-runs/20261109-generalization/`.
+1.158 / 1.993 for $0.1708, so it is not a competitive path. Fresh held-out batch (2026-11-09):
+`debug_recursive` and `edit_feature`, ten pairs each, 40 valid attempts,
+$0.2376. Recursive debug: artifact 10/10 both, harness **9/10 versus
+native 7/10**, median calls 11.5 versus **6**, paired **0.760 elapsed /
+0.734 input**, native denials 0-4 versus **0**. Feature edit: 10/10 both,
+paired **1.022 / 0.948**. Pooled over 20 pairs: **0.941 elapsed /
+0.938 input**. Evidence:
+`docs/agent-benchmark-runs/20261109-generalization/heldout-40.json`.
 
 Verdict: **met for Claude Code; partially met for OpenCode**. FFSAKE halves the
 permission surface (3 versus 6 entries), reduces denials roughly fourfold, is at
@@ -54,9 +56,9 @@ debug correctness, elapsed time, tokens and cost. OpenCode keeps the debug win
 and the enforcement path but is slower on edits. Reviewed preview/apply, stale
 checks, history and debug cleanup remain intact.
 
-Next action: extend the two fresh held-out fixtures (`debug_recursive` and
-`edit_feature`) to ten pairs each in one batch, so the held-out estimate rests on
-40 attempts rather than 20 and stability is visible. Keep the Claude
+Next action: consolidate the held-out evidence into the goal record and switch to
+alpha use and reproducible bug fixes. Do not launch another paid synthetic
+benchmark unless a specific regression question appears. Keep the Claude
 read-redirect hook as the default. The MCP candidate is measured and rejected as
 a competitive path (1.158 elapsed / 1.993 input); do not reopen MCP catalog
 work.
