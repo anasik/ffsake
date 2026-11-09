@@ -37,8 +37,10 @@ an enforcement/correctness mechanism, not an edit speedup. Provider reported
 zero cost.
 
 Bottleneck regression check (2026-11-09): the default CLI on
-`debug_ledger`, `debug_nested` and `edit_batch`, 15 valid pairs,
-pooled **0.988 elapsed / 0.935 input**, total **$0.1805**. The MCP
+`debug_ledger`, `debug_nested` and `edit_batch`, 20 valid pairs,
+pooled **0.975 elapsed / 0.932 input**, total **$0.2325**. The
+`edit_batch` ten-pair sample was 1.044 / 0.950 with 11 versus 6 calls;
+the earlier five-pair 1.237 / 1.162 was noise. The MCP
 probe/workspace-info candidate on the two debug fixtures measured
 1.158 / 1.993 for $0.1708, so it is not a competitive path. Fresh held-out batch (2026-11-09):
 `debug_recursive` and `edit_feature`, ten pairs each, 40 valid attempts,
@@ -118,7 +120,7 @@ Next action after approval: freeze both release binaries and the CLI guidance at
 
 Stop when success is demonstrated on held-out tasks, the budget is exhausted, three materially different candidates fail to improve the bottleneck, or progress needs a safeguard/dependency change. Do not start unrelated features, a new harness or fine-tuning.
 
-**2026-11-09 update:** the 2026-11-05 "not met" verdict applied to the MCP arm at that commit. The current default CLI + read-redirect integration now meets both criteria on two fresh held-out workflow shapes: `debug_recursive` and `edit_feature`, ten pairs each, 40 valid attempts, pooled **0.941 elapsed / 0.938 input**, full artifact correctness, and better harness correctness on debug. The bottleneck regression fixtures also pooled 0.988 / 0.935. The MCP probe/workspace-info candidate closed the call gap but stayed at 1.158 / 1.993, so the MCP catalog path is rejected. Budget statements above are historical; today's five batches totaled about $0.47. Next work is alpha use and reproducible bug fixes, not more synthetic benchmarks.
+**2026-11-09 update:** the 2026-11-05 "not met" verdict applied to the MCP arm at that commit. The current default CLI + read-redirect integration now meets both criteria on two fresh held-out workflow shapes: `debug_recursive` and `edit_feature`, ten pairs each, 40 valid attempts, pooled **0.941 elapsed / 0.938 input**, full artifact correctness, and better harness correctness on debug. The bottleneck regression fixtures also pooled 0.975 / 0.932 over 20 pairs. The MCP probe/workspace-info candidate closed the call gap but stayed at 1.158 / 1.993, so the MCP catalog path is rejected. Budget statements above are historical; today's batches totaled about $0.82. Next work is alpha use and reproducible bug fixes, not more synthetic benchmarks.
 
 ## Authorized Git repositories in added folders (2026-10-30)
 

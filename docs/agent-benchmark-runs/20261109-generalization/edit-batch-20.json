@@ -1,0 +1,5327 @@
+{
+  "schema_version": 1,
+  "kind": "content-free redacted event index",
+  "limitations": "Commands, arguments, output and private content are omitted; retain the original report privately.",
+  "source_revision": "e3749c54a53a8e42585ef19918a9417879645325",
+  "binary_sha256": "a53b4e2b1f0ecefd82edd17441869a2f0746c8c91f0d04ca181fd0391cae4086",
+  "driver_sha256": "81563ed9f502a2973108c0a51bc661701cc270a34ae0838db176d8e50821fed9",
+  "fixture_sha256": "b3fcc21471f9b7391fe07ce1e2e7ff7b9923f27ecd95570e012442a74088c730",
+  "harness_sha256": {
+    "agent_benchmark_suite.py": "520c53851286c62d1bf1579f5a213f12b0090ca110102e5939ffc36807733e9c",
+    "agent_benchmark.py": "19b717bf8d2e2ce9641bc526d218909f9b24b1460f9a018d899066400cf28bc3",
+    "claude_read_redirect_hook.py": "494de75347068f9bda9b1336683a8ad1cb2071d76208351982f72995b5f3c812",
+    "opencode_read_redirect_plugin.js": "765bcb8485f75c56727587edff075c57e9fe9dae74196c1675393d15dc08cd69"
+  },
+  "configuration": {
+    "cli_redirect_reads": true,
+    "opencode_redirect_reads": false,
+    "permission_profiles": true,
+    "cli_hook_policy": false,
+    "default_permissions": false
+  },
+  "agents": [
+    "claude"
+  ],
+  "tasks": [
+    "edit_batch"
+  ],
+  "repetitions": 10,
+  "complete": true,
+  "platform": "arm64",
+  "results": [
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 1,
+      "attempt": null,
+      "elapsed_ms": 14792.072,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 12,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 41,
+        "num_turns": 13,
+        "input_tokens": 10,
+        "total_input_tokens": 149110,
+        "uncached_input_tokens": 10,
+        "output_tokens": 2403,
+        "cache_read_input_tokens": 131097,
+        "cache_creation_input_tokens": 18003,
+        "total_cost_usd": 0.00611407,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "other",
+          "Bash",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "467fbb6292bc7bbe73403769a3c91facc83e1f715605a225267fb05226ac54db",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 13,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 1,
+      "attempt": null,
+      "elapsed_ms": 12638.491,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 28,
+        "num_turns": 7,
+        "input_tokens": 10,
+        "total_input_tokens": 140551,
+        "uncached_input_tokens": 10,
+        "output_tokens": 1836,
+        "cache_read_input_tokens": 122976,
+        "cache_creation_input_tokens": 17565,
+        "total_cost_usd": 0.005661760000000001,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 1,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "92a28bb73fab9623491c883d5d58b289618fed9f84a132dec43e328bf6216f40",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 7,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 2,
+      "attempt": null,
+      "elapsed_ms": 13958.921,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 27,
+        "num_turns": 7,
+        "input_tokens": 10,
+        "total_input_tokens": 140843,
+        "uncached_input_tokens": 10,
+        "output_tokens": 2152,
+        "cache_read_input_tokens": 125952,
+        "cache_creation_input_tokens": 14881,
+        "total_cost_usd": 0.00531272,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 1,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "eb926a277b136666228d9668ea2dcf362988708e1111751d650d9e848ae6908a",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 7,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 2,
+      "attempt": null,
+      "elapsed_ms": 13492.819,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 11,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 2,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 35,
+        "num_turns": 12,
+        "input_tokens": 8,
+        "total_input_tokens": 117520,
+        "uncached_input_tokens": 8,
+        "output_tokens": 2320,
+        "cache_read_input_tokens": 102157,
+        "cache_creation_input_tokens": 15355,
+        "total_cost_usd": 0.005253370000000001,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "other",
+          "Bash",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "95de2117d94f270087c93e41460f6157d798053da25d64a87555000aa70dffb8",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 12,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 3,
+      "attempt": null,
+      "elapsed_ms": 15502.908,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 12,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 40,
+        "num_turns": 13,
+        "input_tokens": 12,
+        "total_input_tokens": 179413,
+        "uncached_input_tokens": 12,
+        "output_tokens": 2491,
+        "cache_read_input_tokens": 163720,
+        "cache_creation_input_tokens": 15681,
+        "total_cost_usd": 0.006020100000000001,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "other",
+          "other",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "cb572b558f7e3067286295d2d25099686746224bb965f6772b40646cf6ac8005",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 13,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 3,
+      "attempt": null,
+      "elapsed_ms": 14514.851,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 8,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 5,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 33,
+        "num_turns": 9,
+        "input_tokens": 12,
+        "total_input_tokens": 168870,
+        "uncached_input_tokens": 12,
+        "output_tokens": 2080,
+        "cache_read_input_tokens": 153857,
+        "cache_creation_input_tokens": 15001,
+        "total_cost_usd": 0.005579970000000001,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 1,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "1d22d64bd4cde771f7a2ffd67226ada8b75c7ef708896daff25fa41e6746fa6a",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 9,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 4,
+      "attempt": null,
+      "elapsed_ms": 12989.25,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 26,
+        "num_turns": 7,
+        "input_tokens": 10,
+        "total_input_tokens": 140121,
+        "uncached_input_tokens": 10,
+        "output_tokens": 1800,
+        "cache_read_input_tokens": 125392,
+        "cache_creation_input_tokens": 14719,
+        "total_cost_usd": 0.005098719999999999,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 2,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "3b9b07cda8fe7d2a4fdef1159552bf3aeecf283580008f2fb07613a4c83a4142",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 7,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 4,
+      "attempt": null,
+      "elapsed_ms": 14850.243,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 11,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 4,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 39,
+        "num_turns": 12,
+        "input_tokens": 12,
+        "total_input_tokens": 180185,
+        "uncached_input_tokens": 12,
+        "output_tokens": 2315,
+        "cache_read_input_tokens": 164139,
+        "cache_creation_input_tokens": 16034,
+        "total_cost_usd": 0.00600689,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "Bash",
+          "other",
+          "Bash",
+          "Read",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "a8870971f88d8f7dfae0128ffe60e86ef0764c3fc96f86fd6e83b9486b35de3f",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 12,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 5,
+      "attempt": null,
+      "elapsed_ms": 11896.947,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 7,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 27,
+        "num_turns": 8,
+        "input_tokens": 8,
+        "total_input_tokens": 115795,
+        "uncached_input_tokens": 8,
+        "output_tokens": 1668,
+        "cache_read_input_tokens": 101297,
+        "cache_creation_input_tokens": 14490,
+        "total_cost_usd": 0.00474577,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "Bash",
+          "other",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "a2abf1edeff0cd64e8c2c81f6987131fcffd8a0947ba4a8844b0f7b736840a92",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 8,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 5,
+      "attempt": null,
+      "elapsed_ms": 15392.947,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 8,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 5,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 34,
+        "num_turns": 9,
+        "input_tokens": 14,
+        "total_input_tokens": 199789,
+        "uncached_input_tokens": 14,
+        "output_tokens": 2075,
+        "cache_read_input_tokens": 184561,
+        "cache_creation_input_tokens": 15214,
+        "total_cost_usd": 0.005927310000000001,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 1,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash",
+          "Bash",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "059b68a989691c1ddcd5e57e338013b0355a5e1ed32ca0f5a20cf7900772f993",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 9,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 6,
+      "attempt": null,
+      "elapsed_ms": 11641.551,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 7,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 4,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 27,
+        "num_turns": 8,
+        "input_tokens": 10,
+        "total_input_tokens": 139960,
+        "uncached_input_tokens": 10,
+        "output_tokens": 1645,
+        "cache_read_input_tokens": 125416,
+        "cache_creation_input_tokens": 14534,
+        "total_cost_usd": 0.00498446,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 1,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "6d2b1cc62f52cbf92401b628e58627ceac1520f627a727fc4a6f8866e0e4dd69",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 8,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 6,
+      "attempt": null,
+      "elapsed_ms": 11060.258,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 25,
+        "num_turns": 7,
+        "input_tokens": 8,
+        "total_input_tokens": 115342,
+        "uncached_input_tokens": 8,
+        "output_tokens": 1585,
+        "cache_read_input_tokens": 100977,
+        "cache_creation_input_tokens": 14357,
+        "total_cost_usd": 0.00467447,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "705856495610310fc28c80d04c161edc9e56dda8869ff1c989c7d36345ee83a0",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 7,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 7,
+      "attempt": null,
+      "elapsed_ms": 14972.604,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 12,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 41,
+        "num_turns": 13,
+        "input_tokens": 12,
+        "total_input_tokens": 180316,
+        "uncached_input_tokens": 12,
+        "output_tokens": 2409,
+        "cache_read_input_tokens": 164671,
+        "cache_creation_input_tokens": 15633,
+        "total_cost_usd": 0.005979010000000001,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "other",
+          "Bash",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "ac462fa38151cbf4aadb7bda0de1850df4cc52cd952c967fa72fb9cb77b27c90",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 13,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 7,
+      "attempt": null,
+      "elapsed_ms": 16037.962,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 9,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 32,
+        "num_turns": 10,
+        "input_tokens": 10,
+        "total_input_tokens": 140452,
+        "uncached_input_tokens": 10,
+        "output_tokens": 2165,
+        "cache_read_input_tokens": 125200,
+        "cache_creation_input_tokens": 15242,
+        "total_cost_usd": 0.0053839000000000005,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 1,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Read",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "d29b1fd7911df6fb1fa28a2ed3c113c8c7452b4e59bba0ee434ca8b575479d27",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 10,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 8,
+      "attempt": null,
+      "elapsed_ms": 13031.623,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 29,
+        "num_turns": 7,
+        "input_tokens": 10,
+        "total_input_tokens": 140186,
+        "uncached_input_tokens": 10,
+        "output_tokens": 1791,
+        "cache_read_input_tokens": 125510,
+        "cache_creation_input_tokens": 14666,
+        "total_cost_usd": 0.0050848,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 1,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "800369eb7a1a713eed33f3fdb0ee9afa5f1f11143752f7f19cb89b4f9deb804d",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 7,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 8,
+      "attempt": null,
+      "elapsed_ms": 11426.723,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 2,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 25,
+        "num_turns": 7,
+        "input_tokens": 8,
+        "total_input_tokens": 115742,
+        "uncached_input_tokens": 8,
+        "output_tokens": 1768,
+        "cache_read_input_tokens": 101170,
+        "cache_creation_input_tokens": 14564,
+        "total_cost_usd": 0.004809300000000001,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "other",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "e43efdeeb4e19fccb222c0e907d6112ca9f519859423deac35849602ad80d8d8",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 7,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 9,
+      "attempt": null,
+      "elapsed_ms": 16606.605,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 12,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 41,
+        "num_turns": 13,
+        "input_tokens": 12,
+        "total_input_tokens": 180965,
+        "uncached_input_tokens": 12,
+        "output_tokens": 2859,
+        "cache_read_input_tokens": 164629,
+        "cache_creation_input_tokens": 16324,
+        "total_cost_usd": 0.00634179,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "other",
+          "Bash",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "270da1042476252f83cbd7a328b8fff594356bacec076a3893ab5a6c31fb533c",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 13,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 9,
+      "attempt": null,
+      "elapsed_ms": 12255.345,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 26,
+        "num_turns": 7,
+        "input_tokens": 8,
+        "total_input_tokens": 110794,
+        "uncached_input_tokens": 8,
+        "output_tokens": 1587,
+        "cache_read_input_tokens": 96396,
+        "cache_creation_input_tokens": 14390,
+        "total_cost_usd": 0.00463626,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "ef72949d264271794b8f0a29947d7049fd774864f123e1c0a516510de8c58dac",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 7,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 10,
+      "attempt": null,
+      "elapsed_ms": 12048.892,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 6,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 28,
+        "num_turns": 7,
+        "input_tokens": 8,
+        "total_input_tokens": 110707,
+        "uncached_input_tokens": 8,
+        "output_tokens": 1694,
+        "cache_read_input_tokens": 96330,
+        "cache_creation_input_tokens": 14369,
+        "total_cost_usd": 0.0046849,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 1,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "762b70eb1f72c91dc10f82e03bc7c2d0aa7d9f38ff5eba9c09a5f81a7c7dad44",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 7,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 10,
+      "attempt": null,
+      "elapsed_ms": 11028.444,
+      "exit_code": 0,
+      "task": "edit_batch",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "98cf80909b4f6be9ca81af0119181948b7ec57b9e7d2e4d3ee9df7c2d2872200",
+        "fixture_manifest_sha256": "a83b1920a473bf8e36011b6784ccbdd86a190706bece94b76139ad43c0941bf2",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 7,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 3,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 27,
+        "num_turns": 8,
+        "input_tokens": 8,
+        "total_input_tokens": 115656,
+        "uncached_input_tokens": 8,
+        "output_tokens": 1663,
+        "cache_read_input_tokens": 101169,
+        "cache_creation_input_tokens": 14479,
+        "total_cost_usd": 0.00473979,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "Bash",
+          "other",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "28250f9e3795feabd5d168eb262be33297e2a2d1ff0fefc0d7e7ebe0dce337a3",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 8,
+          "subtype": "success"
+        }
+      ]
+    }
+  ]
+}

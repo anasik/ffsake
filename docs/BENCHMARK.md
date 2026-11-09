@@ -852,13 +852,13 @@ Pooled medians were **1.158 elapsed / 1.993 input**, and median cost was about 5
 
 ### Current default across all three generalization fixtures (2026-11-09)
 
-`edit_batch`, the remaining 2026-11-05 fixture, was measured with the same default CLI configuration: five pairs, 10 valid attempts, **$0.0550**.
+`edit_batch`, the remaining 2026-11-05 fixture, was remeasured with the same default CLI configuration at ten pairs, 20 valid attempts, **$0.1070**:
 
 | Fixture | Artifact | Harness correct | Calls (native/CLI) | Median seconds (native/CLI) | Median input (native/CLI) | Paired median |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| Edit batch | 5/5 both | 5/5 both | 11 / **10** | 14.1 / 16.6 | 146,778 / **143,059** | **1.237 / 1.162** |
+| Edit batch (10 pairs) | 10/10 both | 10/10 both | 11 / **6** | **14.1 / 13.0** | 133,315 / 140,319 | **1.044 / 0.950** |
 
-Pooling the 15 valid pairs across `edit_batch`, `debug_ledger` and `debug_nested` gives **0.988 elapsed / 0.935 input** (8 and 11 paired wins respectively), total cost **$0.1805**. The debug fixtures now beat native on both axes; multi-file edit remains slower in elapsed time even with one fewer call, consistent with per-read hook and CLI process startup on a short task. All three fixtures informed the current integration, so this is regression evidence for the default configuration, not a new held-out generalization claim.
+Pooling the 20 valid pairs across `edit_batch`, `debug_ledger` and `debug_nested` gives **0.975 elapsed / 0.932 input** (11 and 15 paired wins respectively), total cost **$0.2325**. The earlier five-pair edit sample measured 1.237 / 1.162; the larger sample shows that apparent gap was noise, and the CLI now uses roughly half the calls. All three fixtures informed the current integration, so this is regression evidence for the default configuration, not a new held-out generalization claim.
 
 ### Fresh held-out workflows: recursive debugging and feature editing (2026-11-09)
 
@@ -870,6 +870,8 @@ Two new fixtures test workflow shapes absent from the earlier set. `debug_recurs
 | Feature edit | 10/10 both | 10/10 both | 10 / **9.5** | 13.3 / 13.4 | 148,610 / 152,916 | **1.022 / 0.948** | 0 / 0-1 |
 
 Pooled across the 20 pairs: **0.941 elapsed / 0.938 input**. The three native recursive-debug failures and one CLI failure all had correct artifacts but no usable observed runtime state; the CLI passed 9/10 versus native 7/10. Feature editing is at elapsed parity and slightly lower input. These are two fresh workflow shapes with 40 attempts, not a broad generalization claim, but together they meet both efficiency criteria. Earlier five-pair samples of the same fixtures are retained in `debug-recursive-10.json` and `edit-feature-10.json`; the ten-pair `heldout-40.json` supersedes them for headline numbers and omits per-run event streams to stay under the repository's 256 KiB bounded-read limit (the five-pair indexes retain them). The fixtures were frozen locally before the runs, so their provenance hashes identify the exact code and the recorded source revision is the parent commit; the fixtures are committed with this evidence.
+
+Verdict for the current default integration: both fresh held-out shapes meet the ≤1.0 elapsed and ≤1.10 input criteria, with full artifact correctness and better harness correctness on debug. Claim scope is Claude Haiku 5.5, two workflow shapes and 40 attempts; the three regression fixtures independently pool at 0.975 / 0.932 over 20 pairs.
 
 ### Catalog and interaction-cost analysis (2026-11-05)
 

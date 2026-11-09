@@ -165,3 +165,7 @@ The [final 40-attempt index](20261106-redirect/final-40.json) records 10 Haiku r
 ## 2026-11-09 Fresh held-out batch, ten pairs each
 
 [heldout-40.json](20261109-generalization/heldout-40.json) records 40 valid Claude Haiku 5.5 attempts across the two fresh held-out fixtures, ten pairs each, total $0.2376. Recursive debug was artifact 10/10 both, harness 9/10 CLI versus native 7/10, 11.5 versus 6 median calls, paired 0.760 elapsed / 0.734 input, native denials 0-4 versus zero CLI. Feature edit was 10/10 artifact and harness both, paired 1.022 / 0.948. Pooled 0.941 / 0.938 across 20 pairs. This supersedes the five-pair samples in `debug-recursive-10.json` and `edit-feature-10.json` for headline numbers. It omits per-run event streams to stay under the repository's 256 KiB bounded-read limit; the five-pair per-task indexes retain them.
+
+## 2026-11-09 Edit batch at ten pairs
+
+[edit-batch-20.json](20261109-generalization/edit-batch-20.json) records 20 valid Claude Haiku 5.5 attempts on `edit_batch` with the default CLI, ten pairs, $0.1070. Artifact and harness were 10/10 both at 11 native versus 6 CLI calls; paired median 1.044 elapsed / 0.950 input, zero denials, lower median cost. Pooled with the ledger and nested runs, 20 pairs give 0.975 elapsed / 0.932 input for $0.2325. The earlier five-pair edit sample (1.237 / 1.162) was noise.
