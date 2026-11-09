@@ -66,7 +66,7 @@ work.
 Measurement corrections: bytecode caches are not repository changes;
 `reevaluate_rc_results.py` recomputes retained traces without model calls.
 
-## Competitive unfamiliar-task goal (2026-11-05, candidate pending validation)
+## Competitive unfamiliar-task goal (2026-11-05, met on fresh held-out shapes 2026-11-09)
 
 Active goal: make FFSAKE reliably competitive with native tools on unfamiliar editing and debugging while preserving capabilities and safeguards.
 
@@ -117,6 +117,8 @@ Budget: the previous 60 paid attempts ($5.7511 total reported) are exhausted. Th
 Next action after approval: freeze both release binaries and the CLI guidance at the tested commit, preflight exact adapters and policies, then run the three-arm batch. Report per run: `ToolSearch` counts for the MCP arm, CLI command counts, calls, elapsed, cached/uncached input, output, cost, failures, timeouts and native fallback. Test both whether the 21.8 KB core catalog removes `ToolSearch` and whether agents adopt the CLI; publish sanitized per-run evidence. Before scoring, replace the pilot's exact-name workflow marker with a disclosed general check that requires a debugger-observed runtime value whose name or value contains the target, and report it separately from artifact completion.
 
 Stop when success is demonstrated on held-out tasks, the budget is exhausted, three materially different candidates fail to improve the bottleneck, or progress needs a safeguard/dependency change. Do not start unrelated features, a new harness or fine-tuning.
+
+**2026-11-09 update:** the 2026-11-05 "not met" verdict applied to the MCP arm at that commit. The current default CLI + read-redirect integration now meets both criteria on two fresh held-out workflow shapes: `debug_recursive` and `edit_feature`, ten pairs each, 40 valid attempts, pooled **0.941 elapsed / 0.938 input**, full artifact correctness, and better harness correctness on debug. The bottleneck regression fixtures also pooled 0.988 / 0.935. The MCP probe/workspace-info candidate closed the call gap but stayed at 1.158 / 1.993, so the MCP catalog path is rejected. Budget statements above are historical; today's five batches totaled about $0.47. Next work is alpha use and reproducible bug fixes, not more synthetic benchmarks.
 
 ## Authorized Git repositories in added folders (2026-10-30)
 
