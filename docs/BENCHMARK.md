@@ -873,6 +873,30 @@ Pooled across the 20 pairs: **0.941 elapsed / 0.938 input**. The three native re
 
 Verdict for the current default integration: both fresh held-out shapes meet the ≤1.0 elapsed and ≤1.10 input criteria, with full artifact correctness and better harness correctness on debug. Claim scope is Claude Haiku 5.5, two workflow shapes and 40 attempts; the three regression fixtures independently pool at 0.975 / 0.932 over 20 pairs.
 
+### Language intelligence boundary: semantic rename and reference discovery (2026-11-09)
+
+The default CLI now completes a semantic rename in two commands: `preview_semantic_rename` runs discovery and preview in one process and stores the exact proposal plus analysis-source hashes, and `--apply` repeats discovery and rejects changed sources. The same workflow was compared with native editing on new Rust fixtures designed around identical names in different scopes: a crate function shadowed by locals and parameters, a struct field sharing its name with a method and a pattern binding, and a reference-report task with same-spelling decoys. Each run was verified independently with `cargo build`, `cargo test` and exact symbol checks. Five pairs per task, 30 valid attempts, **$0.2146**.
+
+| Task | Correct (native/CLI) | Paired elapsed | Paired input | Calls (native/CLI) | Median seconds (native/CLI) | Denials |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Rename function with shadowing | 5/5 / **5/5** | **1.130** | **1.453** | 14 / **12** | 22.0 / 25.0 | 0 / 0 |
+| Rename field with shorthand | 5/5 / **5/5** | **1.802** | **2.004** | 12 / 15 | 19.1 / 34.5 | 0 / 0 |
+| Reference report | 5/5 / **5/5** | **1.687** | **1.944** | 3 / 5 | 9.7 / 15.8 | 0 / 0 |
+| **Pooled** | 15/15 / **15/15** | **1.427** | **1.911** | - | - | 0 / 0 |
+
+At this scale native editing was faster and used substantially fewer tokens; every task was completed correctly in both arms, so language intelligence did not buy correctness or efficiency. The preview diff did isolate the field, method, pattern binding and unrelated parameter correctly, and the semantic proposal renamed the constructor parameter as part of the field change (a behavior-preserving but non-minimal edit visible in review).
+
+A larger 12-module version of the shadowing task changed the boundary: five pairs, 10 valid attempts, **$0.1064**.
+
+| Task | Correct (native/CLI) | Paired elapsed | Paired input | Calls (native/CLI) | Median seconds (native/CLI) | Median cost |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Rename across 12 modules | 5/5 / **5/5** | **0.784** | **1.659** | 37 / **9** | 39.6 / **31.0** | $0.0107 / **$0.0098** |
+
+The semantic path cut turns from 37 to 9 and wall time by about 22%, at the cost of 66% more input tokens; reported cost was slightly lower. The advantage is therefore workload-shaped: exact scope-aware editing over many scattered same-spelling uses saves turns, while small unambiguous renames are cheaper with native editing.
+
+The same language server was also exercised without a model on the real `itoa` 1.0.18 source. References for the private `divmod100` helper returned exactly 5 ranges and omitted two call sites inside a `macro_rules!` body, because macro expansion is intentionally not loaded. Applying the 5-edit proposal succeeded and `cargo build` then failed with `E0425: cannot find function divmod100` at the omitted call site; undo restored the source byte-exactly and the build passed again. This is the hard boundary: language intelligence is scope-aware but not complete, so a build/test check is mandatory and a textual search may be more complete on macro-heavy code. No semantic or compiler-correctness guarantee is claimed.
+
+
 ### Catalog and interaction-cost analysis (2026-11-05)
 
 The final held-out traces show FFSAKE used 157 tool calls versus native 113, while input per call was **22,090 versus 22,353** and seconds per call **1.69 versus 1.87**. The efficiency gap is therefore turn count, not per-turn payload or server latency. Model-free server timings are sub-millisecond for `workspace_info`/`read_files` and 7.7 ms for search; a real debugpy `stops=2` probe takes about 970 ms of actual stepping.

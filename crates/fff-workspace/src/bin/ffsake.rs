@@ -585,29 +585,6 @@ fn semantic_rename_preview(runtime: &mut Resident, value: &mut Value) -> Result<
     if !matches!(request.query, SemanticQuery::Rename) {
         return Err("preview_semantic_rename requires query=rename".into());
     }
-    let expected_path = value["expected_path"]
-        .as_str()
-        .ok_or("preview_semantic_rename requires expected_path")?
-        .to_string();
-    let expected_start = value["expected_start_byte"]
-        .as_u64()
-        .ok_or("preview_semantic_rename requires expected_start_byte")?
-        as usize;
-    let expected_old = value["expected_old_text"]
-        .as_str()
-        .ok_or("preview_semantic_rename requires expected_old_text")?
-        .to_string();
-    let expected_new = value["expected_new_name"]
-        .as_str()
-        .ok_or("preview_semantic_rename requires expected_new_name")?
-        .to_string();
-    let expected_edits = value["expected_edits"]
-        .as_u64()
-        .ok_or("preview_semantic_rename requires expected_edits")?
-        as usize;
-    if expected_edits == 0 {
-        return Err("preview_semantic_rename requires positive expected_edits".into());
-    }
     let discovery = runtime.execute(Request::Semantic { request })?;
     let hashes = discovery["file_hashes"].clone();
     if let Some(stored) = value.get("expected_file_hashes") {
@@ -621,6 +598,43 @@ fn semantic_rename_preview(runtime: &mut Resident, value: &mut Value) -> Result<
         .get("prepared")
         .filter(|prepared| !prepared.is_null())
         .ok_or("native rename unavailable at this position")?;
+    let proposal = &discovery["proposal"];
+    let expected_path = match value["expected_path"].as_str() {
+        Some(path) => path.to_string(),
+        None => discovery["path"]
+            .as_str()
+            .ok_or("rename proposal has no path")?
+            .to_string(),
+    };
+    let expected_start = match value["expected_start_byte"].as_u64() {
+        Some(start) => start as usize,
+        None => prepared["start_byte"]
+            .as_u64()
+            .ok_or("rename preparation has no start byte")? as usize,
+    };
+    let expected_old = match value["expected_old_text"].as_str() {
+        Some(old) => old.to_string(),
+        None => prepared["old_text"]
+            .as_str()
+            .ok_or("rename preparation has no old text")?
+            .to_string(),
+    };
+    let expected_new = match value["expected_new_name"].as_str() {
+        Some(new_name) => new_name.to_string(),
+        None => discovery["new_name"]
+            .as_str()
+            .ok_or("rename proposal has no new name")?
+            .to_string(),
+    };
+    let expected_edits = match value["expected_edits"].as_u64() {
+        Some(edits) => edits as usize,
+        None => proposal["text_edit_count"]
+            .as_u64()
+            .ok_or("rename proposal has no edit count")? as usize,
+    };
+    if expected_edits == 0 {
+        return Err("preview_semantic_rename requires positive expected_edits".into());
+    }
     if prepared["start_byte"].as_u64() != Some(expected_start as u64)
         || prepared["old_text"].as_str() != Some(expected_old.as_str())
     {
@@ -631,7 +645,6 @@ fn semantic_rename_preview(runtime: &mut Resident, value: &mut Value) -> Result<
     {
         return Err("rename proposal does not match the expected identity".into());
     }
-    let proposal = &discovery["proposal"];
     let unsupported = proposal["unsupported_reasons"]
         .as_array()
         .map(Vec::len)
@@ -642,14 +655,21 @@ fn semantic_rename_preview(runtime: &mut Resident, value: &mut Value) -> Result<
     let rename_set = discovery["rename_set"]
         .as_u64()
         .ok_or("rename proposal has no set handle")?;
-    runtime.execute(Request::PreviewRustRename {
+    value["expected_path"] = json!(expected_path);
+    value["expected_start_byte"] = json!(expected_start);
+    value["expected_old_text"] = json!(expected_old);
+    value["expected_new_name"] = json!(expected_new);
+    value["expected_edits"] = json!(expected_edits);
+    let mut result = runtime.execute(Request::PreviewRustRename {
         rename_set,
         expected_path,
         expected_start_byte: expected_start,
         expected_old_text: expected_old,
         expected_new_name: expected_new,
         expected_edits,
-    })
+    })?;
+    result["expected_edits"] = json!(expected_edits);
+    Ok(result)
 }
 
 fn token_directory(root: &Path) -> Result<PathBuf> {

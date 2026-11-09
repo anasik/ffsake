@@ -169,3 +169,11 @@ The [final 40-attempt index](20261106-redirect/final-40.json) records 10 Haiku r
 ## 2026-11-09 Edit batch at ten pairs
 
 [edit-batch-20.json](20261109-generalization/edit-batch-20.json) records 20 valid Claude Haiku 5.5 attempts on `edit_batch` with the default CLI, ten pairs, $0.1070. Artifact and harness were 10/10 both at 11 native versus 6 CLI calls; paired median 1.044 elapsed / 0.950 input, zero denials, lower median cost. Pooled with the ledger and nested runs, 20 pairs give 0.975 elapsed / 0.932 input for $0.2325. The earlier five-pair edit sample (1.237 / 1.162) was noise.
+
+## 2026-11-09 Language intelligence boundary
+
+[semantic-30.json](20261109-semantics/semantic-30.json) records 30 valid Claude Haiku 5.5 attempts comparing native editing with the CLI's rust-analyzer path on function/field renames with shadowing and on a reference report. Correctness was 15/15 in both arms; pooled paired medians were 1.427 elapsed and 1.911 input, so native was faster and cheaper on these small fixtures.
+
+[scale-10.json](20261109-semantics/scale-10.json) records 10 valid attempts on a 12-module shadowing rename. Both arms were 5/5; paired medians were 0.784 elapsed and 1.659 input with 37 native versus 9 CLI calls and 39.6 versus 31.0 median seconds. The semantic path wins turns and wall time at this scale but costs more input.
+
+A model-free check on real `itoa` 1.0.18 source found 5 references for `divmod100` but omitted two call sites inside a `macro_rules!` body; applying the proposal broke `cargo build` with `E0425`, and undo restored a passing build. The guarded preview/apply, stale-source rejection and byte-exact undo are covered by `scripts/cli_semantic_smoke.py`.

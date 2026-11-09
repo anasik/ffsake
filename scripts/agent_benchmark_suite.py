@@ -875,7 +875,7 @@ def fixture_directories(root):
             for path in fixture_paths(root) if not path.is_symlink() and path.is_dir()}
 
 
-TRANSIENT_DIRS = ("__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache")
+TRANSIENT_DIRS = ("__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "target")
 TRANSIENT_SUFFIXES = (".pyc", ".pyo", ".pyd")
 
 
@@ -888,10 +888,11 @@ def transient_artifact(name):
 
 
 def fixture_files(root):
-    """Snapshot task files, excluding harness configuration and journal state."""
+    """Snapshot task files, excluding harness state and build output."""
     return {str(p.relative_to(root)): (b"SYMLINK:" + os.fsencode(os.readlink(p))
                                       if p.is_symlink() else p.read_bytes())
-            for p in fixture_paths(root) if p.is_symlink() or p.is_file()}
+            for p in fixture_paths(root)
+            if (p.is_symlink() or p.is_file()) and not transient_artifact(str(p.relative_to(root)))}
 
 
 def file_sha256(path):

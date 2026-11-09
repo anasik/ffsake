@@ -1,0 +1,5942 @@
+{
+  "schema_version": 1,
+  "kind": "content-free redacted event index",
+  "limitations": "Commands, arguments, output and private content are omitted; retain the original report privately.",
+  "source_revision": "8cde5a00ca5eef849e1efe445e8f8deda13c4745",
+  "binary_sha256": "a53b4e2b1f0ecefd82edd17441869a2f0746c8c91f0d04ca181fd0391cae4086",
+  "driver_sha256": "4834835828c2e0610c878db68057079e1e1b0f8660e51308a6d6f64f6e491c5f",
+  "fixture_sha256": "912f419753c92ae1b5e401c0ea570186c66b42d8d5fa1e79e9bdb708f650fc3b",
+  "harness_sha256": {
+    "agent_benchmark_suite.py": "53f7f1b44136ccf300d04aadada2f0dc36b4bd0beba674b21d2224c99a61aeea",
+    "agent_benchmark.py": "19b717bf8d2e2ce9641bc526d218909f9b24b1460f9a018d899066400cf28bc3",
+    "claude_read_redirect_hook.py": "494de75347068f9bda9b1336683a8ad1cb2071d76208351982f72995b5f3c812",
+    "opencode_read_redirect_plugin.js": "765bcb8485f75c56727587edff075c57e9fe9dae74196c1675393d15dc08cd69"
+  },
+  "configuration": {
+    "cli_redirect_reads": true,
+    "opencode_redirect_reads": false,
+    "permission_profiles": true,
+    "cli_hook_policy": false,
+    "default_permissions": false
+  },
+  "agents": [
+    "claude"
+  ],
+  "tasks": [
+    "rename_scale_rust"
+  ],
+  "repetitions": 5,
+  "complete": true,
+  "platform": "arm64",
+  "results": [
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 1,
+      "attempt": null,
+      "elapsed_ms": 51140.613,
+      "exit_code": 0,
+      "task": "rename_scale_rust",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "3c3f7956d8fa4cd3eb09a4a0ef9fe1d2a0965bd280279d8ada892a0d1bbc36de",
+        "fixture_manifest_sha256": "e36af59fd983228660fd994abdb10834a051f0801f564f206a7be9e7b48b7b4b",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 49,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 122,
+        "num_turns": 50,
+        "input_tokens": 14,
+        "total_input_tokens": 251839,
+        "uncached_input_tokens": 14,
+        "output_tokens": 9786,
+        "cache_read_input_tokens": 219585,
+        "cache_creation_input_tokens": 32240,
+        "total_cost_usd": 0.013538250000000002,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "other",
+          "other",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "other",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "b63c659d5d5d42342de440109ec1ab4b938fedc6fcd01bc625eb82e303657d3a",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 50,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 1,
+      "attempt": null,
+      "elapsed_ms": 25683.206,
+      "exit_code": 0,
+      "task": "rename_scale_rust",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "3c3f7956d8fa4cd3eb09a4a0ef9fe1d2a0965bd280279d8ada892a0d1bbc36de",
+        "fixture_manifest_sha256": "e36af59fd983228660fd994abdb10834a051f0801f564f206a7be9e7b48b7b4b",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 8,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 7,
+        "observed_tool_errors": 2,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 39,
+        "num_turns": 9,
+        "input_tokens": 16,
+        "total_input_tokens": 249609,
+        "uncached_input_tokens": 16,
+        "output_tokens": 3724,
+        "cache_read_input_tokens": 225403,
+        "cache_creation_input_tokens": 24190,
+        "total_cost_usd": 0.008955630000000001,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 4,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "ab81fc72be77dd81ea05e405b6b8651faa4eadcd4fc8515a8823f30bd21dce75",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            true
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            true
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 9,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 2,
+      "attempt": null,
+      "elapsed_ms": 31041.967,
+      "exit_code": 0,
+      "task": "rename_scale_rust",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "3c3f7956d8fa4cd3eb09a4a0ef9fe1d2a0965bd280279d8ada892a0d1bbc36de",
+        "fixture_manifest_sha256": "e36af59fd983228660fd994abdb10834a051f0801f564f206a7be9e7b48b7b4b",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 9,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 8,
+        "observed_tool_errors": 2,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 46,
+        "num_turns": 10,
+        "input_tokens": 20,
+        "total_input_tokens": 320972,
+        "uncached_input_tokens": 20,
+        "output_tokens": 4496,
+        "cache_read_input_tokens": 298263,
+        "cache_creation_input_tokens": 22689,
+        "total_cost_usd": 0.00977043,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 5,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "305a1e1d4df6bc6dd08255200c02c6f6fd743c844ae20cace6ae4b2bc57c06fc",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            true
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            true
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 10,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 2,
+      "attempt": null,
+      "elapsed_ms": 39588.102,
+      "exit_code": 0,
+      "task": "rename_scale_rust",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "3c3f7956d8fa4cd3eb09a4a0ef9fe1d2a0965bd280279d8ada892a0d1bbc36de",
+        "fixture_manifest_sha256": "e36af59fd983228660fd994abdb10834a051f0801f564f206a7be9e7b48b7b4b",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 35,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 91,
+        "num_turns": 36,
+        "input_tokens": 10,
+        "total_input_tokens": 171274,
+        "uncached_input_tokens": 10,
+        "output_tokens": 7844,
+        "cache_read_input_tokens": 145710,
+        "cache_creation_input_tokens": 25554,
+        "total_cost_usd": 0.010490900000000001,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "other",
+          "other",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "90e59be1a17c949dbb95fdafd99b52a0195e10e1522ae49ba066db6b3dd725af",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 36,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 3,
+      "attempt": null,
+      "elapsed_ms": 50206.09,
+      "exit_code": 0,
+      "task": "rename_scale_rust",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "3c3f7956d8fa4cd3eb09a4a0ef9fe1d2a0965bd280279d8ada892a0d1bbc36de",
+        "fixture_manifest_sha256": "e36af59fd983228660fd994abdb10834a051f0801f564f206a7be9e7b48b7b4b",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 47,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 2,
+        "observed_tool_errors": 1,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 121,
+        "num_turns": 48,
+        "input_tokens": 14,
+        "total_input_tokens": 248652,
+        "uncached_input_tokens": 14,
+        "output_tokens": 9574,
+        "cache_read_input_tokens": 218486,
+        "cache_creation_input_tokens": 30152,
+        "total_cost_usd": 0.01300366,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "other",
+          "other",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "other",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "0f528f5c75479a9a5d9fc1cd108625f43c1d25cf0bc7ff7d07ba024f78d777c7",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            true
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 48,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 3,
+      "attempt": null,
+      "elapsed_ms": 47086.186,
+      "exit_code": 0,
+      "task": "rename_scale_rust",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "3c3f7956d8fa4cd3eb09a4a0ef9fe1d2a0965bd280279d8ada892a0d1bbc36de",
+        "fixture_manifest_sha256": "e36af59fd983228660fd994abdb10834a051f0801f564f206a7be9e7b48b7b4b",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 35,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 7,
+        "observed_tool_errors": 2,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 96,
+        "num_turns": 36,
+        "input_tokens": 20,
+        "total_input_tokens": 319559,
+        "uncached_input_tokens": 20,
+        "output_tokens": 8247,
+        "cache_read_input_tokens": 293066,
+        "cache_creation_input_tokens": 26473,
+        "total_cost_usd": 0.012350760000000002,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 4,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "708f33831a3c2f2b72810a9cfa8c0168907bd7396cf77d358e1917f1bc4afead",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            true
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            true
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 36,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 4,
+      "attempt": null,
+      "elapsed_ms": 31525.612,
+      "exit_code": 0,
+      "task": "rename_scale_rust",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "3c3f7956d8fa4cd3eb09a4a0ef9fe1d2a0965bd280279d8ada892a0d1bbc36de",
+        "fixture_manifest_sha256": "e36af59fd983228660fd994abdb10834a051f0801f564f206a7be9e7b48b7b4b",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 12,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 10,
+        "observed_tool_errors": 3,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 61,
+        "num_turns": 13,
+        "input_tokens": 26,
+        "total_input_tokens": 424457,
+        "uncached_input_tokens": 26,
+        "output_tokens": 4225,
+        "cache_read_input_tokens": 401655,
+        "cache_creation_input_tokens": 22776,
+        "total_cost_usd": 0.010686850000000001,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 4,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Read",
+          "Edit",
+          "Bash",
+          "Bash",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "328fe5582596f0f901ff08bd9465cfe577ebc68ff1461f3add3b4446f09058a5",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            true
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            true
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            true
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 13,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 4,
+      "attempt": null,
+      "elapsed_ms": 26631.073,
+      "exit_code": 0,
+      "task": "rename_scale_rust",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "3c3f7956d8fa4cd3eb09a4a0ef9fe1d2a0965bd280279d8ada892a0d1bbc36de",
+        "fixture_manifest_sha256": "e36af59fd983228660fd994abdb10834a051f0801f564f206a7be9e7b48b7b4b",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 12,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 5,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 50,
+        "num_turns": 13,
+        "input_tokens": 14,
+        "total_input_tokens": 220194,
+        "uncached_input_tokens": 14,
+        "output_tokens": 3620,
+        "cache_read_input_tokens": 201454,
+        "cache_creation_input_tokens": 18726,
+        "total_cost_usd": 0.00757114,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Bash",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "8bb259cbff8a478b7070441d2f58f1b084307341b39995ccb411721b2ce734c3",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 13,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 5,
+      "attempt": null,
+      "elapsed_ms": 38244.408,
+      "exit_code": 0,
+      "task": "rename_scale_rust",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "baseline",
+      "provenance_hashes": {
+        "prompt_sha256": "3c3f7956d8fa4cd3eb09a4a0ef9fe1d2a0965bd280279d8ada892a0d1bbc36de",
+        "fixture_manifest_sha256": "e36af59fd983228660fd994abdb10834a051f0801f564f206a7be9e7b48b7b4b",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 37,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 1,
+        "observed_tool_errors": 0,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 94,
+        "num_turns": 38,
+        "input_tokens": 10,
+        "total_input_tokens": 171656,
+        "uncached_input_tokens": 10,
+        "output_tokens": 8033,
+        "cache_read_input_tokens": 145594,
+        "cache_creation_input_tokens": 26052,
+        "total_cost_usd": 0.010683840000000002,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 0,
+        "tool_names": [
+          "other",
+          "other",
+          "Read",
+          "Read",
+          "Read",
+          "Read",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Edit",
+          "Bash",
+          "other"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "522a0eab40a5261667059f9c72b5c5f0a825bcaed39caccb7667b3ce4cd19e3a",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Read"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "other"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 38,
+          "subtype": "success"
+        }
+      ]
+    },
+    {
+      "correct": true,
+      "artifact_correct": true,
+      "comparison_valid": true,
+      "timed_out": false,
+      "repetition": 5,
+      "attempt": null,
+      "elapsed_ms": 29685.948,
+      "exit_code": 0,
+      "task": "rename_scale_rust",
+      "comparison_invalid_reasons": [],
+      "provider_error_count": 0,
+      "reported_model": "claude-haiku-5-5",
+      "mode": "cli",
+      "provenance_hashes": {
+        "prompt_sha256": "3c3f7956d8fa4cd3eb09a4a0ef9fe1d2a0965bd280279d8ada892a0d1bbc36de",
+        "fixture_manifest_sha256": "e36af59fd983228660fd994abdb10834a051f0801f564f206a7be9e7b48b7b4b",
+        "initial_staged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "initial_unstaged_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "trace": {
+        "tool_calls": 9,
+        "ffsake_tool_calls": 0,
+        "shell_tool_calls": 8,
+        "observed_tool_errors": 2,
+        "mcp_failed_tool_calls": null,
+        "mcp_approval_blocked_calls": null,
+        "events": 50,
+        "num_turns": 10,
+        "input_tokens": 18,
+        "total_input_tokens": 284814,
+        "uncached_input_tokens": 18,
+        "output_tokens": 4332,
+        "cache_read_input_tokens": 262213,
+        "cache_creation_input_tokens": 22583,
+        "total_cost_usd": 0.00930653,
+        "retries": null,
+        "toolsearch_calls": 0,
+        "mcp_calls": 0,
+        "cli_calls": 5,
+        "tool_names": [
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Bash",
+          "Edit",
+          "Bash"
+        ]
+      },
+      "workflow_evidence": {
+        "passed": true,
+        "details": {
+          "workflow_evidence_required": false
+        }
+      },
+      "file_audit": {
+        "complete": true,
+        "unexpected_count": 0,
+        "verifier_change_count": 0,
+        "program_exit": null,
+        "test_exit": 0,
+        "checks": null,
+        "checks_passed": null,
+        "failed_check_count": null,
+        "task_definition_preserved": null
+      },
+      "private_stdout_sha256": "6d3286db3e2f846117b8b463630f7ad9b99da1233e0ca2396cc8c44cafea71f5",
+      "private_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "events": [
+        {
+          "type": "system",
+          "subtype": "hook_started"
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response"
+        },
+        {
+          "type": "system",
+          "subtype": "init"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            true
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            true
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Edit"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "tool_use"
+          ],
+          "tools": [
+            "Bash"
+          ]
+        },
+        {
+          "type": "user",
+          "tool_results": [
+            false
+          ]
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "system"
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "thinking"
+          ],
+          "tools": []
+        },
+        {
+          "type": "assistant",
+          "content_types": [
+            "text"
+          ],
+          "tools": []
+        },
+        {
+          "type": "result",
+          "is_error": false,
+          "num_turns": 10,
+          "subtype": "success"
+        }
+      ]
+    }
+  ]
+}

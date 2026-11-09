@@ -84,6 +84,29 @@ def cli_guidance(binary, split=False, task=None):
         "stop values. Never bypass an access denial."
     )
 
+def semantic_guidance(binary, kind):
+    common = (
+        f"The guarded FFSAKE CLI is at {binary}. Use it through Bash with a literal dot for the "
+        "workspace and no shell variables or quotes. The host read block rejects commands it "
+        "cannot parse. Never bypass an access denial.\n")
+    if kind == 'rename':
+        return common + (
+            "This is a semantic rename task. Preview the rename through the installed language "
+            "server, review the diff, then apply the printed token:\n"
+            f"{binary} . --request '{{\"op\":\"preview_semantic_rename\",\"request\":{{\"files\":[\"src/lib.rs\",\"src/main.rs\"],\"path\":\"src/lib.rs\",\"position\":{{\"line\":L,\"column\":C}},\"query\":\"rename\",\"context\":{{\"language\":\"rust\",\"crate_root\":\"src/lib.rs\",\"edition\":\"2021\",\"crates\":[{{\"root\":\"src/lib.rs\"}},{{\"root\":\"src/main.rs\",\"dependencies\":{{\"PACKAGE\":\"src/lib.rs\"}}}}]}},\"new_name\":\"NEW_NAME\",\"limit\":100}}}}'\n"
+            f"{binary} . --apply TOKEN\n"
+            "Use the real files, line, column, package name and new name; use line 1/column 0 for "
+            "document-wide queries. The explicit snapshot does not include integration tests or "
+            "cfg(test) code, so run cargo build and cargo test and fix any missed test references "
+            "with native Edit. Do not rename same-spelling locals, methods or unrelated "
+            "parameters.\n")
+    return common + (
+        "This is a reference-discovery task. Query the installed language server with "
+        "query=references at the symbol position, then write the requested report. References "
+        "include the declaration; exclude same-spelling locals, functions and strings. Use the "
+        "real files, line and column; use line 1/column 0 for document-wide queries.\n"
+        f"{binary} . --request '{{\"op\":\"semantic\",\"request\":{{\"files\":[...],\"path\":\"src/lib.rs\",\"position\":{{\"line\":L,\"column\":C}},\"query\":\"references\",\"context\":{{\"language\":\"rust\",\"crate_root\":\"src/lib.rs\",\"edition\":\"2021\"}},\"limit\":100}}}}'\n")
+
 def claude(root, prompt, enabled, timeout, profile, mode=None):
     # The task prompt and native tools are identical in both arms. MCP itself
     # supplies FFSAKE's server guidance; the baseline has no MCP servers.
@@ -785,7 +808,7 @@ def main():
         a.instrument_dir = a.instrument_dir.resolve()
         a.instrument_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     agents, tasks = a.agents.split(','), a.tasks.split(',')
-    if any(x not in ('claude', 'codex', 'opencode') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand', 'edit_units', 'debug_cursor', 'edit_settings', 'edit_refactor', 'debug_retry', 'debug_recursive', 'edit_feature') for x in tasks):
+    if any(x not in ('claude', 'codex', 'opencode') for x in agents) or any(x not in ('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_shipping', 'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch', 'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand', 'edit_units', 'debug_cursor', 'edit_settings', 'edit_refactor', 'debug_retry', 'debug_recursive', 'edit_feature', 'rename_scope_rust', 'rename_field_rust', 'references_rust', 'rename_scale_rust') for x in tasks):
         p.error('unsupported agent or task')
     if not a.pilot and 'codex' in agents and 'git' in tasks:
         p.error('Codex Git comparison unavailable: native workspace sandbox denies linked-worktree Git metadata while MCP can write it')
@@ -801,6 +824,7 @@ def main():
     CLI_GUIDANCE = ('' if a.no_cli_guidance else
                     cli_guidance(suite.CLI_BINARY, a.split_guidance or a.force_reads_cli)
                     if suite.CLI_BINARY else '')
+    BASE_CLI_GUIDANCE = CLI_GUIDANCE
     suite.CLI_GUIDANCE = CLI_GUIDANCE
     changed_binary = suite.FFSAKE_MCP
     baseline_binary = a.baseline_binary.resolve(strict=True) if a.baseline_binary else None
@@ -923,9 +947,14 @@ def main():
                         suite.FFSAKE_MCP = baseline_binary if mode == 'old' else changed_binary
                         SERVER_EDITING = bool(baseline_binary and mode == 'changed' and task in ('cross', 'maintenance', 'layout'))
                         suite_mode = mode if mode in ('baseline', 'ffsake', 'cli') else 'ffsake'
-                        if a.cli_debug_guidance and suite.CLI_BINARY:
+                        semantic = suite.TASKS.get(task, {}).get('semantic')
+                        if suite.CLI_BINARY and semantic and not a.no_cli_guidance:
+                            CLI_GUIDANCE = semantic_guidance(suite.CLI_BINARY, semantic)
+                        elif a.cli_debug_guidance and suite.CLI_BINARY:
                             CLI_GUIDANCE = (cli_guidance(suite.CLI_BINARY, True, task)
                                             if task.startswith('debug') else '')
+                        else:
+                            CLI_GUIDANCE = BASE_CLI_GUIDANCE
                         suite.CLI_GUIDANCE = CLI_GUIDANCE
                         print(f'{agent} {task} {mode} {repetition}', flush=True)
                         # Keep a model's parent-directory discovery in an empty,

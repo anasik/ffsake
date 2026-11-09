@@ -43,12 +43,15 @@ ffsake . --request '{"op":"preview_semantic_rename",
 ffsake . --apply <token>
 ```
 
-`preview_semantic_rename` runs discovery and preview in one process, stores the
-discovery request and its analysis-source hashes in the token, and rewrites the
-reviewed proposal on apply. Apply repeats discovery, rejects changed analysis
-sources or a different proposal, and then commits one journal transaction.
-`preview_rust_rename` still needs a resident `rename_set`; use `ffsake serve` or
-MCP for that form. Same-spelling locals and parameters are not renamed.
+`preview_semantic_rename` runs discovery and preview in one process. The
+`expected_*` fields are optional: when omitted, the preview derives them from
+the prepared proposal, records them in the private token, and returns
+`expected_edits`. Apply repeats discovery, rejects changed analysis sources or a
+different proposal, and then commits one journal transaction. `preview_rust_rename`
+still needs a resident `rename_set`; use `ffsake serve` or MCP for that form.
+Same-spelling locals and parameters are not renamed, but integration tests and
+`cfg(test)` code are outside the explicit snapshot; run the project build and
+tests afterwards.
 
 Output is one JSON object: `{"ok":true,"result":...}` or
 `{"ok":false,"error":"..."}`. Each command is one host tool call and does not

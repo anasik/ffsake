@@ -21,7 +21,8 @@ TASK_NAMES = ('cross', 'maintenance', 'layout', 'build', 'git', 'debug', 'debug_
               'debug_inventory', 'debug_intervals', 'debug_cache', 'edit_batch',
               'debug_ledger', 'debug_nested', 'edit_multi', 'debug_expand', 'edit_units',
               'debug_cursor', 'edit_settings', 'edit_refactor', 'debug_retry',
-              'debug_recursive', 'edit_feature')
+              'debug_recursive', 'edit_feature', 'rename_scope_rust',
+              'rename_field_rust', 'references_rust', 'rename_scale_rust')
 
 
 def name(value):

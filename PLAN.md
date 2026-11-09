@@ -51,6 +51,19 @@ paired **1.022 / 0.948**. Pooled over 20 pairs: **0.941 elapsed /
 0.938 input**. Evidence:
 `docs/agent-benchmark-runs/20261109-generalization/heldout-40.json`.
 
+Language intelligence boundary (2026-11-09): the one-shot CLI can now
+preview and apply a semantic rename (`8cde5a0`), so the default path can use
+the existing rust-analyzer integration. Three new Rust fixtures (function
+shadowing, field shorthand/pattern binding, reference report) measured 30
+valid pairs: correctness **15/15 in both arms**, pooled **1.427 elapsed /
+1.911 input**, so native editing was faster and cheaper at this scale. A
+12-module shadowing rename measured 10 valid pairs at **0.784 elapsed /
+1.659 input** with 9 versus 37 calls and 31.0 versus 39.6 median seconds:
+semantic wins turns and wall time, not tokens. A model-free check on real
+`itoa` source omitted two macro-body call sites; applying the proposal broke
+`cargo build` and undo restored it, so builds/tests remain mandatory.
+Evidence: `docs/agent-benchmark-runs/20261109-semantics/`.
+
 Verdict: **met for Claude Code; partially met for OpenCode**. FFSAKE halves the
 permission surface (3 versus 6 entries), reduces denials roughly fourfold, is at
 edit efficiency parity with lower input on Claude, and is materially better on
@@ -58,11 +71,13 @@ debug correctness, elapsed time, tokens and cost. OpenCode keeps the debug win
 and the enforcement path but is slower on edits. Reviewed preview/apply, stale
 checks, history and debug cleanup remain intact.
 
-Next action: consolidate the held-out evidence into the goal record and switch to
-alpha use and reproducible bug fixes. Do not launch another paid synthetic
-benchmark unless a specific regression question appears. Keep the Claude
-read-redirect hook as the default. The MCP candidate is measured and rejected as
-a competitive path (1.158 elapsed / 1.993 input); do not reopen MCP catalog
+Next action: keep native editing as the default integration. Use semantic
+rename only for large, scattered same-spelling changes where turn count
+dominates, and always verify with the project build/tests; do not expand
+language support or tune to one fixture. Switch to alpha use and reproducible
+bug fixes, and do not launch another paid synthetic benchmark without a
+specific regression question. The MCP candidate is measured and rejected as a
+competitive path (1.158 elapsed / 1.993 input); do not reopen MCP catalog
 work.
 
 Measurement corrections: bytecode caches are not repository changes;

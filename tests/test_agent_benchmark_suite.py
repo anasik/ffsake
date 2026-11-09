@@ -1051,8 +1051,7 @@ def load_config(path):
 
     def test_verifier_rejects_missing_moves_copies_deletions_and_unrelated_changes(self):
         variants = ["docs/config-v1.md", "scripts/legacy_config.py", "examples/request.snapshot.json",
-                    "assets/keep.txt", "dispatch/__main__.py", "extra.txt", "README.md", "docs/MIGRATION.md",
-                    "dispatch/__pycache__/unexpected.pyc"]
+                    "assets/keep.txt", "dispatch/__main__.py", "extra.txt", "README.md", "docs/MIGRATION.md"]
         for name in variants:
             with self.subTest(name=name), tempfile.TemporaryDirectory() as td:
                 root = Path(td)
@@ -1061,6 +1060,16 @@ def load_config(path):
                 (root / name).parent.mkdir(parents=True, exist_ok=True)
                 (root / name).write_text("incorrect")
                 self.assertFalse(suite.maintenance_verify(root, state)[0])
+
+    def test_verifier_ignores_build_caches_as_repository_changes(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = suite.maintenance_fixture(root)
+            self.implementation(root)
+            (root / "dispatch/__pycache__").mkdir(parents=True)
+            (root / "dispatch/__pycache__/unexpected.pyc").write_text("cache")
+            ok, details = suite.maintenance_verify(root, state)
+            self.assertTrue(ok, details)
 
     def test_verifier_rejects_legacy_key_and_boolean_validation_bugs(self):
         variants = [self.CONFIG.replace('data.get("request_timeout_ms", 5000)', 'data.get("timeout_ms", 5000)'),

@@ -34,6 +34,16 @@ calls, paired 0.760 elapsed / 0.734 input, zero CLI denials versus 0-4.
 Feature edit: 10/10 both, paired 1.022 / 0.948. Pooled 0.941 / 0.938.
 Evidence: `docs/agent-benchmark-runs/20261109-generalization/heldout-40.json`.
 
+Language intelligence (2026-11-09): the one-shot CLI now previews and applies
+semantic renames (`8cde5a0`). Three Rust fixtures with shadowing, field shorthand
+and reference decoys measured 30 valid pairs: correctness 15/15 both, pooled
+1.427 elapsed / 1.911 input. A 12-module shadowing rename measured 0.784 / 1.659
+with 9 versus 37 calls and 31.0 versus 39.6 median seconds. Model-free real
+`itoa` source omitted two macro-body call sites; the build failed and undo
+restored it. Keep native editing as the default; use semantic rename only for
+large scattered same-spelling changes with build/test verification. Evidence:
+`docs/agent-benchmark-runs/20261109-semantics/`.
+
 Evidence: `docs/agent-benchmark-runs/20261106-hook-allow/final-80.json`,
 `docs/agent-benchmark-runs/20261106-opencode/haiku-20.json`,
 `docs/agent-benchmark-runs/20261109-opencode-redirect/redirect-40.json`,

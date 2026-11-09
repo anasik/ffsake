@@ -80,16 +80,20 @@ def semantic(query, files, new_name=None):
     return value
 
 
-def preview_request(files, expected_edits):
-    return {
+def preview_request(files, expected_edits=None):
+    value = {
         'op': 'preview_semantic_rename',
         'request': semantic('rename', files, 'sum_all')['request'],
-        'expected_path': 'src/lib.rs',
-        'expected_start_byte': 85,
-        'expected_old_text': 'total',
-        'expected_new_name': 'sum_all',
-        'expected_edits': expected_edits,
     }
+    if expected_edits is not None:
+        value.update({
+            'expected_path': 'src/lib.rs',
+            'expected_start_byte': 85,
+            'expected_old_text': 'total',
+            'expected_new_name': 'sum_all',
+            'expected_edits': expected_edits,
+        })
+    return value
 
 
 def main():
@@ -167,6 +171,19 @@ def main():
         assert undone['ok'], undone
         checks['undo_byte_exact'] = snapshot(root) == original
         assert checks['undo_byte_exact']
+
+        shortened = request(binary, root, preview_request(ALL))
+        assert shortened['ok'], shortened
+        checks['derived_identity'] = shortened['result'].get('expected_edits') == 6
+        assert checks['derived_identity'], shortened['result']
+        reapplied = apply(binary, root, shortened['token'])
+        assert reapplied['ok'], reapplied
+        checks['shortened_apply_ok'] = 'sum_all(&[1, 2, 3])' in (root / 'src/main.rs').read_text()
+        assert checks['shortened_apply_ok']
+        undone_again = request(binary, root, {'op': 'undo', 'transaction': reapplied['transaction']})
+        assert undone_again['ok'], undone_again
+        checks['shortened_undo_byte_exact'] = snapshot(root) == original
+        assert checks['shortened_undo_byte_exact']
 
         stale = request(binary, root, preview_request(ALL, 6))
         assert stale['ok'], stale
