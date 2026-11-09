@@ -446,17 +446,82 @@ def plan_rebind(prefix, host, project, parent):
     return [(path,before,after,[{'old_root':str(parent),'new_root':str(project),'unchanged_arguments':args[1:]}])]
 
 
-def configure(prefix, host, project, profile, apply, guidance=False, rebind_from=None):
+CLI_SETUP = Path(__file__).with_name('ffsake_cli_setup.py')
+
+
+def cli_first_setup(prefix, host, project, apply, remove=False):
+    command = [sys.executable, str(CLI_SETUP), '--host', host, '--project', str(project),
+               '--prefix', str(prefix)]
+    if remove:
+        command.append('--remove')
+    elif host in ('claude', 'opencode'):
+        command.append('--redirect-reads')
+    if apply:
+        command.append('--apply')
+    result = subprocess.run(command, text=True, capture_output=True, timeout=60)
+    if result.returncode != 0:
+        fail(result.stderr.strip() or 'CLI-first setup failed')
+    return json.loads(result.stdout)
+
+
+def plan_remove_config(prefix, host, project):
+    if host == 'codex':
+        fail('automatic Codex entry removal is not supported; remove [mcp_servers.ffsake] manually')
+    outside = outside_entries(host, project)
+    if outside:
+        fail('FFSAKE is configured outside the project; remove that entry manually: ' + outside[0][0])
+    rel = '.mcp.json' if host == 'claude' else 'opencode.json'
+    path = project / rel
+    if not path.exists():
+        return []
+    if path.is_symlink():
+        fail('configuration file cannot be a symlink: ' + str(path))
+    before = path.read_bytes()
+    data = json_content(path)
+    if host == 'claude':
+        servers = data.get('mcpServers')
+        if not isinstance(servers, dict) or 'ffsake' not in servers:
+            return []
+        servers.pop('ffsake')
+    else:
+        if (project / 'opencode.jsonc').exists():
+            fail('existing opencode.jsonc requires manual review and merge; no file changed')
+        mcp = data.get('mcp')
+        if not isinstance(mcp, dict) or 'ffsake' not in mcp:
+            return []
+        mcp.pop('ffsake')
+    after = (json.dumps(data, indent=2) + '\n').encode()
+    return [(path, before, after, [{'ffsake': 'removed'}])]
+
+
+def configure(prefix, host, project, profile, apply, guidance=False, rebind_from=None,
+              cli_first=False, remove=False):
     if current(prefix) is None: fail('FFSAKE is not installed')
-    existing = None if rebind_from else existing_scope(prefix, host, project, profile)
-    changes = plan_rebind(prefix, host, project, rebind_from) if rebind_from else ([] if existing else plan_config(prefix, host, project, profile))
-    if guidance: changes += plan_guidance(host, project)
-    summary = [{'file': str(p), 'added': added} for p, _, _, added in changes]
-    print(json.dumps({'status': 'planned' if changes and not apply else 'applied' if changes else 'unchanged',
-                      'host': host, 'project': str(project), 'binary': str(prefix / 'current/ffsake-mcp'),
-                      'server_args': None if rebind_from else [str(project), '--profile', profile], 'changes': summary, 'existing_scope': existing[0] if existing else None,
-                      'note': 'Existing host permission settings and broader host policies remain authoritative.'}, indent=2))
-    if not apply: return
+    if remove:
+        if rebind_from or guidance:
+            fail('--remove cannot be combined with --rebind-from or --guidance')
+        changes = plan_remove_config(prefix, host, project)
+        cli = cli_first_setup(prefix, host, project, apply, remove=True)
+        summary = [{'file': str(p), 'added': added} for p, _, _, added in changes]
+        print(json.dumps({'status': 'planned' if (changes or cli['action'].startswith('would_')) and not apply
+                          else 'applied' if changes or cli['action'] == 'removed' else 'unchanged',
+                          'host': host, 'project': str(project), 'changes': summary,
+                          'cli_first': cli,
+                          'note': 'Only FFSAKE-managed entries are removed; other host settings and permissions stay.'}, indent=2))
+        if not apply: return
+    else:
+        existing = None if rebind_from else existing_scope(prefix, host, project, profile)
+        changes = plan_rebind(prefix, host, project, rebind_from) if rebind_from else ([] if existing else plan_config(prefix, host, project, profile))
+        if guidance and not cli_first: changes += plan_guidance(host, project)
+        cli = cli_first_setup(prefix, host, project, apply) if cli_first else None
+        summary = [{'file': str(p), 'added': added} for p, _, _, added in changes]
+        planned = bool(changes) or bool(cli and cli['action'].startswith('would_'))
+        print(json.dumps({'status': 'planned' if planned and not apply else 'applied' if planned else 'unchanged',
+                          'host': host, 'project': str(project), 'binary': str(prefix / 'current/ffsake-mcp'),
+                          'server_args': None if rebind_from else [str(project), '--profile', profile], 'changes': summary,
+                          'cli_first': cli, 'existing_scope': existing[0] if existing else None,
+                          'note': 'Existing host permission settings and broader host policies remain authoritative.'}, indent=2))
+        if not apply: return
     for path, before, after, _ in changes:
         path.parent.mkdir(parents=True, exist_ok=True)
         if path.is_symlink() or (path.read_bytes() if path.exists() else None) != before: fail('configuration changed during review: ' + str(path))
@@ -471,7 +536,21 @@ def configure(prefix, host, project, profile, apply, guidance=False, rebind_from
             if os.path.exists(temporary): os.unlink(temporary)
 
 
-def doctor(prefix, host, project, profile):
+def cli_first_installed(host, project):
+    guidance = project / ('CLAUDE.md' if host == 'claude' else 'AGENTS.md')
+    present = guidance.is_file() and '<!-- ffsake-cli:start -->' in guidance.read_text()
+    redirect = None
+    if host == 'claude':
+        path = project / '.claude' / 'settings.json'
+        redirect = path.is_file() and 'claude_read_redirect_hook.py' in path.read_text()
+    elif host == 'opencode':
+        root = project / '.opencode' / 'plugins'
+        redirect = root.is_dir() and any(item.is_dir() and item.name.startswith('ffsake-read-redirect-')
+                                        for item in root.iterdir())
+    return {'guidance': present, 'redirect': redirect}
+
+
+def doctor(prefix, host, project, profile, cli_first=False):
     item = current(prefix)
     if item is None: fail('FFSAKE is not installed')
     existing = existing_scope(prefix, host, project, profile)
@@ -512,12 +591,16 @@ def doctor(prefix, host, project, profile):
         catalog = mcp_profile_preflight(profile, binary)
         if not catalog['ok']: fail('MCP catalog check failed: ' + str(catalog.get('error')))
     source_revision = revision() if item[1].get('source_revision') else None
+    cli = cli_first_installed(host, project) if cli_first else None
+    if cli_first and (not cli['guidance'] or cli['redirect'] is False):
+        fail('CLI-first setup is incomplete; run configure --cli-first')
     print(json.dumps({'ok': True, 'model_calls': 0, 'installed_revision': item[1]['source_revision'],
                       'source_revision': source_revision, 'update_available': source_revision != item[1].get('source_revision') if source_revision else None,
                       'package_version': item[1]['package_version'],
                       'binary': str(binary), 'host': host, 'project': str(project),
                       'host_cli_available': bool(shutil.which({'claude':'claude','codex':'codex','opencode':'opencode'}[host])),
                       'mcp_initialized': True, 'tool_count': len(listing['result']['tools']),
+                      'cli_first': cli,
                       'note': 'Project config checked; host trust, global overrides and current-session connection were not verified.'}, indent=2))
 
 
@@ -546,9 +629,11 @@ def main():
     sub.add_parser('check-update')
     for name in ('configure','doctor'):
         p=sub.add_parser(name);p.add_argument('--host', choices=('claude','codex','opencode'),required=True);p.add_argument('--project',type=Path,required=True);p.add_argument('--tool-profile',choices=('core','all','editing'),default='core')
+        p.add_argument('--cli-first',dest='cli_first',action='store_true',help='Also install/check CLI-first guidance and the read-redirect hook/plugin')
         if name=='configure':
             p.add_argument('--apply',action='store_true',help='Apply the reviewed project configuration')
             p.add_argument('--guidance',action='store_true',help='Also review/add project guidance for this host')
+            p.add_argument('--remove',action='store_true',help='Review/remove FFSAKE project entries, guidance, hook and plugin')
             p.add_argument('--rebind-from',type=Path,help='Review rebinding a copied parent configuration to this worktree')
     sub.add_parser('uninstall')
     args=parser.parse_args()
@@ -579,8 +664,8 @@ def main():
         elif args.action in ('configure','doctor'):
             project=args.project.expanduser().resolve(strict=True)
             if not project.is_dir():fail('project must be an existing directory')
-            if args.action=='configure': configure(prefix,args.host,project,args.tool_profile,args.apply,args.guidance,args.rebind_from)
-            else:doctor(prefix,args.host,project,args.tool_profile)
+            if args.action=='configure': configure(prefix,args.host,project,args.tool_profile,args.apply,args.guidance,args.rebind_from,args.cli_first,args.remove)
+            else:doctor(prefix,args.host,project,args.tool_profile,args.cli_first)
         else:print(json.dumps(uninstall(prefix),indent=2))
     except (ValueError, OSError, subprocess.SubprocessError, json.JSONDecodeError, tomllib.TOMLDecodeError) as e:
         print('ffsake-install: ' + str(e),file=sys.stderr);return 1

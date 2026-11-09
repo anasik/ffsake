@@ -15,10 +15,11 @@ def main():
         base=Path(td).resolve();clone=base/'source';prefix=base/'install'
         command(['git','clone','--quiet','--no-hardlinks',str(SOURCE),str(clone)])
         # Include the working installer when exercising uncommitted development changes.
-        for name in ('ffsake_install.py','ffsake_releases.py'):
+        copied=('ffsake_install.py','ffsake_releases.py','ffsake_cli_setup.py','opencode_read_redirect_plugin.js')
+        for name in copied:
             shutil.copy2(SOURCE/'scripts'/name,clone/'scripts'/name)
         command(['git','config','user.name','Alpha Fixture'],clone);command(['git','config','user.email','fixture@example.invalid'],clone)
-        command(['git','add','scripts/ffsake_install.py','scripts/ffsake_releases.py'],clone)
+        command(['git','add',*(str(Path('scripts')/name) for name in copied)],clone)
         if subprocess.run(['git','diff','--cached','--quiet'],cwd=clone).returncode:
             command(['git','-c','core.hooksPath=/dev/null','-c','commit.gpgsign=false','commit','-qm','installer fixture'],clone)
         env={**os.environ,'CARGO_TARGET_DIR':os.environ.get('FFSAKE_ALPHA_TEST_TARGET',str(base/'cargo-target'))}
@@ -78,6 +79,35 @@ def main():
         assert json.loads((c/'.mcp.json').read_text())['mcpServers']['other']['command']=='other'
         assert tomllib.loads((d/'.codex/config.toml').read_text())['mcp_servers']['other']['command']=='other'
         assert json.loads((o/'opencode.json').read_text())['permission']=={'*':'allow'}
+        cli_projects={name:base/('cli-'+name) for name in ('claude','opencode')}
+        for p in cli_projects.values():p.mkdir()
+        cc=cli_projects['claude'];(cc/'.claude').mkdir();(cc/'.claude/settings.json').write_text('{"custom":true}\n')
+        plan=tool('configure','--host','claude','--project',str(cc),'--cli-first');assert plan['status']=='planned'
+        assert not (cc/'CLAUDE.md').exists()
+        assert tool('configure','--host','claude','--project',str(cc),'--cli-first','--apply')['status']=='applied'
+        assert '<!-- ffsake-cli:start -->' in (cc/'CLAUDE.md').read_text()
+        assert json.loads((cc/'.claude/settings.json').read_text())['custom'] is True
+        assert 'claude_read_redirect_hook.py' in (cc/'.claude/settings.json').read_text()
+        assert tool('doctor','--host','claude','--project',str(cc),'--cli-first')['cli_first']['redirect']
+        oc=cli_projects['opencode'];(oc/'.opencode').mkdir(parents=True);(oc/'.opencode/opencode.json').write_text('{"custom":true}\n')
+        assert tool('configure','--host','opencode','--project',str(oc),'--cli-first','--apply')['status']=='applied'
+        assert list((oc/'.opencode/plugins').glob('ffsake-read-redirect-*'))
+        assert json.loads((oc/'.opencode/opencode.json').read_text())['custom'] is True
+        assert tool('doctor','--host','opencode','--project',str(oc),'--cli-first')['cli_first']['redirect']
+        for host,root in (('claude',cc),('opencode',oc)):
+            removed=tool('configure','--host',host,'--project',str(root),'--remove','--apply');assert removed['status']=='applied'
+        assert '<!-- ffsake-cli' not in (cc/'CLAUDE.md').read_text()
+        assert not any('claude_read_redirect_hook.py' in entry['hooks'][0]['command'] for entry in json.loads((cc/'.claude/settings.json').read_text())['hooks']['PreToolUse'])
+        assert json.loads((cc/'.claude/settings.json').read_text())['custom'] is True
+        assert not list((oc/'.opencode/plugins').glob('ffsake-read-redirect-*'))
+        assert json.loads((oc/'.opencode/opencode.json').read_text())['custom'] is True
+        # The installed CLI must complete a guarded edit and undo without MCP or a model.
+        e2e=base/'e2e';e2e.mkdir();(e2e/'app.py').write_text('value = 1\n');cli=str(prefix/'current/ffsake')
+        read=json.loads(command([cli,'.','--request','{"op":"read","path":"app.py"}'],cwd=e2e).stdout);assert read['ok'] and 'value = 1' in read['result']['text']
+        preview=json.loads(command([cli,'.','--request','{"op":"preview_edit","path":"app.py","old_text":"value = 1","new_text":"value = 2","expected_matches":1}'],cwd=e2e).stdout);assert preview['ok'] and preview.get('token')
+        assert (e2e/'app.py').read_text()=='value = 1\n'
+        applied=json.loads(command([cli,'.','--apply',preview['token']],cwd=e2e).stdout);assert applied['ok'] and (e2e/'app.py').read_text()=='value = 2\n'
+        undone=json.loads(command([cli,'.','--request','{"op":"undo","transaction":'+json.dumps(applied['transaction'])+'}'],cwd=e2e).stdout);assert undone['ok'] and (e2e/'app.py').read_text()=='value = 1\n'
         full=base/'full-profile';full.mkdir()
         assert tool('configure','--host','claude','--project',str(full),'--tool-profile','all','--apply')['status']=='applied'
         assert tool('doctor','--host','claude','--project',str(full),'--tool-profile','all')['tool_count']>36
@@ -106,5 +136,5 @@ def main():
         extra.unlink()
         assert tool('uninstall')['status']=='uninstalled' and (journal/'keep').read_text()=='do not delete' and (c/'.mcp.json').exists()
         assert tool('uninstall')['status']=='not_installed'
-        print(json.dumps({'install':True,'repeat_no_change':True,'three_host_configurations':True,'existing_settings_preserved':True,'conflict_refused':True,'mcp_initialize_and_discovery':True,'no_silent_upgrade':True,'atomic_update_and_running_server':True,'safe_uninstall':True},indent=2))
+        print(json.dumps({'install':True,'repeat_no_change':True,'three_host_configurations':True,'cli_first_claude_and_opencode':True,'existing_settings_preserved':True,'project_removal_restores_config':True,'installed_cli_end_to_end':True,'conflict_refused':True,'mcp_initialize_and_discovery':True,'no_silent_upgrade':True,'atomic_update_and_running_server':True,'safe_uninstall':True},indent=2))
 if __name__=='__main__':main()
