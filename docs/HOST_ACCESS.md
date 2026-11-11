@@ -26,13 +26,13 @@ python3 scripts/ffsake_setup.py codex /absolute/project --binary /absolute/ffsak
 python3 scripts/ffsake_setup.py opencode /absolute/project --binary /absolute/ffsake/target/release/ffsake-mcp --output-dir /absolute/project
 ```
 
-Run only the desired host command. Existing files are never overwritten: omit `--output-dir` to print snippets for merging into existing configuration. Review inherited wildcard allow/deny rules and managed policy. The generator does not change them. `--access-approval allow` deliberately configures automatic allowance of open/remove; `--tool-profile core` selects the smaller catalog.
+Run only the desired host command. Existing files are never overwritten: omit `--output-dir` to print snippets for merging into existing configuration. Review inherited wildcard allow/deny rules and managed policy. The generator does not change them. `--access-approval allow` deliberately configures automatic allowance for Claude Code and Codex; OpenCode setup never writes permission entries, so add deliberate OpenCode rules yourself. `--tool-profile core` selects the smaller catalog.
 
 | Host | Generated setup | Normal access approval |
 | --- | --- | --- |
 | Claude Code | `.mcp.json`, `.claude/settings.json` | Preallows ordinary FFSAKE tools; open/remove use default MCP permission handling. No explicit ask rules that would override deliberate allow/auto behavior. |
 | Codex | `.codex/config.toml` | Per-tool `approval_mode = "prompt"` for open/remove, `"approve"` for ordinary tools. Trust the project to load project config. Deliberate per-tool `"approve"` or host automatic review controls unattended use. |
-| OpenCode | `opencode.json` | `ffsake_*: allow`, exact `ffsake_ffsake_open_access` and `ffsake_ffsake_remove_access`: `ask`. Use deliberate `allow` for unattended calls. In tested 1.18.31, `--auto` still prompted with these explicit `ask` rules. |
+| OpenCode | `opencode.json` | No generated `permission` entries. The host's normal approval policy applies to every FFSAKE tool, including open/remove; merge explicit rules yourself for unattended calls. |
 
 These are **configured defaults, not guaranteed prompts**. Global/managed policy, hooks, SDK callbacks, auto modes and user overrides remain the host's responsibility. Ordinary reads/edits gain no new approval requirement. The launcher additionally supports `--access-approval allow` and an optional `--permission-mode`; otherwise it preserves the host mode.
 

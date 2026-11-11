@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from agent_benchmark_suite import FFSAKE_MCP, FFSAKE_ACCESS_MUTATIONS, FFSAKE_APPROVAL_TOOLS, profile_tools, mcp_arguments
+from agent_benchmark_suite import FFSAKE_MCP, FFSAKE_ACCESS_MUTATIONS, profile_tools, mcp_arguments
 
 
 def configurations(host, root, binary, profile='all', access_approval='ask', debug_policy=None, debug_approval='ask', task_approval='ask'):
@@ -42,8 +42,6 @@ def configurations(host, root, binary, profile='all', access_approval='ask', deb
     return {'opencode.json': json.dumps({
         '$schema': 'https://opencode.ai/config.json',
         'mcp': {'ffsake': {'type': 'local', 'command': [str(binary), *args], 'enabled': True}},
-        'permission': {'ffsake_*': 'allow', **{'ffsake_' + name: approval(name)
-                       for name in FFSAKE_APPROVAL_TOOLS}},
     }, indent=2) + '\n'}
 
 

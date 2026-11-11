@@ -21,7 +21,7 @@ class RebindTests(unittest.TestCase):
      if host=='claude':
       path.write_text(json.dumps({'mcpServers':{'ffsake':json.loads(path.read_text())['mcpServers']['ffsake'],'other':{'command':'keep'}},'other':'keep'}))
      if host=='opencode':
-      d=json.loads(path.read_text());d['permission']['ffsake_ffsake_run_task']='deny';d['other']='keep';path.write_text(json.dumps(d))
+      d=json.loads(path.read_text());d['permission']={'ffsake_ffsake_run_task':'deny'};d['other']='keep';path.write_text(json.dumps(d))
      before=path.read_bytes();plan=install.plan_rebind(prefix,host,child,parent)
      self.assertEqual(path.read_bytes(),before);self.assertEqual(len(plan),1);self.assertEqual(plan[0][3][0]['new_root'],str(child))
      path.write_bytes(plan[0][2]);self.assertEqual(install.plan_rebind(prefix,host,child,parent),[])

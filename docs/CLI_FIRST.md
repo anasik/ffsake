@@ -58,9 +58,12 @@ OpenCode receives the same guidance block plus:
 
 - `.opencode/plugins/ffsake-read-redirect-<workspace-id>/index.js`, a local
   plugin that replaces the native `read` executor with `ffsake read` and
-  rejects file-reading shell commands;
-- merged `.opencode/opencode.json` permissions for `bash`, `read`, `edit`,
-  `write` and native search tools. Existing permission values win.
+  rejects file-reading shell commands.
+
+Setup does not write permission entries into `.opencode/opencode.json`: an
+existing permission policy is preserved byte-for-byte, and a missing policy
+stays missing. OpenCode's normal approval policy governs the CLI, MCP tools and
+native tools.
 
 If the project already uses `.opencode/opencode.jsonc`, setup refuses the
 redirect and asks for a manual merge instead of creating a shadow config.
@@ -72,6 +75,9 @@ FFSAKE does not grant permissions and does not reduce the host's approval
 surface. Allow the commands your policy requires. For Claude Code,
 `Bash(ffsake:*)` is enough for CLI calls; MCP tools follow the host's normal
 approval policy. The generated guidance does not modify permission settings.
+OpenCode setup writes no `permission` entries at all: existing values, wildcard
+rules and absent keys are all left as they are. Approve FFSAKE tool calls (and
+the `ffsake` CLI command) according to your own OpenCode policy.
 
 ## Commands
 

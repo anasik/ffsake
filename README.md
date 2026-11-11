@@ -22,17 +22,17 @@ ARM64 (macOS 14+) and Linux x86-64 (glibc 2.35+). Source installation also needs
 Rust/Cargo and a C compiler. Windows is not supported. Language servers and
 debug adapters are separate optional dependencies.
 
-Release installation (after the first alpha archive is published):
+Release installation (`v0.1.0-alpha.1`):
 
 ```sh
 git clone --depth 1 https://github.com/anasik/ffsake.git "$HOME/.local/src/ffsake"
-python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" install
+python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" install \
+  --version v0.1.0-alpha.1
 ```
 
-Before the first archive is published, build from source:
+Source installation is also supported:
 
 ```sh
-git clone https://github.com/anasik/ffsake.git "$HOME/.local/src/ffsake"
 python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" install --source --profile release
 ```
 
@@ -60,8 +60,9 @@ python3 "$HOME/.local/src/ffsake/scripts/ffsake_install.py" \
 - adds one marked guidance block to `CLAUDE.md` or `AGENTS.md`;
 - installs a Claude `PreToolUse` hook or an OpenCode local plugin that serves
   native `Read` through `ffsake read`;
-- merges those entries into existing project settings without replacing other
-  keys, hooks or permissions;
+- merges the Claude hook into existing settings without replacing other keys,
+  hooks or permissions; OpenCode gets the plugin and, separately, the MCP entry,
+  but no `permission` entries are added;
 - adds the MCP server entry for capabilities that need it.
 
 To register only the MCP server, omit `--cli-first`. Codex uses the same

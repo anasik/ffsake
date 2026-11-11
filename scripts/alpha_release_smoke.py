@@ -84,8 +84,11 @@ def main():
             doctor = tool(args.installer, prefix, 'doctor', '--host', host,
                           '--project', str(project), '--cli-first', env=env)
             assert doctor['ok'] and doctor['cli_first']['guidance'] and doctor['cli_first']['redirect'], doctor
-            assert json.loads((project / ('.claude/settings.json' if host == 'claude'
-                                          else '.opencode/opencode.json')).read_text())['custom'] is True
+            installed = json.loads((project / ('.claude/settings.json' if host == 'claude'
+                                               else '.opencode/opencode.json')).read_text())
+            assert installed['custom'] is True, installed
+            if host == 'opencode':
+                assert installed['permission'] == {'edit': 'ask'}, installed
 
         project = projects['claude']
         (project / 'app.py').write_text('value = 1\n')

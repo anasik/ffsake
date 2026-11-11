@@ -175,21 +175,15 @@ def load_opencode_config(project):
 
 
 def install_opencode_policy(project, binary):
-    """Install the local read plugin and a merged host config."""
+    """Install the local read plugin without changing host permissions."""
     plugin_id, source = opencode_plugin_source(project, binary)
-    config_path, config = load_opencode_config(project)
+    # Validate the existing config before touching the plugin directory. The
+    # plugin is discovered from .opencode/plugins; setup never writes permission
+    # entries, so an existing opencode.json is left byte-for-byte unchanged.
+    config_path, _ = load_opencode_config(project)
     plugin = project / ".opencode" / "plugins" / plugin_id / "index.js"
     plugin.parent.mkdir(parents=True, exist_ok=True)
     plugin.write_text(source)
-    permission = config.get("permission")
-    if not isinstance(permission, dict):
-        permission = {}
-    # Native read is served by ffsake; edits and search stay native.
-    for name in ("bash", "shell", "read", "edit", "write", "apply_patch",
-                 "glob", "grep", "list"):
-        permission.setdefault(name, "allow")
-    config["permission"] = permission
-    config_path.write_text(json.dumps(config, indent=2) + "\n")
     return plugin, config_path, plugin_id
 
 
@@ -291,7 +285,7 @@ def main():
                     plugin_path = project / ".opencode" / "plugins" / plugin_id / "index.js"
                     settings_path = config_path
     rule = ("Bash(ffsake:*)" if args.host == "claude"
-            else "allow bash, read, edit, write, glob, grep in opencode.json")
+            else "host permissions unchanged; no allow rules added")
     print(json.dumps({
         "ok": True,
         "host": args.host,
@@ -303,7 +297,8 @@ def main():
         "guidance_file": str(path),
         "action": action,
         "read_policy": str(settings_path) if settings_path else None,
-        "read_policy_installed": bool(settings_path and settings_path.exists()),
+        "read_policy_installed": bool(
+            (plugin_path and plugin_path.exists()) or (settings_path and settings_path.exists())),
         "read_plugin": str(plugin_path) if plugin_path else None,
         "read_plugin_id": plugin_id,
         "removed_hooks": removed_hooks,

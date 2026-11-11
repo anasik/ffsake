@@ -93,6 +93,7 @@ def main():
         assert tool('configure','--host','opencode','--project',str(oc),'--cli-first','--apply')['status']=='applied'
         assert list((oc/'.opencode/plugins').glob('ffsake-read-redirect-*'))
         assert json.loads((oc/'.opencode/opencode.json').read_text())['custom'] is True
+        assert 'permission' not in json.loads((oc/'.opencode/opencode.json').read_text())
         assert tool('doctor','--host','opencode','--project',str(oc),'--cli-first')['cli_first']['redirect']
         for host,root in (('claude',cc),('opencode',oc)):
             removed=tool('configure','--host',host,'--project',str(root),'--remove','--apply');assert removed['status']=='applied'
@@ -101,6 +102,7 @@ def main():
         assert json.loads((cc/'.claude/settings.json').read_text())['custom'] is True
         assert not list((oc/'.opencode/plugins').glob('ffsake-read-redirect-*'))
         assert json.loads((oc/'.opencode/opencode.json').read_text())['custom'] is True
+        assert 'permission' not in json.loads((oc/'.opencode/opencode.json').read_text())
         # The installed CLI must complete a guarded edit and undo without MCP or a model.
         e2e=base/'e2e';e2e.mkdir();(e2e/'app.py').write_text('value = 1\n');cli=str(prefix/'current/ffsake')
         read=json.loads(command([cli,'.','--request','{"op":"read","path":"app.py"}'],cwd=e2e).stdout);assert read['ok'] and 'value = 1' in read['result']['text']

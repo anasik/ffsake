@@ -332,9 +332,8 @@ def plan_config(prefix, host, project, profile):
                     old = entries['ffsake']; expected = wanted['mcp']['ffsake']
                     if not isinstance(old, dict) or old.get('type') != 'local' or old.get('command') != expected['command'] or old.get('enabled', True) is False: fail('existing OpenCode FFSAKE entry differs or is disabled; review it manually')
                 if 'ffsake' not in entries: entries['ffsake'] = wanted['mcp']['ffsake']; added.append({'mcp.ffsake': entries['ffsake']})
-                # Existing permission policy is authoritative. Do not override wildcard rules.
-                if 'permission' not in existing:
-                    existing['permission'] = wanted['permission']; added.append({'permission': wanted['permission']})
+                # Existing permission policy is authoritative. Setup never adds
+                # allow or ask rules for OpenCode file, shell or FFSAKE tools.
             if not added: continue
             after = (json.dumps(existing, indent=2, ensure_ascii=False) + '\n').encode()
         changes.append((path, before, after, added))

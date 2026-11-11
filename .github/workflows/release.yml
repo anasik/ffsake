@@ -11,7 +11,28 @@ on:
 permissions:
   contents: read
 jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Require successful CI on the tagged commit
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          count=$(gh api "repos/$GH_REPO/actions/workflows/ci.yml/runs?head_sha=$SHA&status=success&per_page=1" --jq '.total_count // 0')
+          if [ "$count" -lt 1 ]; then
+            echo "::error::No successful CI run exists for $SHA; refusing to package or publish."
+            exit 1
+          fi
+          echo "Verified successful CI for $SHA"
   package:
+    needs: verify
     strategy:
       fail-fast: false
       matrix:
@@ -61,19 +82,40 @@ jobs:
           path: dist/*
   publish:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    needs: checksums
+    needs: [verify, checksums]
     runs-on: ubuntu-22.04
     permissions:
+      actions: read
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: release-assets
           path: dist
+      - name: Re-check CI before publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          count=$(gh api "repos/$GH_REPO/actions/workflows/ci.yml/runs?head_sha=$SHA&status=success&per_page=1" --jq '.total_count // 0')
+          if [ "$count" -lt 1 ]; then
+            echo "::error::No successful CI run exists for $SHA; refusing to publish."
+            exit 1
+          fi
+          test -f dist/SHA256SUMS
+          test "$(find dist -name '*.tar.gz' | wc -l)" -eq 2
       - name: Publish prerelease
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$TAG" dist/* --prerelease --title "$TAG" --notes 'Alpha binaries: macOS ARM64 (macOS 14+) and Linux x86-64 (glibc 2.35+), with system runtime libraries. Git is needed for Git operations; curl enables update notices. Language servers and debug adapters are separate optional dependencies. See INSTALL.md for installation, checksums, updates and reconnection.'
+          notes="docs/releases/$TAG.md"
+          if [ -f "$notes" ]; then
+            gh release create "$TAG" dist/* --prerelease --title "$TAG" --notes-file "$notes"
+          else
+            gh release create "$TAG" dist/* --prerelease --title "$TAG" --notes 'Alpha binaries with system runtime libraries. See INSTALL.md for installation, checksums, updates and reconnection.'
+          fi

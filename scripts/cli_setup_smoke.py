@@ -87,19 +87,33 @@ def main():
             "permission": {"edit": "ask"},
             "custom": True,
         }, indent=2) + "\n")
+        original_config = config_path.read_bytes()
         opened = run("--host", "opencode", "--project", str(opencode), "--redirect-reads", "--apply")
         assert opened["read_policy_installed"] is True, opened
+        assert opened["permission_rule"] == "host permissions unchanged; no allow rules added", opened
         plugin = Path(opened["read_plugin"])
         assert plugin.is_file() and plugin.parent.name.startswith("ffsake-read-redirect-"), opened
         source = plugin.read_text()
         assert '"__FFSAKE_BIN__"' not in source and '"__FFSAKE_ROOT__"' not in source
+        assert config_path.read_bytes() == original_config
         config = json.loads(config_path.read_text())
         assert config["custom"] is True and config["mcp"]["other"]["command"] == ["other"]
-        assert config["permission"]["edit"] == "ask" and config["permission"]["read"] == "allow"
+        assert config["permission"] == {"edit": "ask"}, config
+        assert "read" not in config["permission"] and "bash" not in config["permission"]
+
+        plain = project / "opencode-plain"
+        plain.mkdir()
+        plain_setup = run("--host", "opencode", "--project", str(plain),
+                          "--redirect-reads", "--apply")
+        assert plain_setup["read_policy_installed"] is True, plain_setup
+        assert Path(plain_setup["read_plugin"]).is_file(), plain_setup
+        assert not (plain / ".opencode" / "opencode.json").exists()
+        assert not any(item.name == "opencode.jsonc"
+                       for item in (plain / ".opencode").iterdir())
 
         removed = run("--host", "opencode", "--project", str(opencode), "--remove", "--apply")
         assert removed["removed_plugins"] and not Path(removed["removed_plugins"][0]).exists(), removed
-        assert json.loads(config_path.read_text())["custom"] is True
+        assert config_path.read_bytes() == original_config
 
         jsonc = project / "jsonc-project"
         (jsonc / ".opencode").mkdir(parents=True)
@@ -129,6 +143,7 @@ def main():
             "idempotent_guidance": True,
             "existing_claude_settings_preserved": True,
             "existing_opencode_config_preserved": True,
+            "opencode_permissions_unchanged": True,
             "opencode_jsonc_refused": True,
             "removal_restores_config": True,
             "codex_guidance": True,

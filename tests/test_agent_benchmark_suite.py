@@ -34,7 +34,9 @@ class HostSetupTests(unittest.TestCase):
                     self.assertIn('[mcp_servers.ffsake.tools.ffsake_open_access]', result.stdout)
                     self.assertIn('approval_mode = "prompt"', result.stdout)
                 else:
-                    self.assertIn('"ffsake_ffsake_open_access": "ask"', result.stdout)
+                    self.assertIn('"mcp"', result.stdout)
+                    self.assertNotIn('"permission"', result.stdout)
+                    self.assertNotIn('"ffsake_*"', result.stdout)
         with tempfile.TemporaryDirectory() as td:
             result = self.generate('codex', Path(td), '--tool-profile', 'editing', '--debug', '/tmp/debug.json')
             self.assertNotEqual(result.returncode, 0)
@@ -79,15 +81,9 @@ class HostSetupTests(unittest.TestCase):
                             self.assertEqual(tools[name]["approval_mode"], "prompt" if policy == "ask" else "approve")
                     else:
                         config = json.loads((root / "opencode.json").read_text())
-                        self.assertEqual(config["permission"]["ffsake_*"], "allow")
-                        self.assertEqual(config["permission"]["ffsake_ffsake_debug_launch"], "ask")
-                        self.assertEqual(config["permission"]["ffsake_ffsake_debug_attach"], "ask")
-                        self.assertEqual(config["permission"]["ffsake_ffsake_task_register"], "ask")
-                        self.assertEqual(config["permission"]["ffsake_ffsake_run_task"], "ask")
-                        self.assertEqual(config["permission"]["ffsake_ffsake_git_mutate"], "ask")
-                        self.assertEqual(config["permission"]["ffsake_ffsake_git_operation"], "ask")
-                        for name in suite.FFSAKE_ACCESS_MUTATIONS:
-                            self.assertEqual(config["permission"]["ffsake_" + name], policy)
+                        self.assertNotIn("permission", config)
+                        self.assertEqual(config["mcp"]["ffsake"]["enabled"], True)
+                        self.assertNotIn("ffsake_*", config)
                     before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
                     refused = self.generate(host, root, "--output-dir", td)
                     self.assertNotEqual(refused.returncode, 0)
@@ -116,8 +112,7 @@ class HostSetupTests(unittest.TestCase):
                     args = config["args"]
                 else:
                     config = json.loads((root / "opencode.json").read_text())
-                    self.assertEqual(config["permission"]["ffsake_ffsake_debug_launch"], "allow")
-                    self.assertEqual(config["permission"]["ffsake_ffsake_open_access"], "ask")
+                    self.assertNotIn("permission", config)
                     args = config["mcp"]["ffsake"]["command"]
                 self.assertEqual(args[-2:], ["--debug", str(policy.resolve())])
 
@@ -139,10 +134,9 @@ class HostSetupTests(unittest.TestCase):
                     self.assertEqual(tools["ffsake_run_task"]["approval_mode"], "approve")
                     self.assertEqual(tools["ffsake_open_access"]["approval_mode"], "prompt")
                 else:
-                    permissions = json.loads((root / "opencode.json").read_text())["permission"]
-                    self.assertEqual(permissions["ffsake_ffsake_task_register"], "allow")
-                    self.assertEqual(permissions["ffsake_ffsake_run_task"], "allow")
-                    self.assertEqual(permissions["ffsake_ffsake_open_access"], "ask")
+                    config = json.loads((root / "opencode.json").read_text())
+                    self.assertNotIn("permission", config)
+                    self.assertNotIn("ffsake_*", config)
 
 
 class GitFixtureTests(unittest.TestCase):
